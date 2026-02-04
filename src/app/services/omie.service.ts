@@ -6,20 +6,32 @@ import { AuthService } from './auth.service';
 
 export interface MovimentacaoOmie {
   codigo_lancamento?: string;
-  codigo_cliente_fornecedor?: string;
+  codigo_lancamento_omie?: number;
+  codigo_lancamento_integracao?: string;
+  codigo_cliente_fornecedor?: string | number;
   nome_cliente_fornecedor?: string;
   data_vencimento?: string;
   data_emissao?: string;
   data_pagamento?: string;
+  data_previsao?: string;
+  data_registro?: string;
   valor_documento?: number;
   valor_desconto?: number;
   valor_juros?: number;
   valor_multa?: number;
   valor_pago?: number;
   status?: string;
+  status_titulo?: string; // Status do título do Omie (ATRASADO, VENCE HOJE, A VENCER, etc)
   observacao?: string;
   tipo?: string; // "DESPESA" ou "RECEITA"
   debito?: boolean; // true para despesa, false para receita
+  numero_documento?: string;
+  numero_parcela?: string;
+  numero_pedido?: string;
+  codigo_categoria?: string;
+  descricao_categoria?: string;
+  recebimentos?: any[]; // Array de recebimentos/baixas
+  baixas?: any[]; // Array de baixas
   // Campos adicionais que podem vir do OMIE
   [key: string]: any;
 }
@@ -41,6 +53,8 @@ export interface MovimentacoesOmieResponse {
 export interface ContasPagarResponse {
   tipo: string;
   total_de_registros: number;
+  total_de_paginas?: number;
+  pagina?: number;
   registros: MovimentacaoOmie[];
   mock?: boolean;
 }
@@ -48,6 +62,8 @@ export interface ContasPagarResponse {
 export interface ContasReceberResponse {
   tipo: string;
   total_de_registros: number;
+  total_de_paginas?: number;
+  pagina?: number;
   registros: MovimentacaoOmie[];
   mock?: boolean;
 }

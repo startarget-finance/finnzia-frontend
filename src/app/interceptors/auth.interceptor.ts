@@ -12,6 +12,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
+  // Não adicionar token para webhooks externos (como Clint)
+  // Webhooks não precisam de autenticação JWT
+  if (req.url.includes('functions-api.clint.digital') || req.url.includes('clint.digital')) {
+    return next(req);
+  }
+
   // Obter token do localStorage
   const token = authService.getToken();
 

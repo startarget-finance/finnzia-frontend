@@ -4,8 +4,28 @@ import { AuthGuard } from './guards/auth.guard';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: '/login',
+    loadComponent: () => import('./components/landing/landing.component').then(m => m.LandingComponent),
     pathMatch: 'full'
+  },
+  {
+    path: 'restaurantes',
+    loadComponent: () => import('./components/landing/landing.component').then(m => m.LandingComponent),
+    data: { segmento: 'restaurantes' }
+  },
+  {
+    path: 'prestadores',
+    loadComponent: () => import('./components/landing/landing.component').then(m => m.LandingComponent),
+    data: { segmento: 'prestadores' }
+  },
+  {
+    path: 'agencias',
+    loadComponent: () => import('./components/landing/landing.component').then(m => m.LandingComponent),
+    data: { segmento: 'agencias' }
+  },
+  {
+    path: 'diagnostico',
+    loadComponent: () => import('./components/landing/landing.component').then(m => m.LandingComponent),
+    data: { apenasDiagnostico: true }
   },
   {
     path: 'login',
@@ -58,6 +78,16 @@ export const routes: Routes = [
   {
     path: 'movimentacoes',
     loadComponent: () => import('./components/movimentacoes/movimentacoes.component').then(m => m.MovimentacoesComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'contas-a-pagar',
+    loadComponent: () => import('./components/contas-a-pagar/contas-a-pagar.component').then(m => m.ContasAPagarComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'contas-a-receber',
+    loadComponent: () => import('./components/contas-a-receber/contas-a-receber.component').then(m => m.ContasAReceberComponent),
     canActivate: [AuthGuard]
   },
   {

@@ -41,11 +41,31 @@ export const API_CONFIG = {
     // Em produção (deploy): usa a URL do Render
     return isLocalhost 
       ? 'http://localhost:8080'  // Desenvolvimento local
-      : 'https://finnza-backend.onrender.com';  // Produção (Render)
+      : 'https://finnza-backend-2l9v.onrender.com';  // Produção (Render)
   })(),
 
   // Flag para usar login mockado no front (false = usar backend real)
-  USE_BACKEND_MOCK_AUTH: false
+  USE_BACKEND_MOCK_AUTH: false,
+
+  // ===========================
+  // CLINT - INTEGRAÇÃO WEBHOOK
+  // ===========================
+  // Webhook da Clint para integração de formulários
+  // IMPORTANTE: Este webhook é público e seguro, mas não deve ser exposto em repositórios públicos
+  CLINT_WEBHOOK_URL: 'https://functions-api.clint.digital/endpoints/integration/webhook/1a4381ef-bc1a-4a6f-81a9-8ce684649adb',
+
+  // ===========================
+  // GOOGLE SHEETS - INTEGRAÇÃO
+  // ===========================
+  // URL do Google Apps Script Web App para salvar diagnósticos
+  GOOGLE_SHEETS_WEB_APP_URL: (() => {
+    // Pode ser configurado via variável de ambiente
+    if (typeof process !== 'undefined' && process.env['GOOGLE_SHEETS_WEB_APP_URL']) {
+      return process.env['GOOGLE_SHEETS_WEB_APP_URL'];
+    }
+    // URL do Google Apps Script configurada
+    return 'https://script.google.com/macros/s/AKfycbzzaeEpB7exFpSgQPdpLoe1nnjXag4tM2Gg58B-K1oSznDHYmFnkmiTwAaMtJkomW42/exec';
+  })()
 };
 
 // INSTRUÇÕES PARA APIs GRATUITAS:

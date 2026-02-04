@@ -1,0 +1,2285 @@
+<div class="relative bg-slate-950 text-slate-50 min-h-screen overflow-hidden">
+  <!-- Background decorativo -->
+  <div class="pointer-events-none absolute inset-0">
+    <div class="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl"></div>
+    <div class="absolute top-40 -left-20 h-80 w-80 rounded-full bg-purple-500/20 blur-3xl"></div>
+    <div class="absolute bottom-0 inset-x-0 h-64 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent"></div>
+  </div>
+
+  <!-- Header da landing -->
+  <header class="relative sticky top-0 z-50 border-b border-white/10 bg-slate-950/95 backdrop-blur-xl shadow-lg shadow-black/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16 md:h-20">
+        <!-- Logo -->
+        <div class="flex items-center">
+          <a href="/" class="flex items-center gap-3 hover:opacity-90 transition-opacity group">
+            <img src="assets/images/finnzialogo.png" alt="Finzzia" class="h-10 md:h-12 w-auto drop-shadow-lg group-hover:scale-105 transition-transform duration-300" />
+          </a>
+      </div>
+
+        <!-- Navegação Desktop -->
+        <nav class="hidden lg:flex items-center gap-1">
+          <a href="/agencias" 
+             class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200 relative group">
+            <span class="relative z-10">Agências</span>
+            <span class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"></span>
+          </a>
+          <a href="/restaurantes" 
+             class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200 relative group">
+            <span class="relative z-10">Restaurantes</span>
+            <span class="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"></span>
+          </a>
+          <a href="/prestadores" 
+             class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200 relative group">
+            <span class="relative z-10">Prestadores de Serviço</span>
+            <span class="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"></span>
+          </a>
+          <a href="/diagnostico" 
+             (click)="fecharMenuMobile()"
+             class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200 relative group">
+            <span class="relative z-10">Diagnóstico</span>
+            <span class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-emerald-400/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"></span>
+          </a>
+      </nav>
+
+        <!-- Botão Login Desktop -->
+        <div class="hidden lg:flex items-center gap-4">
+      <button
+        (click)="goToLogin()"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-blue-500 to-emerald-400 text-white text-sm font-semibold shadow-lg shadow-blue-500/40 hover:shadow-xl hover:brightness-110 transition-all duration-200 hover:scale-105"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+            </svg>
+            Acessar sistema
+          </button>
+        </div>
+
+        <!-- Botões Mobile (Acessar sistema + Menu hambúrguer) -->
+        <div class="lg:hidden flex items-center gap-3">
+          <button
+            (click)="goToLogin()"
+            class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-emerald-400 text-white text-xs font-semibold shadow-lg shadow-blue-500/40 hover:shadow-xl hover:brightness-110 transition-all duration-200"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+            </svg>
+            <span class="hidden sm:inline">Acessar</span>
+          </button>
+          <button
+            (click)="toggleMenuMobile()"
+            class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+            aria-label="Abrir menu"
+          >
+            <svg *ngIf="!menuMobileAberto" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+            <svg *ngIf="menuMobileAberto" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+
+  </header>
+
+  <!-- Overlay para fechar menu mobile -->
+  <div *ngIf="menuMobileAberto" 
+       (click)="fecharMenuMobile()"
+       class="lg:hidden fixed top-16 md:top-20 left-0 right-0 bottom-0 z-[55] bg-black/60 backdrop-blur-sm transition-opacity"></div>
+
+  <!-- Menu Mobile Lateral -->
+  <div *ngIf="menuMobileAberto" 
+       class="lg:hidden fixed top-0 right-0 bottom-0 z-[60] w-full max-w-sm bg-slate-950/98 backdrop-blur-xl shadow-2xl border-l border-white/10 transform translate-x-0 transition-transform duration-300 ease-in-out">
+    <div class="flex flex-col h-full pt-16 md:pt-20">
+      <!-- Header do Menu Mobile -->
+      <div class="flex items-center justify-between p-6 border-b border-white/10">
+        <img src="assets/images/finnzialogo.png" alt="Finzzia" class="h-10 w-auto" />
+        <button
+          (click)="fecharMenuMobile()"
+          class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Links do Menu Mobile -->
+      <nav class="flex-1 px-6 py-8 space-y-2 overflow-y-auto">
+        <a href="/agencias" 
+           (click)="fecharMenuMobile()"
+           class="flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium text-slate-300 hover:text-white hover:bg-blue-500/10 transition-all duration-200 group">
+          <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/30 transition">
+            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+            </svg>
+          </div>
+          <span>Agências</span>
+        </a>
+        
+        <a href="/restaurantes" 
+           (click)="fecharMenuMobile()"
+           class="flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium text-slate-300 hover:text-white hover:bg-emerald-500/10 transition-all duration-200 group">
+          <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/30 transition">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+          </div>
+          <span>Restaurantes</span>
+        </a>
+        
+        <a href="/prestadores" 
+           (click)="fecharMenuMobile()"
+           class="flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium text-slate-300 hover:text-white hover:bg-purple-500/10 transition-all duration-200 group">
+          <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/30 transition">
+            <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+            </svg>
+          </div>
+          <span>Prestadores de Serviço</span>
+        </a>
+        
+        <a href="/diagnostico" 
+           (click)="fecharMenuMobile()"
+           class="flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium text-slate-300 hover:text-white hover:bg-blue-500/10 transition-all duration-200 group">
+          <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/20 to-emerald-400/20 flex items-center justify-center group-hover:from-blue-500/30 group-hover:to-emerald-400/30 transition">
+            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+            </svg>
+          </div>
+          <span>Diagnóstico</span>
+        </a>
+      </nav>
+
+      <!-- Botão Login Mobile -->
+      <div class="p-6 border-t border-white/10">
+        <button
+          (click)="goToLogin(); fecharMenuMobile()"
+          class="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-emerald-400 text-white text-base font-semibold shadow-lg shadow-blue-500/40 hover:shadow-xl hover:brightness-110 transition-all duration-200"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+          </svg>
+          Acessar sistema
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <main class="relative space-y-20 pb-24 pt-10">
+    <!-- Hero Section - Focada em Financeiro -->
+    <section *ngIf="!segmentoAtual && !apenasDiagnostico" class="relative pt-20 pb-16">
+      <div class="max-w-6xl mx-auto px-4">
+        <div class="text-center space-y-6">
+          <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
+            Clareza e previsibilidade
+            <span class="bg-gradient-to-r from-blue-400 via-emerald-400 to-blue-400 bg-clip-text text-transparent">financeira</span>
+          </h1>
+          <p class="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto">
+            Organize o financeiro da sua empresa com BPO completo, dashboard inteligente e acompanhamento mensal.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+            <button
+              (click)="scrollToDiagnostico()"
+              class="inline-flex justify-center items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-blue-500 to-emerald-400 text-white font-semibold shadow-xl shadow-blue-500/40 hover:shadow-2xl hover:brightness-110 transition text-base md:text-lg"
+            >
+              Começar diagnóstico gratuito
+            </button>
+            <a href="#perfis" class="inline-flex items-center gap-2 text-slate-300 hover:text-white transition-colors text-base md:text-lg">
+              <span>Conheça nossas soluções</span>
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Seção de Direcionamento por Perfil -->
+    <section *ngIf="!segmentoAtual && !apenasDiagnostico" id="perfis" class="scroll-mt-24">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-16">
+          <h2 class="text-4xl md:text-5xl font-bold text-white mb-5">
+            Soluções personalizadas para o seu negócio
+          </h2>
+          <p class="text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
+            Escolha o perfil que melhor se encaixa com sua empresa e descubra como podemos ajudar
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+          <!-- Card Agências -->
+          <div class="group relative bg-gradient-to-br from-slate-900/80 to-slate-800/60 rounded-2xl border border-blue-500/40 p-8 hover:border-blue-500/80 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/30 hover:-translate-y-1 backdrop-blur-xl">
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="relative z-10">
+              <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500/30 to-blue-600/20 flex items-center justify-center mb-6 group-hover:from-blue-500/40 group-hover:to-blue-600/30 transition-all duration-300 shadow-lg shadow-blue-500/20">
+                <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+              </div>
+              <h3 class="text-2xl font-bold text-white mb-4">Agências de Marketing</h3>
+              <p class="text-slate-300 text-base mb-8 leading-relaxed">
+                Para agências que precisam de controle financeiro por cliente e previsibilidade de caixa para crescer com segurança.
+              </p>
+              <a href="/agencias" 
+                 class="group/btn inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold hover:from-blue-400 hover:to-blue-500 transition-all duration-300 text-base shadow-lg shadow-blue-500/40 hover:shadow-xl hover:shadow-blue-500/50 hover:scale-105 hover:brightness-110 relative overflow-hidden">
+                <span class="relative z-10">Saiba mais</span>
+                <svg class="w-5 h-5 relative z-10 transform group-hover/btn:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+                <div class="absolute inset-0 bg-gradient-to-r from-blue-400/0 via-blue-300/20 to-blue-400/0 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-700"></div>
+              </a>
+            </div>
+          </div>
+
+          <!-- Card Restaurantes -->
+          <div class="group relative bg-gradient-to-br from-slate-900/80 to-slate-800/60 rounded-2xl border border-emerald-500/40 p-8 hover:border-emerald-500/80 transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/30 hover:-translate-y-1 backdrop-blur-xl">
+            <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="relative z-10">
+              <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-emerald-500/30 to-emerald-600/20 flex items-center justify-center mb-6 group-hover:from-emerald-500/40 group-hover:to-emerald-600/30 transition-all duration-300 shadow-lg shadow-emerald-500/20">
+                <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+              </div>
+              <h3 class="text-2xl font-bold text-white mb-4">Restaurantes</h3>
+              <p class="text-slate-300 text-base mb-8 leading-relaxed">
+                Para restaurantes que querem ter controle total do financeiro, precificação correta e previsibilidade para compras e equipe.
+              </p>
+              <a href="/restaurantes" 
+                 class="group/btn inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold hover:from-emerald-400 hover:to-emerald-500 transition-all duration-300 text-base shadow-lg shadow-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/50 hover:scale-105 hover:brightness-110 relative overflow-hidden">
+                <span class="relative z-10">Saiba mais</span>
+                <svg class="w-5 h-5 relative z-10 transform group-hover/btn:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+                <div class="absolute inset-0 bg-gradient-to-r from-emerald-400/0 via-emerald-300/20 to-emerald-400/0 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-700"></div>
+              </a>
+            </div>
+          </div>
+
+          <!-- Card Prestadores -->
+          <div class="group relative bg-gradient-to-br from-slate-900/80 to-slate-800/60 rounded-2xl border border-purple-500/40 p-8 hover:border-purple-500/80 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/30 hover:-translate-y-1 backdrop-blur-xl">
+            <div class="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div class="relative z-10">
+              <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500/30 to-purple-600/20 flex items-center justify-center mb-6 group-hover:from-purple-500/40 group-hover:to-purple-600/30 transition-all duration-300 shadow-lg shadow-purple-500/20">
+                <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+              <h3 class="text-2xl font-bold text-white mb-4">Prestadores de Serviço</h3>
+              <p class="text-slate-300 text-base mb-8 leading-relaxed">
+                Para prestadores que querem separar pessoal de empresa e ter clareza real do que sobra para reinvestir.
+              </p>
+              <a href="/prestadores" 
+                 class="group/btn inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold hover:from-purple-400 hover:to-purple-500 transition-all duration-300 text-base shadow-lg shadow-purple-500/40 hover:shadow-xl hover:shadow-purple-500/50 hover:scale-105 hover:brightness-110 relative overflow-hidden">
+                <span class="relative z-10">Saiba mais</span>
+                <svg class="w-5 h-5 relative z-10 transform group-hover/btn:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+                <div class="absolute inset-0 bg-gradient-to-r from-purple-400/0 via-purple-300/20 to-purple-400/0 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-700"></div>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Diagnóstico -->
+    <section *ngIf="!segmentoAtual && !apenasDiagnostico" class="relative">
+      <div class="max-w-4xl mx-auto px-4">
+        <div class="bg-gradient-to-br from-blue-500/20 via-emerald-400/20 to-blue-500/20 rounded-2xl border border-blue-500/30 p-8 md:p-12 text-center relative overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-emerald-400/10 opacity-50"></div>
+          <div class="relative z-10">
+            <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
+              Quer saber onde o dinheiro está "vazando"?
+            </h2>
+            <p class="text-lg text-slate-200 mb-8 max-w-2xl mx-auto">
+              Faça um diagnóstico rápido e sem compromisso. Descubra o que trava seu caixa e receba um plano de ação claro.
+            </p>
+            <button
+              (click)="scrollToDiagnostico()"
+              class="inline-flex justify-center items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-blue-500 to-emerald-400 text-white font-semibold shadow-xl shadow-blue-500/40 hover:shadow-2xl hover:brightness-110 transition text-base md:text-lg"
+            >
+              Fazer diagnóstico gratuito
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tabela de Comparação -->
+    <section *ngIf="!segmentoAtual && !apenasDiagnostico" class="relative py-16">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-12">
+          <h2 class="text-4xl md:text-5xl font-bold text-white mb-5">
+            Compare você mesmo
+          </h2>
+          <p class="text-xl text-slate-300 max-w-3xl mx-auto">
+            Veja como a Finzzia se diferencia das outras soluções do mercado
+          </p>
+        </div>
+
+        <div class="bg-slate-900/80 rounded-2xl border border-slate-700/60 overflow-hidden backdrop-blur-xl">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="bg-slate-800/60 border-b border-slate-700/60">
+                  <th class="px-6 py-4 text-left text-sm font-semibold text-slate-200 uppercase tracking-wide">Recursos</th>
+                  <th class="px-6 py-4 text-center text-sm font-semibold text-slate-200 uppercase tracking-wide">BPOs Financeiros</th>
+                  <th class="px-6 py-4 text-center text-sm font-semibold text-slate-200 uppercase tracking-wide">Sistema de Gestão Financeira</th>
+                  <th class="px-6 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide bg-gradient-to-r from-blue-500/20 to-emerald-400/20">Finzzia</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-700/60">
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-6 py-4 text-slate-200 font-medium">Atendimento humanizado</td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <span class="text-slate-400 text-sm">ÀS VEZES</span>
+                  </td>
+                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-6 py-4 text-slate-200 font-medium">Gerente responsável</td>
+                  <td class="px-6 py-4 text-center">
+                    <span class="text-slate-400 text-sm">ÀS VEZES</span>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-6 py-4 text-slate-200 font-medium">Análise Estratégica</td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-6 py-4 text-slate-200 font-medium">Elaboração de DRE e DFC</td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-6 py-4 text-slate-200 font-medium">Conciliação bancária</td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-6 py-4 text-slate-200 font-medium">Pagamento de contas</td>
+                  <td class="px-6 py-4 text-center">
+                    <span class="text-slate-400 text-sm">Apenas Agendamento</span>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-6 py-4 text-slate-200 font-medium">Emissão de NFs de Serviço</td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-6 py-4 text-slate-200 font-medium">Emissão de boletos de cobrança</td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-6 py-4 text-slate-200 font-medium">Cobrança humanizada de inadimplentes</td>
+                  <td class="px-6 py-4 text-center">
+                    <span class="text-slate-400 text-sm">ÀS VEZES</span>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-6 py-4 text-slate-200 font-medium">Indicador de fluxo de caixa</td>
+                  <td class="px-6 py-4 text-center">
+                    <span class="text-slate-400 text-sm">ÀS VEZES</span>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-6 py-4 text-slate-200 font-medium">Indicadores personalizados</td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-6 py-4 text-slate-200 font-medium">Controle de contratos</td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-6 py-4 text-slate-200 font-medium">Ranking empresarial</td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-6 py-4 text-slate-200 font-medium">Dashboard personalizado</td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-6 py-4 text-slate-200 font-medium">Reunião mensal estratégica</td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-6 py-4 text-slate-200 font-medium">Análise de modelo de negócio</td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                </tr>
+                <tr class="hover:bg-slate-800/40 transition-colors">
+                  <td class="px-6 py-4 text-slate-200 font-medium">Análise de processos</td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center">
+                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Depoimentos -->
+    <section *ngIf="!segmentoAtual && !apenasDiagnostico" class="relative">
+      <div class="max-w-7xl mx-auto px-4">
+        <!-- Título Principal -->
+        <div class="text-center mb-16">
+          <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
+            O que nossos clientes dizem
+          </h2>
+          <p class="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto">
+            Empresas que transformaram seu financeiro com a Finzzia
+          </p>
+        </div>
+
+        <!-- Seção de Vídeos -->
+        <div class="mb-20">
+          <div class="text-center mb-10">
+            <h3 class="text-2xl md:text-3xl font-bold text-white mb-2">
+              Depoimentos em vídeo
+            </h3>
+            <p class="text-slate-400">
+              Veja o que nossos clientes têm a dizer
+            </p>
+          </div>
+          
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <!-- Vídeo 1 -->
+            <div class="relative w-full group">
+              <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-emerald-400/20 rounded-2xl blur-2xl group-hover:blur-3xl transition duration-500"></div>
+              <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-xl aspect-square">
+                <video 
+                  class="w-full h-full object-contain bg-slate-900"
+                  controls
+                  poster=""
+                  preload="metadata">
+                  <source src="/assets/videos/depoimento.mp4" type="video/mp4">
+                  Seu navegador não suporta vídeo HTML5.
+                </video>
+              </div>
+            </div>
+            
+            <!-- Vídeo 2 -->
+            <div class="relative w-full group">
+              <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-emerald-400/20 rounded-2xl blur-2xl group-hover:blur-3xl transition duration-500"></div>
+              <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-xl aspect-square">
+                <video 
+                  class="w-full h-full object-contain bg-slate-900"
+                  controls
+                  poster=""
+                  preload="metadata">
+                  <source src="/assets/videos/depoimento1.mp4" type="video/mp4">
+                  Seu navegador não suporta vídeo HTML5.
+                </video>
+              </div>
+            </div>
+            
+            <!-- Vídeo 3 -->
+            <div class="relative w-full group">
+              <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-emerald-400/20 rounded-2xl blur-2xl group-hover:blur-3xl transition duration-500"></div>
+              <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-xl aspect-square">
+                <video 
+                  class="w-full h-full object-contain bg-slate-900"
+                  controls
+                  poster=""
+                  preload="metadata">
+                  <source src="/assets/videos/depoimento2.mp4" type="video/mp4">
+                  Seu navegador não suporta vídeo HTML5.
+                </video>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Separador Visual -->
+        <div class="flex items-center justify-center mb-16">
+          <div class="flex-1 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
+          <div class="px-6">
+            <div class="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-emerald-400"></div>
+          </div>
+          <div class="flex-1 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
+        </div>
+
+        <!-- Seção de Depoimentos em Texto -->
+        <div>
+          <div class="text-center mb-10">
+            <h3 class="text-2xl md:text-3xl font-bold text-white mb-2">
+              Depoimentos escritos
+            </h3>
+            <p class="text-slate-400">
+              Leia o que nossos clientes compartilham
+            </p>
+          </div>
+
+          <div class="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            <!-- Depoimento 1 -->
+            <div class="bg-slate-900/60 rounded-2xl border border-slate-700/60 p-6 backdrop-blur-xl hover:border-blue-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                  O
+                </div>
+                <div>
+                  <p class="font-semibold text-white">Oduo</p>
+                  <p class="text-sm text-slate-400">Agência de Marketing</p>
+                </div>
+              </div>
+              <p class="text-slate-300 text-sm leading-relaxed">
+                "A Finzzia trouxe previsibilidade que não tínhamos. Agora sabemos exatamente quanto sobra por cliente e podemos tomar decisões com segurança."
+              </p>
+            </div>
+
+            <!-- Depoimento 2 -->
+            <div class="bg-slate-900/60 rounded-2xl border border-slate-700/60 p-6 backdrop-blur-xl hover:border-emerald-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/10">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-green-400 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                  K
+                </div>
+                <div>
+                  <p class="font-semibold text-white">Restaurante Kaipon</p>
+                  <p class="text-sm text-slate-400">Restaurante</p>
+                </div>
+              </div>
+              <p class="text-slate-300 text-sm leading-relaxed">
+                "Depois que organizamos o financeiro com a Finzzia, conseguimos crescer com muito mais segurança. A precificação ficou correta e temos previsibilidade real."
+              </p>
+            </div>
+
+            <!-- Depoimento 3 -->
+            <div class="bg-slate-900/60 rounded-2xl border border-slate-700/60 p-6 backdrop-blur-xl hover:border-purple-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/10">
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-400 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+                  V
+                </div>
+                <div>
+                  <p class="font-semibold text-white">Veduc</p>
+                  <p class="text-sm text-slate-400">Agência de Marketing</p>
+                </div>
+              </div>
+              <p class="text-slate-300 text-sm leading-relaxed">
+                "O acompanhamento mensal e os insights da Finzzia mudaram como tomamos decisões. Agora é tudo baseado em números, não em achismo."
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Agências de Marketing -->
+    <section *ngIf="mostrarSecao('agencias')" id="agencias" class="scroll-mt-24">
+      <div class="max-w-6xl mx-auto px-4">
+        <!-- Texto introdutório -->
+        <div class="text-center mb-12 space-y-6">
+          <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
+            <span class="bg-gradient-to-r from-blue-400 via-emerald-400 to-blue-400 bg-clip-text text-transparent">Terceirização financeira</span>
+            <span class="text-white"> especializada em agências</span>
+          </h1>
+          <p class="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto">
+            Organize o financeiro da sua empresa com BPO completo, dashboard inteligente e acompanhamento mensal.
+          </p>
+          <p class="text-base md:text-lg text-slate-400 max-w-2xl mx-auto">
+            Gestão financeira especializada em agências de marketing
+          </p>
+          <!-- Botão de ação -->
+          <div class="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+            <button
+              (click)="scrollToDiagnostico()"
+              class="inline-flex justify-center items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-blue-500 to-emerald-400 text-white font-semibold shadow-xl shadow-blue-500/40 hover:shadow-2xl hover:brightness-110 transition text-base md:text-lg">
+              Agendar diagnóstico gratuito
+            </button>
+          </div>
+        </div>
+        
+        <div class="grid md:grid-cols-2 gap-10 items-center">
+          <div class="space-y-7 order-2 md:order-1">
+            <p
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/15 text-blue-300 text-xs font-semibold uppercase tracking-wide border border-blue-500/40">
+              Agências de Marketing
+            </p>
+            <h2 class="text-4xl md:text-5xl font-semibold text-white leading-tight tracking-tight">
+              Sua agência não precisa faturar mais pra respirar precisa de controle e previsibilidade
+            </h2>
+            <p class="text-lg text-slate-300 max-w-xl">
+              A Finzzia organiza o financeiro da sua agência (contas a pagar/receber, conciliação, notas, fluxo de caixa e indicadores), recupera inadimplentes e te entrega clareza para você tomar melhores decisões.
+            </p>
+            <ul class="space-y-3 text-slate-100 text-sm md:text-base">
+              <li class="flex gap-3">
+                <span class="mt-1 h-5 w-5 rounded-full bg-blue-500/20 border border-blue-500/60 flex items-center justify-center text-[10px] text-blue-200">✓</span>
+                <span>Saiba quanto sobra por projeto/cliente (sem achismo)</span>
+              </li>
+              <li class="flex gap-3">
+                <span class="mt-1 h-5 w-5 rounded-full bg-blue-500/20 border border-blue-500/60 flex items-center justify-center text-[10px] text-blue-200">✓</span>
+                <span>Pare de “apagar incêndio” com caixa e comece a ter previsibilidade</span>
+              </li>
+              <li class="flex gap-3">
+                <span class="mt-1 h-5 w-5 rounded-full bg-blue-500/20 border border-blue-500/60 flex items-center justify-center text-[10px] text-blue-200">✓</span>
+                <span>Menos tempo em financeiro e mais tempo em vendas e entrega</span>
+              </li>
+              <li class="flex gap-3">
+                <span class="mt-1 h-5 w-5 rounded-full bg-blue-500/20 border border-blue-500/60 flex items-center justify-center text-[10px] text-blue-200">✓</span>
+                <span>Dashboard com indicadores + acompanhamento e plano de ação</span>
+              </li>
+            </ul>
+            <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              <button
+                (click)="scrollToDiagnostico()"
+                class="inline-flex justify-center items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-blue-500 to-emerald-400 text-white font-semibold shadow-xl shadow-blue-500/40 hover:shadow-2xl hover:brightness-110 transition text-sm md:text-base"
+              >
+                Agendar diagnóstico gratuito
+              </button>
+              <p class="text-xs md:text-sm text-slate-400">Diagnóstico rápido. Sem compromisso.</p>
+            </div>
+          </div>
+          <div class="order-1 md:order-2 relative group">
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-emerald-400/20 rounded-2xl blur-2xl group-hover:blur-3xl transition duration-500"></div>
+            <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-blue-500/30">
+              <img 
+                src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=600&fit=crop&q=80" 
+                alt="Equipe de marketing trabalhando em escritório moderno" 
+                class="w-full h-[500px] object-cover transition-transform duration-700 group-hover:scale-105"
+                loading="lazy"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent"></div>
+            </div>
+          </div>
+          <div class="order-3 md:col-span-2 bg-slate-900/60 rounded-2xl shadow-2xl border border-slate-700/60 p-6 space-y-6 backdrop-blur-xl">
+            <div class="space-y-2">
+              <h3 class="text-xl font-semibold text-slate-50">
+                Se o caixa some, o problema não é só venda é também na gestão do dinheiro
+              </h3>
+              <p class="text-blue-300 font-semibold text-sm md:text-base">
+                Faturar X e viver no sufoco é sinal de falta de previsibilidade e não de falta de esforço.
+              </p>
+            </div>
+            <div class="space-y-3">
+              <h4 class="font-semibold text-slate-100 text-sm uppercase tracking-wide">Agências que cresceram depois da organização financeira</h4>
+              <div class="grid sm:grid-cols-3 gap-3 text-xs md:text-sm text-slate-200">
+                <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 flex flex-col gap-1">
+                  <span class="font-semibold">Oduo</span>
+                  <span class="text-slate-400 text-xs">Agência com previsibilidade por cliente</span>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 flex flex-col gap-1">
+                  <span class="font-semibold">Veduc</span>
+                  <span class="text-slate-400 text-xs">Crescimento com margem clara por operação</span>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-900 border border-slate-700/80 flex flex-col gap-1">
+                  <span class="font-semibold">Mk6</span>
+                  <span class="text-slate-400 text-xs">Decisões guiadas por números, não por achismo</span>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <h4 class="font-semibold text-slate-100 text-sm uppercase tracking-wide">
+                BPO Financeiro completo + Estratégia (para você saber o próximo passo)
+              </h4>
+              <ul class="space-y-2 text-slate-300 text-sm">
+                <li class="flex gap-2"><span class="text-blue-300">•</span> Não é só ferramenta: a Finzzia interpreta e te guia</li>
+                <li class="flex gap-2"><span class="text-blue-300">•</span> Gerente exclusivo e rotina mensal de resultados (2h/mês)</li>
+                <li class="flex gap-2"><span class="text-blue-300">•</span> Dashboard online com metas e insights</li>
+              </ul>
+              <div class="pt-3">
+                <button
+                  (click)="scrollToDiagnostico()"
+                  class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-blue-400/70 text-blue-100 text-xs font-semibold hover:bg-blue-500/10 transition"
+                >
+                  Quer saber onde o dinheiro está "vazando" na sua agência? Clique aqui e agende seu diagnóstico.
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela de Comparação - Agências -->
+      <section class="relative py-16 mt-12">
+        <div class="max-w-7xl mx-auto px-4">
+          <div class="text-center mb-12">
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-5">
+              Compare você mesmo
+            </h2>
+            <p class="text-xl text-slate-300 max-w-3xl mx-auto">
+              Veja como a Finzzia se diferencia das outras soluções do mercado
+            </p>
+          </div>
+
+          <div class="bg-slate-900/80 rounded-2xl border border-slate-700/60 overflow-hidden backdrop-blur-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead>
+                  <tr class="bg-slate-800/60 border-b border-slate-700/60">
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-slate-200 uppercase tracking-wide">Recursos</th>
+                    <th class="px-6 py-4 text-center text-sm font-semibold text-slate-200 uppercase tracking-wide">BPOs Financeiros</th>
+                    <th class="px-6 py-4 text-center text-sm font-semibold text-slate-200 uppercase tracking-wide">Sistema de Gestão Financeira</th>
+                    <th class="px-6 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide bg-gradient-to-r from-blue-500/20 to-emerald-400/20">Finzzia</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-700/60">
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Atendimento humanizado</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <span class="text-slate-400 text-sm">ÀS VEZES</span>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Gerente responsável</td>
+                    <td class="px-6 py-4 text-center">
+                      <span class="text-slate-400 text-sm">ÀS VEZES</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Análise Estratégica</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Elaboração de DRE e DFC</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Conciliação bancária</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Pagamento de contas</td>
+                    <td class="px-6 py-4 text-center">
+                      <span class="text-slate-400 text-sm">Apenas Agendamento</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Emissão de NFs de Serviço</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Emissão de boletos de cobrança</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Cobrança humanizada de inadimplentes</td>
+                    <td class="px-6 py-4 text-center">
+                      <span class="text-slate-400 text-sm">ÀS VEZES</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Indicador de fluxo de caixa</td>
+                    <td class="px-6 py-4 text-center">
+                      <span class="text-slate-400 text-sm">ÀS VEZES</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Indicadores personalizados</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Controle de contratos</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Ranking empresarial</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Dashboard personalizado</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Reunião mensal estratégica</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Análise de modelo de negócio</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Análise de processos</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- Restaurantes -->
+    <section *ngIf="mostrarSecao('restaurantes')" id="restaurantes" class="pt-4 scroll-mt-24">
+      <div class="max-w-6xl mx-auto px-4">
+        <!-- Texto introdutório -->
+        <div class="text-center mb-12 space-y-6">
+          <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
+            <span class="bg-gradient-to-r from-blue-400 via-emerald-400 to-blue-400 bg-clip-text text-transparent">Terceirização financeira</span>
+            <span class="text-white"> especializada em restaurantes</span>
+          </h1>
+          <p class="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto">
+            Organize o financeiro da sua empresa com BPO completo, dashboard inteligente e acompanhamento mensal.
+          </p>
+          <p class="text-base md:text-lg text-slate-400 max-w-2xl mx-auto">
+            Gestão financeira especializada em restaurantes
+          </p>
+          <!-- Botão de ação -->
+          <div class="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+            <button
+              (click)="scrollToDiagnostico()"
+              class="inline-flex justify-center items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-blue-500 to-emerald-400 text-white font-semibold shadow-xl shadow-blue-500/40 hover:shadow-2xl hover:brightness-110 transition text-base md:text-lg">
+              Começar diagnóstico gratuito
+            </button>
+          </div>
+        </div>
+        
+        <div class="grid md:grid-cols-2 gap-10 items-center">
+          <div class="space-y-7 order-2 md:order-1">
+            <p
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-300 text-xs font-semibold uppercase tracking-wide border border-emerald-500/40">
+              Restaurantes
+            </p>
+            <h2 class="text-4xl md:text-5xl font-semibold text-white leading-tight tracking-tight">
+              O problema não é só vender. É vender e não ver o dinheiro.
+            </h2>
+            <p class="text-lg text-slate-300">
+              A Finzzia coloca ordem no seu financeiro (pagamentos, recebimentos, conciliação, notas, fluxo de caixa e indicadores) e te dá clareza e previsibilidade pra você decidir com segurança.
+            </p>
+            <ul class="space-y-3 text-slate-100 text-sm md:text-base">
+              <li class="flex gap-3">
+                <span class="mt-1 h-5 w-5 rounded-full bg-emerald-500/20 border border-emerald-500/60 flex items-center justify-center text-[10px] text-emerald-200">✓</span>
+                <span>Mistura de gastos pessoais e do negócio</span>
+              </li>
+              <li class="flex gap-3">
+                <span class="mt-1 h-5 w-5 rounded-full bg-emerald-500/20 border border-emerald-500/60 flex items-center justify-center text-[10px] text-emerald-200">✓</span>
+                <span>Saiba o que entra e o que sai sem "surpresa" no fim do mês</span>
+              </li>
+              <li class="flex gap-3">
+                <span class="mt-1 h-5 w-5 rounded-full bg-emerald-500/20 border border-emerald-500/60 flex items-center justify-center text-[10px] text-emerald-200">✓</span>
+                <span>Precifique corretamente</span>
+              </li>
+              <li class="flex gap-3">
+                <span class="mt-1 h-5 w-5 rounded-full bg-emerald-500/20 border border-emerald-500/60 flex items-center justify-center text-[10px] text-emerald-200">✓</span>
+                <span>Evite juros e atrasos por falta de organização</span>
+              </li>
+              <li class="flex gap-3">
+                <span class="mt-1 h-5 w-5 rounded-full bg-emerald-500/20 border border-emerald-500/60 flex items-center justify-center text-[10px] text-emerald-200">✓</span>
+                <span>Tenha previsibilidade pra comprar, pagar equipe e planejar</span>
+              </li>
+              <li class="flex gap-3">
+                <span class="mt-1 h-5 w-5 rounded-full bg-emerald-500/20 border border-emerald-500/60 flex items-center justify-center text-[10px] text-emerald-200">✓</span>
+                <span>Acompanhe indicadores em dashboard com insights e metas</span>
+              </li>
+            </ul>
+            <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              <button
+                (click)="scrollToDiagnostico()"
+                class="inline-flex justify-center items-center gap-2 px-6 py-3 rounded-full bg-emerald-500 text-white font-semibold shadow-xl shadow-emerald-500/40 hover:shadow-2xl hover:brightness-110 transition text-sm md:text-base"
+              >
+                Quero organizar o financeiro do meu restaurante
+              </button>
+            <p class="text-xs md:text-sm text-slate-400">Sem compromisso. Direto ao ponto.</p>
+            </div>
+          </div>
+          <div class="order-1 md:order-2 relative group">
+            <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/20 to-green-400/20 rounded-2xl blur-2xl group-hover:blur-3xl transition duration-500"></div>
+            <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-emerald-500/30">
+              <img 
+                src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=600&fit=crop&q=80" 
+                alt="Restaurante moderno com ambiente acolhedor" 
+                class="w-full h-[500px] object-cover transition-transform duration-700 group-hover:scale-105"
+                loading="lazy"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent"></div>
+            </div>
+          </div>
+          <div class="order-3 md:col-span-2 bg-slate-900/60 rounded-2xl shadow-2xl p-6 border border-emerald-500/40 space-y-6 backdrop-blur-xl">
+            <div class="space-y-2">
+              <h3 class="text-xl font-semibold text-slate-50">
+                O problema não é só vender, é vender e não ver o dinheiro
+              </h3>
+              <p class="text-slate-300">No restaurante, o financeiro desanda quando:</p>
+              <ul class="space-y-2 text-slate-300 text-sm">
+                <li class="flex gap-2"><span class="text-emerald-300">•</span> Há muitas saídas pequenas e ninguém consolida tudo</li>
+                <li class="flex gap-2"><span class="text-emerald-300">•</span> O dono "olha o banco" e acha que isso é controle</li>
+                <li class="flex gap-2"><span class="text-emerald-300">•</span> Compras, fornecedores e folha ficam sem planejamento</li>
+                <li class="flex gap-2"><span class="text-emerald-300">•</span> Mistura de gastos pessoais e do negócio confunde tudo</li>
+              </ul>
+              <p class="text-emerald-300 font-semibold text-sm md:text-base">Saldo no banco não é gestão. Gestão é previsibilidade.</p>
+            </div>
+            <div class="space-y-3">
+              <h4 class="font-semibold text-slate-100 text-sm uppercase tracking-wide">Crescimento depois da organização financeira</h4>
+              <div class="grid sm:grid-cols-2 gap-3 text-sm text-slate-200">
+                <div class="p-3 rounded-xl bg-slate-900 border border-emerald-500/40">
+                  <p class="font-semibold">Restaurante Kaipon</p>
+                  <p class="text-slate-400 text-xs">Crescimento após estruturar controles e previsibilidade financeira.</p>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <h4 class="font-semibold text-slate-100 text-sm uppercase tracking-wide">
+                Você foca na operação. A Finzzia garante o controle e o rumo.
+              </h4>
+              <ul class="space-y-2 text-slate-300 text-sm">
+                <li class="flex gap-2"><span class="text-emerald-300">•</span> Conciliação, fluxo de caixa e indicadores em dia</li>
+                <li class="flex gap-2"><span class="text-emerald-300">•</span> Metas claras para compra, equipe e planejamento</li>
+                <li class="flex gap-2"><span class="text-emerald-300">•</span> Insights práticos para precificar e evitar juros/atrasos</li>
+              </ul>
+              <div class="pt-3">
+                <button
+                  (click)="scrollToDiagnostico()"
+                  class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-400/70 text-emerald-100 text-xs font-semibold hover:bg-emerald-500/10 transition"
+                >
+                  Agendar diagnóstico para o seu restaurante
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela de Comparação - Restaurantes -->
+      <section class="relative py-16 mt-12">
+        <div class="max-w-7xl mx-auto px-4">
+          <div class="text-center mb-12">
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-5">
+              Compare você mesmo
+            </h2>
+            <p class="text-xl text-slate-300 max-w-3xl mx-auto">
+              Veja como a Finzzia se diferencia das outras soluções do mercado
+            </p>
+          </div>
+
+          <div class="bg-slate-900/80 rounded-2xl border border-slate-700/60 overflow-hidden backdrop-blur-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead>
+                  <tr class="bg-slate-800/60 border-b border-slate-700/60">
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-slate-200 uppercase tracking-wide">Recursos</th>
+                    <th class="px-6 py-4 text-center text-sm font-semibold text-slate-200 uppercase tracking-wide">BPOs Financeiros</th>
+                    <th class="px-6 py-4 text-center text-sm font-semibold text-slate-200 uppercase tracking-wide">Sistema de Gestão Financeira</th>
+                    <th class="px-6 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide bg-gradient-to-r from-emerald-500/20 to-green-400/20">Finzzia</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-700/60">
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Atendimento humanizado</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <span class="text-slate-400 text-sm">ÀS VEZES</span>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-emerald-500/10 to-green-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Gerente responsável</td>
+                    <td class="px-6 py-4 text-center">
+                      <span class="text-slate-400 text-sm">ÀS VEZES</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-emerald-500/10 to-green-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Análise Estratégica</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-emerald-500/10 to-green-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Elaboração de DRE e DFC</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-emerald-500/10 to-green-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Conciliação bancária</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-emerald-500/10 to-green-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Pagamento de contas</td>
+                    <td class="px-6 py-4 text-center">
+                      <span class="text-slate-400 text-sm">Apenas Agendamento</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-emerald-500/10 to-green-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Emissão de NFs de Serviço</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-emerald-500/10 to-green-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Emissão de boletos de cobrança</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-emerald-500/10 to-green-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Cobrança humanizada de inadimplentes</td>
+                    <td class="px-6 py-4 text-center">
+                      <span class="text-slate-400 text-sm">ÀS VEZES</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-emerald-500/10 to-green-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Indicador de fluxo de caixa</td>
+                    <td class="px-6 py-4 text-center">
+                      <span class="text-slate-400 text-sm">ÀS VEZES</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-emerald-500/10 to-green-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Indicadores personalizados</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-emerald-500/10 to-green-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Controle de contratos</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-emerald-500/10 to-green-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Ranking empresarial</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-emerald-500/10 to-green-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Dashboard personalizado</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-emerald-500/10 to-green-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Reunião mensal estratégica</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-emerald-500/10 to-green-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Análise de modelo de negócio</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-emerald-500/10 to-green-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Análise de processos</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-emerald-500/10 to-green-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- Prestadores de Serviço -->
+    <section *ngIf="mostrarSecao('prestadores')" id="servicos" class="pt-4 scroll-mt-24">
+      <div class="max-w-6xl mx-auto px-4">
+        <!-- Texto introdutório -->
+        <div class="text-center mb-12 space-y-6">
+          <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
+            <span class="bg-gradient-to-r from-blue-400 via-emerald-400 to-blue-400 bg-clip-text text-transparent">Terceirização financeira</span>
+            <span class="text-white"> especializada em prestadores de serviço</span>
+          </h1>
+          <p class="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto">
+            Organize o financeiro da sua empresa com BPO completo, dashboard inteligente e acompanhamento mensal.
+          </p>
+          <p class="text-base md:text-lg text-slate-400 max-w-2xl mx-auto">
+            Gestão financeira especializada em prestadores de serviço
+          </p>
+          <!-- Botão de ação -->
+          <div class="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+            <button
+              (click)="scrollToDiagnostico()"
+              class="inline-flex justify-center items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-blue-500 to-emerald-400 text-white font-semibold shadow-xl shadow-blue-500/40 hover:shadow-2xl hover:brightness-110 transition text-base md:text-lg">
+              Começar diagnóstico gratuito
+            </button>
+          </div>
+        </div>
+        
+        <div class="grid md:grid-cols-2 gap-10 items-center">
+          <div class="space-y-7 order-2 md:order-1">
+            <p
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/15 text-purple-300 text-xs font-semibold uppercase tracking-wide border border-purple-500/40">
+              Prestadores de Serviço
+            </p>
+            <h2 class="text-4xl md:text-5xl font-semibold text-white leading-tight">
+              Pare de trabalhar demais e seguir sem clareza financeira.
+            </h2>
+            <p class="text-lg text-slate-300">
+              A Finzzia cuida do seu financeiro (contas a pagar/receber, conciliação, notas, fluxo de caixa e indicadores) e te entrega clareza real do que sobra, para você parar de decidir no achismo.
+            </p>
+            <ul class="space-y-3 text-slate-100 text-sm md:text-base">
+              <li class="flex gap-3">
+                <span class="mt-1 h-5 w-5 rounded-full bg-purple-500/20 border border-purple-500/60 flex items-center justify-center text-[10px] text-purple-200">✓</span>
+                <span>Separe pessoal x empresa e tenha visão real do negócio</span>
+              </li>
+              <li class="flex gap-3">
+                <span class="mt-1 h-5 w-5 rounded-full bg-purple-500/20 border border-purple-500/60 flex items-center justify-center text-[10px] text-purple-200">✓</span>
+                <span>Saiba exatamente quanto pode tirar e quanto precisa reinvestir</span>
+              </li>
+              <li class="flex gap-3">
+                <span class="mt-1 h-5 w-5 rounded-full bg-purple-500/20 border border-purple-500/60 flex items-center justify-center text-[10px] text-purple-200">✓</span>
+                <span>Tenha previsibilidade de caixa e metas mensais</span>
+              </li>
+              <li class="flex gap-3">
+                <span class="mt-1 h-5 w-5 rounded-full bg-purple-500/20 border border-purple-500/60 flex items-center justify-center text-[10px] text-purple-200">✓</span>
+                <span>Dashboard + acompanhamento com leitura do que os números significam</span>
+              </li>
+            </ul>
+            <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              <button
+                (click)="scrollToDiagnostico()"
+                class="inline-flex justify-center items-center gap-2 px-6 py-3 rounded-full bg-purple-500 text-white font-semibold shadow-xl shadow-purple-500/40 hover:shadow-2xl hover:brightness-110 transition text-sm md:text-base"
+              >
+                Quero clareza do meu financeiro
+              </button>
+              <p class="text-xs md:text-sm text-slate-400">Diagnóstico rápido e sem compromisso.</p>
+            </div>
+          </div>
+          <div class="order-1 md:order-2 relative group">
+            <div class="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-400/20 rounded-2xl blur-2xl group-hover:blur-3xl transition duration-500"></div>
+            <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-purple-500/30">
+              <img 
+                src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop&q=80" 
+                alt="Profissional freelancer trabalhando com laptop" 
+                class="w-full h-[500px] object-cover transition-transform duration-700 group-hover:scale-105"
+                loading="lazy"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent"></div>
+            </div>
+          </div>
+          <div class="order-3 md:col-span-2 bg-slate-900/60 rounded-2xl shadow-2xl p-6 border border-purple-500/40 space-y-6 backdrop-blur-xl">
+            <div class="space-y-2">
+              <h3 class="text-xl font-semibold text-slate-50">
+                O prestador cresce… e o financeiro vira um caos silencioso
+              </h3>
+              <p class="text-slate-300">Isso costuma acontecer quando:</p>
+              <ul class="space-y-2 text-slate-300 text-sm">
+                <li class="flex gap-2"><span class="text-purple-300">•</span> Recebe por projeto e não sabe planejar o mês</li>
+                <li class="flex gap-2"><span class="text-purple-300">•</span> Cobra “no feeling” e não entende margem</li>
+                <li class="flex gap-2"><span class="text-purple-300">•</span> Mistura conta pessoal com a empresa</li>
+                <li class="flex gap-2"><span class="text-purple-300">•</span> Passa tempo demais em financeiro e menos em vender/entregar</li>
+              </ul>
+              <p class="text-purple-300 font-semibold text-sm md:text-base">Sem números, toda decisão vira aposta.</p>
+            </div>
+            <div class="space-y-3">
+              <h4 class="font-semibold text-slate-100 text-sm uppercase tracking-wide">Crescimento depois da organização financeira</h4>
+              <div class="grid sm:grid-cols-2 gap-3 text-sm text-slate-200">
+                <div class="p-3 rounded-xl bg-slate-900 border border-purple-500/40">JEFF</div>
+                <div class="p-3 rounded-xl bg-slate-900 border border-purple-500/40">SIMÃO</div>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <h4 class="font-semibold text-slate-100 text-sm uppercase tracking-wide">
+                BPO Financeiro completo + interpretação (para você saber o próximo passo)
+              </h4>
+              <ul class="space-y-2 text-slate-300 text-sm">
+                <li class="flex gap-2"><span class="text-purple-300">•</span> Gerente exclusivo</li>
+                <li class="flex gap-2"><span class="text-purple-300">•</span> 2h/mês de apresentação de resultados</li>
+                <li class="flex gap-2"><span class="text-purple-300">•</span> Dashboard online com indicadores, gráficos, insights e metas</li>
+              </ul>
+              <div class="pt-3">
+                <button
+                  (click)="scrollToDiagnostico()"
+                  class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-purple-400/70 text-purple-100 text-xs font-semibold hover:bg-purple-500/10 transition"
+                >
+                  Agendar diagnóstico
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabela de Comparação - Prestadores -->
+      <section class="relative py-16 mt-12">
+        <div class="max-w-7xl mx-auto px-4">
+          <div class="text-center mb-12">
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-5">
+              Compare você mesmo
+            </h2>
+            <p class="text-xl text-slate-300 max-w-3xl mx-auto">
+              Veja como a Finzzia se diferencia das outras soluções do mercado
+            </p>
+          </div>
+
+          <div class="bg-slate-900/80 rounded-2xl border border-slate-700/60 overflow-hidden backdrop-blur-xl">
+            <div class="overflow-x-auto">
+              <table class="w-full">
+                <thead>
+                  <tr class="bg-slate-800/60 border-b border-slate-700/60">
+                    <th class="px-6 py-4 text-left text-sm font-semibold text-slate-200 uppercase tracking-wide">Recursos</th>
+                    <th class="px-6 py-4 text-center text-sm font-semibold text-slate-200 uppercase tracking-wide">BPOs Financeiros</th>
+                    <th class="px-6 py-4 text-center text-sm font-semibold text-slate-200 uppercase tracking-wide">Sistema de Gestão Financeira</th>
+                    <th class="px-6 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide bg-gradient-to-r from-purple-500/20 to-pink-400/20">Finzzia</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-700/60">
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Atendimento humanizado</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <span class="text-slate-400 text-sm">ÀS VEZES</span>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-purple-500/10 to-pink-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Gerente responsável</td>
+                    <td class="px-6 py-4 text-center">
+                      <span class="text-slate-400 text-sm">ÀS VEZES</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-purple-500/10 to-pink-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Análise Estratégica</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-purple-500/10 to-pink-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Elaboração de DRE e DFC</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-purple-500/10 to-pink-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Conciliação bancária</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-purple-500/10 to-pink-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Pagamento de contas</td>
+                    <td class="px-6 py-4 text-center">
+                      <span class="text-slate-400 text-sm">Apenas Agendamento</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-purple-500/10 to-pink-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Emissão de NFs de Serviço</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-purple-500/10 to-pink-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Emissão de boletos de cobrança</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-purple-500/10 to-pink-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Cobrança humanizada de inadimplentes</td>
+                    <td class="px-6 py-4 text-center">
+                      <span class="text-slate-400 text-sm">ÀS VEZES</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-purple-500/10 to-pink-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Indicador de fluxo de caixa</td>
+                    <td class="px-6 py-4 text-center">
+                      <span class="text-slate-400 text-sm">ÀS VEZES</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-purple-500/10 to-pink-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Indicadores personalizados</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-purple-500/10 to-pink-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Controle de contratos</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-purple-500/10 to-pink-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Ranking empresarial</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-purple-500/10 to-pink-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Dashboard personalizado</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-purple-500/10 to-pink-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Reunião mensal estratégica</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-purple-500/10 to-pink-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Análise de modelo de negócio</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-purple-500/10 to-pink-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                  <tr class="hover:bg-slate-800/40 transition-colors">
+                    <td class="px-6 py-4 text-slate-200 font-medium">Análise de processos</td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                    <td class="px-6 py-4 text-center bg-gradient-to-r from-purple-500/10 to-pink-400/10">
+                      <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- Diagnóstico -->
+    <section id="diagnostico" class="pt-6 scroll-mt-24" [class.mt-20]="!segmentoAtual && !apenasDiagnostico" [class.min-h-screen]="apenasDiagnostico" [class.flex]="apenasDiagnostico" [class.items-center]="apenasDiagnostico">
+      <div class="max-w-5xl mx-auto px-4" [class.w-full]="apenasDiagnostico">
+        <div class="bg-slate-900/80 rounded-2xl shadow-2xl border border-blue-500/40 p-8 md:p-10 space-y-6 backdrop-blur-xl overflow-hidden relative">
+          <!-- Imagem de fundo decorativa -->
+          <div class="absolute top-0 right-0 w-96 h-96 opacity-10 pointer-events-none">
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-emerald-400/20 rounded-full blur-3xl"></div>
+            <img 
+              src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=400&fit=crop&q=80" 
+              alt="Dashboard financeiro com gráficos e indicadores" 
+              class="w-full h-full object-cover rounded-full"
+              loading="lazy"
+            />
+          </div>
+          <div class="relative z-10">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+            <div class="space-y-2">
+              <p class="text-sm font-semibold text-blue-200 uppercase tracking-wide">Diagnóstico</p>
+                <h3 class="text-3xl font-semibold text-white">Quer saber onde o dinheiro está "vazando"?</h3>
+              <p class="text-slate-200">Encontre o que trava seu caixa e receba um plano de ação claro.</p>
+            </div>
+            </div>
+            <!-- Formulário de diagnóstico -->
+            <form class="grid md:grid-cols-2 gap-4" #diagnosticoForm="ngForm">
+            <div class="md:col-span-1">
+              <label class="text-sm font-medium text-slate-200">Nome</label>
+              <input
+                type="text"
+                [(ngModel)]="formData.nome"
+                name="nome"
+                placeholder="Seu nome"
+                required
+                class="mt-2 w-full rounded-lg border border-slate-600/70 bg-slate-950/60 px-4 py-3 text-slate-50 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition" />
+            </div>
+            <div class="md:col-span-1">
+              <label class="text-sm font-medium text-slate-200">Email</label>
+              <input
+                type="email"
+                [(ngModel)]="formData.email"
+                name="email"
+                placeholder="voce@empresa.com"
+                required
+                class="mt-2 w-full rounded-lg border border-slate-600/70 bg-slate-950/60 px-4 py-3 text-slate-50 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition" />
+            </div>
+            <div class="md:col-span-1">
+              <label class="text-sm font-medium text-slate-200">Telefone (Celular)</label>
+              <input
+                type="tel"
+                [(ngModel)]="formData.telefone"
+                name="telefone"
+                placeholder="(48) 99999-9999"
+                class="mt-2 w-full rounded-lg border border-slate-600/70 bg-slate-950/60 px-4 py-3 text-slate-50 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition" />
+            </div>
+            <div class="md:col-span-1">
+              <label class="text-sm font-medium text-slate-200">Segmento</label>
+              <select
+                [(ngModel)]="formData.segmento"
+                name="segmento"
+                class="mt-2 w-full rounded-lg border border-slate-600/70 bg-slate-950/60 px-4 py-3 text-slate-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition">
+                <option value="">Selecione um segmento</option>
+                <option>Agência de Marketing</option>
+                <option>Restaurante</option>
+                <option>Prestador de Serviço</option>
+                <option>Outro</option>
+              </select>
+            </div>
+            <div class="md:col-span-1">
+              <label class="text-sm font-medium text-slate-200">Faturamento mensal aproximado</label>
+              <select
+                [(ngModel)]="formData.faturamento"
+                name="faturamento"
+                class="mt-2 w-full rounded-lg border border-slate-600/70 bg-slate-950/60 px-4 py-3 text-slate-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition">
+                <option value="">Selecione uma faixa</option>
+                <option value="10 a 30k">R$ 10k a R$ 30k</option>
+                <option value="30 a 50k">R$ 30k a R$ 50k</option>
+                <option value="50 a 100k">R$ 50k a R$ 100k</option>
+                <option value="Acima de 100k">Acima de R$ 100k</option>
+              </select>
+            </div>
+            <div class="md:col-span-2">
+              <label class="text-sm font-medium text-slate-200">Contexto / principal dor</label>
+              <textarea
+                rows="3"
+                [(ngModel)]="formData.contexto"
+                name="contexto"
+                placeholder="Resuma onde está o problema hoje"
+                class="mt-2 w-full rounded-lg border border-slate-600/70 bg-slate-950/60 px-4 py-3 text-slate-50 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition"></textarea>
+            </div>
+            <div class="md:col-span-2 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
+              <!-- Mensagem de sucesso -->
+              <div *ngIf="diagnosticoSalvo" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-500/20 border border-green-500/40 text-green-300 text-sm">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                Diagnóstico salvo com sucesso!
+              </div>
+              
+              <button
+                type="button"
+                (click)="salvarDiagnostico($event)"
+                [disabled]="salvandoDiagnostico"
+                class="inline-flex justify-center items-center gap-2 px-5 py-3 rounded-full bg-gradient-to-r from-blue-500 to-emerald-400 text-white font-semibold shadow-lg shadow-blue-500/40 hover:shadow-2xl hover:brightness-110 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg *ngIf="!salvandoDiagnostico" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <svg *ngIf="salvandoDiagnostico" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                {{ salvandoDiagnostico ? 'Salvando...' : 'Salvar diagnóstico' }}
+              </button>
+            </div>
+          </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Botão Flutuante WhatsApp -->
+  <a 
+    [href]="getWhatsAppUrl()"
+    target="_blank"
+    class="fixed bottom-6 right-6 z-50 w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-full shadow-2xl hover:shadow-green-500/50 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:brightness-110 group"
+    aria-label="Fale conosco no WhatsApp"
+  >
+    <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+    </svg>
+  </a>
+
+  <footer *ngIf="!apenasDiagnostico" class="relative bg-slate-950/90 text-slate-200 py-10 mt-10 border-t border-white/5">
+    <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <img src="assets/images/finnzialogo.png" alt="Finzzia" class="h-12 w-auto drop-shadow-lg" />
+      </div>
+      <p class="text-sm text-slate-400">© Finzzia. Clareza e previsibilidade financeira.</p>
+    </div>
+  </footer>
+</div>
+

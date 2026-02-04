@@ -81,8 +81,17 @@ export class AppComponent {
    * Telas públicas de autenticação (não devem exibir header/footer globais)
    */
   isAuthPublicPage(): boolean {
-    const url = this.router.url.split('?')[0];
-    return url === '/login' || url === '/esqueci-senha';
+    const url = this.router.url.split('?')[0].split('#')[0];
+    // Landing (/) e telas de auth não exibem o layout interno do app
+    // Verifica se é a rota raiz (landing page), páginas de segmento, diagnóstico ou páginas de autenticação
+    return url === '/' || 
+           url === '/login' || 
+           url === '/esqueci-senha' || 
+           url === '' ||
+           url === '/restaurantes' ||
+           url === '/prestadores' ||
+           url === '/agencias' ||
+           url === '/diagnostico';
   }
 
   toggleUserMenu(event?: MouseEvent) {

@@ -30,6 +30,8 @@ export interface MovimentacaoFinanceira {
   IdFornecedor?: number;
   NomeClienteFornecedor?: string;
   NomeFantasiaClienteFornecedor?: string;
+  RazaoSocialClienteFornecedor?: string;
+  CodigoClienteFornecedor?: string | number;
   Valores?: Array<{
     Despesa: boolean;
     Categoria: string;
