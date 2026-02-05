@@ -17,6 +17,11 @@ export class ContratosComponent implements OnInit, OnDestroy {
   contratosBackend: ContratoDTO[] = [];
   filtroStatus: string = 'todos';
   filtroTexto: string = '';
+  filtroFormaPagamento: string = 'todos';
+  filtroDataVencimentoInicio: string = '';
+  filtroDataVencimentoFim: string = '';
+  filtroDataPagamentoInicio: string = '';
+  filtroDataPagamentoFim: string = '';
   visualizacao: 'lista' | 'kanban' = 'kanban';
   mostrarFormularioCliente: boolean = false;
   mostrarFormularioNovo: boolean = false;
@@ -29,10 +34,37 @@ export class ContratosComponent implements OnInit, OnDestroy {
   successMessage: string | null = null;
   modoEdicao: boolean = false;
   
-  // Paginação
-  page: number = 0;
-  size: number = 50;
+  // Paginação (igual ao Asaas: offset começa em 0, limit padrão 10)
+  page: number = 0; // offset (começa em 0)
+  size: number = 10; // limit (padrão do Asaas: 10, máximo 100)
   totalElements: number = 0;
+  totalPages: number = 0;
+  
+  // Totais fixos (não mudam com paginação)
+  totalContratosGeral: number = 0;
+  totalValorGeral: number = 0;
+  totaisPorCategoria: {
+    emDia: number;
+    pendente: number;
+    inadimplente: number;
+    valorEmDia?: number;
+    valorPendente?: number;
+    valorInadimplente?: number;
+  } = {
+    emDia: 0,
+    pendente: 0,
+    inadimplente: 0,
+    valorEmDia: 0,
+    valorPendente: 0,
+    valorInadimplente: 0
+  };
+  contratosPorStatusGeral: Record<string, number> = {
+    'PENDENTE': 0,
+    'ASSINADO': 0,
+    'VENCIDO': 0,
+    'PAGO': 0,
+    'CANCELADO': 0
+  };
   
   private destroy$ = new Subject<void>();
   private filtroTextoSubject = new Subject<string>();
@@ -75,9 +107,8 @@ export class ContratosComponent implements OnInit, OnDestroy {
   // Colunas do Kanban
   colunas = [
     { id: 'em-dia', titulo: 'Em Dia', cor: 'green', icone: '✅' },
-    { id: 'atraso', titulo: 'Atraso', cor: 'orange', icone: '⏰' },
     { id: 'pendente', titulo: 'Pendentes', cor: 'yellow', icone: '⏳' },
-    { id: 'inadimplentes', titulo: 'Inadimplentes', cor: 'red', icone: '⚠️' }
+    { id: 'inadimplente', titulo: 'Inadimplentes', cor: 'red', icone: '⚠️' }
   ];
 
   constructor(
@@ -90,11 +121,14 @@ export class ContratosComponent implements OnInit, OnDestroy {
       distinctUntilChanged(),
       takeUntil(this.destroy$)
     ).subscribe(termo => {
+      this.page = 0;
+      this.carregarTotaisGerais();
       this.carregarContratos();
     });
   }
 
   ngOnInit() {
+    this.carregarTotaisGerais();
     this.carregarContratos();
   }
 
@@ -103,21 +137,104 @@ export class ContratosComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  carregarTotaisGerais(): void {
+    // Busca totais por categoria diretamente do backend
+    this.contratoService.getTotaisPorCategoria()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (totais) => {
+          this.totalContratosGeral = totais.totalContratos || 0;
+          this.totalValorGeral = totais.totalValor || 0;
+          
+          // Armazenar totais por categoria para uso nos métodos getContratosX()
+          this.totaisPorCategoria = {
+            emDia: totais.emDia || 0,
+            pendente: totais.pendente || 0,
+            inadimplente: totais.inadimplente || 0,
+            valorEmDia: totais.valorEmDia || 0,
+            valorPendente: totais.valorPendente || 0,
+            valorInadimplente: totais.valorInadimplente || 0
+          };
+        },
+        error: (error) => {
+          console.error('Erro ao carregar totais por categoria:', error);
+          // Em caso de erro, usar valores padrão
+          this.totalContratosGeral = 0;
+          this.totalValorGeral = 0;
+          this.totaisPorCategoria = {
+            emDia: 0,
+            pendente: 0,
+            inadimplente: 0,
+            valorEmDia: 0,
+            valorPendente: 0,
+            valorInadimplente: 0
+          };
+        }
+      });
+  }
+
   carregarContratos(): void {
     this.loading = true;
     this.error = null;
 
-    const status = this.filtroStatus === 'todos' ? undefined : this.filtroStatus.toUpperCase();
-    const termo = this.filtroTexto.trim() || undefined;
+    // Normalizar filtros: status vira undefined se for 'todos', termo vira undefined se vazio
+    const status = this.filtroStatus === 'todos' ? undefined : this.filtroStatus;
+    const termo = this.filtroTexto && this.filtroTexto.trim() ? this.filtroTexto.trim() : undefined;
+    const billingType = this.filtroFormaPagamento === 'todos' ? undefined : this.filtroFormaPagamento;
+    const dueDateInicio = this.filtroDataVencimentoInicio || undefined;
+    const dueDateFim = this.filtroDataVencimentoFim || undefined;
+    const paymentDateInicio = this.filtroDataPagamentoInicio || undefined;
+    const paymentDateFim = this.filtroDataPagamentoFim || undefined;
 
-    this.contratoService.buscarComFiltros(undefined, status, termo, this.page, this.size)
+    // No Kanban, carregar todos os contratos de uma vez (sem paginação)
+    // Na Lista, usar paginação normal
+    const pageParaUsar = this.visualizacao === 'kanban' ? 0 : this.page;
+    const sizeParaUsar = this.visualizacao === 'kanban' ? 10000 : this.size;
+
+    this.contratoService.buscarComFiltros(
+      undefined, 
+      status, 
+      termo, 
+      pageParaUsar, 
+      sizeParaUsar,
+      billingType,
+      dueDateInicio,
+      dueDateFim,
+      paymentDateInicio,
+      paymentDateFim
+    )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          this.contratosBackend = response.content;
-          this.totalElements = response.totalElements;
+          console.log('Resposta paginação:', response);
+          this.contratosBackend = response.content || [];
+          this.totalElements = response.totalElements || 0;
+          
+          // No Kanban, não usar paginação (já carregamos tudo)
+          // Na Lista, manter paginação normal
+          if (this.visualizacao === 'kanban') {
+            this.totalPages = 1; // Sempre 1 página no Kanban (tudo carregado)
+            this.page = 0; // Sempre página 0 no Kanban
+          } else {
+            this.totalPages = response.totalPages || (this.totalElements > 0 ? 1 : 0);
+            this.page = response.number !== undefined ? response.number : 0;
+          }
+          
+          console.log('Total elementos:', this.totalElements, 'Total páginas:', this.totalPages, 'Página atual:', this.page, 'Visualização:', this.visualizacao);
           // Converter para formato do componente
-          this.contratos = response.content.map(c => this.contratoService.converterParaFormatoComponente(c));
+          this.contratos = (response.content || []).map(c => this.contratoService.converterParaFormatoComponente(c));
+          
+          // Debug: verificar categorias
+          const categorias = this.contratos.map(c => ({ id: c.id, titulo: c.titulo, categoria: c.categoria, status: c.status }));
+          const semCategoria = categorias.filter(c => !c.categoria);
+          const comCategoria = categorias.filter(c => c.categoria);
+          console.log('Contratos com categoria:', comCategoria.length, 'Sem categoria:', semCategoria.length);
+          if (semCategoria.length > 0) {
+            console.warn('Contratos sem categoria (primeiros 5):', semCategoria.slice(0, 5));
+          }
+          const inadimplentes = categorias.filter(c => c.categoria === 'inadimplente');
+          console.log('Contratos inadimplentes encontrados:', inadimplentes.length);
+          
           this.loading = false;
         },
         error: (error) => {
@@ -126,6 +243,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
           this.loading = false;
           // Fallback para lista vazia
           this.contratos = [];
+          this.totalPages = 0;
         }
       });
   }
@@ -136,7 +254,94 @@ export class ContratosComponent implements OnInit, OnDestroy {
 
   onFiltroStatusChange(): void {
     this.page = 0;
+    this.carregarTotaisGerais();
     this.carregarContratos();
+  }
+
+  onFiltroFormaPagamentoChange(): void {
+    this.page = 0;
+    this.carregarContratos();
+  }
+
+  onFiltroDataChange(): void {
+    this.page = 0;
+    this.carregarContratos();
+  }
+
+  // Métodos de paginação
+  irParaPrimeiraPagina(): void {
+    if (this.page > 0) {
+      this.page = 0;
+      this.carregarContratos();
+    }
+  }
+
+  irParaPaginaAnterior(): void {
+    if (this.page > 0) {
+      this.page--;
+      this.carregarContratos();
+    }
+  }
+
+  irParaProximaPagina(): void {
+    if (this.page < this.totalPages - 1) {
+      this.page++;
+      this.carregarContratos();
+    }
+  }
+
+  irParaUltimaPagina(): void {
+    if (this.page < this.totalPages - 1) {
+      this.page = this.totalPages - 1;
+      this.carregarContratos();
+    }
+  }
+
+  irParaPagina(numeroPagina: number): void {
+    // numeroPagina vem como número de página (1, 2, 3...), precisa converter para offset (0, 1, 2...)
+    const offset = numeroPagina - 1;
+    if (offset >= 0 && offset < this.totalPages && offset !== this.page) {
+      this.page = offset;
+      this.carregarContratos();
+    }
+  }
+
+  alterarTamanhoPagina(): void {
+    this.page = 0;
+    this.carregarContratos();
+  }
+
+  getPaginasVisiveis(): number[] {
+    const paginas: number[] = [];
+    const maxPaginas = 5; // Mostrar no máximo 5 números de página
+    // Converter offset (0-based) para número de página (1-based) para exibição
+    const paginaAtual = this.page + 1; // page é offset (0, 1, 2...), converte para (1, 2, 3...)
+    let inicio = Math.max(1, paginaAtual - Math.floor(maxPaginas / 2));
+    let fim = Math.min(this.totalPages, inicio + maxPaginas - 1);
+    
+    // Ajustar início se estiver próximo do fim
+    if (fim - inicio < maxPaginas - 1) {
+      inicio = Math.max(1, fim - maxPaginas + 1);
+    }
+    
+    // Retornar números de página (1, 2, 3...) mas internamente usar offset (0, 1, 2...)
+    for (let i = inicio; i <= fim; i++) {
+      paginas.push(i);
+    }
+    
+    return paginas;
+  }
+
+  get inicioItem(): number {
+    return this.page * this.size + 1;
+  }
+
+  get fimItem(): number {
+    return Math.min((this.page + 1) * this.size, this.totalElements);
+  }
+
+  get Math() {
+    return Math;
   }
 
   get contratosFiltrados(): Contrato[] {
@@ -320,6 +525,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
           this.successMessage = 'Contrato criado com sucesso!';
           this.mostrarFormularioNovo = false;
           this.limparFormulario();
+          this.carregarTotaisGerais();
           this.carregarContratos();
           // Limpar mensagem de sucesso após 5 segundos
           setTimeout(() => this.successMessage = null, 5000);
@@ -428,11 +634,11 @@ export class ContratosComponent implements OnInit, OnDestroy {
   }
 
   getTotalContratos(): number {
-    return this.contratosFiltrados.length;
+    return this.totalContratosGeral;
   }
 
   getTotalValor(): number {
-    return this.contratosFiltrados.reduce((total, contrato) => total + contrato.valor, 0);
+    return this.totalValorGeral;
   }
 
   getContratosPorStatus(status: string): number {
@@ -443,148 +649,190 @@ export class ContratosComponent implements OnInit, OnDestroy {
       'pago': 'PAGO',
       'cancelado': 'CANCELADO'
     };
-    const statusBackend = statusMap[status] || status;
-    return this.contratosBackend.filter(c => c.status === statusBackend).length;
+    const statusBackend = statusMap[status] || status.toUpperCase();
+    return this.contratosPorStatusGeral[statusBackend] || 0;
   }
 
-  // Métodos para Kanban - baseado nos status do Asaas
-  getContratosPorColuna(colunaId: string): Contrato[] {
-    const contratosFiltrados = this.contratosFiltrados;
+  // Método auxiliar para determinar a categoria de um contrato (mutuamente exclusivo)
+  // Nota: Agora a categoria vem do backend, mas este método é mantido para compatibilidade
+  private getCategoriaContrato(contrato: Contrato): 'inadimplente' | 'em-dia' | 'pendente' {
+    // Se o contrato já tem categoria do backend, usar ela
+    if ((contrato as any).categoria) {
+      const categoria = (contrato as any).categoria;
+      if (categoria === 'em-dia') return 'em-dia';
+      if (categoria === 'inadimplente') return 'inadimplente';
+      if (categoria === 'pendente') return 'pendente';
+    }
+    
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
     
-    switch (colunaId) {
-      case 'em-dia':
-        // Em Dia = PAGO ou cobranças RECEIVED/DUNNING_RECEIVED ou ASSINADO com cobranças PENDING e data futura
-        // IMPORTANTE: Não pode ter cobranças OVERDUE ou vencidas
-        return contratosFiltrados.filter(c => {
-          // Se tem cobranças, verificar status do Asaas PRIMEIRO
-          if (c.cobrancas && c.cobrancas.length > 0) {
-            // Se tem cobrança OVERDUE, NÃO está em dia
-            const temVencida = c.cobrancas.some(cob => 
-              cob.status === 'OVERDUE' || 
-              cob.status === 'DUNNING_REQUESTED' ||
-              cob.status === 'CHARGEBACK_REQUESTED'
-            );
-            if (temVencida) return false;
-            
-            // Se tem cobrança PENDING vencida, NÃO está em dia
-            const temPendenteVencida = c.cobrancas.some(cob => {
-              if (cob.status === 'PENDING' && cob.dataVencimento) {
-                const vencCobranca = new Date(cob.dataVencimento);
-                vencCobranca.setHours(0, 0, 0, 0);
-                return vencCobranca < hoje;
-              }
-              return false;
-            });
-            if (temPendenteVencida) return false;
-            
-            // Se está pago (todas as cobranças pagas), está em dia
-            const todasPagas = c.cobrancas.every(cob => 
-              cob.status === 'RECEIVED' || 
-              cob.status === 'RECEIVED_IN_CASH_UNDONE' || 
-              cob.status === 'DUNNING_RECEIVED'
-            );
-            if (todasPagas) return true;
-            
-            // Se tem pelo menos uma cobrança paga, está em dia
-            const temCobrancaPaga = c.cobrancas.some(cob => 
-              cob.status === 'RECEIVED' || 
-              cob.status === 'RECEIVED_IN_CASH_UNDONE' || 
-              cob.status === 'DUNNING_RECEIVED'
-            );
-            if (temCobrancaPaga) return true;
-            
-            // Se todas as cobranças estão PENDING e data é futura, está em dia
-            const todasPendentes = c.cobrancas.every(cob => cob.status === 'PENDING');
-            if (todasPendentes) {
-              const vencimento = new Date(c.dataVencimento);
-              vencimento.setHours(0, 0, 0, 0);
-              return vencimento >= hoje;
-            }
-          }
-          
-          // Se está pago (sem cobranças ou todas pagas), está em dia
-          if (c.status === 'pago') return true;
-          
-          // Se está assinado e data é futura (e não tem cobranças vencidas), está em dia
-          if (c.status === 'assinado') {
-            const vencimento = new Date(c.dataVencimento);
-            vencimento.setHours(0, 0, 0, 0);
-            return vencimento >= hoje;
-          }
-          
-          return false;
-        });
-        
-      case 'atraso':
-        // Atraso = ASSINADO com cobranças PENDING e data vencida (mas não muito tempo)
-        return contratosFiltrados.filter(c => {
-          if (c.status !== 'assinado') return false;
-          
-          const vencimento = new Date(c.dataVencimento);
-          vencimento.setHours(0, 0, 0, 0);
-          const diasVencidos = Math.floor((hoje.getTime() - vencimento.getTime()) / (1000 * 60 * 60 * 24));
-          
-          // Considera atraso se venceu há menos de 30 dias
-          if (vencimento < hoje && diasVencidos <= 30) {
-            // Se tem cobranças, verificar se estão PENDING
-            if (c.cobrancas && c.cobrancas.length > 0) {
-              return c.cobrancas.some(cob => cob.status === 'PENDING');
-            }
-            return true;
-          }
-          
-          return false;
-        });
-        
-      case 'pendente':
-        // Pendentes = PENDENTE ou cobranças PENDING com data futura
-        return contratosFiltrados.filter(c => {
-          if (c.status === 'pendente') return true;
-          
-          // Se tem cobranças PENDING e data futura
-          if (c.cobrancas && c.cobrancas.length > 0) {
-            const temPendente = c.cobrancas.some(cob => cob.status === 'PENDING');
-            if (temPendente) {
-              const vencimento = new Date(c.dataVencimento);
-              vencimento.setHours(0, 0, 0, 0);
-              return vencimento >= hoje;
-            }
-          }
-          
-          return false;
-        });
-        
-      case 'inadimplentes':
-        // Inadimplentes = VENCIDO ou cobranças OVERDUE ou ASSINADO com data vencida há mais de 30 dias
-        return contratosFiltrados.filter(c => {
-          if (c.status === 'vencido') return true;
-          
-          // Se tem cobranças, verificar status OVERDUE
-          if (c.cobrancas && c.cobrancas.length > 0) {
-            const temVencida = c.cobrancas.some(cob => 
-              cob.status === 'OVERDUE' || 
-              cob.status === 'DUNNING_REQUESTED' ||
-              cob.status === 'CHARGEBACK_REQUESTED'
-            );
-            if (temVencida) return true;
-          }
-          
-          // Se está assinado e venceu há mais de 30 dias
-          if (c.status === 'assinado') {
-            const vencimento = new Date(c.dataVencimento);
-            vencimento.setHours(0, 0, 0, 0);
-            const diasVencidos = Math.floor((hoje.getTime() - vencimento.getTime()) / (1000 * 60 * 60 * 24));
-            return vencimento < hoje && diasVencidos > 30;
-          }
-          
-          return false;
-        });
-        
-      default:
-        return [];
+    // PRIORIDADE 1: Inadimplentes (qualquer coisa vencida)
+    if (contrato.status === 'vencido') {
+      return 'inadimplente';
     }
+    
+    if (contrato.cobrancas && contrato.cobrancas.length > 0) {
+      // Cobranças com problemas graves
+      const temVencida = contrato.cobrancas.some(cob => 
+        cob.status === 'OVERDUE' || 
+        cob.status === 'DUNNING_REQUESTED' ||
+        cob.status === 'CHARGEBACK_REQUESTED'
+      );
+      if (temVencida) {
+        return 'inadimplente';
+      }
+      
+      // Cobranças PENDING vencidas (qualquer tempo)
+      const temPendenteVencida = contrato.cobrancas.some(cob => {
+        if (cob.status === 'PENDING' && cob.dataVencimento) {
+          const vencCobranca = new Date(cob.dataVencimento);
+          vencCobranca.setHours(0, 0, 0, 0);
+          return vencCobranca < hoje;
+        }
+        return false;
+      });
+      if (temPendenteVencida) {
+        return 'inadimplente';
+      }
+    }
+    
+    // Contrato assinado vencido (qualquer tempo)
+    if (contrato.status === 'assinado') {
+      const vencimento = new Date(contrato.dataVencimento);
+      vencimento.setHours(0, 0, 0, 0);
+      if (vencimento < hoje) {
+        return 'inadimplente';
+      }
+    }
+    
+    // PRIORIDADE 2: Em Dia
+    // - Pago OU
+    // - Todas as cobranças pagas OU
+    // - Pelo menos uma cobrança paga OU
+    // - Assinado com data futura OU
+    // - Todas cobranças PENDING com data futura
+    if (contrato.status === 'pago') {
+      return 'em-dia';
+    }
+    
+    if (contrato.cobrancas && contrato.cobrancas.length > 0) {
+      // Todas pagas
+      const todasPagas = contrato.cobrancas.every(cob => 
+        cob.status === 'RECEIVED' || 
+        cob.status === 'RECEIVED_IN_CASH_UNDONE' || 
+        cob.status === 'DUNNING_RECEIVED'
+      );
+      if (todasPagas) {
+        return 'em-dia';
+      }
+      
+      // Pelo menos uma paga
+      const temPaga = contrato.cobrancas.some(cob => 
+        cob.status === 'RECEIVED' || 
+        cob.status === 'RECEIVED_IN_CASH_UNDONE' || 
+        cob.status === 'DUNNING_RECEIVED'
+      );
+      if (temPaga) {
+        return 'em-dia';
+      }
+      
+      // Todas PENDING e data futura
+      const todasPendentes = contrato.cobrancas.every(cob => cob.status === 'PENDING');
+      if (todasPendentes) {
+        const vencimento = new Date(contrato.dataVencimento);
+        vencimento.setHours(0, 0, 0, 0);
+        if (vencimento >= hoje) {
+          return 'em-dia';
+        }
+      }
+    }
+    
+    if (contrato.status === 'assinado') {
+      const vencimento = new Date(contrato.dataVencimento);
+      vencimento.setHours(0, 0, 0, 0);
+      if (vencimento >= hoje) {
+        return 'em-dia';
+      }
+    }
+    
+    // PRIORIDADE 4: Pendentes (padrão)
+    // - Status pendente OU
+    // - Cobranças PENDING com data futura (e não se encaixa nas outras categorias)
+    if (contrato.status === 'pendente') {
+      return 'pendente';
+    }
+    
+    if (contrato.cobrancas && contrato.cobrancas.length > 0) {
+      const temPendente = contrato.cobrancas.some(cob => cob.status === 'PENDING');
+      if (temPendente) {
+        const vencimento = new Date(contrato.dataVencimento);
+        vencimento.setHours(0, 0, 0, 0);
+        if (vencimento >= hoje) {
+          return 'pendente';
+        }
+      }
+    }
+    
+    // Padrão: pendente
+    return 'pendente';
+  }
+
+  getContratosEmDia(): number {
+    return this.totaisPorCategoria.emDia;
+  }
+
+  getContratosAtraso(): number {
+    return 0; // Removido - tudo vencido vai para Inadimplentes
+  }
+
+  getContratosPendentes(): number {
+    return this.totaisPorCategoria.pendente;
+  }
+
+  getContratosInadimplentes(): number {
+    return this.totaisPorCategoria.inadimplente;
+  }
+
+  getValorEmDia(): number {
+    return this.totaisPorCategoria.valorEmDia || 0;
+  }
+
+  getValorPendente(): number {
+    return this.totaisPorCategoria.valorPendente || 0;
+  }
+
+  getValorInadimplente(): number {
+    return this.totaisPorCategoria.valorInadimplente || 0;
+  }
+
+  // Métodos para Kanban - usa categoria calculada pelo backend
+  getContratosPorColuna(colunaId: string): Contrato[] {
+    const contratosFiltrados = this.contratosFiltrados;
+    
+    // Usar a categoria que já vem calculada do backend
+    // Isso garante que os números batam com os cards de status
+    const contratosComCategoria = contratosFiltrados.filter(c => {
+      // Se o contrato tem categoria do backend, usar ela
+      if (c.categoria) {
+        return c.categoria === colunaId;
+      }
+      return false;
+    });
+    
+    // Debug para inadimplentes
+    if (colunaId === 'inadimplente') {
+      console.log('[DEBUG Inadimplentes] Total filtrados:', contratosFiltrados.length);
+      console.log('[DEBUG Inadimplentes] Com categoria inadimplente:', contratosComCategoria.length);
+      const semCategoria = contratosFiltrados.filter(c => !c.categoria);
+      if (semCategoria.length > 0) {
+        console.warn('[DEBUG Inadimplentes] Contratos sem categoria (primeiros 3):', semCategoria.slice(0, 3).map(c => ({ id: c.id, titulo: c.titulo, status: c.status })));
+      }
+      const comCategoriaInadimplente = contratosFiltrados.filter(c => c.categoria === 'inadimplente');
+      console.log('[DEBUG Inadimplentes] Contratos com categoria="inadimplente":', comCategoriaInadimplente.length);
+    }
+    
+    return contratosComCategoria;
   }
 
   isInadimplente(contrato: Contrato): boolean {
@@ -640,6 +888,18 @@ export class ContratosComponent implements OnInit, OnDestroy {
 
   alterarVisualizacao(tipo: 'lista' | 'kanban'): void {
     this.visualizacao = tipo;
+    // Recarregar contratos quando mudar de visualização
+    // No Kanban carrega tudo, na Lista usa paginação
+    this.page = 0; // Resetar para primeira página
+    this.carregarContratos();
+  }
+
+  isVisualizacaoLista(): boolean {
+    return this.visualizacao === 'lista';
+  }
+
+  isVisualizacaoKanban(): boolean {
+    return this.visualizacao === 'kanban';
   }
 
   // Métodos para formulário de dados do cliente
@@ -824,6 +1084,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
         next: () => {
           this.successMessage = 'Contrato cancelado com sucesso!';
           this.loading = false;
+          this.carregarTotaisGerais();
           this.carregarContratos();
           setTimeout(() => this.successMessage = null, 5000);
         },

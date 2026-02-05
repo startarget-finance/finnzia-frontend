@@ -29,6 +29,7 @@ export interface Contrato {
     numeroParcela?: number;
     asaasPaymentId?: string;
   }>;
+  categoria?: 'em-dia' | 'pendente' | 'inadimplente';
 }
 
 export interface DadosCliente {

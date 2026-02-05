@@ -47,8 +47,20 @@ export interface ContratoDTO {
   whatsapp?: string;
   asaasSubscriptionId?: string;
   cobrancas?: CobrancaDTO[];
+  categoria?: 'EM_DIA' | 'PENDENTE' | 'INADIMPLENTE';
   dataCriacao: string;
   dataAtualizacao?: string;
+}
+
+export interface TotaisPorCategoria {
+  totalContratos: number;
+  totalValor: number;
+  emDia: number;
+  pendente: number;
+  inadimplente: number;
+  valorEmDia?: number;
+  valorPendente?: number;
+  valorInadimplente?: number;
 }
 
 export interface CriarContratoRequest {
@@ -201,27 +213,48 @@ export class ContratoService {
   }
 
   /**
-   * Busca contratos com filtros
+   * Busca contratos com filtros (igual ao Asaas)
    */
   buscarComFiltros(
     clienteId?: number,
     status?: string,
     termo?: string,
     page: number = 0,
-    size: number = 10
+    size: number = 10,
+    billingType?: string,
+    dueDateInicio?: string,
+    dueDateFim?: string,
+    paymentDateInicio?: string,
+    paymentDateFim?: string
   ): Observable<PageResponse<ContratoDTO>> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString());
 
-    if (clienteId) {
+    // Só adiciona parâmetros se tiverem valores válidos
+    if (clienteId !== undefined && clienteId !== null) {
       params = params.set('clienteId', clienteId.toString());
     }
-    if (status) {
-      params = params.set('status', status);
+    if (status && status.trim() !== '') {
+      params = params.set('status', status.trim());
     }
-    if (termo) {
-      params = params.set('termo', termo);
+    if (termo && termo.trim() !== '') {
+      params = params.set('termo', termo.trim());
+    }
+    if (billingType && billingType !== 'todos' && billingType.trim() !== '') {
+      params = params.set('billingType', billingType.trim());
+    }
+    if (dueDateInicio && dueDateInicio.trim() !== '') {
+      params = params.set('dueDateGe', dueDateInicio.trim());
+    }
+    if (dueDateFim && dueDateFim.trim() !== '') {
+      params = params.set('dueDateLe', dueDateFim.trim());
+    }
+    if (paymentDateInicio && paymentDateInicio.trim() !== '') {
+      params = params.set('paymentDateGe', paymentDateInicio.trim());
+    }
+    if (paymentDateFim && paymentDateFim.trim() !== '') {
+      params = params.set('paymentDateLe', paymentDateFim.trim());
     }
 
     return this.http.get<PageResponse<ContratoDTO>>(`${this.baseUrl}/filtros`, {
@@ -303,6 +336,20 @@ export class ContratoService {
   }
 
   /**
+   * Busca totais por categoria de contratos
+   */
+  getTotaisPorCategoria(): Observable<TotaisPorCategoria> {
+    return this.http.get<TotaisPorCategoria>(`${this.baseUrl}/totais-categorias`, {
+      headers: this.getHeaders()
+    }).pipe(
+      catchError(error => {
+        console.error('Erro ao buscar totais por categoria:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
    * Converte ContratoDTO para formato usado no componente (compatibilidade)
    */
   converterParaFormatoComponente(contrato: ContratoDTO): any {
@@ -313,6 +360,7 @@ export class ContratoService {
       valor: contrato.valorContrato,
       dataVencimento: contrato.dataVencimento,
       status: this.mapearStatus(contrato.status),
+      categoria: contrato.categoria ? this.mapearCategoria(contrato.categoria) : undefined,
       descricao: contrato.descricao || '',
       conteudo: contrato.conteudo || '',
       whatsapp: contrato.whatsapp || '',
@@ -331,6 +379,18 @@ export class ContratoService {
         celularFinanceiro: contrato.cliente.celularFinanceiro
       }
     };
+  }
+
+  /**
+   * Mapeia categoria do backend para formato do componente
+   */
+  mapearCategoria(categoria: string): 'em-dia' | 'pendente' | 'inadimplente' {
+    const categoriaMap: Record<string, 'em-dia' | 'pendente' | 'inadimplente'> = {
+      'EM_DIA': 'em-dia',
+      'PENDENTE': 'pendente',
+      'INADIMPLENTE': 'inadimplente'
+    };
+    return categoriaMap[categoria] || 'pendente';
   }
 
   /**

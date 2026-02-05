@@ -1,5 +1,5 @@
-<div class="min-h-screen bg-gray-50 p-4 lg:p-6">
-  <div class="max-w-7xl mx-auto">
+<div class="min-h-screen bg-gray-50 p-4 lg:p-6 overflow-x-hidden">
+  <div class="max-w-7xl mx-auto w-full">
     <div class="bg-white rounded-xl shadow-sm p-4 lg:p-6 mb-6 lg:mb-8">
       <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
         <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-4 lg:mb-0">📋 Gestão de Contratos</h1>
@@ -17,29 +17,46 @@
         </div>
       </div>
       
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
-        <div class="text-center p-3 lg:p-4 bg-gray-50 rounded-lg">
-          <div class="text-xl lg:text-2xl font-bold text-gray-900">{{ getTotalContratos() }}</div>
-          <div class="text-xs lg:text-sm text-gray-600">Total</div>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 lg:gap-4 w-full">
+        <!-- Total -->
+        <div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm min-w-0">
+          <div class="text-xl lg:text-2xl font-bold text-gray-900 mb-1 break-words">{{ getTotalContratos() | number:'1.0-0' }}</div>
+          <div class="text-xs text-gray-600 font-medium">Total</div>
         </div>
-        <div class="text-center p-3 lg:p-4 bg-gray-50 rounded-lg">
-          <div class="text-lg lg:text-2xl font-bold text-gray-900 break-all">{{ formatCurrency(getTotalValor()) }}</div>
-          <div class="text-xs lg:text-sm text-gray-600">Valor Total</div>
+        
+        <!-- Valor Total -->
+        <div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm min-w-0">
+          <div class="text-base lg:text-lg font-bold text-gray-900 mb-1 break-words">{{ formatCurrency(getTotalValor()) }}</div>
+          <div class="text-xs text-gray-600 font-medium">Valor Total</div>
         </div>
-        <div class="text-center p-3 lg:p-4 bg-gray-50 rounded-lg">
-          <div class="text-xl lg:text-2xl font-bold text-success-600">{{ getContratosPorStatus('assinado') }}</div>
-          <div class="text-xs lg:text-sm text-gray-600">Assinados</div>
+        
+        <!-- Em Dia -->
+        <div class="bg-white rounded-lg border-l-4 border-green-500 p-4 shadow-sm min-w-0">
+          <div class="text-xl lg:text-2xl font-bold text-green-600 mb-1 break-words">{{ getContratosEmDia() | number:'1.0-0' }}</div>
+          <div class="text-xs text-gray-600 font-medium mb-2">Em Dia</div>
+          <div class="text-sm font-semibold text-gray-700">{{ formatCurrency(getValorEmDia()) }}</div>
         </div>
-        <div class="text-center p-3 lg:p-4 bg-gray-50 rounded-lg">
-          <div class="text-xl lg:text-2xl font-bold text-warning-600">{{ getContratosPorStatus('pendente') }}</div>
-          <div class="text-xs lg:text-sm text-gray-600">Pendentes</div>
+        
+        <!-- Pendentes -->
+        <div class="bg-white rounded-lg border-l-4 border-blue-500 p-4 shadow-sm min-w-0">
+          <div class="text-xl lg:text-2xl font-bold text-blue-600 mb-1 break-words">{{ getContratosPendentes() | number:'1.0-0' }}</div>
+          <div class="text-xs text-gray-600 font-medium mb-2">Pendentes</div>
+          <div class="text-sm font-semibold text-gray-700">{{ formatCurrency(getValorPendente()) }}</div>
+        </div>
+        
+        <!-- Inadimplentes -->
+        <div class="bg-white rounded-lg border-l-4 border-red-500 p-4 shadow-sm min-w-0">
+          <div class="text-xl lg:text-2xl font-bold text-red-600 mb-1 break-words">{{ getContratosInadimplentes() | number:'1.0-0' }}</div>
+          <div class="text-xs text-gray-600 font-medium mb-2">Inadimplentes</div>
+          <div class="text-sm font-semibold text-gray-700">{{ formatCurrency(getValorInadimplente()) }}</div>
         </div>
       </div>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm p-4 lg:p-6 mb-4 lg:mb-6">
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
-        <div class="flex flex-col sm:flex-row gap-4 flex-1">
+      <div class="flex flex-col gap-4 mb-4">
+        <!-- Primeira linha: Status, Forma de Pagamento, Buscar -->
+        <div class="flex flex-col sm:flex-row gap-4">
           <div class="flex-1">
             <label for="statusFilter" class="block text-sm font-medium text-gray-700 mb-2">Status:</label>
             <select 
@@ -48,11 +65,28 @@
               (ngModelChange)="onFiltroStatusChange()"
               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
               <option value="todos">Todos</option>
-              <option value="pendente">Pendente</option>
-              <option value="assinado">Assinado</option>
-              <option value="vencido">Vencido</option>
-              <option value="pago">Pago</option>
-              <option value="cancelado">Cancelado</option>
+              <option value="PENDING">Aguardando pagamento</option>
+              <option value="OVERDUE">Vencida</option>
+              <option value="RECEIVED">Recebida</option>
+              <option value="CONFIRMED">Confirmada</option>
+              <option value="REFUNDED">Cobrança estornada</option>
+              <option value="RECEIVED_IN_CASH_UNDONE">Estorno solicitado</option>
+              <option value="REFUNDING">Cobrança estornada parcialmente</option>
+              <option value="CHARGEBACK_REQUESTED">Chargeback</option>
+            </select>
+          </div>
+          
+          <div class="flex-1">
+            <label for="billingTypeFilter" class="block text-sm font-medium text-gray-700 mb-2">Forma de Pagamento:</label>
+            <select 
+              id="billingTypeFilter" 
+              [(ngModel)]="filtroFormaPagamento"
+              (ngModelChange)="onFiltroFormaPagamentoChange()"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+              <option value="todos">Todas</option>
+              <option value="BOLETO">Boleto</option>
+              <option value="CREDIT_CARD">Cartão de Crédito</option>
+              <option value="PIX">PIX</option>
             </select>
           </div>
           
@@ -68,25 +102,69 @@
           </div>
         </div>
 
+        <!-- Segunda linha: Filtros de Data -->
+        <div class="flex flex-col sm:flex-row gap-4">
+          <div class="flex-1">
+            <label for="dataVencimentoInicio" class="block text-sm font-medium text-gray-700 mb-2">Vencimento de:</label>
+            <input 
+              type="date" 
+              id="dataVencimentoInicio"
+              [(ngModel)]="filtroDataVencimentoInicio"
+              (ngModelChange)="onFiltroDataChange()"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          
+          <div class="flex-1">
+            <label for="dataVencimentoFim" class="block text-sm font-medium text-gray-700 mb-2">Vencimento até:</label>
+            <input 
+              type="date" 
+              id="dataVencimentoFim"
+              [(ngModel)]="filtroDataVencimentoFim"
+              (ngModelChange)="onFiltroDataChange()"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          
+          <div class="flex-1">
+            <label for="dataPagamentoInicio" class="block text-sm font-medium text-gray-700 mb-2">Pagamento de:</label>
+            <input 
+              type="date" 
+              id="dataPagamentoInicio"
+              [(ngModel)]="filtroDataPagamentoInicio"
+              (ngModelChange)="onFiltroDataChange()"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+          
+          <div class="flex-1">
+            <label for="dataPagamentoFim" class="block text-sm font-medium text-gray-700 mb-2">Pagamento até:</label>
+            <input 
+              type="date" 
+              id="dataPagamentoFim"
+              [(ngModel)]="filtroDataPagamentoFim"
+              (ngModelChange)="onFiltroDataChange()"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+          </div>
+        </div>
+      </div>
+
         <!-- Toggle de Visualização -->
         <div class="flex items-center gap-2">
           <span class="text-sm font-medium text-gray-700">Visualização:</span>
           <div class="flex bg-gray-100 rounded-lg p-1">
             <button 
               (click)="alterarVisualizacao('kanban')"
-              [class.bg-white]="visualizacao === 'kanban'"
-              [class.shadow-sm]="visualizacao === 'kanban'"
-              [class.text-gray-900]="visualizacao === 'kanban'"
-              [class.text-gray-600]="visualizacao !== 'kanban'"
+              [class.bg-white]="isVisualizacaoKanban()"
+              [class.shadow-sm]="isVisualizacaoKanban()"
+              [class.text-gray-900]="isVisualizacaoKanban()"
+              [class.text-gray-600]="!isVisualizacaoKanban()"
               class="px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200">
               📋 Kanban
             </button>
             <button 
               (click)="alterarVisualizacao('lista')"
-              [class.bg-white]="visualizacao === 'lista'"
-              [class.shadow-sm]="visualizacao === 'lista'"
-              [class.text-gray-900]="visualizacao === 'lista'"
-              [class.text-gray-600]="visualizacao !== 'lista'"
+              [class.bg-white]="isVisualizacaoLista()"
+              [class.shadow-sm]="isVisualizacaoLista()"
+              [class.text-gray-900]="isVisualizacaoLista()"
+              [class.text-gray-600]="!isVisualizacaoLista()"
               class="px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200">
               📄 Lista
             </button>
@@ -96,41 +174,39 @@
     </div>
 
     <!-- Visualização Kanban -->
-    <div *ngIf="visualizacao === 'kanban' && !loading" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
-      <div *ngFor="let coluna of colunas" class="bg-gray-50 rounded-xl p-4">
+    <div *ngIf="isVisualizacaoKanban() && !loading" class="overflow-x-hidden">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
+      <div *ngFor="let coluna of colunas" class="bg-gray-50 rounded-xl p-4 min-w-0 flex flex-col">
         <!-- Cabeçalho da Coluna -->
-        <div class="flex items-center justify-between mb-4">
-          <div class="flex items-center gap-2">
-            <span class="text-lg">{{ coluna.icone }}</span>
-            <h3 class="text-lg font-semibold text-gray-900">{{ coluna.titulo }}</h3>
+        <div class="flex items-center justify-between mb-4 flex-shrink-0">
+          <div class="flex items-center gap-2 min-w-0 flex-1">
+            <span class="text-lg flex-shrink-0">{{ coluna.icone }}</span>
+            <h3 class="text-base lg:text-lg font-semibold text-gray-900 truncate">{{ coluna.titulo }}</h3>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="bg-white px-2 py-1 rounded-full text-xs font-medium text-gray-600">
+          <div class="flex items-center gap-2 flex-shrink-0 ml-2">
+            <span class="bg-white px-2 py-1 rounded-full text-xs font-medium text-gray-600 whitespace-nowrap">
               {{ getTotalPorColuna(coluna.id) }}
-            </span>
-            <span class="text-xs text-gray-500">
-              {{ formatCurrency(getValorTotalPorColuna(coluna.id)) }}
             </span>
           </div>
         </div>
 
         <!-- Cards dos Contratos -->
-        <div class="space-y-3 min-h-[200px]">
+        <div class="space-y-3 min-h-[200px] max-h-[600px] overflow-y-auto">
           <div *ngFor="let contrato of getContratosPorColuna(coluna.id)" 
-               class="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow cursor-pointer">
+               class="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow cursor-pointer border border-gray-100">
             <div class="mb-3">
-              <h4 class="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">{{ contrato.titulo }}</h4>
-              <p class="text-xs text-gray-600">{{ contrato.cliente }}</p>
+              <h4 class="font-semibold text-gray-900 text-sm mb-1 line-clamp-2 break-words">{{ contrato.titulo }}</h4>
+              <p class="text-xs text-gray-600 truncate" [title]="contrato.cliente">{{ contrato.cliente }}</p>
             </div>
             
             <div class="space-y-2 mb-3">
-              <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-500">Valor:</span>
-                <span class="text-sm font-semibold text-gray-900">{{ formatCurrency(contrato.valor) }}</span>
+              <div class="flex justify-between items-center gap-2">
+                <span class="text-xs text-gray-500 whitespace-nowrap">Valor:</span>
+                <span class="text-sm font-semibold text-gray-900 truncate">{{ formatCurrency(contrato.valor) }}</span>
               </div>
-              <div class="flex justify-between items-center">
-                <span class="text-xs text-gray-500">Vencimento:</span>
-                <span class="text-xs text-gray-600">{{ contrato.dataVencimento | date:'dd/MM/yyyy' }}</span>
+              <div class="flex justify-between items-center gap-2">
+                <span class="text-xs text-gray-500 whitespace-nowrap">Vencimento:</span>
+                <span class="text-xs text-gray-600 whitespace-nowrap">{{ contrato.dataVencimento | date:'dd/MM/yyyy' }}</span>
               </div>
             </div>
 
@@ -203,9 +279,10 @@
     </div>
 
     <!-- Visualização Lista -->
-    <div *ngIf="visualizacao === 'lista' && !loading" class="space-y-4">
-      <div *ngFor="let contrato of contratosFiltrados" 
-           class="bg-white rounded-xl shadow-sm p-4 lg:p-6 hover:shadow-md transition-shadow">
+    <div *ngIf="isVisualizacaoLista() && !loading">
+      <div class="space-y-4 mb-6">
+        <div *ngFor="let contrato of contratosFiltrados" 
+             class="bg-white rounded-xl shadow-sm p-4 lg:p-6 hover:shadow-md transition-shadow">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
           <div class="flex-1 mb-4 lg:mb-0">
             <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-3">
@@ -266,6 +343,39 @@
         <div class="text-gray-400 text-6xl mb-4">📋</div>
         <h3 class="text-lg font-medium text-gray-900 mb-2">Nenhum contrato encontrado</h3>
         <p class="text-gray-600">Tente ajustar os filtros ou adicionar um novo contrato.</p>
+      </div>
+
+      <!-- Paginação - Lista -->
+      <div *ngIf="!loading && totalElements > 0" class="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="text-sm text-gray-700">
+          Mostrando {{ page * size + 1 }} a {{ Math.min((page + 1) * size, totalElements) }} de {{ totalElements }} contratos
+        </div>
+        <div class="flex items-center gap-3">
+          <button type="button"
+                  (click)="irParaPaginaAnterior()"
+                  [disabled]="page === 0"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            Anterior
+          </button>
+          <div class="flex items-center gap-2">
+            <button *ngFor="let pagina of getPaginasVisiveis()"
+                    type="button"
+                    (click)="irParaPagina(pagina)"
+                    [class.bg-blue-600]="page === (pagina - 1)"
+                    [class.text-white]="page === (pagina - 1)"
+                    [class.text-gray-700]="page !== (pagina - 1)"
+                    [class.hover:bg-gray-50]="page !== (pagina - 1)"
+                    class="px-4 py-2 min-w-[40px] text-sm font-medium border border-gray-300 rounded-lg transition-colors">
+              {{ pagina }}
+            </button>
+          </div>
+          <button type="button"
+                  (click)="irParaProximaPagina()"
+                  [disabled]="page >= totalPages - 1"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            Próxima
+          </button>
+        </div>
       </div>
     </div>
   </div>
