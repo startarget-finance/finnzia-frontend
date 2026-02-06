@@ -371,7 +371,7 @@ export class LandingComponent implements OnInit, AfterViewInit {
   }
 
   setupVideoPosters(): void {
-    const videoIds = ['video1', 'video2', 'video3'];
+    const videoIds = ['video1', 'video2', 'video3', 'video-agencia1', 'video-agencia2', 'video-agencia3'];
     
     videoIds.forEach(videoId => {
       const previewVideo = document.querySelector(`video[data-video-id="${videoId}"]`) as HTMLVideoElement;

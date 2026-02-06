@@ -994,6 +994,154 @@
           </div>
         </div>
       </section>
+
+      <!-- Depoimentos em Vídeo - Agências -->
+      <section class="relative py-16 mt-12">
+        <div class="max-w-7xl mx-auto px-4">
+          <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
+              O que nossos clientes dizem
+            </h2>
+            <p class="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto">
+              Empresas que transformaram seu financeiro com a Finzzia
+            </p>
+          </div>
+
+          <div class="text-center mb-10">
+            <h3 class="text-2xl md:text-3xl font-bold text-white mb-2">
+              Depoimentos em vídeo
+            </h3>
+            <p class="text-slate-400">
+              Veja o que nossos clientes têm a dizer
+            </p>
+          </div>
+          
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            <!-- Vídeo 1 -->
+            <div class="relative w-full group">
+              <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-emerald-400/20 rounded-2xl blur-2xl group-hover:blur-3xl transition duration-500"></div>
+              <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-xl aspect-square video-container cursor-pointer">
+                <!-- Vídeo como background (primeiro frame) -->
+                <video 
+                  data-video-id="video-agencia1"
+                  class="w-full h-full object-cover absolute inset-0 z-0"
+                  muted
+                  preload="auto"
+                  playsinline
+                  (loadedmetadata)="onVideoMetadataLoaded('video-agencia1', $event)">
+                  <source src="/assets/videos/depoimento.mp4" type="video/mp4">
+                </video>
+                
+                <!-- Vídeo principal (oculto até clicar) -->
+                <video 
+                  data-video-id="video-agencia1-main"
+                  class="w-full h-full object-contain bg-slate-900 hidden z-20"
+                  controls
+                  preload="metadata"
+                  (play)="playVideo('video-agencia1', $event)"
+                  (pause)="pauseVideo('video-agencia1', $event)">
+                  <source src="/assets/videos/depoimento.mp4" type="video/mp4">
+                  Seu navegador não suporta vídeo HTML5.
+                </video>
+                
+                <!-- Poster com botão de play (overlay sobre o vídeo) -->
+                <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/20 z-10 transition-opacity duration-300 hover:bg-black/10 group-hover:bg-black/5" (click)="onPosterClick('video-agencia1')">
+                  <div class="text-center">
+                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300 shadow-2xl border-2 border-white/30">
+                      <svg class="w-10 h-10 md:w-12 md:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+                      </svg>
+                    </div>
+                    <p class="text-white font-semibold text-sm md:text-base drop-shadow-lg">Assistir depoimento</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Vídeo 2 -->
+            <div class="relative w-full group">
+              <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-emerald-400/20 rounded-2xl blur-2xl group-hover:blur-3xl transition duration-500"></div>
+              <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-xl aspect-square video-container cursor-pointer">
+                <!-- Vídeo como background (primeiro frame) -->
+                <video 
+                  data-video-id="video-agencia2"
+                  class="w-full h-full object-cover absolute inset-0 z-0"
+                  muted
+                  preload="auto"
+                  playsinline
+                  (loadedmetadata)="onVideoMetadataLoaded('video-agencia2', $event)">
+                  <source src="/assets/videos/depoimento1.mp4" type="video/mp4">
+                </video>
+                
+                <!-- Vídeo principal (oculto até clicar) -->
+                <video 
+                  data-video-id="video-agencia2-main"
+                  class="w-full h-full object-contain bg-slate-900 hidden z-20"
+                  controls
+                  preload="metadata"
+                  (play)="playVideo('video-agencia2', $event)"
+                  (pause)="pauseVideo('video-agencia2', $event)">
+                  <source src="/assets/videos/depoimento1.mp4" type="video/mp4">
+                  Seu navegador não suporta vídeo HTML5.
+                </video>
+                
+                <!-- Poster com botão de play (overlay sobre o vídeo) -->
+                <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/20 z-10 transition-opacity duration-300 hover:bg-black/10 group-hover:bg-black/5" (click)="onPosterClick('video-agencia2')">
+                  <div class="text-center">
+                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300 shadow-2xl border-2 border-white/30">
+                      <svg class="w-10 h-10 md:w-12 md:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+                      </svg>
+                    </div>
+                    <p class="text-white font-semibold text-sm md:text-base drop-shadow-lg">Assistir depoimento</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Vídeo 3 -->
+            <div class="relative w-full group">
+              <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-emerald-400/20 rounded-2xl blur-2xl group-hover:blur-3xl transition duration-500"></div>
+              <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-xl aspect-square video-container cursor-pointer">
+                <!-- Vídeo como background (primeiro frame) -->
+                <video 
+                  data-video-id="video-agencia3"
+                  class="w-full h-full object-cover absolute inset-0 z-0"
+                  muted
+                  preload="auto"
+                  playsinline
+                  (loadedmetadata)="onVideoMetadataLoaded('video-agencia3', $event)">
+                  <source src="/assets/videos/depoimento2.mp4" type="video/mp4">
+                </video>
+                
+                <!-- Vídeo principal (oculto até clicar) -->
+                <video 
+                  data-video-id="video-agencia3-main"
+                  class="w-full h-full object-contain bg-slate-900 hidden z-20"
+                  controls
+                  preload="metadata"
+                  (play)="playVideo('video-agencia3', $event)"
+                  (pause)="pauseVideo('video-agencia3', $event)">
+                  <source src="/assets/videos/depoimento2.mp4" type="video/mp4">
+                  Seu navegador não suporta vídeo HTML5.
+                </video>
+                
+                <!-- Poster com botão de play (overlay sobre o vídeo) -->
+                <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/20 z-10 transition-opacity duration-300 hover:bg-black/10 group-hover:bg-black/5" (click)="onPosterClick('video-agencia3')">
+                  <div class="text-center">
+                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300 shadow-2xl border-2 border-white/30">
+                      <svg class="w-10 h-10 md:w-12 md:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+                      </svg>
+                    </div>
+                    <p class="text-white font-semibold text-sm md:text-base drop-shadow-lg">Assistir depoimento</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </section>
 
     <!-- Restaurantes -->
