@@ -311,750 +311,9 @@
     </section>
 
     <!-- Tabela de Comparação -->
-    <section *ngIf="!segmentoAtual && !apenasDiagnostico" class="relative py-16">
-      <div class="max-w-7xl mx-auto px-4">
-        <div class="text-center mb-12">
-          <h2 class="text-4xl md:text-5xl font-bold text-white mb-5">
-            Compare você mesmo
-          </h2>
-          <p class="text-xl text-slate-300 max-w-3xl mx-auto">
-            Veja como a Finzzia se diferencia das outras soluções do mercado
-          </p>
-        </div>
-
-        <div class="bg-slate-900/80 rounded-2xl border border-slate-700/60 overflow-hidden backdrop-blur-xl">
-          <!-- Versão Desktop - Tabela -->
-          <div class="hidden md:block overflow-x-auto">
-            <table class="w-full">
-              <thead>
-                <tr class="bg-slate-800/60 border-b border-slate-700/60">
-                  <th class="px-6 py-4 text-left text-sm font-semibold text-slate-200 uppercase tracking-wide">Recursos</th>
-                  <th class="px-6 py-4 text-center text-sm font-semibold text-slate-200 uppercase tracking-wide">BPOs Financeiros</th>
-                  <th class="px-6 py-4 text-center text-sm font-semibold text-slate-200 uppercase tracking-wide">Sistema de Gestão Financeira</th>
-                  <th class="px-6 py-4 text-center text-sm font-semibold text-white uppercase tracking-wide bg-gradient-to-r from-blue-500/20 to-emerald-400/20">Finzzia</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-700/60">
-                <tr class="hover:bg-slate-800/40 transition-colors">
-                  <td class="px-6 py-4 text-slate-200 font-medium">Atendimento humanizado</td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <span class="text-slate-400 text-sm">ÀS VEZES</span>
-                  </td>
-                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-800/40 transition-colors">
-                  <td class="px-6 py-4 text-slate-200 font-medium">Gerente responsável</td>
-                  <td class="px-6 py-4 text-center">
-                    <span class="text-slate-400 text-sm">ÀS VEZES</span>
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-800/40 transition-colors">
-                  <td class="px-6 py-4 text-slate-200 font-medium">Análise Estratégica</td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-800/40 transition-colors">
-                  <td class="px-6 py-4 text-slate-200 font-medium">Elaboração de DRE e DFC</td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-800/40 transition-colors">
-                  <td class="px-6 py-4 text-slate-200 font-medium">Conciliação bancária</td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-800/40 transition-colors">
-                  <td class="px-6 py-4 text-slate-200 font-medium">Pagamento de contas</td>
-                  <td class="px-6 py-4 text-center">
-                    <span class="text-slate-400 text-sm">Apenas Agendamento</span>
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-800/40 transition-colors">
-                  <td class="px-6 py-4 text-slate-200 font-medium">Emissão de NFs de Serviço</td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-800/40 transition-colors">
-                  <td class="px-6 py-4 text-slate-200 font-medium">Emissão de boletos de cobrança</td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-800/40 transition-colors">
-                  <td class="px-6 py-4 text-slate-200 font-medium">Cobrança humanizada de inadimplentes</td>
-                  <td class="px-6 py-4 text-center">
-                    <span class="text-slate-400 text-sm">ÀS VEZES</span>
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-800/40 transition-colors">
-                  <td class="px-6 py-4 text-slate-200 font-medium">Indicador de fluxo de caixa</td>
-                  <td class="px-6 py-4 text-center">
-                    <span class="text-slate-400 text-sm">ÀS VEZES</span>
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-800/40 transition-colors">
-                  <td class="px-6 py-4 text-slate-200 font-medium">Indicadores personalizados</td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-800/40 transition-colors">
-                  <td class="px-6 py-4 text-slate-200 font-medium">Controle de contratos</td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-800/40 transition-colors">
-                  <td class="px-6 py-4 text-slate-200 font-medium">Ranking empresarial</td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-800/40 transition-colors">
-                  <td class="px-6 py-4 text-slate-200 font-medium">Dashboard personalizado</td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-800/40 transition-colors">
-                  <td class="px-6 py-4 text-slate-200 font-medium">Reunião mensal estratégica</td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-800/40 transition-colors">
-                  <td class="px-6 py-4 text-slate-200 font-medium">Análise de modelo de negócio</td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                </tr>
-                <tr class="hover:bg-slate-800/40 transition-colors">
-                  <td class="px-6 py-4 text-slate-200 font-medium">Análise de processos</td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center">
-                    <svg class="w-6 h-6 text-red-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                  <td class="px-6 py-4 text-center bg-gradient-to-r from-blue-500/10 to-emerald-400/10">
-                    <svg class="w-6 h-6 text-green-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                    </svg>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          
-          <!-- Versão Mobile - Cards -->
-          <div class="block md:hidden p-4 space-y-4">
-            <!-- Card 1 -->
-            <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
-              <h3 class="text-white font-semibold mb-3 text-sm">Atendimento humanizado</h3>
-              <div class="space-y-2 text-xs">
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">BPOs Financeiros:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">Sistema de Gestão:</span>
-                  <span class="text-slate-400">ÀS VEZES</span>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-slate-700/60">
-                  <span class="text-white font-medium">Finzzia:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Card 2 -->
-            <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
-              <h3 class="text-white font-semibold mb-3 text-sm">Gerente responsável</h3>
-              <div class="space-y-2 text-xs">
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">BPOs Financeiros:</span>
-                  <span class="text-slate-400">ÀS VEZES</span>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">Sistema de Gestão:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-slate-700/60">
-                  <span class="text-white font-medium">Finzzia:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Card 3 -->
-            <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
-              <h3 class="text-white font-semibold mb-3 text-sm">Análise Estratégica</h3>
-              <div class="space-y-2 text-xs">
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">BPOs Financeiros:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">Sistema de Gestão:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-slate-700/60">
-                  <span class="text-white font-medium">Finzzia:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Card 4 -->
-            <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
-              <h3 class="text-white font-semibold mb-3 text-sm">Elaboração de DRE e DFC</h3>
-              <div class="space-y-2 text-xs">
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">BPOs Financeiros:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">Sistema de Gestão:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-slate-700/60">
-                  <span class="text-white font-medium">Finzzia:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Card 5 -->
-            <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
-              <h3 class="text-white font-semibold mb-3 text-sm">Conciliação bancária</h3>
-              <div class="space-y-2 text-xs">
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">BPOs Financeiros:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">Sistema de Gestão:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-slate-700/60">
-                  <span class="text-white font-medium">Finzzia:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Card 6 -->
-            <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
-              <h3 class="text-white font-semibold mb-3 text-sm">Pagamento de contas</h3>
-              <div class="space-y-2 text-xs">
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">BPOs Financeiros:</span>
-                  <span class="text-slate-400 text-xs">Apenas Agendamento</span>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">Sistema de Gestão:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-slate-700/60">
-                  <span class="text-white font-medium">Finzzia:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Card 7 -->
-            <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
-              <h3 class="text-white font-semibold mb-3 text-sm">Emissão de NFs de Serviço</h3>
-              <div class="space-y-2 text-xs">
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">BPOs Financeiros:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">Sistema de Gestão:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-slate-700/60">
-                  <span class="text-white font-medium">Finzzia:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Card 8 -->
-            <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
-              <h3 class="text-white font-semibold mb-3 text-sm">Emissão de boletos de cobrança</h3>
-              <div class="space-y-2 text-xs">
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">BPOs Financeiros:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">Sistema de Gestão:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-slate-700/60">
-                  <span class="text-white font-medium">Finzzia:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Card 9 -->
-            <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
-              <h3 class="text-white font-semibold mb-3 text-sm">Cobrança humanizada de inadimplentes</h3>
-              <div class="space-y-2 text-xs">
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">BPOs Financeiros:</span>
-                  <span class="text-slate-400">ÀS VEZES</span>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">Sistema de Gestão:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-slate-700/60">
-                  <span class="text-white font-medium">Finzzia:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Card 10 -->
-            <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
-              <h3 class="text-white font-semibold mb-3 text-sm">Indicador de fluxo de caixa</h3>
-              <div class="space-y-2 text-xs">
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">BPOs Financeiros:</span>
-                  <span class="text-slate-400">ÀS VEZES</span>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">Sistema de Gestão:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-slate-700/60">
-                  <span class="text-white font-medium">Finzzia:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Card 11 -->
-            <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
-              <h3 class="text-white font-semibold mb-3 text-sm">Indicadores personalizados</h3>
-              <div class="space-y-2 text-xs">
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">BPOs Financeiros:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">Sistema de Gestão:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-slate-700/60">
-                  <span class="text-white font-medium">Finzzia:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Card 12 -->
-            <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
-              <h3 class="text-white font-semibold mb-3 text-sm">Controle de contratos</h3>
-              <div class="space-y-2 text-xs">
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">BPOs Financeiros:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">Sistema de Gestão:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-slate-700/60">
-                  <span class="text-white font-medium">Finzzia:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Card 13 -->
-            <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
-              <h3 class="text-white font-semibold mb-3 text-sm">Ranking empresarial</h3>
-              <div class="space-y-2 text-xs">
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">BPOs Financeiros:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">Sistema de Gestão:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-slate-700/60">
-                  <span class="text-white font-medium">Finzzia:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Card 14 -->
-            <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
-              <h3 class="text-white font-semibold mb-3 text-sm">Dashboard personalizado</h3>
-              <div class="space-y-2 text-xs">
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">BPOs Financeiros:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">Sistema de Gestão:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-slate-700/60">
-                  <span class="text-white font-medium">Finzzia:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Card 15 -->
-            <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
-              <h3 class="text-white font-semibold mb-3 text-sm">Reunião mensal estratégica</h3>
-              <div class="space-y-2 text-xs">
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">BPOs Financeiros:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">Sistema de Gestão:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-slate-700/60">
-                  <span class="text-white font-medium">Finzzia:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Card 16 -->
-            <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
-              <h3 class="text-white font-semibold mb-3 text-sm">Análise de modelo de negócio</h3>
-              <div class="space-y-2 text-xs">
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">BPOs Financeiros:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">Sistema de Gestão:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-slate-700/60">
-                  <span class="text-white font-medium">Finzzia:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Card 17 -->
-            <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
-              <h3 class="text-white font-semibold mb-3 text-sm">Análise de processos</h3>
-              <div class="space-y-2 text-xs">
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">BPOs Financeiros:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center">
-                  <span class="text-slate-400">Sistema de Gestão:</span>
-                  <svg class="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-                <div class="flex justify-between items-center pt-2 border-t border-slate-700/60">
-                  <span class="text-white font-medium">Finzzia:</span>
-                  <svg class="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <app-comparacao-servicos 
+      *ngIf="!segmentoAtual && !apenasDiagnostico"
+    ></app-comparacao-servicos>
 
     <!-- Depoimentos -->
     <section *ngIf="!segmentoAtual && !apenasDiagnostico" class="relative">
@@ -1085,20 +344,20 @@
             <div class="relative w-full group">
               <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-emerald-400/20 rounded-2xl blur-2xl group-hover:blur-3xl transition duration-500"></div>
               <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-xl aspect-square video-container cursor-pointer">
-                <!-- Poster com botão de play -->
-                <div class="video-poster absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-600/90 to-emerald-500/90 z-10 transition-opacity duration-300 hover:opacity-90" (click)="onPosterClick('video1')">
-                  <div class="text-center">
-                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300">
-                      <svg class="w-10 h-10 md:w-12 md:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
-                      </svg>
-                    </div>
-                    <p class="text-white font-semibold text-sm md:text-base">Assistir depoimento</p>
-                  </div>
-                </div>
+                <!-- Vídeo como background (primeiro frame) -->
                 <video 
                   data-video-id="video1"
-                  class="w-full h-full object-contain bg-slate-900"
+                  class="w-full h-full object-cover absolute inset-0"
+                  muted
+                  preload="metadata"
+                  playsinline>
+                  <source src="/assets/videos/depoimento.mp4" type="video/mp4">
+                </video>
+                
+                <!-- Vídeo principal (oculto até clicar) -->
+                <video 
+                  data-video-id="video1-main"
+                  class="w-full h-full object-contain bg-slate-900 hidden"
                   controls
                   preload="metadata"
                   (play)="playVideo('video1', $event)"
@@ -1106,6 +365,18 @@
                   <source src="/assets/videos/depoimento.mp4" type="video/mp4">
                   Seu navegador não suporta vídeo HTML5.
                 </video>
+                
+                <!-- Poster com botão de play (overlay sobre o vídeo) -->
+                <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/40 z-10 transition-opacity duration-300 hover:bg-black/30 group-hover:bg-black/20" (click)="onPosterClick('video1')">
+                  <div class="text-center">
+                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300 shadow-2xl">
+                      <svg class="w-10 h-10 md:w-12 md:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+                      </svg>
+                    </div>
+                    <p class="text-white font-semibold text-sm md:text-base drop-shadow-lg">Assistir depoimento</p>
+                  </div>
+                </div>
               </div>
             </div>
             
@@ -1113,20 +384,20 @@
             <div class="relative w-full group">
               <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-emerald-400/20 rounded-2xl blur-2xl group-hover:blur-3xl transition duration-500"></div>
               <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-xl aspect-square video-container cursor-pointer">
-                <!-- Poster com botão de play -->
-                <div class="video-poster absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-600/90 to-emerald-500/90 z-10 transition-opacity duration-300 hover:opacity-90" (click)="onPosterClick('video2')">
-                  <div class="text-center">
-                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300">
-                      <svg class="w-10 h-10 md:w-12 md:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
-                      </svg>
-                    </div>
-                    <p class="text-white font-semibold text-sm md:text-base">Assistir depoimento</p>
-                  </div>
-                </div>
+                <!-- Vídeo como background (primeiro frame) -->
                 <video 
                   data-video-id="video2"
-                  class="w-full h-full object-contain bg-slate-900"
+                  class="w-full h-full object-cover absolute inset-0"
+                  muted
+                  preload="metadata"
+                  playsinline>
+                  <source src="/assets/videos/depoimento1.mp4" type="video/mp4">
+                </video>
+                
+                <!-- Vídeo principal (oculto até clicar) -->
+                <video 
+                  data-video-id="video2-main"
+                  class="w-full h-full object-contain bg-slate-900 hidden"
                   controls
                   preload="metadata"
                   (play)="playVideo('video2', $event)"
@@ -1134,6 +405,18 @@
                   <source src="/assets/videos/depoimento1.mp4" type="video/mp4">
                   Seu navegador não suporta vídeo HTML5.
                 </video>
+                
+                <!-- Poster com botão de play (overlay sobre o vídeo) -->
+                <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/40 z-10 transition-opacity duration-300 hover:bg-black/30 group-hover:bg-black/20" (click)="onPosterClick('video2')">
+                  <div class="text-center">
+                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300 shadow-2xl">
+                      <svg class="w-10 h-10 md:w-12 md:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+                      </svg>
+                    </div>
+                    <p class="text-white font-semibold text-sm md:text-base drop-shadow-lg">Assistir depoimento</p>
+                  </div>
+                </div>
               </div>
             </div>
             
@@ -1141,20 +424,20 @@
             <div class="relative w-full group">
               <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-emerald-400/20 rounded-2xl blur-2xl group-hover:blur-3xl transition duration-500"></div>
               <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-xl aspect-square video-container cursor-pointer">
-                <!-- Poster com botão de play -->
-                <div class="video-poster absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-600/90 to-emerald-500/90 z-10 transition-opacity duration-300 hover:opacity-90" (click)="onPosterClick('video3')">
-                  <div class="text-center">
-                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300">
-                      <svg class="w-10 h-10 md:w-12 md:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
-                      </svg>
-                    </div>
-                    <p class="text-white font-semibold text-sm md:text-base">Assistir depoimento</p>
-                  </div>
-                </div>
+                <!-- Vídeo como background (primeiro frame) -->
                 <video 
                   data-video-id="video3"
-                  class="w-full h-full object-contain bg-slate-900"
+                  class="w-full h-full object-cover absolute inset-0"
+                  muted
+                  preload="metadata"
+                  playsinline>
+                  <source src="/assets/videos/depoimento2.mp4" type="video/mp4">
+                </video>
+                
+                <!-- Vídeo principal (oculto até clicar) -->
+                <video 
+                  data-video-id="video3-main"
+                  class="w-full h-full object-contain bg-slate-900 hidden"
                   controls
                   preload="metadata"
                   (play)="playVideo('video3', $event)"
@@ -1162,20 +445,23 @@
                   <source src="/assets/videos/depoimento2.mp4" type="video/mp4">
                   Seu navegador não suporta vídeo HTML5.
                 </video>
+                
+                <!-- Poster com botão de play (overlay sobre o vídeo) -->
+                <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/40 z-10 transition-opacity duration-300 hover:bg-black/30 group-hover:bg-black/20" (click)="onPosterClick('video3')">
+                  <div class="text-center">
+                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300 shadow-2xl">
+                      <svg class="w-10 h-10 md:w-12 md:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+                      </svg>
+                    </div>
+                    <p class="text-white font-semibold text-sm md:text-base drop-shadow-lg">Assistir depoimento</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Separador Visual -->
-        <div class="flex items-center justify-center mb-16">
-          <div class="flex-1 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
-          <div class="px-6">
-            <div class="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-emerald-400"></div>
-          </div>
-          <div class="flex-1 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
-        </div>
-
+        
         <!-- Seção de Depoimentos em Texto -->
         <div>
           <div class="text-center mb-10">
@@ -1186,7 +472,7 @@
               Leia o que nossos clientes compartilham
             </p>
           </div>
-
+          
           <div class="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             <!-- Depoimento 1 -->
             <div class="bg-slate-900/60 rounded-2xl border border-slate-700/60 p-6 backdrop-blur-xl hover:border-blue-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10">
@@ -1195,15 +481,15 @@
                   O
                 </div>
                 <div>
-                  <p class="font-semibold text-white">Oduo</p>
-                  <p class="text-sm text-slate-400">Agência de Marketing</p>
+                  <h4 class="text-white font-semibold">Olavo</h4>
+                  <p class="text-slate-400 text-sm">CEO</p>
                 </div>
               </div>
               <p class="text-slate-300 text-sm leading-relaxed">
-                "A Finzzia trouxe previsibilidade que não tínhamos. Agora sabemos exatamente quanto sobra por cliente e podemos tomar decisões com segurança."
+                "A Finzzia transformou completamente nossa gestão financeira. Agora temos controle total e visibilidade em tempo real."
               </p>
             </div>
-
+            
             <!-- Depoimento 2 -->
             <div class="bg-slate-900/60 rounded-2xl border border-slate-700/60 p-6 backdrop-blur-xl hover:border-emerald-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/10">
               <div class="flex items-center gap-3 mb-4">
@@ -1211,15 +497,15 @@
                   K
                 </div>
                 <div>
-                  <p class="font-semibold text-white">Restaurante Kaipon</p>
-                  <p class="text-sm text-slate-400">Restaurante</p>
+                  <h4 class="text-white font-semibold">Karina</h4>
+                  <p class="text-slate-400 text-sm">Diretora Financeira</p>
                 </div>
               </div>
               <p class="text-slate-300 text-sm leading-relaxed">
-                "Depois que organizamos o financeiro com a Finzzia, conseguimos crescer com muito mais segurança. A precificação ficou correta e temos previsibilidade real."
+                "O suporte humanizado e a análise estratégica mensal fazem toda a diferença. Recomendo sem hesitação!"
               </p>
             </div>
-
+            
             <!-- Depoimento 3 -->
             <div class="bg-slate-900/60 rounded-2xl border border-slate-700/60 p-6 backdrop-blur-xl hover:border-purple-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/10">
               <div class="flex items-center gap-3 mb-4">
@@ -1227,12 +513,12 @@
                   V
                 </div>
                 <div>
-                  <p class="font-semibold text-white">Veduc</p>
-                  <p class="text-sm text-slate-400">Agência de Marketing</p>
+                  <h4 class="text-white font-semibold">Vitor</h4>
+                  <p class="text-slate-400 text-sm">Fundador</p>
                 </div>
               </div>
               <p class="text-slate-300 text-sm leading-relaxed">
-                "O acompanhamento mensal e os insights da Finzzia mudaram como tomamos decisões. Agora é tudo baseado em números, não em achismo."
+                "Finalmente encontramos uma solução que une tecnologia e atendimento personalizado. Excelente!"
               </p>
             </div>
           </div>

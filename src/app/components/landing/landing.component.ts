@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ClintService } from '../../services/clint.service';
 import { GoogleSheetsService } from '../../services/google-sheets.service';
+import { ComparacaoServicosComponent, FeatureComparacao } from '../comparacao-servicos/comparacao-servicos.component';
 
 @Component({
   standalone: true,
   selector: 'app-landing',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ComparacaoServicosComponent],
   templateUrl: './landing.component.html'
 })
 export class LandingComponent implements OnInit {
