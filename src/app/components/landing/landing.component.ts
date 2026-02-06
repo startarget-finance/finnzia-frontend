@@ -23,7 +23,7 @@ export class LandingComponent implements OnInit {
   };
 
   // Número do WhatsApp
-  readonly whatsappNumber = '554896626464';
+  readonly whatsappNumber = '554991984101';
 
   // Segmento atual (para mostrar apenas uma seção)
   segmentoAtual: string | null = null;
