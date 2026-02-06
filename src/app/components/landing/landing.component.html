@@ -175,86 +175,50 @@
     <!-- Seção de Direcionamento por Perfil -->
     <section *ngIf="!segmentoAtual && !apenasDiagnostico" id="perfis" class="scroll-mt-24">
       <div class="max-w-7xl mx-auto px-4">
-        <div class="text-center mb-16">
-          <h2 class="text-4xl md:text-5xl font-bold text-white mb-5">
+        <div class="text-center mb-12">
+          <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">
             Soluções personalizadas para o seu negócio
           </h2>
-          <p class="text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed">
+          <p class="text-lg text-slate-300 max-w-3xl mx-auto">
             Escolha o perfil que melhor se encaixa com sua empresa e descubra como podemos ajudar
           </p>
         </div>
 
-        <div class="grid md:grid-cols-3 gap-8">
+        <div class="grid md:grid-cols-3 gap-6">
           <!-- Card Agências -->
-          <div class="group relative bg-gradient-to-br from-slate-900/80 to-slate-800/60 rounded-2xl border border-blue-500/40 p-8 hover:border-blue-500/80 transition-all duration-300 hover:shadow-2xl hover:shadow-blue-500/30 hover:-translate-y-1 backdrop-blur-xl">
-            <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div class="relative z-10">
-              <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500/30 to-blue-600/20 flex items-center justify-center mb-6 group-hover:from-blue-500/40 group-hover:to-blue-600/30 transition-all duration-300 shadow-lg shadow-blue-500/20">
-                <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                </svg>
-              </div>
-              <h3 class="text-2xl font-bold text-white mb-4">Agências de Marketing</h3>
-              <p class="text-slate-300 text-base mb-8 leading-relaxed">
-                Para agências que precisam de controle financeiro por cliente e previsibilidade de caixa para crescer com segurança.
-              </p>
-              <a href="/agencias" 
-                 class="group/btn inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold hover:from-blue-400 hover:to-blue-500 transition-all duration-300 text-base shadow-lg shadow-blue-500/40 hover:shadow-xl hover:shadow-blue-500/50 hover:scale-105 hover:brightness-110 relative overflow-hidden">
-                <span class="relative z-10">Saiba mais</span>
-                <svg class="w-5 h-5 relative z-10 transform group-hover/btn:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                </svg>
-                <div class="absolute inset-0 bg-gradient-to-r from-blue-400/0 via-blue-300/20 to-blue-400/0 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-700"></div>
-              </a>
-            </div>
+          <div class="relative rounded-2xl border border-blue-500/30 bg-slate-900/60 backdrop-blur-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+            <h3 class="text-2xl font-bold text-white mb-4">Agências de Marketing</h3>
+            <p class="text-slate-300 text-base mb-6 leading-relaxed">
+              Para agências que precisam de controle financeiro por cliente e previsibilidade de caixa para crescer com segurança.
+            </p>
+            <a href="/agencias" 
+               class="inline-flex items-center justify-center w-full px-6 py-3 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-400 text-white font-semibold hover:brightness-110 transition-all duration-200">
+              Saiba mais
+            </a>
           </div>
 
           <!-- Card Restaurantes -->
-          <div class="group relative bg-gradient-to-br from-slate-900/80 to-slate-800/60 rounded-2xl border border-emerald-500/40 p-8 hover:border-emerald-500/80 transition-all duration-300 hover:shadow-2xl hover:shadow-emerald-500/30 hover:-translate-y-1 backdrop-blur-xl">
-            <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div class="relative z-10">
-              <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-emerald-500/30 to-emerald-600/20 flex items-center justify-center mb-6 group-hover:from-emerald-500/40 group-hover:to-emerald-600/30 transition-all duration-300 shadow-lg shadow-emerald-500/20">
-                <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                </svg>
-              </div>
-              <h3 class="text-2xl font-bold text-white mb-4">Restaurantes</h3>
-              <p class="text-slate-300 text-base mb-8 leading-relaxed">
-                Para restaurantes que querem ter controle total do financeiro, precificação correta e previsibilidade para compras e equipe.
-              </p>
-              <a href="/restaurantes" 
-                 class="group/btn inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold hover:from-emerald-400 hover:to-emerald-500 transition-all duration-300 text-base shadow-lg shadow-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/50 hover:scale-105 hover:brightness-110 relative overflow-hidden">
-                <span class="relative z-10">Saiba mais</span>
-                <svg class="w-5 h-5 relative z-10 transform group-hover/btn:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                </svg>
-                <div class="absolute inset-0 bg-gradient-to-r from-emerald-400/0 via-emerald-300/20 to-emerald-400/0 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-700"></div>
-              </a>
-            </div>
+          <div class="relative rounded-2xl border border-purple-500/30 bg-slate-900/60 backdrop-blur-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+            <h3 class="text-2xl font-bold text-white mb-4">Restaurantes</h3>
+            <p class="text-slate-300 text-base mb-6 leading-relaxed">
+              Para restaurantes que querem ter controle total do financeiro, precificação correta e previsibilidade para compras e equipe.
+            </p>
+            <a href="/restaurantes" 
+               class="inline-flex items-center justify-center w-full px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 text-white font-semibold hover:brightness-110 transition-all duration-200">
+              Saiba mais
+            </a>
           </div>
 
           <!-- Card Prestadores -->
-          <div class="group relative bg-gradient-to-br from-slate-900/80 to-slate-800/60 rounded-2xl border border-purple-500/40 p-8 hover:border-purple-500/80 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/30 hover:-translate-y-1 backdrop-blur-xl">
-            <div class="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-transparent to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div class="relative z-10">
-              <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500/30 to-purple-600/20 flex items-center justify-center mb-6 group-hover:from-purple-500/40 group-hover:to-purple-600/30 transition-all duration-300 shadow-lg shadow-purple-500/20">
-                <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                </svg>
-              </div>
-              <h3 class="text-2xl font-bold text-white mb-4">Prestadores de Serviço</h3>
-              <p class="text-slate-300 text-base mb-8 leading-relaxed">
-                Para prestadores que querem separar pessoal de empresa e ter clareza real do que sobra para reinvestir.
-              </p>
-              <a href="/prestadores" 
-                 class="group/btn inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold hover:from-purple-400 hover:to-purple-500 transition-all duration-300 text-base shadow-lg shadow-purple-500/40 hover:shadow-xl hover:shadow-purple-500/50 hover:scale-105 hover:brightness-110 relative overflow-hidden">
-                <span class="relative z-10">Saiba mais</span>
-                <svg class="w-5 h-5 relative z-10 transform group-hover/btn:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                </svg>
-                <div class="absolute inset-0 bg-gradient-to-r from-purple-400/0 via-purple-300/20 to-purple-400/0 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-700"></div>
-              </a>
-            </div>
+          <div class="relative rounded-2xl border border-blue-500/30 bg-slate-900/60 backdrop-blur-xl p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+            <h3 class="text-2xl font-bold text-white mb-4">Prestadores de Serviço</h3>
+            <p class="text-slate-300 text-base mb-6 leading-relaxed">
+              Para prestadores que querem separar pessoal de empresa e ter clareza real do que sobra para reinvestir.
+            </p>
+            <a href="/prestadores" 
+               class="inline-flex items-center justify-center w-full px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-teal-400 text-white font-semibold hover:brightness-110 transition-all duration-200">
+              Saiba mais
+            </a>
           </div>
         </div>
       </div>
@@ -292,210 +256,128 @@
     <section *ngIf="!segmentoAtual && !apenasDiagnostico" class="relative">
       <div class="max-w-7xl mx-auto px-4">
         <!-- Título Principal -->
-        <div class="text-center mb-16">
-          <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
+        <div class="text-center mb-12">
+          <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">
             O que nossos clientes dizem
           </h2>
-          <p class="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto">
+          <p class="text-lg text-slate-300 max-w-2xl mx-auto">
             Empresas que transformaram seu financeiro com a Finzzia
           </p>
         </div>
 
-        <!-- Seção de Vídeos -->
+        <!-- Seção de Vídeos - Carousel -->
         <div class="mb-20">
-          <div class="text-center mb-10">
-            <h3 class="text-2xl md:text-3xl font-bold text-white mb-2">
-              Depoimentos em vídeo
-            </h3>
-            <p class="text-slate-400">
-              Veja o que nossos clientes têm a dizer
-            </p>
-          </div>
-          
-          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <!-- Vídeo 1 -->
-            <div class="relative w-full group">
-              <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-emerald-400/20 rounded-2xl blur-2xl group-hover:blur-3xl transition duration-500"></div>
-              <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-xl aspect-square video-container cursor-pointer">
+          <div class="max-w-4xl mx-auto relative">
+            <!-- Seta Esquerda -->
+            <button
+              (click)="videoAnterior()"
+              class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-12 z-10 w-12 h-12 rounded-full border-2 border-white/30 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center hover:bg-slate-800/70 hover:border-white/50 transition-all duration-200">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+            </button>
+
+            <!-- Player de Vídeo Central -->
+            <div class="relative w-full aspect-[9/16] max-w-md mx-auto rounded-2xl overflow-hidden bg-slate-900/60 backdrop-blur-xl border border-slate-700/60 shadow-2xl video-container">
+              <div *ngFor="let video of videos; let i = index" [class.hidden]="i !== videoAtualIndex">
                 <!-- Vídeo como background (primeiro frame) -->
                 <video 
-                  data-video-id="video1"
+                  [attr.data-video-id]="video.id"
                   class="w-full h-full object-cover absolute inset-0 z-0"
                   muted
                   preload="auto"
                   playsinline
-                  (loadedmetadata)="onVideoMetadataLoaded('video1', $event)">
-                  <source src="/assets/videos/depoimento.mp4" type="video/mp4">
+                  (loadedmetadata)="onVideoMetadataLoaded(video.id, $event)">
+                  <source [src]="video.src" type="video/mp4">
                 </video>
                 
                 <!-- Vídeo principal (oculto até clicar) -->
                 <video 
-                  data-video-id="video1-main"
+                  [attr.data-video-id]="video.id + '-main'"
                   class="w-full h-full object-contain bg-slate-900 hidden z-20"
                   controls
                   preload="metadata"
-                  (play)="playVideo('video1', $event)"
-                  (pause)="pauseVideo('video1', $event)">
-                  <source src="/assets/videos/depoimento.mp4" type="video/mp4">
+                  (play)="playVideo(video.id, $event)"
+                  (pause)="pauseVideo(video.id, $event)">
+                  <source [src]="video.src" type="video/mp4">
                   Seu navegador não suporta vídeo HTML5.
                 </video>
                 
-                <!-- Poster com botão de play (overlay sobre o vídeo) -->
-                <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/20 z-10 transition-opacity duration-300 hover:bg-black/10 group-hover:bg-black/5" (click)="onPosterClick('video1')">
-                  <div class="text-center">
-                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300 shadow-2xl border-2 border-white/30">
-                      <svg class="w-10 h-10 md:w-12 md:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
-                      </svg>
-                    </div>
-                    <p class="text-white font-semibold text-sm md:text-base drop-shadow-lg">Assistir depoimento</p>
+                <!-- Poster com botão de play -->
+                <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/30 z-10 transition-opacity duration-300 cursor-pointer" (click)="onPosterClick(video.id)">
+                  <div class="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center hover:scale-110 transition-transform duration-300">
+                    <svg class="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+                    </svg>
                   </div>
                 </div>
               </div>
             </div>
-            
-            <!-- Vídeo 2 -->
-            <div class="relative w-full group">
-              <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-emerald-400/20 rounded-2xl blur-2xl group-hover:blur-3xl transition duration-500"></div>
-              <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-xl aspect-square video-container cursor-pointer">
-                <!-- Vídeo como background (primeiro frame) -->
-                <video 
-                  data-video-id="video2"
-                  class="w-full h-full object-cover absolute inset-0 z-0"
-                  muted
-                  preload="auto"
-                  playsinline
-                  (loadedmetadata)="onVideoMetadataLoaded('video2', $event)">
-                  <source src="/assets/videos/depoimento1.mp4" type="video/mp4">
-                </video>
-                
-                <!-- Vídeo principal (oculto até clicar) -->
-                <video 
-                  data-video-id="video2-main"
-                  class="w-full h-full object-contain bg-slate-900 hidden z-20"
-                  controls
-                  preload="metadata"
-                  (play)="playVideo('video2', $event)"
-                  (pause)="pauseVideo('video2', $event)">
-                  <source src="/assets/videos/depoimento1.mp4" type="video/mp4">
-                  Seu navegador não suporta vídeo HTML5.
-                </video>
-                
-                <!-- Poster com botão de play (overlay sobre o vídeo) -->
-                <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/20 z-10 transition-opacity duration-300 hover:bg-black/10 group-hover:bg-black/5" (click)="onPosterClick('video2')">
-                  <div class="text-center">
-                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300 shadow-2xl border-2 border-white/30">
-                      <svg class="w-10 h-10 md:w-12 md:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
-                      </svg>
-                    </div>
-                    <p class="text-white font-semibold text-sm md:text-base drop-shadow-lg">Assistir depoimento</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Vídeo 3 -->
-            <div class="relative w-full group">
-              <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-emerald-400/20 rounded-2xl blur-2xl group-hover:blur-3xl transition duration-500"></div>
-              <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-xl aspect-square video-container cursor-pointer">
-                <!-- Vídeo como background (primeiro frame) -->
-                <video 
-                  data-video-id="video3"
-                  class="w-full h-full object-cover absolute inset-0 z-0"
-                  muted
-                  preload="auto"
-                  playsinline
-                  (loadedmetadata)="onVideoMetadataLoaded('video3', $event)">
-                  <source src="/assets/videos/depoimento2.mp4" type="video/mp4">
-                </video>
-                
-                <!-- Vídeo principal (oculto até clicar) -->
-                <video 
-                  data-video-id="video3-main"
-                  class="w-full h-full object-contain bg-slate-900 hidden z-20"
-                  controls
-                  preload="metadata"
-                  (play)="playVideo('video3', $event)"
-                  (pause)="pauseVideo('video3', $event)">
-                  <source src="/assets/videos/depoimento2.mp4" type="video/mp4">
-                  Seu navegador não suporta vídeo HTML5.
-                </video>
-                
-                <!-- Poster com botão de play (overlay sobre o vídeo) -->
-                <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/20 z-10 transition-opacity duration-300 hover:bg-black/10 group-hover:bg-black/5" (click)="onPosterClick('video3')">
-                  <div class="text-center">
-                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300 shadow-2xl border-2 border-white/30">
-                      <svg class="w-10 h-10 md:w-12 md:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
-                      </svg>
-                    </div>
-                    <p class="text-white font-semibold text-sm md:text-base drop-shadow-lg">Assistir depoimento</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+
+            <!-- Seta Direita -->
+            <button
+              (click)="proximoVideo()"
+              class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-12 z-10 w-12 h-12 rounded-full border-2 border-white/30 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center hover:bg-slate-800/70 hover:border-white/50 transition-all duration-200">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </button>
           </div>
         </div>
         
         <!-- Seção de Depoimentos em Texto -->
-        <div>
-          <div class="text-center mb-10">
-            <h3 class="text-2xl md:text-3xl font-bold text-white mb-2">
-              Depoimentos escritos
+        <div class="max-w-4xl mx-auto">
+          <div class="text-center mb-12">
+            <h3 class="text-4xl md:text-5xl font-bold text-white mb-4">
+              Depoimentos
             </h3>
-            <p class="text-slate-400">
+            <p class="text-lg text-slate-300">
               Leia o que nossos clientes compartilham
             </p>
           </div>
           
-          <div class="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            <!-- Depoimento 1 -->
-            <div class="bg-slate-900/60 rounded-2xl border border-slate-700/60 p-6 backdrop-blur-xl hover:border-blue-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/10">
-              <div class="flex items-center gap-3 mb-4">
-                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-emerald-400 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                  O
-                </div>
-                <div>
-                  <h4 class="text-white font-semibold">Olavo</h4>
-                  <p class="text-slate-400 text-sm">CEO</p>
-                </div>
-              </div>
-              <p class="text-slate-300 text-sm leading-relaxed">
-                "A Finzzia transformou completamente nossa gestão financeira. Agora temos controle total e visibilidade em tempo real."
-              </p>
+          <div class="relative text-center py-12 cursor-grab active:cursor-grabbing"
+               (touchstart)="onDepoimentoTouchStart($event)"
+               (touchmove)="onDepoimentoTouchMove($event)"
+               (touchend)="onDepoimentoTouchEnd($event)"
+               (mousedown)="onDepoimentoMouseDown($event)"
+               (mousemove)="onDepoimentoMouseMove($event)"
+               (mouseup)="onDepoimentoMouseUp($event)"
+               (mouseleave)="onDepoimentoMouseUp($event)">
+            <!-- Aspas de Abertura (Esquerda) -->
+            <div class="absolute left-0 top-0 text-8xl md:text-9xl text-slate-700/30 font-serif leading-none" style="font-family: Georgia, serif;">
+              "
             </div>
             
-            <!-- Depoimento 2 -->
-            <div class="bg-slate-900/60 rounded-2xl border border-slate-700/60 p-6 backdrop-blur-xl hover:border-emerald-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/10">
-              <div class="flex items-center gap-3 mb-4">
-                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-green-400 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                  K
-                </div>
-                <div>
-                  <h4 class="text-white font-semibold">Karina</h4>
-                  <p class="text-slate-400 text-sm">Diretora Financeira</p>
-                </div>
-              </div>
-              <p class="text-slate-300 text-sm leading-relaxed">
-                "O suporte humanizado e a análise estratégica mensal fazem toda a diferença. Recomendo sem hesitação!"
-              </p>
+            <!-- Aspas de Fechamento (Direita) -->
+            <div class="absolute right-0 bottom-0 text-8xl md:text-9xl text-slate-700/30 font-serif leading-none" style="font-family: Georgia, serif;">
+              "
             </div>
             
-            <!-- Depoimento 3 -->
-            <div class="bg-slate-900/60 rounded-2xl border border-slate-700/60 p-6 backdrop-blur-xl hover:border-purple-500/40 transition-all duration-300 hover:shadow-xl hover:shadow-purple-500/10">
-              <div class="flex items-center gap-3 mb-4">
-                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-400 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                  V
-                </div>
-                <div>
-                  <h4 class="text-white font-semibold">Vitor</h4>
-                  <p class="text-slate-400 text-sm">Fundador</p>
-                </div>
+            <!-- Conteúdo do Depoimento -->
+            <div class="relative z-10 max-w-3xl mx-auto px-8">
+              <div *ngFor="let depoimento of depoimentos; let i = index" [class.hidden]="i !== depoimentoAtualIndex">
+                <h4 class="text-2xl md:text-3xl font-bold italic text-white mb-2">
+                  {{ depoimento.empresa }}
+                </h4>
+                <p class="text-lg italic text-white/80 mb-6">
+                  {{ depoimento.tipo }}
+                </p>
+                <p class="text-lg md:text-xl italic text-white leading-relaxed">
+                  "{{ depoimento.texto }}"
+                </p>
               </div>
-              <p class="text-slate-300 text-sm leading-relaxed">
-                "Finalmente encontramos uma solução que une tecnologia e atendimento personalizado. Excelente!"
-              </p>
+            </div>
+            
+            <!-- Dots de Navegação -->
+            <div class="flex justify-center gap-2 mt-8">
+              <button
+                *ngFor="let depoimento of depoimentos; let i = index"
+                (click)="irParaDepoimento(i)"
+                class="w-2 h-2 rounded-full transition-all duration-200"
+                [ngClass]="i === depoimentoAtualIndex ? 'bg-white' : 'bg-white opacity-30'"
+                [attr.aria-label]="'Ir para depoimento ' + (i + 1)">
+              </button>
             </div>
           </div>
         </div>
@@ -634,133 +516,71 @@
       <section class="relative py-16 mt-12">
         <div class="max-w-7xl mx-auto px-4">
           <div class="text-center mb-12">
-            <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-4">
               O que nossos clientes dizem
             </h2>
-            <p class="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto">
+            <p class="text-lg text-slate-300 max-w-2xl mx-auto">
               Empresas que transformaram seu financeiro com a Finzzia
             </p>
           </div>
 
-          <div class="text-center mb-10">
-            <h3 class="text-2xl md:text-3xl font-bold text-white mb-2">
-              Depoimentos em vídeo
-            </h3>
-            <p class="text-slate-400">
-              Veja o que nossos clientes têm a dizer
-            </p>
-          </div>
-          
-          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <!-- Vídeo 1 -->
-            <div class="relative w-full group">
-              <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-emerald-400/20 rounded-2xl blur-2xl group-hover:blur-3xl transition duration-500"></div>
-              <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-xl aspect-square video-container cursor-pointer">
-                <!-- Vídeo como background (primeiro frame) -->
-                <video 
-                  data-video-id="video-agencia1"
-                  class="w-full h-full object-cover absolute inset-0 z-0"
-                  muted
-                  preload="auto"
-                  playsinline
-                  (loadedmetadata)="onVideoMetadataLoaded('video-agencia1', $event)">
-                  <source src="/assets/videos/depoimento.mp4" type="video/mp4">
-                </video>
-                
-                <!-- Vídeo principal (oculto até clicar) -->
-                <video 
-                  data-video-id="video-agencia1-main"
-                  class="w-full h-full object-contain bg-slate-900 hidden z-20"
-                  controls
-                  preload="metadata"
-                  (play)="playVideo('video-agencia1', $event)"
-                  (pause)="pauseVideo('video-agencia1', $event)">
-                  <source src="/assets/videos/depoimento.mp4" type="video/mp4">
-                  Seu navegador não suporta vídeo HTML5.
-                </video>
-                
-                <!-- Poster com botão de play (overlay sobre o vídeo) -->
-                <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/20 z-10 transition-opacity duration-300 hover:bg-black/10 group-hover:bg-black/5" (click)="onPosterClick('video-agencia1')">
-                  <div class="text-center">
-                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300 shadow-2xl border-2 border-white/30">
-                      <svg class="w-10 h-10 md:w-12 md:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
+          <!-- Seção de Vídeos - Carousel -->
+          <div class="mb-20">
+            <div class="max-w-4xl mx-auto relative">
+              <!-- Seta Esquerda -->
+              <button
+                (click)="videoAgenciaAnterior()"
+                class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-12 z-10 w-12 h-12 rounded-full border-2 border-white/30 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center hover:bg-slate-800/70 hover:border-white/50 transition-all duration-200">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+              </button>
+
+              <!-- Player de Vídeo Central -->
+              <div class="relative w-full aspect-[9/16] max-w-md mx-auto rounded-2xl overflow-hidden bg-slate-900/60 backdrop-blur-xl border border-slate-700/60 shadow-2xl video-container-agencia">
+                <div *ngFor="let video of videosAgencias; let i = index" [class.hidden]="i !== videoAgenciaAtualIndex">
+                  <!-- Vídeo como background (primeiro frame) -->
+                  <video 
+                    [attr.data-video-id]="video.id"
+                    class="w-full h-full object-cover absolute inset-0 z-0"
+                    muted
+                    preload="auto"
+                    playsinline
+                    (loadedmetadata)="onVideoMetadataLoaded(video.id, $event)">
+                    <source [src]="video.src" type="video/mp4">
+                  </video>
+                  
+                  <!-- Vídeo principal (oculto até clicar) -->
+                  <video 
+                    [attr.data-video-id]="video.id + '-main'"
+                    class="w-full h-full object-contain bg-slate-900 hidden z-20"
+                    controls
+                    preload="metadata"
+                    (play)="playVideo(video.id, $event)"
+                    (pause)="pauseVideo(video.id, $event)">
+                    <source [src]="video.src" type="video/mp4">
+                    Seu navegador não suporta vídeo HTML5.
+                  </video>
+                  
+                  <!-- Poster com botão de play -->
+                  <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/30 z-10 transition-opacity duration-300 cursor-pointer" (click)="onPosterClick(video.id)">
+                    <div class="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center hover:scale-110 transition-transform duration-300">
+                      <svg class="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
                       </svg>
                     </div>
-                    <p class="text-white font-semibold text-sm md:text-base drop-shadow-lg">Assistir depoimento</p>
                   </div>
                 </div>
               </div>
-            </div>
-            <!-- Vídeo 2 -->
-            <div class="relative w-full group">
-              <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-emerald-400/20 rounded-2xl blur-2xl group-hover:blur-3xl transition duration-500"></div>
-              <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-xl aspect-square video-container cursor-pointer">
-                <video 
-                  data-video-id="video-agencia2"
-                  class="w-full h-full object-cover absolute inset-0 z-0"
-                  muted
-                  preload="auto"
-                  playsinline
-                  (loadedmetadata)="onVideoMetadataLoaded('video-agencia2', $event)">
-                  <source src="/assets/videos/depoimento2.mp4" type="video/mp4">
-                </video>
-                <video 
-                  data-video-id="video-agencia2-main"
-                  class="w-full h-full object-contain bg-slate-900 hidden z-20"
-                  controls
-                  preload="metadata"
-                  (play)="playVideo('video-agencia2', $event)"
-                  (pause)="pauseVideo('video-agencia2', $event)">
-                  <source src="/assets/videos/depoimento2.mp4" type="video/mp4">
-                  Seu navegador não suporta vídeo HTML5.
-                </video>
-                <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/20 z-10 transition-opacity duration-300 hover:bg-black/10 group-hover:bg-black/5" (click)="onPosterClick('video-agencia2')">
-                  <div class="text-center">
-                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300 shadow-2xl border-2 border-white/30">
-                      <svg class="w-10 h-10 md:w-12 md:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
-                      </svg>
-                    </div>
-                    <p class="text-white font-semibold text-sm md:text-base drop-shadow-lg">Assistir depoimento</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <!-- Vídeo 3 -->
-            <div class="relative w-full group">
-              <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-emerald-400/20 rounded-2xl blur-2xl group-hover:blur-3xl transition duration-500"></div>
-              <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-700/60 bg-slate-900/60 backdrop-blur-xl aspect-square video-container cursor-pointer">
-                <video 
-                  data-video-id="video-agencia3"
-                  class="w-full h-full object-cover absolute inset-0 z-0"
-                  muted
-                  preload="auto"
-                  playsinline
-                  (loadedmetadata)="onVideoMetadataLoaded('video-agencia3', $event)">
-                  <source src="/assets/videos/depoimento1.mp4" type="video/mp4">
-                </video>
-                <video 
-                  data-video-id="video-agencia3-main"
-                  class="w-full h-full object-contain bg-slate-900 hidden z-20"
-                  controls
-                  preload="metadata"
-                  (play)="playVideo('video-agencia3', $event)"
-                  (pause)="pauseVideo('video-agencia3', $event)">
-                  <source src="/assets/videos/depoimento1.mp4" type="video/mp4">
-                  Seu navegador não suporta vídeo HTML5.
-                </video>
-                <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/20 z-10 transition-opacity duration-300 hover:bg-black/10 group-hover:bg-black/5" (click)="onPosterClick('video-agencia3')">
-                  <div class="text-center">
-                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300 shadow-2xl border-2 border-white/30">
-                      <svg class="w-10 h-10 md:w-12 md:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
-                      </svg>
-                    </div>
-                    <p class="text-white font-semibold text-sm md:text-base drop-shadow-lg">Assistir depoimento</p>
-                  </div>
-                </div>
-              </div>
+
+              <!-- Seta Direita -->
+              <button
+                (click)="proximoVideoAgencia()"
+                class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-12 z-10 w-12 h-12 rounded-full border-2 border-white/30 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center hover:bg-slate-800/70 hover:border-white/50 transition-all duration-200">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -1026,122 +846,156 @@
     </section>
 
     <!-- Diagnóstico -->
-    <section id="diagnostico" class="pt-6 scroll-mt-24" [class.mt-20]="!segmentoAtual && !apenasDiagnostico" [class.min-h-screen]="apenasDiagnostico" [class.flex]="apenasDiagnostico" [class.items-center]="apenasDiagnostico">
-      <div class="max-w-5xl mx-auto px-4" [class.w-full]="apenasDiagnostico">
-        <div class="bg-slate-900/80 rounded-2xl shadow-2xl border border-blue-500/40 p-8 md:p-10 space-y-6 backdrop-blur-xl overflow-hidden relative">
-          <!-- Imagem de fundo decorativa -->
-          <div class="absolute top-0 right-0 w-96 h-96 opacity-10 pointer-events-none">
-            <div class="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-emerald-400/20 rounded-full blur-3xl"></div>
-            <img 
-              src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=400&fit=crop&q=80" 
-              alt="Dashboard financeiro com gráficos e indicadores" 
-              class="w-full h-full object-cover rounded-full"
-              loading="lazy"
-            />
-          </div>
+    <section id="diagnostico" class="pt-6 scroll-mt-24" [class.mt-20]="!segmentoAtual && !apenasDiagnostico" [class.min-h-screen]="apenasDiagnostico" [class.flex]="apenasDiagnostico" [class.flex-col]="apenasDiagnostico" [class.items-center]="apenasDiagnostico" [class.justify-center]="apenasDiagnostico">
+      <div class="max-w-5xl mx-auto px-4 w-full" [class.flex-1]="apenasDiagnostico" [class.flex]="apenasDiagnostico" [class.flex-col]="apenasDiagnostico" [class.justify-center]="apenasDiagnostico">
+        <div class="bg-gradient-to-br from-purple-600/20 via-blue-600/20 to-teal-500/20 rounded-2xl shadow-2xl border border-purple-500/30 p-8 md:p-10 space-y-6 backdrop-blur-xl overflow-hidden relative">
           <div class="relative z-10">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            <div class="space-y-2">
-              <p class="text-sm font-semibold text-blue-200 uppercase tracking-wide">Diagnóstico</p>
-                <h3 class="text-3xl font-semibold text-white">Quer saber onde o dinheiro está "vazando"?</h3>
-              <p class="text-slate-200">Encontre o que trava seu caixa e receba um plano de ação claro.</p>
+            <div class="mb-8">
+              <h3 class="text-3xl md:text-4xl font-bold text-white mb-3">Quer saber onde o dinheiro está "vazando"?</h3>
+              <p class="text-lg text-slate-300">Encontre o que trava seu caixa e receba um plano de ação claro.</p>
             </div>
-            </div>
+            
             <!-- Formulário de diagnóstico -->
-            <form class="grid md:grid-cols-2 gap-4" #diagnosticoForm="ngForm">
-            <div class="md:col-span-1">
-              <label class="text-sm font-medium text-slate-200">Nome</label>
-              <input
-                type="text"
-                [(ngModel)]="formData.nome"
-                name="nome"
-                placeholder="Seu nome"
-                required
-                class="mt-2 w-full rounded-lg border border-slate-600/70 bg-slate-950/60 px-4 py-3 text-slate-50 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition" />
-            </div>
-            <div class="md:col-span-1">
-              <label class="text-sm font-medium text-slate-200">Email</label>
-              <input
-                type="email"
-                [(ngModel)]="formData.email"
-                name="email"
-                placeholder="voce@empresa.com"
-                required
-                class="mt-2 w-full rounded-lg border border-slate-600/70 bg-slate-950/60 px-4 py-3 text-slate-50 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition" />
-            </div>
-            <div class="md:col-span-1">
-              <label class="text-sm font-medium text-slate-200">Telefone (Celular)</label>
-              <input
-                type="tel"
-                [(ngModel)]="formData.telefone"
-                name="telefone"
-                placeholder="(48) 99999-9999"
-                class="mt-2 w-full rounded-lg border border-slate-600/70 bg-slate-950/60 px-4 py-3 text-slate-50 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition" />
-            </div>
-            <div class="md:col-span-1">
-              <label class="text-sm font-medium text-slate-200">Segmento</label>
-              <select
-                [(ngModel)]="formData.segmento"
-                name="segmento"
-                class="mt-2 w-full rounded-lg border border-slate-600/70 bg-slate-950/60 px-4 py-3 text-slate-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition">
-                <option value="">Selecione um segmento</option>
-                <option>Agência de Marketing</option>
-                <option>Restaurante</option>
-                <option>Prestador de Serviço</option>
-                <option>Outro</option>
-              </select>
-            </div>
-            <div class="md:col-span-1">
-              <label class="text-sm font-medium text-slate-200">Faturamento mensal aproximado</label>
-              <select
-                [(ngModel)]="formData.faturamento"
-                name="faturamento"
-                class="mt-2 w-full rounded-lg border border-slate-600/70 bg-slate-950/60 px-4 py-3 text-slate-50 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition">
-                <option value="">Selecione uma faixa</option>
-                <option value="10 a 30k">R$ 10k a R$ 30k</option>
-                <option value="30 a 50k">R$ 30k a R$ 50k</option>
-                <option value="50 a 100k">R$ 50k a R$ 100k</option>
-                <option value="Acima de 100k">Acima de R$ 100k</option>
-              </select>
-            </div>
-            <div class="md:col-span-2">
-              <label class="text-sm font-medium text-slate-200">Contexto / principal dor</label>
-              <textarea
-                rows="3"
-                [(ngModel)]="formData.contexto"
-                name="contexto"
-                placeholder="Resuma onde está o problema hoje"
-                class="mt-2 w-full rounded-lg border border-slate-600/70 bg-slate-950/60 px-4 py-3 text-slate-50 placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition"></textarea>
-            </div>
-            <div class="md:col-span-2 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
-              <!-- Mensagem de sucesso -->
-              <div *ngIf="diagnosticoSalvo" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-500/20 border border-green-500/40 text-green-300 text-sm">
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                </svg>
-                Diagnóstico salvo com sucesso!
+            <form class="space-y-4" #diagnosticoForm="ngForm">
+              <!-- Nome Completo -->
+              <div>
+                <input
+                  type="text"
+                  [(ngModel)]="formData.nome"
+                  name="nome"
+                  placeholder="Nome Completo"
+                  required
+                  class="w-full rounded-xl border-0 bg-slate-700/50 px-4 py-3.5 text-white placeholder:text-slate-400 focus:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition" />
               </div>
               
-              <button
-                type="button"
-                (click)="salvarDiagnostico($event)"
-                [disabled]="salvandoDiagnostico"
-                class="inline-flex justify-center items-center gap-2 px-5 py-3 rounded-full bg-gradient-to-r from-blue-500 to-emerald-400 text-white font-semibold shadow-lg shadow-blue-500/40 hover:shadow-2xl hover:brightness-110 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <svg *ngIf="!salvandoDiagnostico" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-                <svg *ngIf="salvandoDiagnostico" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                {{ salvandoDiagnostico ? 'Salvando...' : 'Salvar diagnóstico' }}
-              </button>
-            </div>
-          </form>
+              <!-- Telefone e Email (lado a lado) -->
+              <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                  <input
+                    type="tel"
+                    [(ngModel)]="formData.telefone"
+                    name="telefone"
+                    placeholder="Telefone ou Celular"
+                    class="w-full rounded-xl border-0 bg-slate-700/50 px-4 py-3.5 text-white placeholder:text-slate-400 focus:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition" />
+                </div>
+                <div>
+                  <input
+                    type="email"
+                    [(ngModel)]="formData.email"
+                    name="email"
+                    placeholder="E-mail"
+                    required
+                    class="w-full rounded-xl border-0 bg-slate-700/50 px-4 py-3.5 text-white placeholder:text-slate-400 focus:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition" />
+                </div>
+              </div>
+              
+              <!-- Faturamento e Segmento (lado a lado) -->
+              <div class="grid md:grid-cols-2 gap-4">
+                <div class="relative">
+                  <select
+                    [(ngModel)]="formData.faturamento"
+                    name="faturamento"
+                    class="w-full rounded-xl border-0 bg-slate-700/50 px-4 py-3.5 text-white appearance-none focus:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition">
+                    <option value="" class="bg-slate-800 text-slate-400">Faturamento mensal aproximado</option>
+                    <option value="10 a 30k" class="bg-slate-800">R$ 10k a R$ 30k</option>
+                    <option value="30 a 50k" class="bg-slate-800">R$ 30k a R$ 50k</option>
+                    <option value="50 a 100k" class="bg-slate-800">R$ 50k a R$ 100k</option>
+                    <option value="Acima de 100k" class="bg-slate-800">Acima de R$ 100k</option>
+                  </select>
+                  <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </div>
+                </div>
+                <div class="relative">
+                  <select
+                    [(ngModel)]="formData.segmento"
+                    name="segmento"
+                    class="w-full rounded-xl border-0 bg-slate-700/50 px-4 py-3.5 text-white appearance-none focus:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition">
+                    <option value="" class="bg-slate-800 text-slate-400">Selecione um segmento</option>
+                    <option value="Agência de Marketing" class="bg-slate-800">Agência de Marketing</option>
+                    <option value="Restaurante" class="bg-slate-800">Restaurante</option>
+                    <option value="Prestador de Serviço" class="bg-slate-800">Prestador de Serviço</option>
+                    <option value="Outro" class="bg-slate-800">Outro</option>
+                  </select>
+                  <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Onde está o problema hoje? -->
+              <div>
+                <textarea
+                  rows="4"
+                  [(ngModel)]="formData.contexto"
+                  name="contexto"
+                  placeholder="Onde está o problema hoje?"
+                  class="w-full rounded-xl border-0 bg-slate-700/50 px-4 py-3.5 text-white placeholder:text-slate-400 focus:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition resize-none"></textarea>
+              </div>
+              
+              <!-- Mensagem de sucesso e Botão -->
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
+                <div *ngIf="diagnosticoSalvo" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-500/20 border border-green-500/40 text-green-300 text-sm">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                  </svg>
+                  Diagnóstico salvo com sucesso!
+                </div>
+                
+                <button
+                  type="button"
+                  (click)="salvarDiagnostico($event)"
+                  [disabled]="salvandoDiagnostico"
+                  class="inline-flex justify-center items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-emerald-400 text-white font-semibold shadow-lg shadow-blue-500/40 hover:shadow-2xl hover:brightness-110 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                  <svg *ngIf="!salvandoDiagnostico" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  <svg *ngIf="salvandoDiagnostico" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  {{ salvandoDiagnostico ? 'Salvando...' : 'Salvar diagnóstico' }}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
+      
+      <!-- Footer na seção de diagnóstico -->
+      <footer *ngIf="apenasDiagnostico" class="relative bg-slate-950 text-slate-200 py-12 mt-12 w-full">
+        <div class="max-w-6xl mx-auto px-4">
+          <div class="flex flex-col items-center gap-8">
+            <!-- Logo -->
+            <div class="flex items-center">
+              <img src="assets/images/finnzialogo.png" alt="Finzzia" class="h-10 w-auto" />
+            </div>
+            
+            <!-- Ícones de Redes Sociais -->
+            <div class="flex items-center gap-4">
+              <a href="https://www.instagram.com/finzzia/" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full bg-black flex items-center justify-center hover:bg-slate-900 transition-colors" aria-label="Instagram">
+                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+              </a>
+              <a href="#" target="_blank" class="w-10 h-10 rounded-full bg-black flex items-center justify-center hover:bg-slate-900 transition-colors" aria-label="LinkedIn">
+                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+              </a>
+            </div>
+            
+            <!-- Copyright -->
+            <p class="text-sm text-slate-400 text-center">
+              Copyright © FINZZIA | Todos os direitos reservados. | <a href="#" class="hover:text-slate-300 transition-colors">Política de privacidade</a>
+            </p>
+          </div>
+        </div>
+      </footer>
     </section>
   </main>
 
@@ -1157,12 +1011,33 @@
     </svg>
   </a>
 
-  <footer *ngIf="!apenasDiagnostico" class="relative bg-slate-950/90 text-slate-200 py-10 mt-10 border-t border-white/5">
-    <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <img src="assets/images/finnzialogo.png" alt="Finzzia" class="h-12 w-auto drop-shadow-lg" />
+  <footer *ngIf="!apenasDiagnostico" class="relative bg-slate-950 text-slate-200 py-12 mt-20">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="flex flex-col items-center gap-8">
+        <!-- Logo -->
+        <div class="flex items-center">
+          <img src="assets/images/finnzialogo.png" alt="Finzzia" class="h-10 w-auto" />
+        </div>
+        
+        <!-- Ícones de Redes Sociais -->
+        <div class="flex items-center gap-4">
+          <a href="https://www.instagram.com/finzzia/" target="_blank" rel="noopener noreferrer" class="w-10 h-10 rounded-full bg-black flex items-center justify-center hover:bg-slate-900 transition-colors" aria-label="Instagram">
+            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+            </svg>
+          </a>
+          <a href="#" target="_blank" class="w-10 h-10 rounded-full bg-black flex items-center justify-center hover:bg-slate-900 transition-colors" aria-label="LinkedIn">
+            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+            </svg>
+          </a>
+        </div>
+        
+        <!-- Copyright -->
+        <p class="text-sm text-slate-400 text-center">
+          Copyright © FINZZIA | Todos os direitos reservados. | <a href="#" class="hover:text-slate-300 transition-colors">Política de privacidade</a>
+        </p>
       </div>
-      <p class="text-sm text-slate-400">© Finzzia. Clareza e previsibilidade financeira.</p>
     </div>
   </footer>
 </div>
