@@ -347,17 +347,18 @@
                 <!-- Vídeo como background (primeiro frame) -->
                 <video 
                   data-video-id="video1"
-                  class="w-full h-full object-cover absolute inset-0"
+                  class="w-full h-full object-cover absolute inset-0 z-0"
                   muted
-                  preload="metadata"
-                  playsinline>
+                  preload="auto"
+                  playsinline
+                  (loadedmetadata)="onVideoMetadataLoaded('video1', $event)">
                   <source src="/assets/videos/depoimento.mp4" type="video/mp4">
                 </video>
                 
                 <!-- Vídeo principal (oculto até clicar) -->
                 <video 
                   data-video-id="video1-main"
-                  class="w-full h-full object-contain bg-slate-900 hidden"
+                  class="w-full h-full object-contain bg-slate-900 hidden z-20"
                   controls
                   preload="metadata"
                   (play)="playVideo('video1', $event)"
@@ -367,9 +368,9 @@
                 </video>
                 
                 <!-- Poster com botão de play (overlay sobre o vídeo) -->
-                <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/40 z-10 transition-opacity duration-300 hover:bg-black/30 group-hover:bg-black/20" (click)="onPosterClick('video1')">
+                <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/20 z-10 transition-opacity duration-300 hover:bg-black/10 group-hover:bg-black/5" (click)="onPosterClick('video1')">
                   <div class="text-center">
-                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300 shadow-2xl">
+                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300 shadow-2xl border-2 border-white/30">
                       <svg class="w-10 h-10 md:w-12 md:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
                       </svg>
@@ -387,17 +388,18 @@
                 <!-- Vídeo como background (primeiro frame) -->
                 <video 
                   data-video-id="video2"
-                  class="w-full h-full object-cover absolute inset-0"
+                  class="w-full h-full object-cover absolute inset-0 z-0"
                   muted
-                  preload="metadata"
-                  playsinline>
+                  preload="auto"
+                  playsinline
+                  (loadedmetadata)="onVideoMetadataLoaded('video2', $event)">
                   <source src="/assets/videos/depoimento1.mp4" type="video/mp4">
                 </video>
                 
                 <!-- Vídeo principal (oculto até clicar) -->
                 <video 
                   data-video-id="video2-main"
-                  class="w-full h-full object-contain bg-slate-900 hidden"
+                  class="w-full h-full object-contain bg-slate-900 hidden z-20"
                   controls
                   preload="metadata"
                   (play)="playVideo('video2', $event)"
@@ -407,9 +409,9 @@
                 </video>
                 
                 <!-- Poster com botão de play (overlay sobre o vídeo) -->
-                <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/40 z-10 transition-opacity duration-300 hover:bg-black/30 group-hover:bg-black/20" (click)="onPosterClick('video2')">
+                <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/20 z-10 transition-opacity duration-300 hover:bg-black/10 group-hover:bg-black/5" (click)="onPosterClick('video2')">
                   <div class="text-center">
-                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300 shadow-2xl">
+                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300 shadow-2xl border-2 border-white/30">
                       <svg class="w-10 h-10 md:w-12 md:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
                       </svg>
@@ -427,17 +429,18 @@
                 <!-- Vídeo como background (primeiro frame) -->
                 <video 
                   data-video-id="video3"
-                  class="w-full h-full object-cover absolute inset-0"
+                  class="w-full h-full object-cover absolute inset-0 z-0"
                   muted
-                  preload="metadata"
-                  playsinline>
+                  preload="auto"
+                  playsinline
+                  (loadedmetadata)="onVideoMetadataLoaded('video3', $event)">
                   <source src="/assets/videos/depoimento2.mp4" type="video/mp4">
                 </video>
                 
                 <!-- Vídeo principal (oculto até clicar) -->
                 <video 
                   data-video-id="video3-main"
-                  class="w-full h-full object-contain bg-slate-900 hidden"
+                  class="w-full h-full object-contain bg-slate-900 hidden z-20"
                   controls
                   preload="metadata"
                   (play)="playVideo('video3', $event)"
@@ -447,9 +450,9 @@
                 </video>
                 
                 <!-- Poster com botão de play (overlay sobre o vídeo) -->
-                <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/40 z-10 transition-opacity duration-300 hover:bg-black/30 group-hover:bg-black/20" (click)="onPosterClick('video3')">
+                <div class="video-poster absolute inset-0 flex items-center justify-center bg-black/20 z-10 transition-opacity duration-300 hover:bg-black/10 group-hover:bg-black/5" (click)="onPosterClick('video3')">
                   <div class="text-center">
-                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/30 backdrop-blur-md flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300 shadow-2xl">
+                    <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300 shadow-2xl border-2 border-white/30">
                       <svg class="w-10 h-10 md:w-12 md:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 20 20">
                         <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
                       </svg>

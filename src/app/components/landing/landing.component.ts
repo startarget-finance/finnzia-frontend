@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -12,7 +12,7 @@ import { ComparacaoServicosComponent, FeatureComparacao } from '../comparacao-se
   imports: [CommonModule, FormsModule, ComparacaoServicosComponent],
   templateUrl: './landing.component.html'
 })
-export class LandingComponent implements OnInit {
+export class LandingComponent implements OnInit, AfterViewInit {
   // Dados do formulário de diagnóstico
   formData = {
     nome: '',
@@ -365,27 +365,91 @@ export class LandingComponent implements OnInit {
   // Métodos para controlar reprodução de vídeos
   playingVideos: { [key: string]: boolean } = {};
 
-  playVideo(videoId: string, event?: Event): void {
-    const videoElement = document.querySelector(`video[data-video-id="${videoId}"]`) as HTMLVideoElement;
-    if (!videoElement) return;
+  ngAfterViewInit(): void {
+    // Configurar vídeos para mostrar primeiro frame como capa
+    this.setupVideoPosters();
+  }
+
+  setupVideoPosters(): void {
+    const videoIds = ['video1', 'video2', 'video3'];
     
-    const container = videoElement.closest('.video-container');
-    const poster = container?.querySelector('.video-poster') as HTMLElement;
+    videoIds.forEach(videoId => {
+      const previewVideo = document.querySelector(`video[data-video-id="${videoId}"]`) as HTMLVideoElement;
+      if (!previewVideo) return;
+
+      // Garantir que o vídeo está pausado e no primeiro frame
+      previewVideo.pause();
+      previewVideo.currentTime = 0;
+      
+      // Quando o vídeo carregar metadados, garantir primeiro frame
+      previewVideo.addEventListener('loadedmetadata', () => {
+        previewVideo.currentTime = 0.1; // Pequeno offset para garantir que há frame
+        previewVideo.pause();
+      });
+
+      // Quando o vídeo carregar dados suficientes, garantir primeiro frame
+      previewVideo.addEventListener('loadeddata', () => {
+        previewVideo.currentTime = 0.1;
+        previewVideo.pause();
+      });
+
+      // Tentar carregar o primeiro frame
+      previewVideo.load();
+    });
+  }
+
+  onVideoMetadataLoaded(videoId: string, event: Event): void {
+    const video = event.target as HTMLVideoElement;
+    if (video) {
+      // Garantir que o vídeo está no primeiro frame e pausado
+      video.currentTime = 0.1;
+      video.pause();
+    }
+  }
+
+  playVideo(videoId: string, event?: Event): void {
+    const container = document.querySelector(`video[data-video-id="${videoId}"]`)?.closest('.video-container') as HTMLElement;
+    if (!container) return;
+    
+    // Esconder preview e poster
+    const previewVideo = container.querySelector(`video[data-video-id="${videoId}"]`) as HTMLVideoElement;
+    const mainVideo = container.querySelector(`video[data-video-id="${videoId}-main"]`) as HTMLVideoElement;
+    const poster = container.querySelector('.video-poster') as HTMLElement;
+    
+    if (previewVideo) {
+      previewVideo.classList.add('hidden');
+    }
     
     if (poster) {
       poster.style.display = 'none';
     }
     
-    videoElement.play();
+    if (mainVideo) {
+      mainVideo.classList.remove('hidden');
+      mainVideo.muted = false;
+      mainVideo.play();
+    }
+    
     this.playingVideos[videoId] = true;
   }
 
   pauseVideo(videoId: string, event: Event): void {
     const video = event.target as HTMLVideoElement;
     const container = video.closest('.video-container');
-    const poster = container?.querySelector('.video-poster') as HTMLElement;
+    if (!container) return;
+    
+    const previewVideo = container.querySelector(`video[data-video-id="${videoId}"]`) as HTMLVideoElement;
+    const mainVideo = container.querySelector(`video[data-video-id="${videoId}-main"]`) as HTMLVideoElement;
+    const poster = container.querySelector('.video-poster') as HTMLElement;
     
     if (poster && video.paused) {
+      // Mostrar preview e poster novamente
+      if (previewVideo) {
+        previewVideo.classList.remove('hidden');
+      }
+      if (mainVideo) {
+        mainVideo.classList.add('hidden');
+      }
       poster.style.display = 'flex';
     }
     
