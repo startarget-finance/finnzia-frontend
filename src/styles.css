@@ -113,23 +113,4 @@
     @apply opacity-0 -translate-y-2;
   }
 
-  /* Tabela de comparação - esconder no mobile */
-  @media (max-width: 767px) {
-    .comparison-table-desktop {
-      display: none !important;
-    }
-    .comparison-table-mobile {
-      display: block !important;
-    }
-  }
-  
-  @media (min-width: 768px) {
-    .comparison-table-desktop {
-      display: block !important;
-    }
-    .comparison-table-mobile {
-      display: none !important;
-    }
-  }
-
 }
