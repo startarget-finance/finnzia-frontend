@@ -7,47 +7,41 @@
   </div>
 
   <!-- Header da landing -->
-  <header class="relative sticky top-0 z-50 border-b border-white/10 bg-slate-950/95 backdrop-blur-xl shadow-lg shadow-black/10">
+  <header class="relative sticky top-0 z-50 border-b border-slate-800/50 bg-slate-950/90 backdrop-blur-xl transition-all duration-300">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16 md:h-20">
+      <div class="flex items-center justify-between h-16">
         <!-- Logo -->
         <div class="flex items-center">
-          <a href="/" class="flex items-center gap-3 hover:opacity-90 transition-opacity group">
-            <img src="assets/images/finnzialogo.png" alt="Finzzia" class="h-10 md:h-12 w-auto drop-shadow-lg group-hover:scale-105 transition-transform duration-300" />
+          <a href="/" class="flex items-center hover:opacity-90 transition-opacity">
+            <img src="assets/images/finnzialogo.png" alt="Finzzia" class="h-8 w-auto" />
           </a>
-      </div>
+        </div>
 
         <!-- Navegação Desktop -->
         <nav class="hidden lg:flex items-center gap-1">
           <a href="/agencias" 
-             class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200 relative group">
-            <span class="relative z-10">Agências</span>
-            <span class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"></span>
+             class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200">
+            Agências
           </a>
           <a href="/restaurantes" 
-             class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200 relative group">
-            <span class="relative z-10">Restaurantes</span>
-            <span class="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"></span>
+             class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200">
+            Restaurantes
           </a>
           <a href="/prestadores" 
-             class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200 relative group">
-            <span class="relative z-10">Prestadores de Serviço</span>
-            <span class="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"></span>
+             class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200">
+            Prestadores de Serviço
           </a>
           <a href="/diagnostico" 
-             (click)="fecharMenuMobile()"
-             class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200 relative group">
-            <span class="relative z-10">Diagnóstico</span>
-            <span class="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-emerald-400/10 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"></span>
+             class="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200">
+            Diagnóstico
           </a>
-      </nav>
+        </nav>
 
         <!-- Botão Login Desktop -->
-        <div class="hidden lg:flex items-center gap-4">
-      <button
-        (click)="goToLogin()"
-            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-blue-500 to-emerald-400 text-white text-sm font-semibold shadow-lg shadow-blue-500/40 hover:shadow-xl hover:brightness-110 transition-all duration-200 hover:scale-105"
-          >
+        <div class="hidden lg:flex items-center">
+          <button
+            (click)="goToLogin()"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-blue-500 to-emerald-400 text-white text-sm font-semibold hover:brightness-110 transition-all duration-200">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
             </svg>
@@ -55,115 +49,94 @@
           </button>
         </div>
 
-        <!-- Botões Mobile (Acessar sistema + Menu hambúrguer) -->
-        <div class="lg:hidden flex items-center gap-3">
-          <button
-            (click)="goToLogin()"
-            class="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-emerald-400 text-white text-xs font-semibold shadow-lg shadow-blue-500/40 hover:shadow-xl hover:brightness-110 transition-all duration-200"
-          >
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
-            </svg>
-            <span class="hidden sm:inline">Acessar</span>
-          </button>
+        <!-- Botão Menu Mobile -->
+        <div class="lg:hidden">
           <button
             (click)="toggleMenuMobile()"
-            class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-            aria-label="Abrir menu"
-          >
-            <svg *ngIf="!menuMobileAberto" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 transition-all duration-200"
+            aria-label="Abrir menu">
+            <svg *ngIf="!menuMobileAberto" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
             </svg>
-            <svg *ngIf="menuMobileAberto" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg *ngIf="menuMobileAberto" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
         </div>
       </div>
     </div>
-
-
   </header>
 
   <!-- Overlay para fechar menu mobile -->
   <div *ngIf="menuMobileAberto" 
        (click)="fecharMenuMobile()"
-       class="lg:hidden fixed top-16 md:top-20 left-0 right-0 bottom-0 z-[55] bg-black/60 backdrop-blur-sm transition-opacity"></div>
+       class="lg:hidden fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm transition-opacity duration-300 ease-out"></div>
 
-  <!-- Menu Mobile Lateral -->
+  <!-- Menu Mobile Lateral (Off-Canvas) -->
   <div *ngIf="menuMobileAberto" 
-       class="lg:hidden fixed top-0 right-0 bottom-0 z-[60] w-full max-w-sm bg-slate-950/98 backdrop-blur-xl shadow-2xl border-l border-white/10 transform translate-x-0 transition-transform duration-300 ease-in-out">
-    <div class="flex flex-col h-full pt-16 md:pt-20">
-      <!-- Header do Menu Mobile -->
-      <div class="flex items-center justify-between p-6 border-b border-white/10">
-        <img src="assets/images/finnzialogo.png" alt="Finzzia" class="h-10 w-auto" />
-        <button
-          (click)="fecharMenuMobile()"
-          class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-        >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
+       class="lg:hidden fixed top-0 right-0 bottom-0 z-[70] w-[85%] bg-slate-950/95 backdrop-blur-xl border-l border-slate-800/50 rounded-l-2xl shadow-2xl transform translate-x-0 transition-transform duration-300 ease-out">
+    <div class="flex flex-col h-full">
+      <!-- Conteúdo do Menu -->
+      <nav class="flex-1 overflow-y-auto px-5 py-6">
+        <!-- Label SEGMENTOS -->
+        <div class="mb-6">
+          <h3 class="text-xs font-medium text-slate-500 uppercase tracking-wider">
+            Segmentos
+          </h3>
+        </div>
 
-      <!-- Links do Menu Mobile -->
-      <nav class="flex-1 px-6 py-8 space-y-2 overflow-y-auto">
-        <a href="/agencias" 
-           (click)="fecharMenuMobile()"
-           class="flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium text-slate-300 hover:text-white hover:bg-blue-500/10 transition-all duration-200 group">
-          <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/30 transition">
-            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Itens do Menu -->
+        <div class="space-y-1">
+          <a href="/agencias" 
+             (click)="fecharMenuMobile()"
+             class="flex items-center gap-3 h-[52px] px-3 rounded-lg text-base font-semibold text-slate-200 hover:text-white hover:bg-slate-800/40 transition-all duration-200 group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
             </svg>
-          </div>
-          <span>Agências</span>
-        </a>
-        
-        <a href="/restaurantes" 
-           (click)="fecharMenuMobile()"
-           class="flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium text-slate-300 hover:text-white hover:bg-emerald-500/10 transition-all duration-200 group">
-          <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/30 transition">
-            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span>Agências</span>
+          </a>
+          
+          <a href="/restaurantes" 
+             (click)="fecharMenuMobile()"
+             class="flex items-center gap-3 h-[52px] px-3 rounded-lg text-base font-semibold text-slate-200 hover:text-white hover:bg-slate-800/40 transition-all duration-200 group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-emerald-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
             </svg>
-          </div>
-          <span>Restaurantes</span>
-        </a>
-        
-        <a href="/prestadores" 
-           (click)="fecharMenuMobile()"
-           class="flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium text-slate-300 hover:text-white hover:bg-purple-500/10 transition-all duration-200 group">
-          <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/30 transition">
-            <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span>Restaurantes</span>
+          </a>
+          
+          <a href="/prestadores" 
+             (click)="fecharMenuMobile()"
+             class="flex items-center gap-3 h-[52px] px-3 rounded-lg text-base font-semibold text-slate-200 hover:text-white hover:bg-slate-800/40 transition-all duration-200 group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-purple-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
             </svg>
-          </div>
-          <span>Prestadores de Serviço</span>
-        </a>
-        
-        <a href="/diagnostico" 
-           (click)="fecharMenuMobile()"
-           class="flex items-center gap-4 px-4 py-3 rounded-xl text-base font-medium text-slate-300 hover:text-white hover:bg-blue-500/10 transition-all duration-200 group">
-          <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/20 to-emerald-400/20 flex items-center justify-center group-hover:from-blue-500/30 group-hover:to-emerald-400/30 transition">
-            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span>Prestadores de Serviço</span>
+          </a>
+        </div>
+
+        <!-- Link Diagnóstico -->
+        <div class="mt-8 pt-8 border-t border-slate-800/50">
+          <a href="/diagnostico" 
+             (click)="fecharMenuMobile()"
+             class="flex items-center gap-3 h-[52px] px-3 rounded-lg text-base font-semibold text-slate-200 hover:text-white hover:bg-slate-800/40 transition-all duration-200 group">
+            <svg class="w-5 h-5 text-slate-400 group-hover:text-blue-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
             </svg>
-          </div>
-          <span>Diagnóstico</span>
-        </a>
+            <span>Diagnóstico</span>
+          </a>
+        </div>
       </nav>
 
-      <!-- Botão Login Mobile -->
-      <div class="p-6 border-t border-white/10">
+      <!-- Botão Secundário no Final -->
+      <div class="px-5 py-5 border-t border-slate-800/50">
         <button
           (click)="goToLogin(); fecharMenuMobile()"
-          class="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-emerald-400 text-white text-base font-semibold shadow-lg shadow-blue-500/40 hover:shadow-xl hover:brightness-110 transition-all duration-200"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          class="w-full inline-flex items-center justify-center gap-2 h-12 px-4 rounded-xl bg-gradient-to-r from-blue-500/90 to-emerald-400/90 text-white text-sm font-semibold hover:from-blue-500 hover:to-emerald-400 transition-all duration-200">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
           </svg>
-          Acessar sistema
+          <span>Acessar sistema</span>
         </button>
       </div>
     </div>
