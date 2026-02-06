@@ -25,37 +25,37 @@
       </div>
     </div>
 
-    <!-- VERSÃO DESKTOP: Tabela elegante (>= md) -->
+    <!-- VERSÃO DESKTOP: Tabela profissional e elegante (>= md) -->
     <div class="hidden md:block">
-      <div class="bg-slate-900/30 rounded-lg border border-slate-800/40 overflow-hidden backdrop-blur-sm">
+      <div class="bg-slate-900/40 rounded-xl border border-slate-800/50 overflow-hidden backdrop-blur-sm shadow-xl">
         <table class="w-full">
           <thead>
-            <tr class="bg-slate-800/20 border-b border-slate-800/50">
-              <th class="px-4 py-2 text-left text-[11px] font-medium text-slate-300/80 uppercase tracking-wider">
+            <tr class="bg-slate-800/40 border-b border-slate-700/50">
+              <th class="px-5 py-3 text-left text-xs font-semibold text-slate-200 uppercase tracking-wider">
                 Recursos
               </th>
-              <th class="px-4 py-2 text-center text-[11px] font-medium text-slate-300/80 uppercase tracking-wider">
+              <th class="px-5 py-3 text-center text-xs font-semibold text-slate-200 uppercase tracking-wider">
                 BPOs Financeiros
               </th>
-              <th class="px-4 py-2 text-center text-[11px] font-medium text-slate-300/80 uppercase tracking-wider">
+              <th class="px-5 py-3 text-center text-xs font-semibold text-slate-200 uppercase tracking-wider">
                 Sistema de Gestão
               </th>
-              <th class="px-4 py-2 text-center text-[11px] font-semibold text-emerald-400/90 uppercase tracking-wider bg-gradient-to-r from-emerald-500/8 via-blue-500/8 to-emerald-500/8 border-l border-emerald-500/20">
-                <div class="flex items-center justify-center gap-1.5">
+              <th class="px-5 py-3 text-center text-xs font-bold text-white uppercase tracking-wider bg-gradient-to-r from-emerald-500/15 via-blue-500/15 to-emerald-500/15 border-l border-emerald-500/30">
+                <div class="flex items-center justify-center gap-2">
                   <span>Finzzia</span>
-                  <span class="text-[9px] px-1.5 py-0.5 bg-emerald-500/15 text-emerald-300/90 rounded font-medium">Mais completo</span>
+                  <span class="text-[10px] px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-full font-semibold">Mais completo</span>
                 </div>
               </th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-slate-800/40">
+          <tbody class="divide-y divide-slate-800/50">
             <ng-container *ngFor="let category of featuresByCategory">
               <!-- Categoria como linha separadora -->
-              <tr class="bg-slate-800/10">
-                <td colspan="4" class="px-4 py-1.5">
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-[10px]">{{ getCategoryIcon(category.categoria) }}</span>
-                    <span class="text-[10px] font-medium text-slate-400/70 uppercase tracking-wider">
+              <tr class="bg-slate-800/30">
+                <td colspan="4" class="px-5 py-2">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm">{{ getCategoryIcon(category.categoria) }}</span>
+                    <span class="text-xs font-semibold text-slate-300 uppercase tracking-wider">
                       {{ category.categoria === 'Estratégico' ? 'Diferenciais Estratégicos' : category.categoria }}
                     </span>
                   </div>
@@ -65,61 +65,61 @@
               <!-- Features da categoria -->
               <tr 
                 *ngFor="let feature of category.features" 
-                class="hover:bg-slate-800/10 transition-colors duration-75"
+                class="hover:bg-slate-800/20 transition-colors duration-150"
               >
                 <!-- Nome do recurso -->
-                <td class="px-4 py-2 text-slate-200/90 font-normal text-sm leading-snug">
+                <td class="px-5 py-3 text-slate-100 font-medium text-sm">
                   {{ feature.nome }}
                 </td>
                 
                 <!-- BPOs Financeiros -->
-                <td class="px-4 py-2 text-center">
+                <td class="px-5 py-3 text-center">
                   <ng-container *ngIf="isTrue(feature.bpo)">
-                    <svg class="w-4 h-4 text-slate-500/60 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-5 h-5 text-slate-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                     </svg>
                   </ng-container>
                   <ng-container *ngIf="isFalse(feature.bpo)">
-                    <svg class="w-4 h-4 text-slate-500/40 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-5 h-5 text-slate-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
                     </svg>
                   </ng-container>
                   <ng-container *ngIf="isString(feature.bpo)">
-                    <span class="text-slate-400/70 text-[11px] font-normal">{{ getStringValue(feature.bpo) }}</span>
+                    <span class="text-slate-400 text-xs font-medium">{{ getStringValue(feature.bpo) }}</span>
                   </ng-container>
                 </td>
                 
                 <!-- Sistema de Gestão Financeira -->
-                <td class="px-4 py-2 text-center">
+                <td class="px-5 py-3 text-center">
                   <ng-container *ngIf="isTrue(feature.sistema)">
-                    <svg class="w-4 h-4 text-slate-500/60 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-5 h-5 text-slate-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                     </svg>
                   </ng-container>
                   <ng-container *ngIf="isFalse(feature.sistema)">
-                    <svg class="w-4 h-4 text-slate-500/40 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-5 h-5 text-slate-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
                     </svg>
                   </ng-container>
                   <ng-container *ngIf="isString(feature.sistema)">
-                    <span class="text-slate-400/70 text-[11px] font-normal">{{ getStringValue(feature.sistema) }}</span>
+                    <span class="text-slate-400 text-xs font-medium">{{ getStringValue(feature.sistema) }}</span>
                   </ng-container>
                 </td>
                 
                 <!-- Finzzia (destacado) -->
-                <td class="px-4 py-2 text-center bg-gradient-to-r from-emerald-500/6 via-blue-500/6 to-emerald-500/6 border-l border-emerald-500/20">
+                <td class="px-5 py-3 text-center bg-gradient-to-r from-emerald-500/10 via-blue-500/10 to-emerald-500/10 border-l border-emerald-500/30">
                   <ng-container *ngIf="isTrue(feature.finzzia)">
-                    <svg class="w-4.5 h-4.5 text-emerald-400/90 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-5 h-5 text-emerald-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                     </svg>
                   </ng-container>
                   <ng-container *ngIf="isFalse(feature.finzzia)">
-                    <svg class="w-4 h-4 text-slate-500/40 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-5 h-5 text-slate-500 mx-auto" fill="currentColor" viewBox="0 0 20 20">
                       <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
                     </svg>
                   </ng-container>
                   <ng-container *ngIf="isString(feature.finzzia)">
-                    <span class="text-emerald-400/90 font-semibold text-[11px]">{{ getStringValue(feature.finzzia) }}</span>
+                    <span class="text-emerald-400 font-semibold text-xs">{{ getStringValue(feature.finzzia) }}</span>
                   </ng-container>
                 </td>
               </tr>
