@@ -360,5 +360,39 @@ export class LandingComponent implements OnInit {
     const mensagemEncoded = encodeURIComponent(mensagem);
     return `https://wa.me/${this.whatsappNumber}?text=${mensagemEncoded}`;
   }
+
+  // Métodos para controlar reprodução de vídeos
+  playingVideos: { [key: string]: boolean } = {};
+
+  playVideo(videoId: string, event?: Event): void {
+    const videoElement = document.querySelector(`video[data-video-id="${videoId}"]`) as HTMLVideoElement;
+    if (!videoElement) return;
+    
+    const container = videoElement.closest('.video-container');
+    const poster = container?.querySelector('.video-poster') as HTMLElement;
+    
+    if (poster) {
+      poster.style.display = 'none';
+    }
+    
+    videoElement.play();
+    this.playingVideos[videoId] = true;
+  }
+
+  pauseVideo(videoId: string, event: Event): void {
+    const video = event.target as HTMLVideoElement;
+    const container = video.closest('.video-container');
+    const poster = container?.querySelector('.video-poster') as HTMLElement;
+    
+    if (poster && video.paused) {
+      poster.style.display = 'flex';
+    }
+    
+    this.playingVideos[videoId] = false;
+  }
+  
+  onPosterClick(videoId: string): void {
+    this.playVideo(videoId);
+  }
 }
 

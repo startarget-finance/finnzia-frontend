@@ -1,0 +1,25 @@
+// Estilos específicos do componente (se necessário)
+// O TailwindCSS já cobre a maioria dos estilos
+
+// Garantir que não haja scroll horizontal em mobile
+@media (max-width: 767px) {
+  section {
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .max-w-7xl {
+    max-width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+// Animação suave para hover nos cards mobile
+@media (max-width: 767px) {
+  .hover\:border-slate-600\/60:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
