@@ -16,12 +16,12 @@ export interface LeadData {
   providedIn: 'root'
 })
 export class LeadService {
-  private readonly apiUrl = 'https://api.sheetmonkey.io/form/aZAYW6Fa1rjgp48GALxmGM';
+  private readonly apiUrl = 'https://app.heysheet.in/api/s/QvNKqDMGOJ';
 
   constructor(private http: HttpClient) {}
 
   /**
-   * Envia um lead para o SheetMonkey usando FormData
+   * Envia um lead para o HeySheet usando FormData
    * FormData é mais estável e funciona perfeitamente em mobile
    * @param data Dados do lead
    * @returns Observable com a resposta do servidor
@@ -33,7 +33,7 @@ export class LeadService {
       timestamp: new Date().toISOString()
     };
 
-    console.log('Enviando lead para SheetMonkey:', leadData);
+    console.log('Enviando lead para HeySheet:', leadData);
 
     // Usar FormData - mais estável e funciona em qualquer browser (especialmente mobile)
     const formData = new FormData();
