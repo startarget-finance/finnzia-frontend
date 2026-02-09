@@ -3,9 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ClintService } from '../../services/clint.service';
-import { GoogleSheetsService } from '../../services/google-sheets.service';
+import { LeadService, LeadData } from '../../services/lead.service';
 import { ComparacaoServicosComponent, FeatureComparacao } from '../comparacao-servicos/comparacao-servicos.component';
-import { API_CONFIG } from '../../config/api.config';
 
 @Component({
   standalone: true,
@@ -89,15 +88,14 @@ export class LandingComponent implements OnInit, AfterViewInit {
   enviandoClint = false;
   salvandoDiagnostico = false;
   diagnosticoSalvo = false;
-
-  // URL do Google Sheets para o formulário HTML
-  googleSheetsUrl = API_CONFIG.GOOGLE_SHEETS_WEB_APP_URL || '';
+  erroEnvio = false;
+  mensagemErro = '';
 
   constructor(
     private router: Router,
     private route: ActivatedRoute,
     private clintService: ClintService,
-    private googleSheetsService: GoogleSheetsService
+    private leadService: LeadService
   ) {}
 
   ngOnInit(): void {
@@ -432,45 +430,56 @@ export class LandingComponent implements OnInit, AfterViewInit {
 
     // Validação básica
     if (!this.formData.nome || !this.formData.email) {
-      alert('Por favor, preencha pelo menos o nome e email.');
+      this.erroEnvio = true;
+      this.mensagemErro = 'Por favor, preencha pelo menos o nome e email.';
+      setTimeout(() => {
+        this.erroEnvio = false;
+        this.mensagemErro = '';
+      }, 5000);
       return;
     }
 
     // Estado de loading
     this.salvandoDiagnostico = true;
     this.diagnosticoSalvo = false;
+    this.erroEnvio = false;
+    this.mensagemErro = '';
 
-    console.log('Salvando diagnóstico...', this.formData);
-
-    // Salvar dados no Google Sheets
-    this.googleSheetsService.salvarDiagnostico({
+    // Preparar dados do lead
+    const leadData: LeadData = {
       nome: this.formData.nome,
       email: this.formData.email,
-      telefone: this.formData.telefone,
-      segmento: this.formData.segmento,
-      faturamento: this.formData.faturamento,
-      contexto: this.formData.contexto
-    }).subscribe({
-      next: (result) => {
+      telefone: this.formData.telefone || undefined,
+      empresa: this.formData.segmento || undefined,
+      mensagem: this.formData.contexto || undefined
+    };
+
+    // Enviar para SheetMonkey
+    this.leadService.enviarLead(leadData).subscribe({
+      next: (response) => {
         this.salvandoDiagnostico = false;
-        if (result.success) {
-          console.log('Dados salvos no Google Sheets com sucesso');
-          this.diagnosticoSalvo = true;
-          // Limpar formulário após salvar
-          this.limparFormulario();
-          // Esconder mensagem de sucesso após 5 segundos
-          setTimeout(() => {
-            this.diagnosticoSalvo = false;
-          }, 5000);
-        } else {
-          console.warn('Não foi possível salvar no Google Sheets:', result.message);
-          alert('Erro ao salvar diagnóstico. Por favor, tente novamente.');
-        }
+        console.log('Lead enviado com sucesso:', response);
+        this.diagnosticoSalvo = true;
+        
+        // Limpar formulário após sucesso
+        this.limparFormulario();
+        
+        // Esconder mensagem de sucesso após 5 segundos
+        setTimeout(() => {
+          this.diagnosticoSalvo = false;
+        }, 5000);
       },
       error: (error) => {
         this.salvandoDiagnostico = false;
-        console.error('Erro ao salvar no Google Sheets:', error);
-        alert('Erro ao salvar diagnóstico. Por favor, tente novamente.');
+        console.error('Erro ao enviar lead:', error);
+        this.erroEnvio = true;
+        this.mensagemErro = error.message || 'Erro ao salvar diagnóstico. Por favor, tente novamente.';
+        
+        // Esconder mensagem de erro após 7 segundos
+        setTimeout(() => {
+          this.erroEnvio = false;
+          this.mensagemErro = '';
+        }, 7000);
       }
     });
   }

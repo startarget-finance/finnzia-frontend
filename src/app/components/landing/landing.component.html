@@ -855,23 +855,6 @@
               <p class="text-lg text-slate-300">Encontre o que trava seu caixa e receba um plano de ação claro.</p>
             </div>
             
-            <!-- Formulário oculto para Google Sheets (sempre presente no DOM) -->
-            <form 
-              id="google-sheets-form" 
-              method="POST" 
-              [attr.action]="googleSheetsUrl"
-              target="google-sheets-iframe"
-              enctype="application/x-www-form-urlencoded"
-              style="display: none;"
-              aria-hidden="true">
-            </form>
-            <iframe 
-              id="google-sheets-iframe"
-              name="google-sheets-iframe"
-              style="display: none; width: 0; height: 0; border: none;"
-              aria-hidden="true">
-            </iframe>
-
             <!-- Formulário de diagnóstico -->
             <form class="space-y-4" #diagnosticoForm="ngForm">
               <!-- Nome Completo -->
@@ -954,29 +937,41 @@
                   class="w-full rounded-xl border-0 bg-slate-700/50 px-4 py-3.5 text-white placeholder:text-slate-400 focus:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition resize-none"></textarea>
               </div>
               
-              <!-- Mensagem de sucesso e Botão -->
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
-                <div *ngIf="diagnosticoSalvo" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-500/20 border border-green-500/40 text-green-300 text-sm">
-                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <!-- Mensagens de feedback e Botão -->
+              <div class="space-y-3">
+                <!-- Mensagem de sucesso -->
+                <div *ngIf="diagnosticoSalvo" class="flex items-center gap-2 px-4 py-3 rounded-lg bg-green-500/20 border border-green-500/40 text-green-300 text-sm animate-fade-in">
+                  <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                   </svg>
-                  Diagnóstico salvo com sucesso!
+                  <span>Diagnóstico salvo com sucesso! Entraremos em contato em breve.</span>
                 </div>
-                
-                <button
-                  type="button"
-                  (click)="salvarDiagnostico($event)"
-                  [disabled]="salvandoDiagnostico"
-                  class="inline-flex justify-center items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-emerald-400 text-white font-semibold shadow-lg shadow-blue-500/40 hover:shadow-2xl hover:brightness-110 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                  <svg *ngIf="!salvandoDiagnostico" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+
+                <!-- Mensagem de erro -->
+                <div *ngIf="erroEnvio" class="flex items-start gap-2 px-4 py-3 rounded-lg bg-red-500/20 border border-red-500/40 text-red-300 text-sm animate-fade-in">
+                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                   </svg>
-                  <svg *ngIf="salvandoDiagnostico" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  {{ salvandoDiagnostico ? 'Salvando...' : 'Salvar diagnóstico' }}
-                </button>
+                  <span>{{ mensagemErro }}</span>
+                </div>
+
+                <!-- Botão de envio -->
+                <div class="flex justify-end">
+                  <button
+                    type="button"
+                    (click)="salvarDiagnostico($event)"
+                    [disabled]="salvandoDiagnostico"
+                    class="inline-flex justify-center items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-emerald-400 text-white font-semibold shadow-lg shadow-blue-500/40 hover:shadow-2xl hover:brightness-110 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:brightness-100 min-w-[160px]">
+                    <svg *ngIf="!salvandoDiagnostico" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <svg *ngIf="salvandoDiagnostico" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>{{ salvandoDiagnostico ? 'Salvando...' : 'Salvar diagnóstico' }}</span>
+                  </button>
+                </div>
               </div>
             </form>
           </div>
