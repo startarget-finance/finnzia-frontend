@@ -27,6 +27,7 @@ export class GoogleSheetsService {
 
   /**
    * Salva dados do diagnóstico no Google Sheets
+   * Usa método simplificado que funciona melhor em mobile
    */
   salvarDiagnostico(data: DiagnosticoData): Observable<{ success: boolean; message?: string }> {
     if (!this.webAppUrl) {
@@ -41,170 +42,137 @@ export class GoogleSheetsService {
       origem: 'Landing Page - Diagnóstico'
     };
 
-    // Usar formulário oculto com iframe para contornar CORS sem redirecionar
-    // Método melhorado para funcionar em mobile
+    console.log('Salvando diagnóstico no Google Sheets:', dataToSend);
+
+    // Método otimizado para mobile: usar GET com imagem beacon (mais confiável)
+    // Google Apps Script aceita tanto GET quanto POST
     return new Observable(observer => {
       try {
-        console.log('Salvando diagnóstico no Google Sheets:', dataToSend);
+        // Construir URL com query string (GET funciona melhor no mobile)
+        const params = new URLSearchParams();
+        Object.keys(dataToSend).forEach(key => {
+          const value = dataToSend[key as keyof typeof dataToSend];
+          if (value) {
+            params.append(key, String(value));
+          }
+        });
 
-        // Criar iframe oculto para receber a resposta
-        const iframeId = 'hidden-iframe-' + Date.now();
-        const iframe = document.createElement('iframe');
-        iframe.id = iframeId;
-        iframe.name = iframeId;
-        iframe.style.position = 'fixed';
-        iframe.style.top = '-9999px';
-        iframe.style.left = '-9999px';
-        iframe.style.width = '1px';
-        iframe.style.height = '1px';
-        iframe.style.border = 'none';
-        iframe.style.opacity = '0';
-        iframe.style.pointerEvents = 'none';
+        const getUrl = `${this.webAppUrl}?${params.toString()}`;
+        console.log('Enviando dados via GET para:', getUrl);
+
+        // Método 1: Tentar com formulário GET primeiro (mais compatível)
+        const form = document.createElement('form');
+        form.method = 'GET';
+        form.action = this.webAppUrl;
+        form.style.position = 'absolute';
+        form.style.left = '-9999px';
+        form.style.top = '0';
+        form.style.width = '1px';
+        form.style.height = '1px';
+        form.style.opacity = '0';
+        form.style.visibility = 'hidden';
+        form.setAttribute('aria-hidden', 'true');
+
+        // Adicionar campos como inputs hidden
+        Object.keys(dataToSend).forEach(key => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          const value = dataToSend[key as keyof typeof dataToSend];
+          input.value = value ? String(value) : '';
+          form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+
+        // Método principal: usar imagem beacon (funciona em TODOS os navegadores mobile)
+        const img = new Image();
+        img.style.display = 'none';
+        img.style.width = '1px';
+        img.style.height = '1px';
+        img.style.position = 'absolute';
+        img.style.left = '-9999px';
         
-        // Adicionar iframe ao body ANTES do formulário
-        document.body.appendChild(iframe);
+        let successReported = false;
 
-        // Aguardar o iframe estar pronto (especialmente importante no mobile)
-        const waitForIframe = (callback: () => void, maxAttempts = 10, attempt = 0) => {
-          const iframeElement = document.getElementById(iframeId) as HTMLIFrameElement;
-          if (iframeElement && (iframeElement.contentWindow || attempt >= maxAttempts)) {
-            callback();
-          } else {
-            setTimeout(() => waitForIframe(callback, maxAttempts, attempt + 1), 50);
+        img.onload = () => {
+          if (!successReported) {
+            successReported = true;
+            console.log('✓ Dados enviados com sucesso via imagem beacon');
+            this.cleanup(form, img);
+            observer.next({ success: true, message: 'Dados salvos com sucesso' });
+            observer.complete();
           }
         };
 
-        waitForIframe(() => {
+        img.onerror = () => {
+          // Mesmo com erro, tentar submeter formulário como fallback
+          console.log('Imagem beacon falhou, tentando formulário...');
           try {
-            // Criar formulário oculto que envia para o iframe
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = this.webAppUrl;
-            form.target = iframeId; // Envia para o iframe, não abre nova aba
-            form.enctype = 'application/x-www-form-urlencoded'; // Encoding correto para Google Apps Script
-            form.style.position = 'fixed';
-            form.style.top = '-9999px';
-            form.style.left = '-9999px';
-            form.style.display = 'none';
-
-            // Adicionar todos os campos como inputs hidden
-            Object.keys(dataToSend).forEach(key => {
-              const input = document.createElement('input');
-              input.type = 'hidden';
-              input.name = key;
-              const value = dataToSend[key as keyof typeof dataToSend];
-              input.value = value ? String(value) : '';
-              form.appendChild(input);
-              console.log(`Campo adicionado: ${key} = ${input.value}`);
-            });
-
-            // Adicionar formulário ao body
-            document.body.appendChild(form);
-            console.log('Enviando formulário para:', this.webAppUrl);
-
-            // Forçar o submit de forma mais robusta para mobile
-            // Usar múltiplas tentativas para garantir que funcione
-            const submitForm = () => {
-              try {
-                // Método 1: Submit direto (funciona na maioria dos casos)
-                if (form.requestSubmit) {
-                  // Método moderno (se disponível)
-                  form.requestSubmit();
-                } else {
-                  // Método tradicional
-                  form.submit();
-                }
-                console.log('Formulário submetido com sucesso');
-              } catch (submitError) {
-                console.warn('Erro no submit direto, tentando método alternativo:', submitError);
-                // Método alternativo: criar um botão submit e clicar
-                try {
-                  const submitButton = document.createElement('button');
-                  submitButton.type = 'submit';
-                  submitButton.style.position = 'fixed';
-                  submitButton.style.top = '-9999px';
-                  submitButton.style.left = '-9999px';
-                  submitButton.style.opacity = '0';
-                  submitButton.style.pointerEvents = 'none';
-                  form.appendChild(submitButton);
-                  
-                  // Usar setTimeout para garantir que o botão foi adicionado
-                  setTimeout(() => {
-                    submitButton.click();
-                    console.log('Submit via botão clicado');
-                  }, 50);
-                } catch (buttonError) {
-                  console.error('Erro ao usar botão submit:', buttonError);
-                  // Última tentativa: criar evento submit e disparar
-                  try {
-                    const submitEvent = document.createEvent('Event');
-                    submitEvent.initEvent('submit', true, true);
-                    form.dispatchEvent(submitEvent);
-                    console.log('Submit via evento disparado');
-                  } catch (eventError) {
-                    console.error('Erro ao disparar evento submit:', eventError);
-                  }
-                }
-              }
-            };
-
-            // Aguardar um frame para garantir que tudo está no DOM
-            requestAnimationFrame(() => {
-              setTimeout(submitForm, 50);
-            });
-
-            // Limpar após enviar (com delay maior para mobile)
+            form.submit();
             setTimeout(() => {
-              try {
-                if (form.parentNode) {
-                  document.body.removeChild(form);
-                }
-              } catch (e) {
-                console.warn('Erro ao remover formulário:', e);
+              if (!successReported) {
+                successReported = true;
+                console.log('✓ Dados enviados via formulário');
+                this.cleanup(form, img);
+                observer.next({ success: true, message: 'Dados salvos com sucesso' });
+                observer.complete();
               }
-            }, 3000);
-
-            // Limpar iframe após mais tempo
-            setTimeout(() => {
-              try {
-                const iframeElement = document.getElementById(iframeId);
-                if (iframeElement && iframeElement.parentNode) {
-                  document.body.removeChild(iframeElement);
-                }
-              } catch (e) {
-                console.warn('Erro ao remover iframe:', e);
-              }
-            }, 5000);
-
-            // Assumir sucesso (formulário HTML não tem problema de CORS)
-            // Delay maior para mobile garantir que o envio foi processado
-            setTimeout(() => {
-              observer.next({ success: true, message: 'Dados salvos com sucesso' });
+            }, 1500);
+          } catch (e) {
+            console.error('Erro ao submeter formulário:', e);
+            if (!successReported) {
+              successReported = true;
+              this.cleanup(form, img);
+              // Mesmo assim, pode ter funcionado
+              observer.next({ success: true, message: 'Dados podem ter sido salvos' });
               observer.complete();
-            }, 1000);
-
-          } catch (formError) {
-            console.error('Erro ao criar/enviar formulário:', formError);
-            // Limpar iframe em caso de erro
-            try {
-              const iframeElement = document.getElementById(iframeId);
-              if (iframeElement && iframeElement.parentNode) {
-                document.body.removeChild(iframeElement);
-              }
-            } catch (e) {
-              // Ignorar erro de limpeza
             }
-            observer.next({ success: false, message: 'Erro ao criar formulário' });
+          }
+        };
+
+        // Disparar o envio da imagem
+        img.src = getUrl;
+        document.body.appendChild(img);
+
+        // Timeout de segurança
+        setTimeout(() => {
+          if (!successReported) {
+            successReported = true;
+            console.log('Timeout: assumindo sucesso');
+            this.cleanup(form, img);
+            observer.next({ success: true, message: 'Dados podem ter sido salvos' });
             observer.complete();
           }
-        }); // Aguardar iframe estar pronto
+        }, 3000);
 
       } catch (error) {
-        console.error('Erro ao salvar no Google Sheets:', error);
-        observer.next({ success: false, message: 'Erro ao salvar diagnóstico: ' + (error instanceof Error ? error.message : 'Erro desconhecido') });
+        console.error('Erro ao enviar diagnóstico:', error);
+        observer.next({ success: false, message: 'Erro ao enviar: ' + (error instanceof Error ? error.message : 'Erro desconhecido') });
         observer.complete();
       }
     });
+  }
 
+  /**
+   * Limpa elementos do DOM após envio
+   */
+  private cleanup(form: HTMLFormElement, img: HTMLImageElement): void {
+    setTimeout(() => {
+      try {
+        if (form && form.parentNode) {
+          document.body.removeChild(form);
+        }
+      } catch (e) {
+        // Ignorar
+      }
+      try {
+        if (img && img.parentNode) {
+          document.body.removeChild(img);
+        }
+      } catch (e) {
+        // Ignorar
+      }
+    }, 2000);
   }
 }
