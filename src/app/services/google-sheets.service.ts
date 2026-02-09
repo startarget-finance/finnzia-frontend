@@ -44,27 +44,33 @@ export class GoogleSheetsService {
 
     console.log('Salvando diagnóstico no Google Sheets:', dataToSend);
 
-    // Método otimizado para mobile: usar GET com imagem beacon (mais confiável)
-    // Google Apps Script aceita tanto GET quanto POST
+    // Método otimizado para mobile: usar POST com formulário simples
+    // Google Apps Script precisa de doPost() para receber POST
     return new Observable(observer => {
       try {
-        // Construir URL com query string (GET funciona melhor no mobile)
-        const params = new URLSearchParams();
-        Object.keys(dataToSend).forEach(key => {
-          const value = dataToSend[key as keyof typeof dataToSend];
-          if (value) {
-            params.append(key, String(value));
-          }
-        });
+        // Criar iframe oculto para receber a resposta (evita abrir nova aba)
+        const iframeId = 'google-sheets-iframe-' + Date.now();
+        const iframe = document.createElement('iframe');
+        iframe.id = iframeId;
+        iframe.name = iframeId;
+        iframe.style.position = 'fixed';
+        iframe.style.left = '-9999px';
+        iframe.style.top = '0';
+        iframe.style.width = '1px';
+        iframe.style.height = '1px';
+        iframe.style.border = 'none';
+        iframe.style.opacity = '0';
+        iframe.style.visibility = 'hidden';
+        iframe.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(iframe);
 
-        const getUrl = `${this.webAppUrl}?${params.toString()}`;
-        console.log('Enviando dados via GET para:', getUrl);
-
-        // Método 1: Tentar com formulário GET primeiro (mais compatível)
+        // Criar formulário POST (Google Apps Script espera doPost)
         const form = document.createElement('form');
-        form.method = 'GET';
+        form.method = 'POST';
         form.action = this.webAppUrl;
-        form.style.position = 'absolute';
+        form.target = iframeId; // Envia para o iframe, não abre nova aba
+        form.enctype = 'application/x-www-form-urlencoded';
+        form.style.position = 'fixed';
         form.style.left = '-9999px';
         form.style.top = '0';
         form.style.width = '1px';
@@ -81,74 +87,72 @@ export class GoogleSheetsService {
           const value = dataToSend[key as keyof typeof dataToSend];
           input.value = value ? String(value) : '';
           form.appendChild(input);
+          console.log(`Campo adicionado: ${key} = ${input.value}`);
         });
 
         document.body.appendChild(form);
+        console.log('Formulário POST criado, enviando para:', this.webAppUrl);
 
-        // Método principal: usar imagem beacon (funciona em TODOS os navegadores mobile)
-        const img = new Image();
-        img.style.display = 'none';
-        img.style.width = '1px';
-        img.style.height = '1px';
-        img.style.position = 'absolute';
-        img.style.left = '-9999px';
-        
-        let successReported = false;
-
-        img.onload = () => {
-          if (!successReported) {
-            successReported = true;
-            console.log('✓ Dados enviados com sucesso via imagem beacon');
-            this.cleanup(form, img);
-            observer.next({ success: true, message: 'Dados salvos com sucesso' });
-            observer.complete();
-          }
-        };
-
-        img.onerror = () => {
-          // Mesmo com erro, tentar submeter formulário como fallback
-          console.log('Imagem beacon falhou, tentando formulário...');
+        // Submeter o formulário após garantir que está no DOM
+        const submitForm = () => {
           try {
+            // Tentar submit direto
             form.submit();
+            console.log('✓ Formulário POST submetido');
+            
+            // Limpar formulário e iframe após delay
             setTimeout(() => {
-              if (!successReported) {
-                successReported = true;
-                console.log('✓ Dados enviados via formulário');
-                this.cleanup(form, img);
-                observer.next({ success: true, message: 'Dados salvos com sucesso' });
-                observer.complete();
-              }
+              this.cleanup(form, null, iframe);
+            }, 2000);
+
+            // Assumir sucesso (POST não retorna resposta devido a CORS)
+            setTimeout(() => {
+              observer.next({ success: true, message: 'Dados salvos com sucesso' });
+              observer.complete();
             }, 1500);
-          } catch (e) {
-            console.error('Erro ao submeter formulário:', e);
-            if (!successReported) {
-              successReported = true;
-              this.cleanup(form, img);
-              // Mesmo assim, pode ter funcionado
-              observer.next({ success: true, message: 'Dados podem ter sido salvos' });
+
+          } catch (submitError) {
+            console.error('Erro ao submeter formulário POST:', submitError);
+            
+            // Tentar método alternativo: criar botão submit
+            try {
+              const submitButton = document.createElement('button');
+              submitButton.type = 'submit';
+              submitButton.style.display = 'none';
+              form.appendChild(submitButton);
+              
+              setTimeout(() => {
+                submitButton.click();
+                console.log('✓ Formulário POST submetido via botão');
+                
+                setTimeout(() => {
+                  this.cleanup(form, null, iframe);
+                  observer.next({ success: true, message: 'Dados salvos com sucesso' });
+                  observer.complete();
+                }, 1500);
+              }, 100);
+            } catch (buttonError) {
+              console.error('Erro ao usar botão submit:', buttonError);
+              this.cleanup(form, null, iframe);
+              observer.next({ success: false, message: 'Erro ao enviar formulário' });
               observer.complete();
             }
           }
         };
 
-        // Disparar o envio da imagem
-        img.src = getUrl;
-        document.body.appendChild(img);
-
-        // Timeout de segurança
-        setTimeout(() => {
-          if (!successReported) {
-            successReported = true;
-            console.log('Timeout: assumindo sucesso');
-            this.cleanup(form, img);
-            observer.next({ success: true, message: 'Dados podem ter sido salvos' });
-            observer.complete();
-          }
-        }, 3000);
+        // Aguardar um pouco para garantir que o formulário está no DOM
+        // Isso é especialmente importante no mobile
+        if (typeof requestAnimationFrame !== 'undefined') {
+          requestAnimationFrame(() => {
+            setTimeout(submitForm, 150);
+          });
+        } else {
+          setTimeout(submitForm, 300);
+        }
 
       } catch (error) {
-        console.error('Erro ao enviar diagnóstico:', error);
-        observer.next({ success: false, message: 'Erro ao enviar: ' + (error instanceof Error ? error.message : 'Erro desconhecido') });
+        console.error('Erro ao criar formulário:', error);
+        observer.next({ success: false, message: 'Erro ao criar formulário: ' + (error instanceof Error ? error.message : 'Erro desconhecido') });
         observer.complete();
       }
     });
@@ -157,7 +161,7 @@ export class GoogleSheetsService {
   /**
    * Limpa elementos do DOM após envio
    */
-  private cleanup(form: HTMLFormElement, img: HTMLImageElement): void {
+  private cleanup(form: HTMLFormElement, img: HTMLImageElement | null, iframe?: HTMLIFrameElement): void {
     setTimeout(() => {
       try {
         if (form && form.parentNode) {
@@ -166,12 +170,23 @@ export class GoogleSheetsService {
       } catch (e) {
         // Ignorar
       }
-      try {
-        if (img && img.parentNode) {
-          document.body.removeChild(img);
+      if (img) {
+        try {
+          if (img.parentNode) {
+            document.body.removeChild(img);
+          }
+        } catch (e) {
+          // Ignorar
         }
-      } catch (e) {
-        // Ignorar
+      }
+      if (iframe) {
+        try {
+          if (iframe.parentNode) {
+            document.body.removeChild(iframe);
+          }
+        } catch (e) {
+          // Ignorar
+        }
       }
     }, 2000);
   }
