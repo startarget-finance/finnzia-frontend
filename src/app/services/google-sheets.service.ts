@@ -27,7 +27,7 @@ export class GoogleSheetsService {
 
   /**
    * Salva dados do diagnóstico no Google Sheets
-   * Usa método simplificado que funciona melhor em mobile
+   * Usa múltiplos métodos para garantir funcionamento no mobile
    */
   salvarDiagnostico(data: DiagnosticoData): Observable<{ success: boolean; message?: string }> {
     if (!this.webAppUrl) {
@@ -44,118 +44,169 @@ export class GoogleSheetsService {
 
     console.log('Salvando diagnóstico no Google Sheets:', dataToSend);
 
-    // Método otimizado para mobile: usar POST com formulário simples
-    // Google Apps Script precisa de doPost() para receber POST
     return new Observable(observer => {
-      try {
-        // Criar iframe oculto para receber a resposta (evita abrir nova aba)
-        const iframeId = 'google-sheets-iframe-' + Date.now();
-        const iframe = document.createElement('iframe');
-        iframe.id = iframeId;
-        iframe.name = iframeId;
-        iframe.style.position = 'fixed';
-        iframe.style.left = '-9999px';
-        iframe.style.top = '0';
-        iframe.style.width = '1px';
-        iframe.style.height = '1px';
-        iframe.style.border = 'none';
-        iframe.style.opacity = '0';
-        iframe.style.visibility = 'hidden';
-        iframe.setAttribute('aria-hidden', 'true');
-        document.body.appendChild(iframe);
+      const state = { successReported: false };
 
-        // Criar formulário POST (Google Apps Script espera doPost)
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = this.webAppUrl;
-        form.target = iframeId; // Envia para o iframe, não abre nova aba
-        form.enctype = 'application/x-www-form-urlencoded';
-        form.style.position = 'fixed';
-        form.style.left = '-9999px';
-        form.style.top = '0';
-        form.style.width = '1px';
-        form.style.height = '1px';
-        form.style.opacity = '0';
-        form.style.visibility = 'hidden';
-        form.setAttribute('aria-hidden', 'true');
+      // MÉTODO 1: navigator.sendBeacon (MAIS CONFIÁVEL NO MOBILE)
+      // Funciona mesmo quando a página está sendo fechada e não tem problemas de CORS
+      if (navigator.sendBeacon) {
+        try {
+          // Construir URL-encoded string manualmente (sendBeacon precisa de string ou Blob)
+          const params = new URLSearchParams();
+          Object.keys(dataToSend).forEach(key => {
+            const value = dataToSend[key as keyof typeof dataToSend];
+            if (value) {
+              params.append(key, String(value));
+            }
+          });
 
-        // Adicionar campos como inputs hidden
-        Object.keys(dataToSend).forEach(key => {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = key;
-          const value = dataToSend[key as keyof typeof dataToSend];
-          input.value = value ? String(value) : '';
-          form.appendChild(input);
-          console.log(`Campo adicionado: ${key} = ${input.value}`);
-        });
+          // Criar Blob com dados URL-encoded
+          const blob = new Blob([params.toString()], { 
+            type: 'application/x-www-form-urlencoded' 
+          });
+          
+          const success = navigator.sendBeacon(this.webAppUrl, blob);
+          
+          if (success) {
+            console.log('✓ Dados enviados via navigator.sendBeacon');
+            state.successReported = true;
+            observer.next({ success: true, message: 'Dados salvos com sucesso' });
+            observer.complete();
+            return;
+          } else {
+            console.warn('navigator.sendBeacon retornou false, tentando método alternativo...');
+          }
+        } catch (beaconError) {
+          console.warn('Erro ao usar navigator.sendBeacon:', beaconError);
+        }
+      }
 
-        document.body.appendChild(form);
-        console.log('Formulário POST criado, enviando para:', this.webAppUrl);
+      // MÉTODO 2: FormData com fetch (tenta no-cors)
+      if (!state.successReported) {
+        try {
+          const params = new URLSearchParams();
+          Object.keys(dataToSend).forEach(key => {
+            const value = dataToSend[key as keyof typeof dataToSend];
+            if (value) {
+              params.append(key, String(value));
+            }
+          });
 
-        // Submeter o formulário após garantir que está no DOM
-        const submitForm = () => {
-          try {
-            // Tentar submit direto
-            form.submit();
-            console.log('✓ Formulário POST submetido');
-            
-            // Limpar formulário e iframe após delay
-            setTimeout(() => {
-              this.cleanup(form, null, iframe);
-            }, 2000);
-
-            // Assumir sucesso (POST não retorna resposta devido a CORS)
-            setTimeout(() => {
+          // Tentar fetch com no-cors (pode funcionar em alguns casos)
+          fetch(this.webAppUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: params.toString(),
+            mode: 'no-cors',
+            keepalive: true // Importante para mobile
+          }).then(() => {
+            if (!state.successReported) {
+              console.log('✓ Dados enviados via fetch (no-cors)');
+              state.successReported = true;
               observer.next({ success: true, message: 'Dados salvos com sucesso' });
               observer.complete();
-            }, 1500);
+            }
+          }).catch((fetchError) => {
+            console.warn('Fetch falhou, tentando formulário:', fetchError);
+            if (!state.successReported) {
+              this.tryFormMethod(dataToSend, observer, state);
+            }
+          });
+        } catch (fetchError) {
+          console.warn('Erro ao tentar fetch:', fetchError);
+          if (!state.successReported) {
+            this.tryFormMethod(dataToSend, observer, state);
+          }
+        }
+      }
 
-          } catch (submitError) {
-            console.error('Erro ao submeter formulário POST:', submitError);
-            
-            // Tentar método alternativo: criar botão submit
-            try {
-              const submitButton = document.createElement('button');
-              submitButton.type = 'submit';
-              submitButton.style.display = 'none';
-              form.appendChild(submitButton);
-              
-              setTimeout(() => {
-                submitButton.click();
-                console.log('✓ Formulário POST submetido via botão');
-                
-                setTimeout(() => {
-                  this.cleanup(form, null, iframe);
-                  observer.next({ success: true, message: 'Dados salvos com sucesso' });
-                  observer.complete();
-                }, 1500);
-              }, 100);
-            } catch (buttonError) {
-              console.error('Erro ao usar botão submit:', buttonError);
-              this.cleanup(form, null, iframe);
-              observer.next({ success: false, message: 'Erro ao enviar formulário' });
+      // Timeout de segurança
+      setTimeout(() => {
+        if (!state.successReported) {
+          console.warn('Timeout: tentando método de formulário como último recurso');
+          this.tryFormMethod(dataToSend, observer, state);
+        }
+      }, 500);
+    });
+  }
+
+  /**
+   * Método alternativo usando formulário (fallback)
+   */
+  private tryFormMethod(
+    dataToSend: any,
+    observer: any,
+    state: { successReported: boolean }
+  ): void {
+    if (state.successReported) {
+      return; // Já foi enviado com sucesso
+    }
+
+    try {
+      // Criar iframe oculto
+      const iframeId = 'google-sheets-iframe-' + Date.now();
+      const iframe = document.createElement('iframe');
+      iframe.id = iframeId;
+      iframe.name = iframeId;
+      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;border:none;opacity:0;visibility:hidden;';
+      iframe.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(iframe);
+
+      // Criar formulário POST
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = this.webAppUrl;
+      form.target = iframeId;
+      form.enctype = 'application/x-www-form-urlencoded';
+      form.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;visibility:hidden;';
+      form.setAttribute('aria-hidden', 'true');
+
+      // Adicionar campos
+      Object.keys(dataToSend).forEach(key => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = String(dataToSend[key] || '');
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+
+      // Submeter
+      setTimeout(() => {
+        try {
+          form.submit();
+          console.log('✓ Formulário POST submetido (fallback)');
+          
+          setTimeout(() => {
+            if (!state.successReported) {
+              state.successReported = true;
+              observer.next({ success: true, message: 'Dados salvos com sucesso' });
               observer.complete();
             }
+            this.cleanup(form, null, iframe);
+          }, 1500);
+        } catch (e) {
+          console.error('Erro ao submeter formulário:', e);
+          this.cleanup(form, null, iframe);
+          if (!state.successReported) {
+            state.successReported = true;
+            observer.next({ success: false, message: 'Erro ao enviar formulário' });
+            observer.complete();
           }
-        };
-
-        // Aguardar um pouco para garantir que o formulário está no DOM
-        // Isso é especialmente importante no mobile
-        if (typeof requestAnimationFrame !== 'undefined') {
-          requestAnimationFrame(() => {
-            setTimeout(submitForm, 150);
-          });
-        } else {
-          setTimeout(submitForm, 300);
         }
+      }, 200);
 
-      } catch (error) {
-        console.error('Erro ao criar formulário:', error);
-        observer.next({ success: false, message: 'Erro ao criar formulário: ' + (error instanceof Error ? error.message : 'Erro desconhecido') });
+    } catch (error) {
+      console.error('Erro no método de formulário:', error);
+      if (!state.successReported) {
+        state.successReported = true;
+        observer.next({ success: false, message: 'Erro ao criar formulário' });
         observer.complete();
       }
-    });
+    }
   }
 
   /**
