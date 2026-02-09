@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 
 export interface LeadData {
   nome: string;
@@ -18,16 +18,11 @@ export interface LeadData {
 export class LeadService {
   private readonly apiUrl = 'https://api.sheetmonkey.io/form/aZAYW6Fa1rjgp48GALxmGM';
 
-  private readonly httpOptions = {
-    headers: new HttpHeaders({
-      'Content-Type': 'application/json'
-    })
-  };
-
   constructor(private http: HttpClient) {}
 
   /**
-   * Envia um lead para o SheetMonkey
+   * Envia um lead para o SheetMonkey usando FormData
+   * FormData é mais estável e funciona perfeitamente em mobile
    * @param data Dados do lead
    * @returns Observable com a resposta do servidor
    */
@@ -40,24 +35,19 @@ export class LeadService {
 
     console.log('Enviando lead para SheetMonkey:', leadData);
 
-    // SheetMonkey pode retornar HTML/texto, não JSON
-    // Usar observe: 'response' para verificar status HTTP independente do formato
-    const options = {
-      headers: this.httpOptions.headers,
-      observe: 'response' as const,
-      responseType: 'text' as const
-    };
+    // Usar FormData - mais estável e funciona em qualquer browser (especialmente mobile)
+    const formData = new FormData();
+    
+    // Adicionar apenas campos que têm valor (evita enviar undefined/null)
+    Object.keys(leadData).forEach(key => {
+      const value = leadData[key as keyof LeadData];
+      if (value !== undefined && value !== null && value !== '') {
+        formData.append(key, String(value));
+      }
+    });
 
-    return this.http.post(this.apiUrl, leadData, options).pipe(
-      map((response: HttpResponse<string>) => {
-        // Se o status for 200-299, considerar sucesso
-        // SheetMonkey retorna HTML/texto, não JSON, então qualquer resposta 200 é sucesso
-        if (response.status >= 200 && response.status < 300) {
-          console.log('Lead enviado com sucesso. Status:', response.status);
-          return { success: true, status: response.status };
-        }
-        throw new Error(`Erro ao enviar: Status ${response.status}`);
-      }),
+    // Não precisa definir Content-Type - o browser define automaticamente como multipart/form-data
+    return this.http.post(this.apiUrl, formData).pipe(
       catchError(error => {
         console.error('Erro ao enviar lead:', error);
         
