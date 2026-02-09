@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 export interface LeadData {
   nome: string;
@@ -40,14 +40,41 @@ export class LeadService {
 
     console.log('Enviando lead para SheetMonkey:', leadData);
 
-    return this.http.post(this.apiUrl, leadData, this.httpOptions).pipe(
+    // SheetMonkey pode retornar HTML/texto, não JSON
+    // Usar observe: 'response' para verificar status HTTP independente do formato
+    const options = {
+      headers: this.httpOptions.headers,
+      observe: 'response' as const,
+      responseType: 'text' as const
+    };
+
+    return this.http.post(this.apiUrl, leadData, options).pipe(
+      map((response: HttpResponse<string>) => {
+        // Se o status for 200-299, considerar sucesso
+        // SheetMonkey retorna HTML/texto, não JSON, então qualquer resposta 200 é sucesso
+        if (response.status >= 200 && response.status < 300) {
+          console.log('Lead enviado com sucesso. Status:', response.status);
+          return { success: true, status: response.status };
+        }
+        throw new Error(`Erro ao enviar: Status ${response.status}`);
+      }),
       catchError(error => {
         console.error('Erro ao enviar lead:', error);
-        return throwError(() => new Error(
-          error.error?.message || 
-          error.message || 
-          'Erro ao enviar formulário. Por favor, tente novamente.'
-        ));
+        
+        // Tratar diferentes tipos de erro
+        let errorMessage = 'Erro ao enviar formulário. Por favor, tente novamente.';
+        
+        if (error.status === 0) {
+          errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+        } else if (error.status >= 400 && error.status < 500) {
+          errorMessage = 'Dados inválidos. Verifique os campos e tente novamente.';
+        } else if (error.status >= 500) {
+          errorMessage = 'Erro no servidor. Tente novamente em alguns instantes.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        return throwError(() => new Error(errorMessage));
       })
     );
   }
