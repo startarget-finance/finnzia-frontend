@@ -5,6 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { ClintService } from '../../services/clint.service';
 import { GoogleSheetsService } from '../../services/google-sheets.service';
 import { ComparacaoServicosComponent, FeatureComparacao } from '../comparacao-servicos/comparacao-servicos.component';
+import { API_CONFIG } from '../../config/api.config';
 
 @Component({
   standalone: true,
@@ -88,6 +89,9 @@ export class LandingComponent implements OnInit, AfterViewInit {
   enviandoClint = false;
   salvandoDiagnostico = false;
   diagnosticoSalvo = false;
+
+  // URL do Google Sheets para o formulário HTML
+  googleSheetsUrl = API_CONFIG.GOOGLE_SHEETS_WEB_APP_URL || '';
 
   constructor(
     private router: Router,

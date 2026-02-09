@@ -855,6 +855,23 @@
               <p class="text-lg text-slate-300">Encontre o que trava seu caixa e receba um plano de ação claro.</p>
             </div>
             
+            <!-- Formulário oculto para Google Sheets (sempre presente no DOM) -->
+            <form 
+              id="google-sheets-form" 
+              method="POST" 
+              [attr.action]="googleSheetsUrl"
+              target="google-sheets-iframe"
+              enctype="application/x-www-form-urlencoded"
+              style="display: none;"
+              aria-hidden="true">
+            </form>
+            <iframe 
+              id="google-sheets-iframe"
+              name="google-sheets-iframe"
+              style="display: none; width: 0; height: 0; border: none;"
+              aria-hidden="true">
+            </iframe>
+
             <!-- Formulário de diagnóstico -->
             <form class="space-y-4" #diagnosticoForm="ngForm">
               <!-- Nome Completo -->

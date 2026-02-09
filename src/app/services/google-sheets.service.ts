@@ -134,6 +134,7 @@ export class GoogleSheetsService {
 
   /**
    * Método alternativo usando formulário (fallback)
+   * Usa formulário que já existe no DOM (mais confiável no mobile)
    */
   private tryFormMethod(
     dataToSend: any,
@@ -145,40 +146,68 @@ export class GoogleSheetsService {
     }
 
     try {
-      // Criar iframe oculto
-      const iframeId = 'google-sheets-iframe-' + Date.now();
-      const iframe = document.createElement('iframe');
-      iframe.id = iframeId;
-      iframe.name = iframeId;
-      iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;border:none;opacity:0;visibility:hidden;';
-      iframe.setAttribute('aria-hidden', 'true');
-      document.body.appendChild(iframe);
+      // Tentar usar formulário que já existe no DOM (mais confiável no mobile)
+      let form = document.getElementById('google-sheets-form') as HTMLFormElement;
+      let iframe = document.getElementById('google-sheets-iframe') as HTMLIFrameElement;
 
-      // Criar formulário POST
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = this.webAppUrl;
-      form.target = iframeId;
-      form.enctype = 'application/x-www-form-urlencoded';
-      form.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;visibility:hidden;';
-      form.setAttribute('aria-hidden', 'true');
+      // Se não existir, criar (fallback)
+      if (!form) {
+        console.warn('Formulário não encontrado no DOM, criando dinamicamente...');
+        const iframeId = 'google-sheets-iframe-' + Date.now();
+        iframe = document.createElement('iframe');
+        iframe.id = iframeId;
+        iframe.name = iframeId;
+        iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;border:none;opacity:0;visibility:hidden;';
+        iframe.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(iframe);
 
-      // Adicionar campos
+        form = document.createElement('form');
+        form.id = 'google-sheets-form';
+        form.method = 'POST';
+        form.action = this.webAppUrl;
+        form.target = iframeId;
+        form.enctype = 'application/x-www-form-urlencoded';
+        form.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;visibility:hidden;';
+        form.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(form);
+      } else {
+        // Limpar campos anteriores do formulário existente
+        while (form.firstChild) {
+          form.removeChild(form.firstChild);
+        }
+        // Garantir que o formulário está configurado corretamente
+        form.method = 'POST';
+        form.action = this.webAppUrl;
+        form.enctype = 'application/x-www-form-urlencoded';
+        if (iframe) {
+          form.target = iframe.name || 'google-sheets-iframe';
+        }
+      }
+
+      // Adicionar campos ao formulário
       Object.keys(dataToSend).forEach(key => {
         const input = document.createElement('input');
         input.type = 'hidden';
         input.name = key;
         input.value = String(dataToSend[key] || '');
         form.appendChild(input);
+        console.log(`Campo adicionado ao formulário: ${key} = ${input.value}`);
       });
 
-      document.body.appendChild(form);
+      console.log('Formulário preparado, submetendo...');
 
-      // Submeter
+      // Submeter o formulário
+      // No mobile, é importante garantir que o formulário está totalmente no DOM
       setTimeout(() => {
         try {
+          // Verificar se o formulário ainda está no DOM
+          if (!form.parentNode) {
+            document.body.appendChild(form);
+          }
+
+          // Submeter
           form.submit();
-          console.log('✓ Formulário POST submetido (fallback)');
+          console.log('✓ Formulário POST submetido (usando formulário do DOM)');
           
           setTimeout(() => {
             if (!state.successReported) {
@@ -186,18 +215,18 @@ export class GoogleSheetsService {
               observer.next({ success: true, message: 'Dados salvos com sucesso' });
               observer.complete();
             }
-            this.cleanup(form, null, iframe);
+            // Não limpar o formulário do DOM, apenas os campos
+            this.clearFormFields(form);
           }, 1500);
         } catch (e) {
           console.error('Erro ao submeter formulário:', e);
-          this.cleanup(form, null, iframe);
           if (!state.successReported) {
             state.successReported = true;
             observer.next({ success: false, message: 'Erro ao enviar formulário' });
             observer.complete();
           }
         }
-      }, 200);
+      }, 100); // Delay menor para formulário que já existe no DOM
 
     } catch (error) {
       console.error('Erro no método de formulário:', error);
@@ -206,6 +235,23 @@ export class GoogleSheetsService {
         observer.next({ success: false, message: 'Erro ao criar formulário' });
         observer.complete();
       }
+    }
+  }
+
+  /**
+   * Limpa apenas os campos do formulário, mantendo o formulário no DOM
+   */
+  private clearFormFields(form: HTMLFormElement): void {
+    try {
+      // Remover apenas os inputs hidden, mantendo o formulário
+      const inputs = form.querySelectorAll('input[type="hidden"]');
+      inputs.forEach(input => {
+        if (input.parentNode === form) {
+          form.removeChild(input);
+        }
+      });
+    } catch (e) {
+      // Ignorar
     }
   }
 
