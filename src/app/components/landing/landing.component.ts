@@ -450,8 +450,9 @@ export class LandingComponent implements OnInit, AfterViewInit {
       nome: this.formData.nome,
       email: this.formData.email,
       telefone: this.formData.telefone || undefined,
-      empresa: this.formData.segmento || undefined,
-      mensagem: this.formData.contexto || undefined
+      segmento: this.formData.segmento || undefined,
+      faturamento: this.formData.faturamento || undefined,
+      contexto: this.formData.contexto || undefined
     };
 
     // Enviar para SheetMonkey

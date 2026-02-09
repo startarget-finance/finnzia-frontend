@@ -7,8 +7,9 @@ export interface LeadData {
   nome: string;
   email: string;
   telefone?: string;
-  empresa?: string;
-  mensagem?: string;
+  segmento?: string;
+  faturamento?: string;
+  contexto?: string;
   timestamp?: string;
 }
 
