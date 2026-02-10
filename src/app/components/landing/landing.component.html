@@ -148,8 +148,8 @@
       <div class="max-w-6xl mx-auto px-4">
         <div class="text-center space-y-6">
           <h1 class="text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
-            Clareza e previsibilidade
-            <span class="bg-gradient-to-r from-blue-400 via-emerald-400 to-blue-400 bg-clip-text text-transparent">financeira</span>
+            Terceirize seu financeiro e tenha
+            <span class="bg-gradient-to-r from-blue-400 via-emerald-400 to-blue-400 bg-clip-text text-transparent"> clareza e previsibilidade</span>
           </h1>
           <p class="text-xl md:text-2xl text-slate-300 max-w-3xl mx-auto">
             Organize o financeiro da sua empresa com BPO completo, dashboard inteligente e acompanhamento mensal.
@@ -852,7 +852,9 @@
           <div class="relative z-10">
             <div class="mb-8">
               <h3 class="text-3xl md:text-4xl font-bold text-white mb-3">Quer saber onde o dinheiro está "vazando"?</h3>
-              <p class="text-lg text-slate-300">Encontre o que trava seu caixa e receba um plano de ação claro.</p>
+              <p class="text-lg text-slate-300 font-semibold text-center md:text-left">
+                Preencha o Formulário e Desbloqueie o Caminho para o Sucesso Financeiro!
+              </p>
             </div>
             
             <!-- Formulário de diagnóstico -->
@@ -897,10 +899,10 @@
                     name="faturamento"
                     class="w-full rounded-xl border-0 bg-slate-700/50 px-4 py-3.5 text-white appearance-none focus:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition">
                     <option value="" class="bg-slate-800 text-slate-400">Faturamento mensal aproximado</option>
-                    <option value="10 a 30k" class="bg-slate-800">R$ 10k a R$ 30k</option>
-                    <option value="30 a 50k" class="bg-slate-800">R$ 30k a R$ 50k</option>
-                    <option value="50 a 100k" class="bg-slate-800">R$ 50k a R$ 100k</option>
-                    <option value="Acima de 100k" class="bg-slate-800">Acima de R$ 100k</option>
+                    <option value="até 50 mil por mês" class="bg-slate-800">até 50 mil por mês</option>
+                    <option value="De 50mil a 100mil por mês" class="bg-slate-800">De 50mil a 100mil por mês</option>
+                    <option value="De 100mil a 300mil por mês" class="bg-slate-800">De 100mil a 300mil por mês</option>
+                    <option value="Acima de 300mil mensais" class="bg-slate-800">Acima de 300mil mensais</option>
                   </select>
                   <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                     <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -937,7 +939,25 @@
                   class="w-full rounded-xl border-0 bg-slate-700/50 px-4 py-3.5 text-white placeholder:text-slate-400 focus:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition resize-none"></textarea>
               </div>
               
-              <!-- Mensagens de feedback e Botão -->
+              <!-- Botão embaixo do campo "Onde está o problema hoje?" -->
+              <div class="flex justify-center py-4">
+                <button
+                  type="button"
+                  (click)="salvarDiagnostico($event)"
+                  [disabled]="salvandoDiagnostico"
+                  class="inline-flex justify-center items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 text-slate-900 font-semibold shadow-xl shadow-amber-500/40 hover:shadow-2xl hover:brightness-110 transition text-sm md:text-base disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:brightness-100 min-w-[220px] uppercase tracking-wide">
+                  <svg *ngIf="!salvandoDiagnostico" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  <svg *ngIf="salvandoDiagnostico" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>{{ salvandoDiagnostico ? 'Enviando...' : 'Quero transformar meu negócio' }}</span>
+                </button>
+              </div>
+              
+              <!-- Mensagens de feedback -->
               <div class="space-y-3">
                 <!-- Mensagem de sucesso -->
                 <div *ngIf="diagnosticoSalvo" class="flex items-center gap-2 px-4 py-3 rounded-lg bg-green-500/20 border border-green-500/40 text-green-300 text-sm animate-fade-in">
@@ -953,24 +973,6 @@
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                   </svg>
                   <span>{{ mensagemErro }}</span>
-                </div>
-
-                <!-- Botão de envio -->
-                <div class="flex justify-end">
-                  <button
-                    type="button"
-                    (click)="salvarDiagnostico($event)"
-                    [disabled]="salvandoDiagnostico"
-                    class="inline-flex justify-center items-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-emerald-400 text-white font-semibold shadow-lg shadow-blue-500/40 hover:shadow-2xl hover:brightness-110 transition text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:brightness-100 min-w-[160px]">
-                    <svg *ngIf="!salvandoDiagnostico" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg>
-                    <svg *ngIf="salvandoDiagnostico" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span>{{ salvandoDiagnostico ? 'Salvando...' : 'Salvar diagnóstico' }}</span>
-                  </button>
                 </div>
               </div>
             </form>
