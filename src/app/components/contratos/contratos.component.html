@@ -5,6 +5,18 @@
         <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-4 lg:mb-0">📋 Gestão de Contratos</h1>
         <div class="flex flex-col sm:flex-row gap-3">
           <button 
+            (click)="importarDoAsaas()"
+            [disabled]="importando || sincronizando"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            {{ importando ? '⏳ Importando...' : '🔄 Importar do Asaas' }}
+          </button>
+          <button 
+            (click)="sincronizarTodos()"
+            [disabled]="sincronizando || importando"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            {{ sincronizando ? '⏳ Sincronizando...' : '🔃 Sincronizar Status' }}
+          </button>
+          <button 
             (click)="exportarContratos()"
             class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
             📊 Exportar
@@ -17,7 +29,7 @@
         </div>
       </div>
       
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 lg:gap-4 w-full">
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 lg:gap-4 w-full">
         <!-- Total -->
         <div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm min-w-0">
           <div class="text-xl lg:text-2xl font-bold text-gray-900 mb-1 break-words">{{ getTotalContratos() | number:'1.0-0' }}</div>
@@ -35,6 +47,13 @@
           <div class="text-xl lg:text-2xl font-bold text-green-600 mb-1 break-words">{{ getContratosEmDia() | number:'1.0-0' }}</div>
           <div class="text-xs text-gray-600 font-medium mb-2">Em Dia</div>
           <div class="text-sm font-semibold text-gray-700">{{ formatCurrency(getValorEmDia()) }}</div>
+        </div>
+        
+        <!-- Em Atraso -->
+        <div class="bg-white rounded-lg border-l-4 border-orange-500 p-4 shadow-sm min-w-0">
+          <div class="text-xl lg:text-2xl font-bold text-orange-600 mb-1 break-words">{{ getContratosAtraso() | number:'1.0-0' }}</div>
+          <div class="text-xs text-gray-600 font-medium mb-2">Em Atraso</div>
+          <div class="text-sm font-semibold text-gray-700">{{ formatCurrency(getValorEmAtraso()) }}</div>
         </div>
         
         <!-- Pendentes -->
@@ -175,7 +194,7 @@
 
     <!-- Visualização Kanban -->
     <div *ngIf="isVisualizacaoKanban() && !loading" class="overflow-x-hidden">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
       <div *ngFor="let coluna of colunas" class="bg-gray-50 rounded-xl p-4 min-w-0 flex flex-col">
         <!-- Cabeçalho da Coluna -->
         <div class="flex items-center justify-between mb-4 flex-shrink-0">
@@ -197,6 +216,9 @@
             <div class="mb-3">
               <h4 class="font-semibold text-gray-900 text-sm mb-1 line-clamp-2 break-words">{{ contrato.titulo }}</h4>
               <p class="text-xs text-gray-600 truncate" [title]="contrato.cliente">{{ contrato.cliente }}</p>
+              <p *ngIf="contrato.cobrancas && contrato.cobrancas.length > 1" class="text-xs text-blue-600 mt-0.5">
+                📋 {{ contrato.cobrancas.length }} parcelas
+              </p>
             </div>
             
             <div class="space-y-2 mb-3">
@@ -817,72 +839,100 @@
           </div>
         </div>
 
-        <!-- Valores e Datas -->
+        <!-- Dados da Fatura (estilo Asaas) -->
         <div class="bg-green-50 rounded-xl p-6 border border-green-100">
           <h3 class="text-lg font-bold text-green-900 mb-4">💰 Valores</h3>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="text-sm font-medium text-gray-600">Valor do Contrato</label>
-              <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(contratoDetalhes.valorContrato) }}</p>
-            </div>
-            <div *ngIf="contratoDetalhes.valorRecorrencia">
-              <label class="text-sm font-medium text-gray-600">Valor Recorrente</label>
-              <p class="text-2xl font-bold text-gray-900">{{ formatCurrency(contratoDetalhes.valorRecorrencia) }}</p>
+              <p class="text-2xl font-bold text-green-700">{{ formatCurrency(contratoDetalhes.valorContrato) }}</p>
+              <p *ngIf="contratoDetalhes.valorRecorrencia && contratoDetalhes.cobrancas && contratoDetalhes.cobrancas.length > 1" 
+                 class="text-sm text-gray-500 mt-1">
+                Parcelado em {{ contratoDetalhes.cobrancas.length }}x de {{ formatCurrency(contratoDetalhes.valorRecorrencia) }}
+              </p>
             </div>
             <div>
               <label class="text-sm font-medium text-gray-600">Data de Vencimento</label>
               <p class="text-lg font-semibold text-gray-900">{{ formatDate(contratoDetalhes.dataVencimento) }}</p>
             </div>
           </div>
+          <div *ngIf="contratoDetalhes.cobrancas && contratoDetalhes.cobrancas.length > 1" class="mt-3 pt-3 border-t border-green-200">
+            <div class="flex items-center gap-2 text-sm text-gray-600">
+              <span class="font-medium">Parcela</span>
+              <span class="bg-white px-2 py-0.5 rounded text-gray-900 font-semibold">
+                {{ contarCobrancasPagas(contratoDetalhes.cobrancas) + contarCobrancasVencidas(contratoDetalhes.cobrancas) }} de {{ contratoDetalhes.cobrancas.length }}
+              </span>
+            </div>
+          </div>
         </div>
 
-        <!-- Cobranças -->
-        <div *ngIf="contratoDetalhes.cobrancas && contratoDetalhes.cobrancas.length > 0" class="bg-yellow-50 rounded-xl p-6 border border-yellow-100">
-          <h3 class="text-lg font-bold text-yellow-900 mb-4">💳 Cobranças</h3>
-          <div class="space-y-3">
-            <div *ngFor="let cobranca of contratoDetalhes.cobrancas" 
-                 class="bg-white rounded-lg p-4 border border-yellow-200">
-              <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div class="flex-1">
-                  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div>
-                      <label class="text-xs font-medium text-gray-600">Valor</label>
-                      <p class="text-lg font-bold text-gray-900">{{ formatCurrency(cobranca.valor) }}</p>
-                    </div>
-                    <div>
-                      <label class="text-xs font-medium text-gray-600">Vencimento</label>
-                      <p class="text-sm text-gray-900">{{ formatDate(cobranca.dataVencimento) }}</p>
-                    </div>
-                    <div>
-                      <label class="text-xs font-medium text-gray-600">Status</label>
-                      <p class="text-sm font-semibold" 
-                         [ngClass]="{
-                           'text-green-600': cobranca.status === 'RECEIVED',
-                           'text-yellow-600': cobranca.status === 'PENDING',
-                           'text-red-600': cobranca.status === 'OVERDUE'
-                         }">
-                        {{ cobranca.status }}
-                      </p>
-                    </div>
-                    <div *ngIf="cobranca.dataPagamento">
-                      <label class="text-xs font-medium text-gray-600">Pagamento</label>
-                      <p class="text-sm text-gray-900">{{ formatDate(cobranca.dataPagamento) }}</p>
-                    </div>
-                  </div>
-                </div>
-                <div *ngIf="cobranca.linkPagamento" class="flex gap-2">
-                  <button 
-                    (click)="abrirLinkPagamento(cobranca.linkPagamento!)"
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
-                    🔗 Abrir Link
-                  </button>
-                  <button 
-                    (click)="copiarLinkPagamento(cobranca.linkPagamento!)"
-                    class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 text-sm">
-                    📋 Copiar
-                  </button>
-                </div>
+        <!-- Resumo do Parcelamento (estilo Asaas) -->
+        <div *ngIf="contratoDetalhes.cobrancas && contratoDetalhes.cobrancas.length > 0" class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+          <h3 class="text-lg font-bold text-gray-900 mb-4">📋 Resumo do parcelamento</h3>
+          <div class="space-y-2">
+            <div *ngFor="let cobranca of getCobrancasOrdenadas(contratoDetalhes.cobrancas); let i = index"
+                 class="flex items-center gap-3 py-2 px-3 rounded-lg transition-colors"
+                 [ngClass]="{
+                   'bg-green-50': isCobrancaPaga(cobranca),
+                   'bg-red-50': isCobrancaVencida(cobranca),
+                   'bg-yellow-50': cobranca.status === 'PENDING',
+                   'bg-gray-50': cobranca.status !== 'PENDING' && !isCobrancaPaga(cobranca) && !isCobrancaVencida(cobranca)
+                 }">
+              <!-- Número da parcela -->
+              <span class="text-sm font-bold text-gray-500 w-6 text-right flex-shrink-0">
+                {{ cobranca.numeroParcela || (i + 1) }}
+              </span>
+
+              <!-- Ícone de status -->
+              <span class="flex-shrink-0 text-lg">
+                <span *ngIf="isCobrancaPaga(cobranca)" class="text-green-600">✓</span>
+                <span *ngIf="isCobrancaVencida(cobranca)" class="text-red-600">✗</span>
+                <span *ngIf="cobranca.status === 'PENDING'" class="text-yellow-600">⏳</span>
+                <span *ngIf="!isCobrancaPaga(cobranca) && !isCobrancaVencida(cobranca) && cobranca.status !== 'PENDING'" class="text-gray-400">•</span>
+              </span>
+
+              <!-- Data e Valor -->
+              <div class="flex-1 flex items-center gap-2 min-w-0">
+                <span class="text-sm text-gray-700">{{ formatDate(cobranca.dataVencimento) }}</span>
+                <span class="text-sm text-gray-400">-</span>
+                <span class="text-sm font-semibold text-gray-900">{{ formatCurrency(cobranca.valor) }}</span>
               </div>
+
+              <!-- Status badge -->
+              <span class="text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0"
+                    [ngClass]="{
+                      'bg-green-100 text-green-700': isCobrancaPaga(cobranca),
+                      'bg-red-100 text-red-700': isCobrancaVencida(cobranca),
+                      'bg-yellow-100 text-yellow-700': cobranca.status === 'PENDING'
+                    }">
+                {{ isCobrancaPaga(cobranca) ? 'Pago' : (isCobrancaVencida(cobranca) ? 'Vencido' : (cobranca.status === 'PENDING' ? 'Pendente' : cobranca.status)) }}
+              </span>
+
+              <!-- Botão link pagamento (se disponível e não pago) -->
+              <button *ngIf="cobranca.linkPagamento && !isCobrancaPaga(cobranca)"
+                      (click)="abrirLinkPagamento(cobranca.linkPagamento!)"
+                      class="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 flex-shrink-0">
+                🔗 Link
+              </button>
+            </div>
+          </div>
+
+          <!-- Totalizador -->
+          <div class="mt-4 pt-4 border-t border-gray-200 flex flex-wrap gap-4 text-sm">
+            <div class="flex items-center gap-1">
+              <span class="text-green-600 font-bold">✓</span>
+              <span class="text-gray-600">Pagas: {{ contarCobrancasPagas(contratoDetalhes.cobrancas) }}</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <span class="text-red-600 font-bold">✗</span>
+              <span class="text-gray-600">Vencidas: {{ contarCobrancasVencidas(contratoDetalhes.cobrancas) }}</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <span class="text-yellow-600 font-bold">⏳</span>
+              <span class="text-gray-600">Pendentes: {{ contarCobrancasPendentes(contratoDetalhes.cobrancas) }}</span>
+            </div>
+            <div class="ml-auto font-semibold text-gray-900">
+              Total: {{ contratoDetalhes.cobrancas.length }} parcela{{ contratoDetalhes.cobrancas.length > 1 ? 's' : '' }}
             </div>
           </div>
         </div>

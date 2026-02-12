@@ -24,7 +24,7 @@ export interface CobrancaDTO {
   status: 'PENDING' | 'RECEIVED' | 'OVERDUE' | 'REFUNDED' | 'RECEIVED_IN_CASH_UNDONE' | 
           'CHARGEBACK_REQUESTED' | 'CHARGEBACK_DISPUTE' | 'AWAITING_CHARGEBACK_REVERSAL' |
           'DUNNING_REQUESTED' | 'DUNNING_RECEIVED' | 'AWAITING_RISK_ANALYSIS';
-  linkPagamento?: string;
+  linkPagamento?: string | null;
   codigoBarras?: string;
   numeroParcela?: number;
   asaasPaymentId?: string;
@@ -47,7 +47,7 @@ export interface ContratoDTO {
   whatsapp?: string;
   asaasSubscriptionId?: string;
   cobrancas?: CobrancaDTO[];
-  categoria?: 'EM_DIA' | 'PENDENTE' | 'INADIMPLENTE';
+  categoria?: 'EM_DIA' | 'PENDENTE' | 'EM_ATRASO' | 'INADIMPLENTE';
   dataCriacao: string;
   dataAtualizacao?: string;
 }
@@ -57,9 +57,11 @@ export interface TotaisPorCategoria {
   totalValor: number;
   emDia: number;
   pendente: number;
+  emAtraso: number;
   inadimplente: number;
   valorEmDia?: number;
   valorPendente?: number;
+  valorEmAtraso?: number;
   valorInadimplente?: number;
 }
 
@@ -336,6 +338,35 @@ export class ContratoService {
   }
 
   /**
+   * Importa contratos do Asaas para o banco de dados
+   */
+  importarDoAsaas(): Observable<{ contratosImportados: number; mensagem: string }> {
+    return this.http.post<{ contratosImportados: number; mensagem: string }>(`${this.baseUrl}/importar-asaas`, {}, {
+      headers: this.getHeaders()
+    }).pipe(
+      catchError(error => {
+        console.error('Erro ao importar contratos do Asaas:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
+   * Re-sincroniza TODOS os contratos com o Asaas.
+   * Atualiza status de cobranças que podem estar desatualizadas (ex: pagas no Asaas mas PENDING no sistema).
+   */
+  sincronizarTodos(): Observable<{ totalContratos: number; contratosAtualizados: number; cobrancasAtualizadas: number; erros: number; mensagem: string }> {
+    return this.http.post<{ totalContratos: number; contratosAtualizados: number; cobrancasAtualizadas: number; erros: number; mensagem: string }>(`${this.baseUrl}/sincronizar-todos`, {}, {
+      headers: this.getHeaders()
+    }).pipe(
+      catchError(error => {
+        console.error('Erro ao sincronizar contratos com Asaas:', error);
+        throw error;
+      })
+    );
+  }
+
+  /**
    * Busca totais por categoria de contratos
    */
   getTotaisPorCategoria(): Observable<TotaisPorCategoria> {
@@ -384,10 +415,11 @@ export class ContratoService {
   /**
    * Mapeia categoria do backend para formato do componente
    */
-  mapearCategoria(categoria: string): 'em-dia' | 'pendente' | 'inadimplente' {
-    const categoriaMap: Record<string, 'em-dia' | 'pendente' | 'inadimplente'> = {
+  mapearCategoria(categoria: string): 'em-dia' | 'pendente' | 'em-atraso' | 'inadimplente' {
+    const categoriaMap: Record<string, 'em-dia' | 'pendente' | 'em-atraso' | 'inadimplente'> = {
       'EM_DIA': 'em-dia',
       'PENDENTE': 'pendente',
+      'EM_ATRASO': 'em-atraso',
       'INADIMPLENTE': 'inadimplente'
     };
     return categoriaMap[categoria] || 'pendente';

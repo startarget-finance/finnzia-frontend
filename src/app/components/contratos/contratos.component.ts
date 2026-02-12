@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
-import { ContratoService, ContratoDTO, CriarContratoRequest } from '../../services/contrato.service';
+import { ContratoService, ContratoDTO, CobrancaDTO, CriarContratoRequest } from '../../services/contrato.service';
 import { Contrato, DadosCliente } from '../../data/mock-data';
 
 @Component({
@@ -33,6 +33,8 @@ export class ContratosComponent implements OnInit, OnDestroy {
   error: string | null = null;
   successMessage: string | null = null;
   modoEdicao: boolean = false;
+  importando: boolean = false;
+  sincronizando: boolean = false;
   
   // Paginação (igual ao Asaas: offset começa em 0, limit padrão 10)
   page: number = 0; // offset (começa em 0)
@@ -46,16 +48,20 @@ export class ContratosComponent implements OnInit, OnDestroy {
   totaisPorCategoria: {
     emDia: number;
     pendente: number;
+    emAtraso: number;
     inadimplente: number;
     valorEmDia?: number;
     valorPendente?: number;
+    valorEmAtraso?: number;
     valorInadimplente?: number;
   } = {
     emDia: 0,
     pendente: 0,
+    emAtraso: 0,
     inadimplente: 0,
     valorEmDia: 0,
     valorPendente: 0,
+    valorEmAtraso: 0,
     valorInadimplente: 0
   };
   contratosPorStatusGeral: Record<string, number> = {
@@ -107,6 +113,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
   // Colunas do Kanban
   colunas = [
     { id: 'em-dia', titulo: 'Em Dia', cor: 'green', icone: '✅' },
+    { id: 'em-atraso', titulo: 'Em Atraso', cor: 'orange', icone: '⏰' },
     { id: 'pendente', titulo: 'Pendentes', cor: 'yellow', icone: '⏳' },
     { id: 'inadimplente', titulo: 'Inadimplentes', cor: 'red', icone: '⚠️' }
   ];
@@ -150,9 +157,11 @@ export class ContratosComponent implements OnInit, OnDestroy {
           this.totaisPorCategoria = {
             emDia: totais.emDia || 0,
             pendente: totais.pendente || 0,
+            emAtraso: totais.emAtraso || 0,
             inadimplente: totais.inadimplente || 0,
             valorEmDia: totais.valorEmDia || 0,
             valorPendente: totais.valorPendente || 0,
+            valorEmAtraso: totais.valorEmAtraso || 0,
             valorInadimplente: totais.valorInadimplente || 0
           };
         },
@@ -164,9 +173,11 @@ export class ContratosComponent implements OnInit, OnDestroy {
           this.totaisPorCategoria = {
             emDia: 0,
             pendente: 0,
+            emAtraso: 0,
             inadimplente: 0,
             valorEmDia: 0,
             valorPendente: 0,
+            valorEmAtraso: 0,
             valorInadimplente: 0
           };
         }
@@ -378,8 +389,21 @@ export class ContratosComponent implements OnInit, OnDestroy {
     }).format(value);
   }
 
+  /**
+   * Converte string de data (yyyy-MM-dd) para Date local sem problema de timezone.
+   * new Date("2026-01-20") interpreta como UTC, causando -1 dia no Brasil (UTC-3).
+   * Este método cria a data como horário local.
+   */
+  private parseLocalDate(dateString: string): Date {
+    if (!dateString) return new Date();
+    const parts = dateString.substring(0, 10).split('-');
+    return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  }
+
   formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('pt-BR');
+    if (!dateString) return '-';
+    const date = this.parseLocalDate(dateString);
+    return date.toLocaleDateString('pt-BR');
   }
 
   assinarContrato(contrato: Contrato) {
@@ -447,7 +471,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
     
     // Validar que a data não está no passado
     if (dataVencimento) {
-      const dataVenc = new Date(dataVencimento);
+      const dataVenc = this.parseLocalDate(dataVencimento);
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
       if (dataVenc < hoje) {
@@ -596,7 +620,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
     const dataVencimento = this.inicioRecorrencia || this.inicioContrato;
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
-    const dataVenc = new Date(dataVencimento);
+    const dataVenc = this.parseLocalDate(dataVencimento);
     if (dataVenc <= hoje) {
       this.error = 'Data de vencimento deve ser futura.';
       return false;
@@ -612,7 +636,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
         this.error = 'Data de início da recorrência é obrigatória para contratos recorrentes.';
         return false;
       }
-      const dataRec = new Date(this.inicioRecorrencia);
+      const dataRec = this.parseLocalDate(this.inicioRecorrencia);
       if (dataRec <= new Date()) {
         this.error = 'Data de início da recorrência deve ser futura.';
         return false;
@@ -655,11 +679,13 @@ export class ContratosComponent implements OnInit, OnDestroy {
 
   // Método auxiliar para determinar a categoria de um contrato (mutuamente exclusivo)
   // Nota: Agora a categoria vem do backend, mas este método é mantido para compatibilidade
-  private getCategoriaContrato(contrato: Contrato): 'inadimplente' | 'em-dia' | 'pendente' {
+  // Inadimplente = 2+ parcelas em atraso | Em Atraso = 1 parcela em atraso
+  private getCategoriaContrato(contrato: Contrato): 'inadimplente' | 'em-atraso' | 'em-dia' | 'pendente' {
     // Se o contrato já tem categoria do backend, usar ela
     if ((contrato as any).categoria) {
       const categoria = (contrato as any).categoria;
       if (categoria === 'em-dia') return 'em-dia';
+      if (categoria === 'em-atraso') return 'em-atraso';
       if (categoria === 'inadimplente') return 'inadimplente';
       if (categoria === 'pendente') return 'pendente';
     }
@@ -667,51 +693,33 @@ export class ContratosComponent implements OnInit, OnDestroy {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
     
-    // PRIORIDADE 1: Inadimplentes (qualquer coisa vencida)
-    if (contrato.status === 'vencido') {
+    // Contar parcelas em atraso
+    const parcelasEmAtraso = this.contarParcelasEmAtraso(contrato);
+    
+    // PRIORIDADE 1: Inadimplentes (2+ parcelas em atraso)
+    if (parcelasEmAtraso >= 2) {
       return 'inadimplente';
     }
     
-    if (contrato.cobrancas && contrato.cobrancas.length > 0) {
-      // Cobranças com problemas graves
-      const temVencida = contrato.cobrancas.some(cob => 
-        cob.status === 'OVERDUE' || 
-        cob.status === 'DUNNING_REQUESTED' ||
-        cob.status === 'CHARGEBACK_REQUESTED'
-      );
-      if (temVencida) {
-        return 'inadimplente';
-      }
-      
-      // Cobranças PENDING vencidas (qualquer tempo)
-      const temPendenteVencida = contrato.cobrancas.some(cob => {
-        if (cob.status === 'PENDING' && cob.dataVencimento) {
-          const vencCobranca = new Date(cob.dataVencimento);
-          vencCobranca.setHours(0, 0, 0, 0);
-          return vencCobranca < hoje;
-        }
-        return false;
-      });
-      if (temPendenteVencida) {
-        return 'inadimplente';
-      }
+    // PRIORIDADE 2: Em Atraso (1 parcela em atraso ou contrato vencido sem cobranças)
+    if (parcelasEmAtraso === 1) {
+      return 'em-atraso';
     }
     
-    // Contrato assinado vencido (qualquer tempo)
+    // Contrato vencido sem cobranças = em atraso
+    if (contrato.status === 'vencido') {
+      return 'em-atraso';
+    }
+    
+    // Contrato assinado com data vencida (sem cobranças em atraso) = em atraso
     if (contrato.status === 'assinado') {
-      const vencimento = new Date(contrato.dataVencimento);
-      vencimento.setHours(0, 0, 0, 0);
+      const vencimento = this.parseLocalDate(contrato.dataVencimento);
       if (vencimento < hoje) {
-        return 'inadimplente';
+        return 'em-atraso';
       }
     }
     
-    // PRIORIDADE 2: Em Dia
-    // - Pago OU
-    // - Todas as cobranças pagas OU
-    // - Pelo menos uma cobrança paga OU
-    // - Assinado com data futura OU
-    // - Todas cobranças PENDING com data futura
+    // PRIORIDADE 3: Em Dia
     if (contrato.status === 'pago') {
       return 'em-dia';
     }
@@ -740,8 +748,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
       // Todas PENDING e data futura
       const todasPendentes = contrato.cobrancas.every(cob => cob.status === 'PENDING');
       if (todasPendentes) {
-        const vencimento = new Date(contrato.dataVencimento);
-        vencimento.setHours(0, 0, 0, 0);
+        const vencimento = this.parseLocalDate(contrato.dataVencimento);
         if (vencimento >= hoje) {
           return 'em-dia';
         }
@@ -749,16 +756,13 @@ export class ContratosComponent implements OnInit, OnDestroy {
     }
     
     if (contrato.status === 'assinado') {
-      const vencimento = new Date(contrato.dataVencimento);
-      vencimento.setHours(0, 0, 0, 0);
+      const vencimento = this.parseLocalDate(contrato.dataVencimento);
       if (vencimento >= hoje) {
         return 'em-dia';
       }
     }
     
     // PRIORIDADE 4: Pendentes (padrão)
-    // - Status pendente OU
-    // - Cobranças PENDING com data futura (e não se encaixa nas outras categorias)
     if (contrato.status === 'pendente') {
       return 'pendente';
     }
@@ -766,8 +770,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
     if (contrato.cobrancas && contrato.cobrancas.length > 0) {
       const temPendente = contrato.cobrancas.some(cob => cob.status === 'PENDING');
       if (temPendente) {
-        const vencimento = new Date(contrato.dataVencimento);
-        vencimento.setHours(0, 0, 0, 0);
+        const vencimento = this.parseLocalDate(contrato.dataVencimento);
         if (vencimento >= hoje) {
           return 'pendente';
         }
@@ -783,7 +786,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
   }
 
   getContratosAtraso(): number {
-    return 0; // Removido - tudo vencido vai para Inadimplentes
+    return this.totaisPorCategoria.emAtraso;
   }
 
   getContratosPendentes(): number {
@@ -800,6 +803,10 @@ export class ContratosComponent implements OnInit, OnDestroy {
 
   getValorPendente(): number {
     return this.totaisPorCategoria.valorPendente || 0;
+  }
+
+  getValorEmAtraso(): number {
+    return this.totaisPorCategoria.valorEmAtraso || 0;
   }
 
   getValorInadimplente(): number {
@@ -835,44 +842,57 @@ export class ContratosComponent implements OnInit, OnDestroy {
     return contratosComCategoria;
   }
 
-  isInadimplente(contrato: Contrato): boolean {
+  /**
+   * Conta quantas parcelas (cobranças) estão em atraso para um contrato.
+   * Parcela em atraso = OVERDUE, DUNNING_REQUESTED, CHARGEBACK_REQUESTED
+   * ou PENDING com data de vencimento no passado.
+   */
+  contarParcelasEmAtraso(contrato: Contrato): number {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
-    const vencimento = new Date(contrato.dataVencimento);
-    vencimento.setHours(0, 0, 0, 0);
     
-    // Verificar se tem cobranças OVERDUE
-    if (contrato.cobrancas && contrato.cobrancas.length > 0) {
-      return contrato.cobrancas.some(cob => cob.status === 'OVERDUE');
+    if (!contrato.cobrancas || contrato.cobrancas.length === 0) {
+      return 0;
     }
     
-    // Se está vencido ou assinado com data vencida há mais de 30 dias
-    if (contrato.status === 'vencido') return true;
-    if (contrato.status === 'assinado' && vencimento < hoje) {
-      const diasVencidos = Math.floor((hoje.getTime() - vencimento.getTime()) / (1000 * 60 * 60 * 24));
-      return diasVencidos > 30;
-    }
-    
-    return false;
+    return contrato.cobrancas.filter(cob => {
+      if (cob.status === 'OVERDUE' || cob.status === 'DUNNING_REQUESTED' || cob.status === 'CHARGEBACK_REQUESTED') {
+        return true;
+      }
+      if (cob.status === 'PENDING' && cob.dataVencimento) {
+        const vencCobranca = this.parseLocalDate(cob.dataVencimento);
+        return vencCobranca < hoje;
+      }
+      return false;
+    }).length;
   }
 
+  /**
+   * Inadimplente = 2 ou mais parcelas em atraso
+   */
+  isInadimplente(contrato: Contrato): boolean {
+    return this.contarParcelasEmAtraso(contrato) >= 2;
+  }
+
+  /**
+   * Em Atraso = exatamente 1 parcela em atraso, 
+   * ou contrato vencido/assinado com data vencida (sem cobranças para contar)
+   */
   isAtraso(contrato: Contrato): boolean {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const vencimento = new Date(contrato.dataVencimento);
-    vencimento.setHours(0, 0, 0, 0);
+    const parcelasEmAtraso = this.contarParcelasEmAtraso(contrato);
     
-    if (contrato.status !== 'assinado') return false;
+    if (parcelasEmAtraso === 1) return true;
     
-    const diasVencidos = Math.floor((hoje.getTime() - vencimento.getTime()) / (1000 * 60 * 60 * 24));
-    
-    // Atraso = vencido há menos de 30 dias
-    if (vencimento < hoje && diasVencidos <= 30) {
-      // Se tem cobranças, verificar se estão PENDING
-      if (contrato.cobrancas && contrato.cobrancas.length > 0) {
-        return contrato.cobrancas.some(cob => cob.status === 'PENDING');
+    // Se não tem cobranças mas está vencido, considerar como atraso
+    if (parcelasEmAtraso === 0) {
+      if (contrato.status === 'vencido') return true;
+      
+      if (contrato.status === 'assinado') {
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+        const vencimento = this.parseLocalDate(contrato.dataVencimento);
+        return vencimento < hoje;
       }
-      return true;
     }
     
     return false;
@@ -1197,6 +1217,51 @@ export class ContratosComponent implements OnInit, OnDestroy {
     window.open(link, '_blank');
   }
 
+  // === Métodos do Resumo do Parcelamento (estilo Asaas) ===
+
+  // Ordena cobranças por data de vencimento (mais antiga primeiro)
+  getCobrancasOrdenadas(cobrancas: CobrancaDTO[]): CobrancaDTO[] {
+    return [...cobrancas].sort((a, b) => {
+      const dateA = this.parseLocalDate(a.dataVencimento).getTime();
+      const dateB = this.parseLocalDate(b.dataVencimento).getTime();
+      return dateA - dateB;
+    });
+  }
+
+  // Verifica se cobrança foi paga
+  isCobrancaPaga(cobranca: CobrancaDTO): boolean {
+    return cobranca.status === 'RECEIVED' || cobranca.status === 'RECEIVED_IN_CASH_UNDONE';
+  }
+
+  // Verifica se cobrança está vencida/inadimplente
+  isCobrancaVencida(cobranca: CobrancaDTO): boolean {
+    if (cobranca.status === 'OVERDUE' || cobranca.status === 'DUNNING_REQUESTED' || 
+        cobranca.status === 'CHARGEBACK_REQUESTED' || cobranca.status === 'CHARGEBACK_DISPUTE') {
+      return true;
+    }
+    // PENDING mas com data já vencida
+    if (cobranca.status === 'PENDING') {
+      const hoje = new Date();
+      hoje.setHours(0, 0, 0, 0);
+      const venc = this.parseLocalDate(cobranca.dataVencimento);
+      return venc < hoje;
+    }
+    return false;
+  }
+
+  // Contadores para o totalizador
+  contarCobrancasPagas(cobrancas: CobrancaDTO[]): number {
+    return cobrancas.filter(c => this.isCobrancaPaga(c)).length;
+  }
+
+  contarCobrancasVencidas(cobrancas: CobrancaDTO[]): number {
+    return cobrancas.filter(c => this.isCobrancaVencida(c)).length;
+  }
+
+  contarCobrancasPendentes(cobrancas: CobrancaDTO[]): number {
+    return cobrancas.filter(c => c.status === 'PENDING' && !this.isCobrancaVencida(c)).length;
+  }
+
   salvarDadosCliente(): void {
     // Se estiver criando novo contrato
     if (this.mostrarFormularioNovo) {
@@ -1299,6 +1364,61 @@ export class ContratosComponent implements OnInit, OnDestroy {
     return new Date().toLocaleDateString('pt-BR');
   }
 
+
+  importarDoAsaas(): void {
+    if (this.importando) return;
+    
+    this.importando = true;
+    this.error = null;
+    this.successMessage = null;
+
+    this.contratoService.importarDoAsaas()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          this.importando = false;
+          this.successMessage = result.mensagem || `${result.contratosImportados} contratos importados com sucesso!`;
+          // Recarregar dados
+          this.carregarTotaisGerais();
+          this.carregarContratos();
+          setTimeout(() => this.successMessage = null, 8000);
+        },
+        error: (error) => {
+          console.error('Erro ao importar do Asaas:', error);
+          this.error = error.error?.message || 'Erro ao importar contratos do Asaas. Tente novamente.';
+          this.importando = false;
+          setTimeout(() => this.error = null, 8000);
+        }
+      });
+  }
+
+  sincronizarTodos(): void {
+    if (this.sincronizando) return;
+    
+    this.sincronizando = true;
+    this.error = null;
+    this.successMessage = null;
+
+    this.contratoService.sincronizarTodos()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          this.sincronizando = false;
+          this.successMessage = result.mensagem || 
+            `Sincronização concluída: ${result.cobrancasAtualizadas} cobranças atualizadas.`;
+          // Recarregar dados
+          this.carregarTotaisGerais();
+          this.carregarContratos();
+          setTimeout(() => this.successMessage = null, 10000);
+        },
+        error: (error) => {
+          console.error('Erro ao sincronizar com Asaas:', error);
+          this.error = error.error?.message || 'Erro ao sincronizar contratos com Asaas. Tente novamente.';
+          this.sincronizando = false;
+          setTimeout(() => this.error = null, 8000);
+        }
+      });
+  }
 
   exportarContratos(): void {
     const dados = this.contratosFiltrados.map(contrato => ({
