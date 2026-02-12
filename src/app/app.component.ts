@@ -15,6 +15,7 @@ export class AppComponent {
   title = 'ia-financeira-erp';
   isMobileMenuOpen = false;
   isUserMenuOpen = false;
+  isSidebarCollapsed = false;
   currentYear: number = new Date().getFullYear();
   
   // Simular tipo de usuário (em produção viria do AuthService)
@@ -63,6 +64,10 @@ export class AppComponent {
 
   canAccessGerenciarAcessos(): boolean {
     return this.hasPermission('gerenciar-acessos');
+  }
+
+  toggleSidebar() {
+    this.isSidebarCollapsed = !this.isSidebarCollapsed;
   }
 
   toggleMobileMenu() {

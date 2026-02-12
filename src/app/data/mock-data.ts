@@ -4,7 +4,7 @@ export interface Contrato {
   cliente: string;
   valor: number;
   dataVencimento: string;
-  status: 'pendente' | 'assinado' | 'vencido' | 'pago' | 'cancelado';
+  status: 'pendente' | 'em_dia' | 'vencido' | 'pago' | 'cancelado';
   descricao: string;
   conteudo: string;
   whatsapp: string;
@@ -29,7 +29,7 @@ export interface Contrato {
     numeroParcela?: number;
     asaasPaymentId?: string;
   }>;
-  categoria?: 'em-dia' | 'pendente' | 'inadimplente';
+  categoria?: 'em-dia' | 'pendente' | 'em-atraso' | 'inadimplente';
 }
 
 export interface DadosCliente {
@@ -70,14 +70,14 @@ export interface DadosFinanceiros {
 }
 
 export const CONTRATOS_MOCK: Contrato[] = [
-  // 5 Contratos EM DIA (assinados e não vencidos)
+  // 5 Contratos EM DIA (em dia e não vencidos)
   {
     id: '1',
     titulo: 'Contrato de Desenvolvimento de Sistema ERP',
     cliente: 'Tech Solutions S.A.',
     valor: 45000,
     dataVencimento: '2026-02-20',
-    status: 'assinado',
+    status: 'em_dia',
     descricao: 'Desenvolvimento completo de sistema ERP customizado',
     conteudo: `CONTRATO DE DESENVOLVIMENTO DE SOFTWARE ERP
 
@@ -106,7 +106,7 @@ Suporte técnico por 12 meses após a entrega final.`,
     cliente: 'E-commerce Digital Ltda',
     valor: 18000,
     dataVencimento: '2026-01-25',
-    status: 'assinado',
+    status: 'em_dia',
     descricao: 'Adequação completa à LGPD e implementação de controles de privacidade',
     conteudo: `CONTRATO DE CONSULTORIA EM COMPLIANCE LGPD
 
@@ -135,7 +135,7 @@ Todas as informações sensíveis serão tratadas com absoluto sigilo.`,
     cliente: 'Fintech Brasil Ltda',
     valor: 35000,
     dataVencimento: '2026-02-15',
-    status: 'assinado',
+    status: 'em_dia',
     descricao: 'Integração completa com APIs bancárias e desenvolvimento de soluções financeiras',
     conteudo: `CONTRATO DE INTEGRAÇÃO DE SISTEMAS BANCÁRIOS
 
@@ -164,7 +164,7 @@ Suporte técnico por 24 meses após a entrega.`,
     cliente: 'Holding Empresarial Ltda',
     valor: 50000,
     dataVencimento: '2026-03-20',
-    status: 'assinado',
+    status: 'em_dia',
     descricao: 'Consultoria especializada em processo de fusão empresarial',
     conteudo: `CONTRATO DE CONSULTORIA EM FUSÕES E AQUISIÇÕES
 
@@ -193,7 +193,7 @@ Todas as informações estratégicas serão mantidas em sigilo absoluto.`,
     cliente: 'Indústria Moderna S.A.',
     valor: 22000,
     dataVencimento: '2026-01-30',
-    status: 'assinado',
+    status: 'em_dia',
     descricao: 'Implementação de sistema de gestão integrado para indústria',
     conteudo: `CONTRATO DE IMPLEMENTAÇÃO DE SISTEMA DE GESTÃO
 

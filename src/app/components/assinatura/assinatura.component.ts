@@ -90,7 +90,12 @@ export class AssinaturaComponent implements OnInit {
   }
 
   formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('pt-BR');
+    if (!dateString) return '-';
+    // Evitar problema de timezone: new Date("2026-01-20") é interpretado como UTC
+    // No Brasil (UTC-3), isso vira dia anterior. Parseando manualmente como local.
+    const parts = dateString.substring(0, 10).split('-');
+    const date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    return date.toLocaleDateString('pt-BR');
   }
 
 
@@ -104,7 +109,7 @@ export class AssinaturaComponent implements OnInit {
   getStatusClass(status: string): string {
     switch (status) {
       case 'pendente': return 'status-pendente';
-      case 'assinado': return 'status-assinado';
+      case 'em_dia': return 'status-em-dia';
       case 'vencido': return 'status-vencido';
       default: return '';
     }
@@ -113,7 +118,7 @@ export class AssinaturaComponent implements OnInit {
   getStatusText(status: string): string {
     switch (status) {
       case 'pendente': return 'Pendente';
-      case 'assinado': return 'Assinado';
+      case 'em_dia': return 'Assinado';
       case 'vencido': return 'Vencido';
       default: return status;
     }
@@ -129,7 +134,7 @@ export class AssinaturaComponent implements OnInit {
       this.isAssinando = false;
       const index = CONTRATOS_MOCK.findIndex(c => c.id === this.contrato!.id);
       if (index !== -1) {
-        CONTRATOS_MOCK[index].status = 'assinado';
+        CONTRATOS_MOCK[index].status = 'em_dia';
       }
     }, 2000);
   }

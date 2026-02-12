@@ -1046,7 +1046,7 @@ A assinatura digital utiliza criptografia assimétrica com duas chaves:
 • **Reserva:** Mantenha reserva de emergência
 
 **5. Gráfico de Contratos:**
-• **Status:** Pendentes, assinados, vencidos
+• **Status:** Pendentes, em dia, vencidos
 • **Valores:** Total por status
 • **Tendência:** Crescimento da carteira
 • **Ações:** Identifique contratos que precisam de atenção

@@ -66,7 +66,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
   };
   contratosPorStatusGeral: Record<string, number> = {
     'PENDENTE': 0,
-    'ASSINADO': 0,
+    'EM_DIA': 0,
     'VENCIDO': 0,
     'PAGO': 0,
     'CANCELADO': 0
@@ -363,7 +363,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
   getStatusClass(status: string): string {
     switch (status.toLowerCase()) {
       case 'pendente': return 'status-pendente';
-      case 'assinado': return 'status-assinado';
+      case 'em_dia': return 'status-em-dia';
       case 'vencido': return 'status-vencido';
       case 'pago': return 'status-pago';
       case 'cancelado': return 'status-cancelado';
@@ -374,7 +374,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
   getStatusText(status: string): string {
     switch (status.toLowerCase()) {
       case 'pendente': return 'Pendente';
-      case 'assinado': return 'Assinado';
+      case 'em_dia': return 'Em Dia';
       case 'vencido': return 'Vencido';
       case 'pago': return 'Pago';
       case 'cancelado': return 'Cancelado';
@@ -668,7 +668,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
   getContratosPorStatus(status: string): number {
     const statusMap: Record<string, string> = {
       'pendente': 'PENDENTE',
-      'assinado': 'ASSINADO',
+      'em_dia': 'EM_DIA',
       'vencido': 'VENCIDO',
       'pago': 'PAGO',
       'cancelado': 'CANCELADO'
@@ -711,8 +711,8 @@ export class ContratosComponent implements OnInit, OnDestroy {
       return 'em-atraso';
     }
     
-    // Contrato assinado com data vencida (sem cobranças em atraso) = em atraso
-    if (contrato.status === 'assinado') {
+    // Contrato em dia com data vencida (sem cobranças em atraso) = em atraso
+    if (contrato.status === 'em_dia') {
       const vencimento = this.parseLocalDate(contrato.dataVencimento);
       if (vencimento < hoje) {
         return 'em-atraso';
@@ -755,7 +755,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
       }
     }
     
-    if (contrato.status === 'assinado') {
+    if (contrato.status === 'em_dia') {
       const vencimento = this.parseLocalDate(contrato.dataVencimento);
       if (vencimento >= hoje) {
         return 'em-dia';
@@ -876,7 +876,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
 
   /**
    * Em Atraso = exatamente 1 parcela em atraso, 
-   * ou contrato vencido/assinado com data vencida (sem cobranças para contar)
+   * ou contrato vencido/em dia com data vencida (sem cobranças para contar)
    */
   isAtraso(contrato: Contrato): boolean {
     const parcelasEmAtraso = this.contarParcelasEmAtraso(contrato);
@@ -887,7 +887,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
     if (parcelasEmAtraso === 0) {
       if (contrato.status === 'vencido') return true;
       
-      if (contrato.status === 'assinado') {
+      if (contrato.status === 'em_dia') {
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
         const vencimento = this.parseLocalDate(contrato.dataVencimento);
@@ -1124,7 +1124,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
       cliente: detalhes.cliente.razaoSocial,
       valor: detalhes.valorContrato,
       dataVencimento: detalhes.dataVencimento,
-      status: this.contratoService.mapearStatus(detalhes.status) as 'pendente' | 'assinado' | 'vencido' | 'pago' | 'cancelado',
+      status: this.contratoService.mapearStatus(detalhes.status) as 'pendente' | 'em_dia' | 'vencido' | 'pago' | 'cancelado',
       descricao: detalhes.descricao || '',
       conteudo: detalhes.conteudo || '',
       whatsapp: detalhes.whatsapp || detalhes.cliente.celularFinanceiro || '',

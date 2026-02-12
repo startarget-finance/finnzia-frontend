@@ -39,7 +39,7 @@ export interface ContratoDTO {
   valorContrato: number;
   valorRecorrencia?: number;
   dataVencimento: string;
-  status: 'PENDENTE' | 'ASSINADO' | 'VENCIDO' | 'PAGO' | 'CANCELADO';
+  status: 'PENDENTE' | 'EM_DIA' | 'VENCIDO' | 'PAGO' | 'CANCELADO';
   tipoPagamento: 'UNICO' | 'RECORRENTE';
   servico?: string;
   inicioContrato?: string;
@@ -428,10 +428,10 @@ export class ContratoService {
   /**
    * Mapeia status do backend para formato do componente
    */
-  mapearStatus(status: string): 'pendente' | 'assinado' | 'vencido' | 'pago' | 'cancelado' {
-    const statusMap: Record<string, 'pendente' | 'assinado' | 'vencido' | 'pago' | 'cancelado'> = {
+  mapearStatus(status: string): 'pendente' | 'em_dia' | 'vencido' | 'pago' | 'cancelado' {
+    const statusMap: Record<string, 'pendente' | 'em_dia' | 'vencido' | 'pago' | 'cancelado'> = {
       'PENDENTE': 'pendente',
-      'ASSINADO': 'assinado',
+      'EM_DIA': 'em_dia',
       'VENCIDO': 'vencido',
       'PAGO': 'pago',
       'CANCELADO': 'cancelado'

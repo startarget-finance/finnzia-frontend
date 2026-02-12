@@ -1,205 +1,287 @@
-<div [class.min-h-screen]="!isAuthPublicPage()" [class.bg-gray-50]="!isAuthPublicPage()" [class.flex]="!isAuthPublicPage()" [class.flex-col]="!isAuthPublicPage()">
-  <!-- Header - apenas para páginas autenticadas -->
-  <nav *ngIf="!isAuthPublicPage()" class="bg-black shadow-lg border-b border-gray-800">
-    <div class="max-w-8xl mx-auto px-6 sm:px-8 lg:px-12">
-      <div class="flex justify-between items-center h-20">
-        <!-- Logo -->
-        <div class="flex items-center">
-          <a routerLink="/dashboard" class="flex items-center hover:opacity-90 transition-all duration-300 group">
-            <img src="assets/images/finnzialogo.png" alt="Finnzia" class="h-14 w-auto group-hover:scale-105 transition-transform duration-300">
-          </a>
-        </div>
+<!-- Layout wrapper: Sidebar for authenticated, full-width for public -->
+<div [ngClass]="{'flex h-screen bg-slate-50': !isAuthPublicPage()}">
 
-        <div class="hidden md:block">
-          <div class="ml-12 flex items-center space-x-1">
-            <a *ngIf="canAccessDashboard()" routerLink="/dashboard" 
-               class="text-white hover:text-gray-300 hover:bg-gray-800 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-              </svg>
-              Dashboard
-            </a>
-            <a *ngIf="canAccessRelatorio()" routerLink="/relatorio" 
-               class="text-white hover:text-gray-300 hover:bg-gray-800 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-              Relatório
-            </a>
-            <a *ngIf="canAccessMovimentacoes()" routerLink="/movimentacoes" 
-               class="text-white hover:text-gray-300 hover:bg-gray-800 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-              </svg>
-              Movimentações
-            </a>
-            <a *ngIf="canAccessFluxoCaixa()" routerLink="/fluxo-caixa"
-               class="text-white hover:text-gray-300 hover:bg-gray-800 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-              </svg>
-              DFC
-            </a>
-            <a *ngIf="canAccessContratos()" routerLink="/contratos" 
-               class="text-white hover:text-gray-300 hover:bg-gray-800 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-              </svg>
-              Contratos
-            </a>
-            <a *ngIf="canAccessChat()" routerLink="/chat" 
-               class="text-white hover:text-gray-300 hover:bg-gray-800 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-              </svg>
-              Chat IA
-            </a>
-            <!-- User Menu Dropdown -->
-            <div class="relative">
-              <button (click)="toggleUserMenu($event)" class="text-white hover:text-gray-300 hover:bg-gray-800 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center gap-2 cursor-pointer">
-                <svg *ngIf="isAdmin" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                </svg>
-                <svg *ngIf="!isAdmin" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                </svg>
-                {{ isAdmin ? 'Configurações' : 'Sair' }}
-              </button>
-              
-              <!-- Dropdown Menu -->
-              <div *ngIf="isUserMenuOpen" (click)="$event.stopPropagation()" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                <!-- Meu Perfil (todos os usuários) -->
-                <a routerLink="/meu-perfil" 
-                   (click)="isUserMenuOpen = false"
-                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center gap-2">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                  </svg>
-                  Meu Perfil
-                </a>
-                
-                <!-- Opções para Admin ou quem tem permissão -->
-                <div *ngIf="canAccessGerenciarAcessos()" class="border-t border-gray-200 mt-1 pt-1">
-                  <a (click)="onManageAccess()" 
-                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                    </svg>
-                    Gerenciar Acessos
-                  </a>
-                </div>
-                
-                <!-- Sair sempre disponível para todos -->
-                <div class="border-t border-gray-200 mt-1 pt-1">
-                  <a (click)="logout()" 
-                     class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                    </svg>
-                    Sair
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="md:hidden">
-          <button 
-            (click)="toggleMobileMenu()"
-            type="button" 
-            class="text-white hover:text-gray-300 hover:bg-gray-800 p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-600 transition-all duration-200">
-            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path *ngIf="!isMobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-              <path *ngIf="isMobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <div *ngIf="isMobileMenuOpen" 
-           class="md:hidden transition-all duration-300 ease-in-out transform"
-           [class.opacity-100]="isMobileMenuOpen"
-           [class.translate-y-0]="isMobileMenuOpen"
-           [class.opacity-0]="!isMobileMenuOpen"
-           [class.-translate-y-2]="!isMobileMenuOpen">
-         <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-900 rounded-lg mt-2 shadow-lg border border-gray-700">
-           <a *ngIf="canAccessDashboard()" routerLink="/dashboard" 
-              (click)="closeMobileMenu()"
-              class="text-white hover:text-gray-300 hover:bg-gray-800 block px-4 py-3 rounded-lg text-base font-semibold transition-all duration-200 flex items-center gap-3">
-             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-             </svg>
-             <span>Dashboard</span>
-           </a>
-           <a *ngIf="canAccessRelatorio()" routerLink="/relatorio" 
-              (click)="closeMobileMenu()"
-              class="text-white hover:text-gray-300 hover:bg-gray-800 block px-4 py-3 rounded-lg text-base font-semibold transition-all duration-200 flex items-center gap-3">
-             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-             </svg>
-             <span>Relatório</span>
-           </a>
-           <a *ngIf="canAccessMovimentacoes()" routerLink="/movimentacoes" 
-              (click)="closeMobileMenu()"
-              class="text-white hover:text-gray-300 hover:bg-gray-800 block px-4 py-3 rounded-lg text-base font-semibold transition-all duration-200 flex items-center gap-3">
-             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-             </svg>
-             <span>Movimentações</span>
-           </a>
-           <a *ngIf="canAccessFluxoCaixa()" routerLink="/fluxo-caixa"
-              (click)="closeMobileMenu()"
-              class="text-white hover:text-gray-300 hover:bg-gray-800 block px-4 py-3 rounded-lg text-base font-semibold transition-all duration-200 flex items-center gap-3">
-             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-             </svg>
-             <span>DFC</span>
-           </a>
-           <a *ngIf="canAccessContratos()" routerLink="/contratos" 
-              (click)="closeMobileMenu()"
-              class="text-white hover:text-gray-300 hover:bg-gray-800 block px-4 py-3 rounded-lg text-base font-semibold transition-all duration-200 flex items-center gap-3">
-             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-             </svg>
-             <span>Contratos</span>
-           </a>
-           <a *ngIf="canAccessChat()" routerLink="/chat" 
-              (click)="closeMobileMenu()"
-              class="text-white hover:text-gray-300 hover:bg-gray-800 block px-4 py-3 rounded-lg text-base font-semibold transition-all duration-200 flex items-center gap-3">
-             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-             </svg>
-             <span>Chat IA</span>
-           </a>
-         </div>
-      </div>
+  <!-- ========== SIDEBAR - Desktop ========== -->
+  <aside *ngIf="!isAuthPublicPage()" 
+         class="hidden lg:flex lg:flex-col bg-slate-950 border-r border-slate-800/50 flex-shrink-0 transition-all duration-300 relative"
+         [ngStyle]="{'width': isSidebarCollapsed ? '68px' : '240px'}">
+    
+    <!-- Logo + Toggle -->
+    <div class="h-16 flex items-center border-b border-slate-800/50"
+         [class.px-5]="!isSidebarCollapsed"
+         [class.justify-center]="isSidebarCollapsed"
+         [class.px-0]="isSidebarCollapsed">
+      <a *ngIf="!isSidebarCollapsed" routerLink="/dashboard" class="flex items-center hover:opacity-80 transition-opacity duration-200">
+        <img src="assets/images/finnzialogo.png" alt="Finnzia" class="h-9 w-auto">
+      </a>
+      <button (click)="toggleSidebar()" 
+              class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200"
+              [class.ml-auto]="!isSidebarCollapsed"
+              [title]="isSidebarCollapsed ? 'Expandir menu' : 'Recolher menu'">
+        <svg class="w-5 h-5 transition-transform duration-300" [class.rotate-180]="isSidebarCollapsed" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+        </svg>
+      </button>
     </div>
-  </nav>
 
-  <main [class.flex-1]="!isAuthPublicPage()">
-<router-outlet />
-  </main>
+    <!-- Navigation -->
+    <nav class="flex-1 py-4 space-y-0.5 overflow-y-auto overflow-x-hidden"
+         [class.px-3]="!isSidebarCollapsed"
+         [class.px-2]="isSidebarCollapsed">
+      <!-- Dashboard -->
+      <a *ngIf="canAccessDashboard()" routerLink="/dashboard" 
+         routerLinkActive #rlaDash="routerLinkActive"
+         [class.bg-blue-600]="rlaDash.isActive"
+         [class.text-white]="rlaDash.isActive"
+         [class.font-semibold]="rlaDash.isActive"
+         [class.text-slate-400]="!rlaDash.isActive"
+         class="flex items-center gap-3 py-2.5 rounded-lg text-[13px] font-medium hover:bg-slate-800 hover:text-white transition-all duration-150"
+         [class.px-3]="!isSidebarCollapsed"
+         [class.px-0]="isSidebarCollapsed"
+         [class.justify-center]="isSidebarCollapsed"
+         [title]="isSidebarCollapsed ? 'Dashboard' : ''">
+        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+        </svg>
+        <span *ngIf="!isSidebarCollapsed">Dashboard</span>
+      </a>
 
-  <!-- Componentes Globais -->
-  <app-loading></app-loading>
-  <app-error-notification></app-error-notification>
+      <!-- Relatório -->
+      <a *ngIf="canAccessRelatorio()" routerLink="/relatorio" 
+         routerLinkActive #rlaRel="routerLinkActive"
+         [class.bg-blue-600]="rlaRel.isActive"
+         [class.text-white]="rlaRel.isActive"
+         [class.font-semibold]="rlaRel.isActive"
+         [class.text-slate-400]="!rlaRel.isActive"
+         class="flex items-center gap-3 py-2.5 rounded-lg text-[13px] font-medium hover:bg-slate-800 hover:text-white transition-all duration-150"
+         [class.px-3]="!isSidebarCollapsed"
+         [class.px-0]="isSidebarCollapsed"
+         [class.justify-center]="isSidebarCollapsed"
+         [title]="isSidebarCollapsed ? 'Relatório' : ''">
+        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        <span *ngIf="!isSidebarCollapsed">Relatório</span>
+      </a>
 
-<!-- Footer global (em todas as telas, não fixo) -->
-<footer *ngIf="!isAuthPublicPage()" class="bg-white border-t border-gray-200">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between text-sm">
-    <div class="flex items-center gap-2 text-gray-700">
-      <span class="font-semibold text-gray-900">Finnzia</span>
-      <span class="text-gray-300">•</span>
-      <span>© {{ currentYear }} Todos os direitos reservados</span>
-    </div>
-    <nav class="hidden sm:flex items-center gap-4 text-gray-600">
-      <a *ngIf="canAccessDashboard()" routerLink="/dashboard" class="no-underline hover:text-gray-900 visited:text-gray-600">Dashboard</a>
-      <a *ngIf="canAccessRelatorio()" routerLink="/relatorio" class="no-underline hover:text-gray-900 visited:text-gray-600">Relatório</a>
-      <a *ngIf="canAccessMovimentacoes()" routerLink="/movimentacoes" class="no-underline hover:text-gray-900 visited:text-gray-600">Movimentações</a>
-      <a *ngIf="canAccessFluxoCaixa()" routerLink="/fluxo-caixa" class="no-underline hover:text-gray-900 visited:text-gray-600">DFC</a>
-      <a *ngIf="canAccessContratos()" routerLink="/contratos" class="no-underline hover:text-gray-900 visited:text-gray-600">Contratos</a>
+      <!-- Movimentações -->
+      <a *ngIf="canAccessMovimentacoes()" routerLink="/movimentacoes" 
+         routerLinkActive #rlaMov="routerLinkActive"
+         [class.bg-blue-600]="rlaMov.isActive"
+         [class.text-white]="rlaMov.isActive"
+         [class.font-semibold]="rlaMov.isActive"
+         [class.text-slate-400]="!rlaMov.isActive"
+         class="flex items-center gap-3 py-2.5 rounded-lg text-[13px] font-medium hover:bg-slate-800 hover:text-white transition-all duration-150"
+         [class.px-3]="!isSidebarCollapsed"
+         [class.px-0]="isSidebarCollapsed"
+         [class.justify-center]="isSidebarCollapsed"
+         [title]="isSidebarCollapsed ? 'Movimentações' : ''">
+        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+        </svg>
+        <span *ngIf="!isSidebarCollapsed">Movimentações</span>
+      </a>
+
+      <!-- DFC -->
+      <a *ngIf="canAccessFluxoCaixa()" routerLink="/fluxo-caixa"
+         routerLinkActive #rlaDfc="routerLinkActive"
+         [class.bg-blue-600]="rlaDfc.isActive"
+         [class.text-white]="rlaDfc.isActive"
+         [class.font-semibold]="rlaDfc.isActive"
+         [class.text-slate-400]="!rlaDfc.isActive"
+         class="flex items-center gap-3 py-2.5 rounded-lg text-[13px] font-medium hover:bg-slate-800 hover:text-white transition-all duration-150"
+         [class.px-3]="!isSidebarCollapsed"
+         [class.px-0]="isSidebarCollapsed"
+         [class.justify-center]="isSidebarCollapsed"
+         [title]="isSidebarCollapsed ? 'DFC' : ''">
+        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+        </svg>
+        <span *ngIf="!isSidebarCollapsed">DFC</span>
+      </a>
+
+      <!-- Contratos -->
+      <a *ngIf="canAccessContratos()" routerLink="/contratos" 
+         routerLinkActive #rlaCon="routerLinkActive"
+         [class.bg-blue-600]="rlaCon.isActive"
+         [class.text-white]="rlaCon.isActive"
+         [class.font-semibold]="rlaCon.isActive"
+         [class.text-slate-400]="!rlaCon.isActive"
+         class="flex items-center gap-3 py-2.5 rounded-lg text-[13px] font-medium hover:bg-slate-800 hover:text-white transition-all duration-150"
+         [class.px-3]="!isSidebarCollapsed"
+         [class.px-0]="isSidebarCollapsed"
+         [class.justify-center]="isSidebarCollapsed"
+         [title]="isSidebarCollapsed ? 'Contratos' : ''">
+        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        <span *ngIf="!isSidebarCollapsed">Contratos</span>
+      </a>
+
+      <!-- Chat IA -->
+      <a *ngIf="canAccessChat()" routerLink="/chat" 
+         routerLinkActive #rlaChat="routerLinkActive"
+         [class.bg-blue-600]="rlaChat.isActive"
+         [class.text-white]="rlaChat.isActive"
+         [class.font-semibold]="rlaChat.isActive"
+         [class.text-slate-400]="!rlaChat.isActive"
+         class="flex items-center gap-3 py-2.5 rounded-lg text-[13px] font-medium hover:bg-slate-800 hover:text-white transition-all duration-150"
+         [class.px-3]="!isSidebarCollapsed"
+         [class.px-0]="isSidebarCollapsed"
+         [class.justify-center]="isSidebarCollapsed"
+         [title]="isSidebarCollapsed ? 'Chat IA' : ''">
+        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+        </svg>
+        <span *ngIf="!isSidebarCollapsed">Chat IA</span>
+      </a>
     </nav>
+
+    <!-- User section (bottom) -->
+    <div class="border-t border-slate-800/50 p-3 space-y-0.5"
+         [class.px-3]="!isSidebarCollapsed"
+         [class.px-2]="isSidebarCollapsed">
+      <a routerLink="/meu-perfil"
+         routerLinkActive #rlaPerfil="routerLinkActive"
+         [class.bg-blue-600]="rlaPerfil.isActive"
+         [class.text-white]="rlaPerfil.isActive"
+         [class.text-slate-400]="!rlaPerfil.isActive"
+         class="flex items-center gap-3 py-2.5 rounded-lg text-[13px] font-medium hover:bg-slate-800 hover:text-white transition-all duration-150 cursor-pointer"
+         [class.px-3]="!isSidebarCollapsed"
+         [class.px-0]="isSidebarCollapsed"
+         [class.justify-center]="isSidebarCollapsed"
+         [title]="isSidebarCollapsed ? 'Meu Perfil' : ''">
+        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+        </svg>
+        <span *ngIf="!isSidebarCollapsed">Meu Perfil</span>
+      </a>
+
+      <a *ngIf="canAccessGerenciarAcessos()" (click)="onManageAccess()"
+         class="flex items-center gap-3 py-2.5 rounded-lg text-[13px] font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all duration-150 cursor-pointer"
+         [class.px-3]="!isSidebarCollapsed"
+         [class.px-0]="isSidebarCollapsed"
+         [class.justify-center]="isSidebarCollapsed"
+         [title]="isSidebarCollapsed ? 'Configurações' : ''">
+        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+        <span *ngIf="!isSidebarCollapsed">Configurações</span>
+      </a>
+
+      <a (click)="logout()"
+         class="flex items-center gap-3 py-2.5 rounded-lg text-[13px] font-medium text-slate-400 hover:bg-red-500/20 hover:text-red-400 transition-all duration-150 cursor-pointer"
+         [class.px-3]="!isSidebarCollapsed"
+         [class.px-0]="isSidebarCollapsed"
+         [class.justify-center]="isSidebarCollapsed"
+         [title]="isSidebarCollapsed ? 'Sair' : ''">
+        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+        </svg>
+        <span *ngIf="!isSidebarCollapsed">Sair</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- ========== SIDEBAR - Mobile Overlay ========== -->
+  <div *ngIf="!isAuthPublicPage() && isMobileMenuOpen" class="fixed inset-0 z-50 lg:hidden">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" (click)="closeMobileMenu()"></div>
+    <aside class="fixed left-0 top-0 bottom-0 w-[260px] bg-slate-950 shadow-2xl flex flex-col z-50">
+      <div class="h-16 flex items-center justify-between px-5 border-b border-slate-800/50">
+        <a routerLink="/dashboard" (click)="closeMobileMenu()" class="flex items-center">
+          <img src="assets/images/finnzialogo.png" alt="Finnzia" class="h-9 w-auto">
+        </a>
+        <button (click)="closeMobileMenu()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <nav class="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto">
+        <a *ngIf="canAccessDashboard()" routerLink="/dashboard" (click)="closeMobileMenu()"
+           routerLinkActive #rlaDashM="routerLinkActive"
+           [class.bg-blue-600]="rlaDashM.isActive" [class.text-white]="rlaDashM.isActive" [class.font-semibold]="rlaDashM.isActive" [class.text-slate-400]="!rlaDashM.isActive"
+           class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium hover:bg-slate-800 hover:text-white transition-all duration-150">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+          Dashboard
+        </a>
+        <a *ngIf="canAccessRelatorio()" routerLink="/relatorio" (click)="closeMobileMenu()"
+           routerLinkActive #rlaRelM="routerLinkActive"
+           [class.bg-blue-600]="rlaRelM.isActive" [class.text-white]="rlaRelM.isActive" [class.font-semibold]="rlaRelM.isActive" [class.text-slate-400]="!rlaRelM.isActive"
+           class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium hover:bg-slate-800 hover:text-white transition-all duration-150">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          Relatório
+        </a>
+        <a *ngIf="canAccessMovimentacoes()" routerLink="/movimentacoes" (click)="closeMobileMenu()"
+           routerLinkActive #rlaMovM="routerLinkActive"
+           [class.bg-blue-600]="rlaMovM.isActive" [class.text-white]="rlaMovM.isActive" [class.font-semibold]="rlaMovM.isActive" [class.text-slate-400]="!rlaMovM.isActive"
+           class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium hover:bg-slate-800 hover:text-white transition-all duration-150">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path></svg>
+          Movimentações
+        </a>
+        <a *ngIf="canAccessFluxoCaixa()" routerLink="/fluxo-caixa" (click)="closeMobileMenu()"
+           routerLinkActive #rlaDfcM="routerLinkActive"
+           [class.bg-blue-600]="rlaDfcM.isActive" [class.text-white]="rlaDfcM.isActive" [class.font-semibold]="rlaDfcM.isActive" [class.text-slate-400]="!rlaDfcM.isActive"
+           class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium hover:bg-slate-800 hover:text-white transition-all duration-150">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+          DFC
+        </a>
+        <a *ngIf="canAccessContratos()" routerLink="/contratos" (click)="closeMobileMenu()"
+           routerLinkActive #rlaConM="routerLinkActive"
+           [class.bg-blue-600]="rlaConM.isActive" [class.text-white]="rlaConM.isActive" [class.font-semibold]="rlaConM.isActive" [class.text-slate-400]="!rlaConM.isActive"
+           class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium hover:bg-slate-800 hover:text-white transition-all duration-150">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          Contratos
+        </a>
+        <a *ngIf="canAccessChat()" routerLink="/chat" (click)="closeMobileMenu()"
+           routerLinkActive #rlaChatM="routerLinkActive"
+           [class.bg-blue-600]="rlaChatM.isActive" [class.text-white]="rlaChatM.isActive" [class.font-semibold]="rlaChatM.isActive" [class.text-slate-400]="!rlaChatM.isActive"
+           class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium hover:bg-slate-800 hover:text-white transition-all duration-150">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+          Chat IA
+        </a>
+      </nav>
+      <div class="border-t border-slate-800/50 p-3 space-y-0.5">
+        <a routerLink="/meu-perfil" (click)="closeMobileMenu()"
+           class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all duration-150 cursor-pointer">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+          Meu Perfil
+        </a>
+        <a *ngIf="canAccessGerenciarAcessos()" (click)="onManageAccess(); closeMobileMenu()"
+           class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all duration-150 cursor-pointer">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          Configurações
+        </a>
+        <a (click)="logout()"
+           class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-slate-400 hover:bg-red-500/20 hover:text-red-400 transition-all duration-150 cursor-pointer">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+          Sair
+        </a>
+      </div>
+    </aside>
   </div>
-</footer>
+
+  <!-- ========== MAIN CONTENT AREA ========== -->
+  <div [ngClass]="{'flex-1 flex flex-col min-w-0 min-h-0': !isAuthPublicPage()}">
+    <!-- Mobile top bar (hamburger only, no desktop header) -->
+    <header *ngIf="!isAuthPublicPage()" class="h-14 bg-white border-b border-gray-200/80 flex items-center px-4 flex-shrink-0 lg:hidden">
+      <button (click)="toggleMobileMenu()" class="p-2 -ml-1 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path *ngIf="!isMobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          <path *ngIf="isMobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      <div class="flex-1 flex justify-center">
+        <a routerLink="/dashboard"><img src="assets/images/finnzialogo.png" alt="Finnzia" class="h-8 w-auto"></a>
+      </div>
+      <div class="w-9"></div>
+    </header>
+    <main [ngClass]="{'flex-1 overflow-y-auto': !isAuthPublicPage()}">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+
+<app-loading></app-loading>
+<app-error-notification></app-error-notification>
