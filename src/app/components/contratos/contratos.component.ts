@@ -48,25 +48,20 @@ export class ContratosComponent implements OnInit, OnDestroy {
   totalValorGeral: number = 0;
   totaisPorCategoria: {
     emDia: number;
-    pendente: number;
     emAtraso: number;
     inadimplente: number;
     valorEmDia?: number;
-    valorPendente?: number;
     valorEmAtraso?: number;
     valorInadimplente?: number;
   } = {
     emDia: 0,
-    pendente: 0,
     emAtraso: 0,
     inadimplente: 0,
     valorEmDia: 0,
-    valorPendente: 0,
     valorEmAtraso: 0,
     valorInadimplente: 0
   };
   contratosPorStatusGeral: Record<string, number> = {
-    'PENDENTE': 0,
     'EM_DIA': 0,
     'VENCIDO': 0,
     'PAGO': 0,
@@ -111,11 +106,10 @@ export class ContratosComponent implements OnInit, OnDestroy {
   descontoValorFixo: number | undefined = undefined;
   prazoMaximoDesconto: number | undefined = undefined;
 
-  // Colunas do Kanban
+  // Colunas do Kanban (3 categorias: Em Dia, Em Atraso, Inadimplente)
   colunas = [
     { id: 'em-dia', titulo: 'Em Dia', cor: 'green', icone: '✅' },
     { id: 'em-atraso', titulo: 'Em Atraso', cor: 'orange', icone: '⏰' },
-    { id: 'pendente', titulo: 'Pendentes', cor: 'yellow', icone: '⏳' },
     { id: 'inadimplente', titulo: 'Inadimplentes', cor: 'red', icone: '⚠️' }
   ];
 
@@ -157,11 +151,9 @@ export class ContratosComponent implements OnInit, OnDestroy {
           // Armazenar totais por categoria para uso nos métodos getContratosX()
           this.totaisPorCategoria = {
             emDia: totais.emDia || 0,
-            pendente: totais.pendente || 0,
             emAtraso: totais.emAtraso || 0,
             inadimplente: totais.inadimplente || 0,
             valorEmDia: totais.valorEmDia || 0,
-            valorPendente: totais.valorPendente || 0,
             valorEmAtraso: totais.valorEmAtraso || 0,
             valorInadimplente: totais.valorInadimplente || 0
           };
@@ -173,11 +165,9 @@ export class ContratosComponent implements OnInit, OnDestroy {
           this.totalValorGeral = 0;
           this.totaisPorCategoria = {
             emDia: 0,
-            pendente: 0,
             emAtraso: 0,
             inadimplente: 0,
             valorEmDia: 0,
-            valorPendente: 0,
             valorEmAtraso: 0,
             valorInadimplente: 0
           };
@@ -379,7 +369,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
 
   getStatusClass(status: string): string {
     switch (status.toLowerCase()) {
-      case 'pendente': return 'status-pendente';
+      case 'pendente': return 'status-em-dia';
       case 'em_dia': return 'status-em-dia';
       case 'vencido': return 'status-vencido';
       case 'pago': return 'status-pago';
@@ -390,7 +380,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
 
   getStatusText(status: string): string {
     switch (status.toLowerCase()) {
-      case 'pendente': return 'Pendente';
+      case 'pendente': return 'Em Dia';
       case 'em_dia': return 'Em Dia';
       case 'vencido': return 'Vencido';
       case 'pago': return 'Pago';
@@ -684,7 +674,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
 
   getContratosPorStatus(status: string): number {
     const statusMap: Record<string, string> = {
-      'pendente': 'PENDENTE',
+      'pendente': 'EM_DIA',
       'em_dia': 'EM_DIA',
       'vencido': 'VENCIDO',
       'pago': 'PAGO',
@@ -697,14 +687,14 @@ export class ContratosComponent implements OnInit, OnDestroy {
   // Método auxiliar para determinar a categoria de um contrato (mutuamente exclusivo)
   // Nota: Agora a categoria vem do backend, mas este método é mantido para compatibilidade
   // Inadimplente = 2+ parcelas em atraso | Em Atraso = 1 parcela em atraso
-  private getCategoriaContrato(contrato: Contrato): 'inadimplente' | 'em-atraso' | 'em-dia' | 'pendente' {
+  private getCategoriaContrato(contrato: Contrato): 'inadimplente' | 'em-atraso' | 'em-dia' {
     // Se o contrato já tem categoria do backend, usar ela
     if ((contrato as any).categoria) {
       const categoria = (contrato as any).categoria;
-      if (categoria === 'em-dia') return 'em-dia';
-      if (categoria === 'em-atraso') return 'em-atraso';
-      if (categoria === 'inadimplente') return 'inadimplente';
-      if (categoria === 'pendente') return 'pendente';
+      if (categoria === 'em-atraso' || categoria === 'EM_ATRASO') return 'em-atraso';
+      if (categoria === 'inadimplente' || categoria === 'INADIMPLENTE') return 'inadimplente';
+      // Tudo que não é atraso/inadimplente é "em-dia" (inclui antigo "pendente")
+      return 'em-dia';
     }
     
     const hoje = new Date();
@@ -713,12 +703,12 @@ export class ContratosComponent implements OnInit, OnDestroy {
     // Contar parcelas em atraso
     const parcelasEmAtraso = this.contarParcelasEmAtraso(contrato);
     
-    // PRIORIDADE 1: Inadimplentes (2+ parcelas em atraso)
+    // INADIMPLENTE (2+ parcelas em atraso)
     if (parcelasEmAtraso >= 2) {
       return 'inadimplente';
     }
     
-    // PRIORIDADE 2: Em Atraso (1 parcela em atraso ou contrato vencido sem cobranças)
+    // EM ATRASO (1 parcela em atraso ou contrato vencido sem cobranças)
     if (parcelasEmAtraso === 1) {
       return 'em-atraso';
     }
@@ -736,66 +726,8 @@ export class ContratosComponent implements OnInit, OnDestroy {
       }
     }
     
-    // PRIORIDADE 3: Em Dia
-    if (contrato.status === 'pago') {
-      return 'em-dia';
-    }
-    
-    if (contrato.cobrancas && contrato.cobrancas.length > 0) {
-      // Todas pagas
-      const todasPagas = contrato.cobrancas.every(cob => 
-        cob.status === 'RECEIVED' || 
-        cob.status === 'RECEIVED_IN_CASH_UNDONE' || 
-        cob.status === 'DUNNING_RECEIVED'
-      );
-      if (todasPagas) {
-        return 'em-dia';
-      }
-      
-      // Pelo menos uma paga
-      const temPaga = contrato.cobrancas.some(cob => 
-        cob.status === 'RECEIVED' || 
-        cob.status === 'RECEIVED_IN_CASH_UNDONE' || 
-        cob.status === 'DUNNING_RECEIVED'
-      );
-      if (temPaga) {
-        return 'em-dia';
-      }
-      
-      // Todas PENDING e data futura
-      const todasPendentes = contrato.cobrancas.every(cob => cob.status === 'PENDING');
-      if (todasPendentes) {
-        const vencimento = this.parseLocalDate(contrato.dataVencimento);
-        if (vencimento >= hoje) {
-          return 'em-dia';
-        }
-      }
-    }
-    
-    if (contrato.status === 'em_dia') {
-      const vencimento = this.parseLocalDate(contrato.dataVencimento);
-      if (vencimento >= hoje) {
-        return 'em-dia';
-      }
-    }
-    
-    // PRIORIDADE 4: Pendentes (padrão)
-    if (contrato.status === 'pendente') {
-      return 'pendente';
-    }
-    
-    if (contrato.cobrancas && contrato.cobrancas.length > 0) {
-      const temPendente = contrato.cobrancas.some(cob => cob.status === 'PENDING');
-      if (temPendente) {
-        const vencimento = this.parseLocalDate(contrato.dataVencimento);
-        if (vencimento >= hoje) {
-          return 'pendente';
-        }
-      }
-    }
-    
-    // Padrão: pendente
-    return 'pendente';
+    // Tudo que não está em atraso ou inadimplente = Em Dia
+    return 'em-dia';
   }
 
   getContratosEmDia(): number {
@@ -806,9 +738,6 @@ export class ContratosComponent implements OnInit, OnDestroy {
     return this.totaisPorCategoria.emAtraso;
   }
 
-  getContratosPendentes(): number {
-    return this.totaisPorCategoria.pendente;
-  }
 
   getContratosInadimplentes(): number {
     return this.totaisPorCategoria.inadimplente;
@@ -818,9 +747,6 @@ export class ContratosComponent implements OnInit, OnDestroy {
     return this.totaisPorCategoria.valorEmDia || 0;
   }
 
-  getValorPendente(): number {
-    return this.totaisPorCategoria.valorPendente || 0;
-  }
 
   getValorEmAtraso(): number {
     return this.totaisPorCategoria.valorEmAtraso || 0;

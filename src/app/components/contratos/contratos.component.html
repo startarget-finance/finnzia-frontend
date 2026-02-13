@@ -19,7 +19,7 @@
     </div>
 
     <!-- ========== METRIC CARDS ========== -->
-    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
       <!-- Total -->
       <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
         <div class="space-y-1">
@@ -51,15 +51,6 @@
           <p class="text-sm text-gray-500 font-medium">Em Atraso</p>
           <p class="text-2xl font-semibold text-slate-900">{{ getContratosAtraso() | number:'1.0-0' }}</p>
           <p class="text-base font-medium text-gray-700">{{ formatCurrency(getValorEmAtraso()) }}</p>
-        </div>
-      </div>
-      
-      <!-- Pendentes -->
-      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 hover:shadow-md transition-shadow duration-200 border-l-4 border-l-blue-500">
-        <div class="space-y-1">
-          <p class="text-sm text-gray-500 font-medium">Pendentes</p>
-          <p class="text-2xl font-semibold text-slate-900">{{ getContratosPendentes() | number:'1.0-0' }}</p>
-          <p class="text-base font-medium text-gray-700">{{ formatCurrency(getValorPendente()) }}</p>
         </div>
       </div>
       
@@ -246,7 +237,7 @@
 
     <!-- ========== KANBAN VIEW ========== -->
     <div *ngIf="isVisualizacaoKanban() && !loading" class="overflow-x-hidden">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div *ngFor="let coluna of colunas" class="flex flex-col min-w-0">
           
           <!-- Column Header -->
