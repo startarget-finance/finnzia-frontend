@@ -5,12 +5,12 @@
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
       <h1 class="text-2xl font-semibold tracking-tight text-slate-900 mb-4 lg:mb-0">Gestão de Contratos</h1>
       <div class="flex flex-wrap items-center gap-3">
-        <button 
+        <button
           (click)="exportarContratos()"
           class="px-4 py-2 bg-white border border-gray-300 text-slate-700 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all duration-150">
           Exportar
         </button>
-        <button 
+        <button
           (click)="adicionarContrato()"
           class="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-all duration-150 shadow-sm">
           + Novo Contrato
@@ -27,7 +27,7 @@
           <p class="text-2xl font-semibold text-slate-900">{{ getTotalContratos() | number:'1.0-0' }}</p>
         </div>
       </div>
-      
+
       <!-- Valor Total -->
       <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 hover:shadow-md transition-shadow duration-200">
         <div class="space-y-1">
@@ -35,7 +35,7 @@
           <p class="text-lg font-semibold text-slate-900">{{ formatCurrency(getTotalValor()) }}</p>
         </div>
       </div>
-      
+
       <!-- Em Dia -->
       <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 hover:shadow-md transition-shadow duration-200 border-l-4 border-l-green-500">
         <div class="space-y-1">
@@ -44,7 +44,7 @@
           <p class="text-base font-medium text-gray-700">{{ formatCurrency(getValorEmDia()) }}</p>
         </div>
       </div>
-      
+
       <!-- Em Atraso -->
       <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 hover:shadow-md transition-shadow duration-200 border-l-4 border-l-amber-500">
         <div class="space-y-1">
@@ -53,7 +53,7 @@
           <p class="text-base font-medium text-gray-700">{{ formatCurrency(getValorEmAtraso()) }}</p>
         </div>
       </div>
-      
+
       <!-- Inadimplentes -->
       <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 hover:shadow-md transition-shadow duration-200 border-l-4 border-l-red-500">
         <div class="space-y-1">
@@ -71,8 +71,8 @@
         <div class="flex flex-col sm:flex-row gap-4 items-end">
           <div class="flex-1">
             <label for="statusFilter" class="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Status</label>
-            <select 
-              id="statusFilter" 
+            <select
+              id="statusFilter"
               [(ngModel)]="filtroStatus"
               (ngModelChange)="onFiltroStatusChange()"
               class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all">
@@ -90,8 +90,8 @@
 
           <div class="flex-1">
             <label for="ordenacaoFilter" class="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Ordenar por</label>
-            <select 
-              id="ordenacaoFilter" 
+            <select
+              id="ordenacaoFilter"
               [(ngModel)]="ordenacao"
               (ngModelChange)="onOrdenacaoChange()"
               class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all">
@@ -102,15 +102,15 @@
               <option value="menor-valor">Menor valor</option>
             </select>
           </div>
-          
+
           <div class="flex-[2]">
             <label for="textFilter" class="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Buscar</label>
             <div class="relative">
               <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
               </svg>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 id="textFilter"
                 [(ngModel)]="filtroTexto"
                 (ngModelChange)="onFiltroTextoChange()"
@@ -124,38 +124,38 @@
         <div class="flex flex-col sm:flex-row gap-4 items-end">
           <div class="flex-1">
             <label for="dataVencimentoInicio" class="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Vencimento de</label>
-            <input 
-              type="date" 
+            <input
+              type="date"
               id="dataVencimentoInicio"
               [(ngModel)]="filtroDataVencimentoInicio"
               (ngModelChange)="onFiltroDataChange()"
               class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all">
           </div>
-          
+
           <div class="flex-1">
             <label for="dataVencimentoFim" class="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Vencimento até</label>
-            <input 
-              type="date" 
+            <input
+              type="date"
               id="dataVencimentoFim"
               [(ngModel)]="filtroDataVencimentoFim"
               (ngModelChange)="onFiltroDataChange()"
               class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all">
           </div>
-          
+
           <div class="flex-1">
             <label for="dataPagamentoInicio" class="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Pagamento de</label>
-            <input 
-              type="date" 
+            <input
+              type="date"
               id="dataPagamentoInicio"
               [(ngModel)]="filtroDataPagamentoInicio"
               (ngModelChange)="onFiltroDataChange()"
               class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all">
           </div>
-          
+
           <div class="flex-1">
             <label for="dataPagamentoFim" class="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Pagamento até</label>
-            <input 
-              type="date" 
+            <input
+              type="date"
               id="dataPagamentoFim"
               [(ngModel)]="filtroDataPagamentoFim"
               (ngModelChange)="onFiltroDataChange()"
@@ -166,7 +166,7 @@
           <div class="flex-shrink-0">
             <label class="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Visualização</label>
             <div class="flex bg-slate-100 rounded-xl p-1 h-11 items-center">
-              <button 
+              <button
                 (click)="alterarVisualizacao('kanban')"
                 [class.bg-white]="isVisualizacaoKanban()"
                 [class.shadow-sm]="isVisualizacaoKanban()"
@@ -175,7 +175,7 @@
                 class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200">
                 Kanban
               </button>
-              <button 
+              <button
                 (click)="alterarVisualizacao('lista')"
                 [class.bg-white]="isVisualizacaoLista()"
                 [class.shadow-sm]="isVisualizacaoLista()"
@@ -239,7 +239,7 @@
     <div *ngIf="isVisualizacaoKanban() && !loading" class="overflow-x-hidden">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div *ngFor="let coluna of colunas" class="flex flex-col min-w-0">
-          
+
           <!-- Column Header -->
           <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-2 min-w-0 flex-1">
@@ -252,38 +252,75 @@
 
           <!-- Contract Cards -->
           <div class="space-y-3 min-h-[200px] max-h-[600px] overflow-y-auto pr-1">
-            <div *ngFor="let contrato of getContratosPorColuna(coluna.id)" 
+            <div *ngFor="let contrato of getContratosPorColuna(coluna.id)"
                  class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 space-y-3 hover:-translate-y-1 hover:shadow-lg transition-all duration-200 cursor-pointer">
-              
-              <!-- Title & Client -->
+
+              <!-- Title & Client & Status -->
               <div>
-                <h4 class="font-semibold text-slate-900 text-sm leading-snug line-clamp-2 break-words">{{ contrato.titulo }}</h4>
-                <p class="text-xs text-gray-500 mt-1 truncate" [title]="contrato.cliente">{{ contrato.cliente }}</p>
-                <p *ngIf="contrato.cobrancas && contrato.cobrancas.length > 1" class="text-xs text-blue-600 mt-1 font-medium">
-                  {{ contrato.cobrancas.length }} parcelas
-                </p>
-              </div>
-              
-              <!-- Value & Date -->
-              <div class="space-y-1.5">
-                <div class="flex justify-between items-center">
-                  <span class="text-xs text-gray-400">Valor</span>
-                  <span class="text-lg font-semibold text-slate-900">{{ formatCurrency(contrato.valor) }}</span>
+                <div class="flex items-start justify-between gap-2 mb-1">
+                  <h4 class="font-semibold text-slate-900 text-sm leading-snug line-clamp-2 break-words flex-1">{{ contrato.titulo }}</h4>
+                  <span [ngClass]="getStatusClass(contrato.status)"
+                        class="px-2 py-0.5 rounded-full text-xs font-medium flex-shrink-0 whitespace-nowrap">
+                    {{ getStatusText(contrato.status) }}
+                  </span>
                 </div>
+                <p class="text-xs text-gray-500 truncate" [title]="contrato.cliente">{{ contrato.cliente }}</p>
+                <p *ngIf="contrato.projeto" class="text-xs text-blue-600 mt-1 font-medium">{{ contrato.projeto }}</p>
+              </div>
+
+              <!-- Highlighted section: Recorrência Ativa & Data Fim -->
+              <div class="bg-blue-50 border border-blue-200 rounded-lg p-2.5 space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-medium text-blue-700">Recorrência</span>
+                  <span class="inline-flex items-center gap-1">
+                    <span *ngIf="contrato.asaasSubscriptionId" class="w-2 h-2 bg-green-500 rounded-full"></span>
+                    <span class="text-xs font-semibold text-blue-900">
+                      {{ contrato.tipoPagamento === 'RECORRENTE' ? 'Ativa' : 'Única' }}
+                    </span>
+                  </span>
+                </div>
+                <div class="border-t-2 border-blue-200 pt-2">
+                  <span class="text-xs text-gray-600 block mb-1">Data Fim do Contrato</span>
+                  <span class="text-lg font-bold text-red-600">{{ contrato.dataVencimento | date:'dd/MM/yyyy' }}</span>
+                </div>
+                <div *ngIf="contrato.cobrancas && contrato.cobrancas.length > 0" class="border-t-2 border-blue-200 pt-2">
+                  <span class="text-xs text-gray-600 block mb-1">Próxima Parcela</span>
+                  <span class="text-sm font-bold text-orange-500">
+                    {{ getProximaParcela(contrato) | date:'dd/MM/yyyy' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Core Info -->
+              <div class="space-y-1">
                 <div class="flex justify-between items-center">
-                  <span class="text-xs text-gray-400">Vencimento</span>
-                  <span class="text-xs text-gray-600 font-medium">{{ contrato.dataVencimento | date:'dd/MM/yyyy' }}</span>
+                  <span class="text-xs text-gray-500">Valor Contrato</span>
+                  <span class="text-sm font-semibold text-slate-900">{{ formatCurrency(contrato.valor) }}</span>
+                </div>
+                <div *ngIf="contrato.valorRecorrencia" class="flex justify-between items-center">
+                  <span class="text-xs text-gray-500">Recorrência</span>
+                  <span class="text-sm font-semibold text-blue-600">{{ formatCurrency(contrato.valorRecorrencia) }}</span>
                 </div>
               </div>
 
               <!-- Actions -->
               <div class="flex flex-col gap-2 pt-1">
-                <button 
-                  (click)="visualizarDetalhes(contrato)"
-                  class="w-full px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors">
-                  Ver detalhes
-                </button>
-                <button 
+                <div class="flex gap-2">
+                  <button
+                    (click)="visualizarDetalhes(contrato)"
+                    class="flex-1 px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-200 transition-colors">
+                    Detalhes
+                  </button>
+                  <button
+                    (click)="abrirAsaas(contrato)"
+                    title="Abrir no Asaas"
+                    class="px-3 py-1.5 bg-violet-100 text-violet-700 rounded-lg text-xs font-medium hover:bg-violet-200 transition-colors">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
+                    </svg>
+                  </button>
+                </div>
+                <button
                   (click)="enviarWhatsApp(contrato)"
                   class="w-full px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-xs font-medium hover:bg-emerald-600 transition-colors">
                   WhatsApp
@@ -292,7 +329,7 @@
             </div>
 
             <!-- Empty column -->
-            <div *ngIf="getContratosPorColuna(coluna.id).length === 0" 
+            <div *ngIf="getContratosPorColuna(coluna.id).length === 0"
                  class="text-center py-10">
               <div class="w-10 h-10 mx-auto mb-3 rounded-full bg-slate-100 flex items-center justify-center">
                 <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -309,60 +346,110 @@
     <!-- ========== LIST VIEW ========== -->
     <div *ngIf="isVisualizacaoLista() && !loading">
       <div class="space-y-3 mb-6">
-        <div *ngFor="let contrato of contratosFiltrados" 
+        <div *ngFor="let contrato of contratosFiltrados"
              class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
-          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-            <div class="flex-1 mb-4 lg:mb-0">
-              <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-3">
-                <h3 class="text-sm font-semibold text-slate-900 mb-2 sm:mb-0">{{ contrato.titulo }}</h3>
-                <span [ngClass]="getStatusClass(contrato.status)" 
-                      class="px-2.5 py-1 rounded-full text-xs font-medium self-start sm:self-auto">
+          <div class="space-y-3">
+            <!-- Header: Title & Status -->
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div>
+                <h3 class="text-sm font-semibold text-slate-900">{{ contrato.titulo }}</h3>
+                <p class="text-xs text-gray-500 mt-1">{{ contrato.cliente }}</p>
+              </div>
+              <div class="flex gap-2 items-center sm:self-start">
+                <span [ngClass]="getStatusClass(contrato.status)"
+                      class="px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap">
                   {{ getStatusText(contrato.status) }}
                 </span>
+                <span *ngIf="contrato.tipoPagamento === 'RECORRENTE' && contrato.asaasSubscriptionId"
+                      class="inline-flex items-center gap-1 px-2 py-1 bg-green-50 border border-green-200 rounded-full text-xs font-medium text-green-700 whitespace-nowrap">
+                  <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                  Recorrência Ativa
+                </span>
               </div>
-              
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                <div class="text-gray-500 break-words">
-                  <span class="font-medium text-slate-600">Cliente:</span> {{ contrato.cliente }}
-                </div>
-                <div class="break-words">
-                  <span class="font-medium text-slate-600">Valor:</span> 
-                  <span class="font-semibold text-slate-900">{{ formatCurrency(contrato.valor) }}</span>
-                </div>
-                <div class="text-gray-500">
-                  <span class="font-medium text-slate-600">Vencimento:</span> {{ contrato.dataVencimento | date:'dd/MM/yyyy' }}
-                </div>
-                <div class="text-gray-500 break-words">
-                  <span class="font-medium text-slate-600">WhatsApp:</span> {{ contrato.whatsapp }}
-                </div>
-              </div>
-              
-              <p *ngIf="contrato.descricao" class="text-gray-500 mt-2 text-sm">{{ contrato.descricao }}</p>
             </div>
-            
-            <div class="flex flex-col sm:flex-row gap-2 lg:ml-6 mt-4 lg:mt-0">
-              <button 
+
+            <!-- Main Info Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div class="bg-gray-50 rounded-lg p-2">
+                <p class="text-gray-500 font-medium">Valor</p>
+                <p class="text-sm font-semibold text-slate-900">{{ formatCurrency(contrato.valor) }}</p>
+              </div>
+              <div class="bg-gray-50 rounded-lg p-2">
+                <p class="text-gray-500 font-medium">Venda</p>
+                <p class="text-sm font-semibold text-slate-900">{{ contrato.dataVenda | date:'dd/MM' }}</p>
+              </div>
+              <div class="bg-gray-50 rounded-lg p-2">
+                <p class="text-gray-500 font-medium">Início</p>
+                <p class="text-sm font-semibold text-slate-900">{{ contrato.inicioContrato | date:'dd/MM' }}</p>
+              </div>
+              <div class="bg-gray-50 rounded-lg p-2">
+                <p class="text-gray-500 font-medium">Encerramento</p>
+                <p class="text-sm font-semibold text-slate-900">{{ contrato.dataVencimento | date:'dd/MM' }}</p>
+              </div>
+            </div>
+
+            <!-- Secondary Info -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+              <div *ngIf="contrato.projeto" class="border-l-2 border-blue-300 pl-2">
+                <p class="text-gray-500 font-medium">Projeto</p>
+                <p class="text-slate-900 font-medium">{{ contrato.projeto }}</p>
+              </div>
+              <div *ngIf="contrato.valorEntrada" class="border-l-2 border-emerald-300 pl-2">
+                <p class="text-gray-500 font-medium">Entrada</p>
+                <p class="text-emerald-600 font-semibold">{{ formatCurrency(contrato.valorEntrada) }}</p>
+              </div>
+              <div *ngIf="contrato.valorRecorrencia" class="border-l-2 border-violet-300 pl-2">
+                <p class="text-gray-500 font-medium">Recorrência</p>
+                <p class="text-violet-600 font-semibold">{{ formatCurrency(contrato.valorRecorrencia) }}</p>
+              </div>
+              <div *ngIf="contrato.statusAssinatura" class="border-l-2 border-orange-300 pl-2">
+                <p class="text-gray-500 font-medium">Assinatura</p>
+                <p class="text-orange-600 font-medium">{{ contrato.statusAssinatura }}</p>
+              </div>
+            </div>
+
+            <!-- Description & Link -->
+            <div>
+              <p *ngIf="contrato.descricao" class="text-gray-500 text-xs">{{ contrato.descricao }}</p>
+              <a *ngIf="contrato.linkContrato" [href]="contrato.linkContrato" target="_blank"
+                 class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium mt-2">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                </svg>
+                Visualizar Contrato
+              </a>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex flex-wrap gap-2 pt-2 border-t">
+              <button
                 (click)="visualizarDetalhes(contrato)"
                 class="px-3 py-1.5 bg-white border border-gray-300 text-slate-700 rounded-lg hover:bg-gray-50 transition-colors text-xs font-medium">
                 Detalhes
               </button>
-              <button 
+              <button
+                (click)="abrirAsaas(contrato)"
+                title="Abrir no Asaas"
+                class="px-3 py-1.5 bg-violet-100 text-violet-700 rounded-lg hover:bg-violet-200 transition-colors text-xs font-medium">
+                Asaas
+              </button>
+              <button
                 (click)="enviarWhatsApp(contrato)"
                 class="px-3 py-1.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-xs font-medium">
                 WhatsApp
               </button>
-              <button 
+              <button
                 *ngIf="contrato.status !== 'cancelado' && contrato.status !== 'pago'"
                 (click)="cancelarContrato(contrato)"
-                class="px-3 py-1.5 bg-white border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-xs font-medium">
+                class="px-3 py-1.5 bg-white border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-xs font-medium ml-auto">
                 Cancelar
               </button>
             </div>
           </div>
         </div>
-      
+
         <!-- Empty state -->
-        <div *ngIf="contratosFiltrados.length === 0" 
+        <div *ngIf="contratosFiltrados.length === 0"
              class="text-center py-16 bg-white rounded-2xl border border-gray-200 shadow-sm">
           <div class="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center">
             <svg class="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -420,7 +507,7 @@
             <h2 class="text-lg font-semibold text-slate-900">{{ mostrarFormularioNovo ? 'Novo Contrato' : 'Dados do Cliente' }}</h2>
             <p class="text-sm text-gray-500 mt-0.5">{{ mostrarFormularioNovo ? 'Preencha os dados para criar um novo contrato' : 'Criado em ' + getDataAtual() }}</p>
           </div>
-          <button 
+          <button
             (click)="fecharFormularioCliente()"
             class="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-slate-50 transition-all">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -441,26 +528,26 @@
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Serviço *</label>
-              <input 
+              <input
                 [(ngModel)]="servico"
-                type="text" 
+                type="text"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
                 placeholder="Ex: Consultoria Financeira">
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Início do Contrato *</label>
-              <input 
+              <input
                 [(ngModel)]="inicioContrato"
-                type="date" 
+                type="date"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all">
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Valor do Contrato (R$) *</label>
               <div class="relative">
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">R$</span>
-                <input 
+                <input
                   [(ngModel)]="valorContrato"
-                  type="number" 
+                  type="number"
                   step="0.01"
                   class="w-full h-11 pl-10 pr-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
                   placeholder="0,00">
@@ -470,9 +557,9 @@
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Valor da Recorrência (R$) *</label>
               <div class="relative">
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium">R$</span>
-                <input 
+                <input
                   [(ngModel)]="valorRecorrencia"
-                  type="number" 
+                  type="number"
                   step="0.01"
                   min="0.01"
                   class="w-full h-11 pl-10 pr-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
@@ -482,15 +569,15 @@
             </div>
             <div *ngIf="tipoContrato === 'RECORRENTE'">
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Início da Recorrência *</label>
-              <input 
+              <input
                 [(ngModel)]="inicioRecorrencia"
-                type="date" 
+                type="date"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all">
               <p class="text-[11px] text-gray-400 mt-1">Data da primeira cobrança recorrente</p>
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Tipo de Contrato *</label>
-              <select 
+              <select
                 [(ngModel)]="tipoContrato"
                 (ngModelChange)="onTipoContratoChange()"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all">
@@ -510,44 +597,44 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Razão Social *</label>
-              <input 
+              <input
                 [(ngModel)]="dadosCliente.razaoSocial"
-                type="text" 
+                type="text"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
                 placeholder="Ex: COMERCIO DE EQUIPAMENTOS LTDA">
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Nome Fantasia</label>
-              <input 
+              <input
                 [(ngModel)]="dadosCliente.nomeFantasia"
-                type="text" 
+                type="text"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
                 placeholder="Ex: Construtora ABC">
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">CNPJ/CPF *</label>
-              <input 
+              <input
                 [(ngModel)]="dadosCliente.cnpj"
                 (input)="formatarCNPJ($event)"
-                type="text" 
+                type="text"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
                 placeholder="00.000.000/0000-00"
                 required>
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">CEP</label>
-              <input 
+              <input
                 [(ngModel)]="dadosCliente.cep"
                 (input)="formatarCEP($event)"
-                type="text" 
+                type="text"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
                 placeholder="00000-000">
             </div>
             <div class="md:col-span-2">
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Endereço Completo</label>
-              <input 
+              <input
                 [(ngModel)]="dadosCliente.enderecoCompleto"
-                type="text" 
+                type="text"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
                 placeholder="Rua, número, bairro, cidade - UF">
             </div>
@@ -563,35 +650,35 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Celular Financeiro</label>
-              <input 
+              <input
                 [(ngModel)]="dadosCliente.celularFinanceiro"
                 (input)="formatarCelular($event)"
-                type="text" 
+                type="text"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
                 placeholder="(00) 00000-0000">
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">E-mail Financeiro</label>
-              <input 
+              <input
                 [(ngModel)]="dadosCliente.emailFinanceiro"
-                type="email" 
+                type="email"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
                 placeholder="financeiro@empresa.com">
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Responsável</label>
-              <input 
+              <input
                 [(ngModel)]="dadosCliente.responsavel"
-                type="text" 
+                type="text"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
                 placeholder="Nome do responsável">
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">CPF</label>
-              <input 
+              <input
                 [(ngModel)]="dadosCliente.cpf"
                 (input)="formatarCPF($event)"
-                type="text" 
+                type="text"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
                 placeholder="000.000.000-00">
             </div>
@@ -607,7 +694,7 @@
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Forma de Pagamento</label>
-              <select 
+              <select
                 [(ngModel)]="formaPagamento"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all">
                 <option value="BOLETO">Boleto Bancário</option>
@@ -618,7 +705,7 @@
             </div>
             <div *ngIf="tipoContrato === 'UNICO'">
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Parcelas</label>
-              <select 
+              <select
                 [(ngModel)]="numeroParcelas"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all">
                 <option [ngValue]="1">À vista (1x)</option>
@@ -637,7 +724,7 @@
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Juros ao Mês (%)</label>
-              <input 
+              <input
                 [(ngModel)]="jurosAoMes"
                 type="number" step="0.01" min="0" max="100"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
@@ -645,7 +732,7 @@
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Multa por Atraso (%)</label>
-              <input 
+              <input
                 [(ngModel)]="multaPorAtraso"
                 type="number" step="0.01" min="0" max="100"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
@@ -653,7 +740,7 @@
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Desconto (%)</label>
-              <input 
+              <input
                 [(ngModel)]="descontoPercentual"
                 type="number" step="0.01" min="0" max="100"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
@@ -661,7 +748,7 @@
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Desconto (R$)</label>
-              <input 
+              <input
                 [(ngModel)]="descontoValorFixo"
                 type="number" step="0.01" min="0"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
@@ -669,7 +756,7 @@
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-500 mb-1.5">Prazo Desconto (dias)</label>
-              <input 
+              <input
                 [(ngModel)]="prazoMaximoDesconto"
                 type="number" min="0"
                 class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all"
@@ -686,7 +773,7 @@
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-500 mb-1.5">Descrição do Contrato</label>
-            <textarea 
+            <textarea
               [(ngModel)]="dadosCliente.descricaoNegociacao"
               rows="3"
               maxlength="1000"
@@ -702,13 +789,13 @@
           <p class="text-xs text-red-700 whitespace-pre-line">{{ error }}</p>
         </div>
         <div class="flex justify-end gap-3">
-          <button 
+          <button
             (click)="fecharFormularioCliente()"
             [disabled]="loading"
             class="px-4 py-2 text-slate-700 bg-white border border-gray-300 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50">
             Cancelar
           </button>
-          <button 
+          <button
             (click)="salvarDadosCliente()"
             [disabled]="saving"
             class="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
@@ -736,7 +823,7 @@
             <h2 class="text-lg font-semibold text-slate-900">{{ contratoDetalhes.titulo }}</h2>
             <p class="text-xs text-gray-500 mt-0.5">Criado em {{ formatDate(contratoDetalhes.dataCriacao) }}</p>
           </div>
-          <button 
+          <button
             (click)="fecharDetalhes()"
             class="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-slate-50 transition-all">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -752,7 +839,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="bg-slate-50 rounded-xl p-4">
             <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Status</label>
-            <p [ngClass]="'status-' + contratoDetalhes.status.toLowerCase()" 
+            <p [ngClass]="'status-' + contratoDetalhes.status.toLowerCase()"
                class="mt-1.5 text-base font-semibold">
               {{ getStatusText(contratoDetalhes.status) }}
             </p>
@@ -805,7 +892,7 @@
             <div>
               <label class="text-xs text-gray-500">Valor do Contrato</label>
               <p class="text-2xl font-semibold text-slate-900 mt-1">{{ formatCurrency(contratoDetalhes.valorContrato) }}</p>
-              <p *ngIf="contratoDetalhes.valorRecorrencia && contratoDetalhes.cobrancas && contratoDetalhes.cobrancas.length > 1" 
+              <p *ngIf="contratoDetalhes.valorRecorrencia && contratoDetalhes.cobrancas && contratoDetalhes.cobrancas.length > 1"
                  class="text-xs text-gray-500 mt-1">
                 Parcelado em {{ contratoDetalhes.cobrancas.length }}x de {{ formatCurrency(contratoDetalhes.valorRecorrencia) }}
               </p>
@@ -942,7 +1029,7 @@
       <!-- Footer Actions -->
       <div class="sticky bottom-0 bg-white border-t border-gray-100 px-6 py-4 rounded-b-2xl">
         <div class="flex flex-wrap gap-2 justify-end">
-          <button 
+          <button
             (click)="fecharDetalhes()"
             class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-medium hover:bg-slate-200 transition-colors">
             Fechar

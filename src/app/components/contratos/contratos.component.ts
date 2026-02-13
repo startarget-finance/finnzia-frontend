@@ -36,13 +36,13 @@ export class ContratosComponent implements OnInit, OnDestroy {
   modoEdicao: boolean = false;
   importando: boolean = false;
   sincronizando: boolean = false;
-  
+
   // Paginação (igual ao Asaas: offset começa em 0, limit padrão 10)
   page: number = 0; // offset (começa em 0)
   size: number = 10; // limit (padrão do Asaas: 10, máximo 100)
   totalElements: number = 0;
   totalPages: number = 0;
-  
+
   // Totais fixos (não mudam com paginação)
   totalContratosGeral: number = 0;
   totalValorGeral: number = 0;
@@ -67,7 +67,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
     'PAGO': 0,
     'CANCELADO': 0
   };
-  
+
   private destroy$ = new Subject<void>();
   private filtroTextoSubject = new Subject<string>();
 
@@ -96,7 +96,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
   valorContrato: number = 0;
   valorRecorrencia: number = 0;
   tipoContrato: 'UNICO' | 'RECORRENTE' = 'UNICO';
-  
+
   // Configurações de pagamento (Asaas)
   formaPagamento: string = 'BOLETO';
   numeroParcelas: number = 1;
@@ -147,7 +147,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
         next: (totais) => {
           this.totalContratosGeral = totais.totalContratos || 0;
           this.totalValorGeral = totais.totalValor || 0;
-          
+
           // Armazenar totais por categoria para uso nos métodos getContratosX()
           this.totaisPorCategoria = {
             emDia: totais.emDia || 0,
@@ -194,10 +194,10 @@ export class ContratosComponent implements OnInit, OnDestroy {
     const sizeParaUsar = this.visualizacao === 'kanban' ? 10000 : this.size;
 
     this.contratoService.buscarComFiltros(
-      undefined, 
-      status, 
-      termo, 
-      pageParaUsar, 
+      undefined,
+      status,
+      termo,
+      pageParaUsar,
       sizeParaUsar,
       billingType,
       dueDateInicio,
@@ -212,7 +212,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
           console.log('Resposta paginação:', response);
           this.contratosBackend = response.content || [];
           this.totalElements = response.totalElements || 0;
-          
+
           // No Kanban, não usar paginação (já carregamos tudo)
           // Na Lista, manter paginação normal
           if (this.visualizacao === 'kanban') {
@@ -222,11 +222,11 @@ export class ContratosComponent implements OnInit, OnDestroy {
             this.totalPages = response.totalPages || (this.totalElements > 0 ? 1 : 0);
             this.page = response.number !== undefined ? response.number : 0;
           }
-          
+
           console.log('Total elementos:', this.totalElements, 'Total páginas:', this.totalPages, 'Página atual:', this.page, 'Visualização:', this.visualizacao);
           // Converter para formato do componente
           this.contratos = (response.content || []).map(c => this.contratoService.converterParaFormatoComponente(c));
-          
+
           // Debug: verificar categorias
           const categorias = this.contratos.map(c => ({ id: c.id, titulo: c.titulo, categoria: c.categoria, status: c.status }));
           const semCategoria = categorias.filter(c => !c.categoria);
@@ -237,7 +237,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
           }
           const inadimplentes = categorias.filter(c => c.categoria === 'inadimplente');
           console.log('Contratos inadimplentes encontrados:', inadimplentes.length);
-          
+
           this.loading = false;
         },
         error: (error) => {
@@ -321,17 +321,17 @@ export class ContratosComponent implements OnInit, OnDestroy {
     const paginaAtual = this.page + 1; // page é offset (0, 1, 2...), converte para (1, 2, 3...)
     let inicio = Math.max(1, paginaAtual - Math.floor(maxPaginas / 2));
     let fim = Math.min(this.totalPages, inicio + maxPaginas - 1);
-    
+
     // Ajustar início se estiver próximo do fim
     if (fim - inicio < maxPaginas - 1) {
       inicio = Math.max(1, fim - maxPaginas + 1);
     }
-    
+
     // Retornar números de página (1, 2, 3...) mas internamente usar offset (0, 1, 2...)
     for (let i = inicio; i <= fim; i++) {
       paginas.push(i);
     }
-    
+
     return paginas;
   }
 
@@ -414,8 +414,8 @@ export class ContratosComponent implements OnInit, OnDestroy {
   }
 
   assinarContrato(contrato: Contrato) {
-    this.router.navigate(['/assinatura'], { 
-      queryParams: { contratoId: contrato.id } 
+    this.router.navigate(['/assinatura'], {
+      queryParams: { contratoId: contrato.id }
     });
   }
 
@@ -425,10 +425,66 @@ export class ContratosComponent implements OnInit, OnDestroy {
     window.open(url, '_blank');
   }
 
+  abrirAsaas(contrato: Contrato) {
+    // Se tiver asaasSubscriptionId, abrir a subscription no Asaas
+    if ((contrato as any).asaasSubscriptionId) {
+      const subscriptionId = (contrato as any).asaasSubscriptionId;
+      window.open(`https://www.asaas.com/subscription/${subscriptionId}`, '_blank');
+      return;
+    }
+
+    // Se tiver cobranças com asaasPaymentId, abrir a primeira cobrança
+    if (contrato.cobrancas && contrato.cobrancas.length > 0) {
+      const cobrancaComAsaas = (contrato.cobrancas as any[]).find((c: any) => c.asaasPaymentId);
+      if (cobrancaComAsaas) {
+        window.open(`https://www.asaas.com/payment/${cobrancaComAsaas.asaasPaymentId}`, '_blank');
+        return;
+      }
+    }
+
+    // Caso contrário, abrir a tela de criar nova cobrança/subscription
+    window.open('https://www.asaas.com/', '_blank');
+  }
+
+  /**
+   * Retorna a data de vencimento da próxima parcela a vencer
+   * Busca a cobrança com a menor data de vencimento no futuro (ou a primeira pendente)
+   */
+  getProximaParcela(contrato: Contrato): Date | null {
+    if (!contrato.cobrancas || contrato.cobrancas.length === 0) {
+      return null;
+    }
+
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    // Filtrar cobranças que ainda não foram pagas
+    const cobrancasPendentes = contrato.cobrancas.filter(c => {
+      const status = (c as any).status;
+      return status === 'PENDING' || status === 'OVERDUE';
+    });
+
+    if (cobrancasPendentes.length === 0) {
+      return null;
+    }
+
+    // Encontrar a cobrança com a menor data de vencimento
+    let proximaCobranca = cobrancasPendentes[0];
+    for (const cobranca of cobrancasPendentes) {
+      const dataVenc = this.parseLocalDate((cobranca as any).dataVencimento);
+      const dataProxima = this.parseLocalDate((proximaCobranca as any).dataVencimento);
+      if (dataVenc < dataProxima) {
+        proximaCobranca = cobranca;
+      }
+    }
+
+    return this.parseLocalDate((proximaCobranca as any).dataVencimento);
+  }
+
   adicionarContrato() {
     this.mostrarFormularioNovo = true;
     this.limparFormulario();
-    
+
     // Preencher valores padrão
     this.inicioContrato = new Date().toISOString().split('T')[0];
     const dataRecorrencia = new Date();
@@ -475,7 +531,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
     } else {
       dataVencimento = this.inicioContrato;
     }
-    
+
     // Validar que a data não está no passado
     if (dataVencimento) {
       const dataVenc = this.parseLocalDate(dataVencimento);
@@ -563,12 +619,12 @@ export class ContratosComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Erro ao criar contrato:', error);
-          
+
           // Tratar erros de validação do backend
           if (error.error?.errors) {
             const validationErrors = error.error.errors;
             const errorMessages: string[] = [];
-            
+
             // Mapear campos para nomes amigáveis
             const fieldNames: Record<string, string> = {
               'titulo': 'Título',
@@ -580,20 +636,20 @@ export class ContratosComponent implements OnInit, OnDestroy {
               'dadosCliente.emailFinanceiro': 'E-mail Financeiro',
               'whatsapp': 'WhatsApp'
             };
-            
+
             // Coletar todas as mensagens de erro
             Object.keys(validationErrors).forEach(field => {
               const fieldName = fieldNames[field] || field;
               errorMessages.push(`${fieldName}: ${validationErrors[field]}`);
             });
-            
-            this.error = errorMessages.length > 0 
+
+            this.error = errorMessages.length > 0
               ? errorMessages.join('\n')
               : error.error?.message || 'Erro de validação nos campos';
           } else {
             this.error = error.error?.message || 'Erro ao criar contrato. Verifique os dados e tente novamente.';
           }
-          
+
           this.saving = false;
           this.successMessage = null;
         }
@@ -696,28 +752,28 @@ export class ContratosComponent implements OnInit, OnDestroy {
       // Tudo que não é atraso/inadimplente é "em-dia" (inclui antigo "pendente")
       return 'em-dia';
     }
-    
+
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
-    
+
     // Contar parcelas em atraso
     const parcelasEmAtraso = this.contarParcelasEmAtraso(contrato);
-    
+
     // INADIMPLENTE (2+ parcelas em atraso)
     if (parcelasEmAtraso >= 2) {
       return 'inadimplente';
     }
-    
+
     // EM ATRASO (1 parcela em atraso ou contrato vencido sem cobranças)
     if (parcelasEmAtraso === 1) {
       return 'em-atraso';
     }
-    
+
     // Contrato vencido sem cobranças = em atraso
     if (contrato.status === 'vencido') {
       return 'em-atraso';
     }
-    
+
     // Contrato em dia com data vencida (sem cobranças em atraso) = em atraso
     if (contrato.status === 'em_dia') {
       const vencimento = this.parseLocalDate(contrato.dataVencimento);
@@ -725,7 +781,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
         return 'em-atraso';
       }
     }
-    
+
     // Tudo que não está em atraso ou inadimplente = Em Dia
     return 'em-dia';
   }
@@ -759,7 +815,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
   // Métodos para Kanban - usa categoria calculada pelo backend
   getContratosPorColuna(colunaId: string): Contrato[] {
     const contratosFiltrados = this.contratosFiltrados;
-    
+
     // Usar a categoria que já vem calculada do backend
     // Isso garante que os números batam com os cards de status
     const contratosComCategoria = contratosFiltrados.filter(c => {
@@ -769,7 +825,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
       }
       return false;
     });
-    
+
     // Debug para inadimplentes
     if (colunaId === 'inadimplente') {
       console.log('[DEBUG Inadimplentes] Total filtrados:', contratosFiltrados.length);
@@ -781,7 +837,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
       const comCategoriaInadimplente = contratosFiltrados.filter(c => c.categoria === 'inadimplente');
       console.log('[DEBUG Inadimplentes] Contratos com categoria="inadimplente":', comCategoriaInadimplente.length);
     }
-    
+
     return contratosComCategoria;
   }
 
@@ -793,11 +849,11 @@ export class ContratosComponent implements OnInit, OnDestroy {
   contarParcelasEmAtraso(contrato: Contrato): number {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
-    
+
     if (!contrato.cobrancas || contrato.cobrancas.length === 0) {
       return 0;
     }
-    
+
     return contrato.cobrancas.filter(cob => {
       if (cob.status === 'OVERDUE' || cob.status === 'DUNNING_REQUESTED' || cob.status === 'CHARGEBACK_REQUESTED') {
         return true;
@@ -818,18 +874,18 @@ export class ContratosComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Em Atraso = exatamente 1 parcela em atraso, 
+   * Em Atraso = exatamente 1 parcela em atraso,
    * ou contrato vencido/em dia com data vencida (sem cobranças para contar)
    */
   isAtraso(contrato: Contrato): boolean {
     const parcelasEmAtraso = this.contarParcelasEmAtraso(contrato);
-    
+
     if (parcelasEmAtraso === 1) return true;
-    
+
     // Se não tem cobranças mas está vencido, considerar como atraso
     if (parcelasEmAtraso === 0) {
       if (contrato.status === 'vencido') return true;
-      
+
       if (contrato.status === 'em_dia') {
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
@@ -837,7 +893,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
         return vencimento < hoje;
       }
     }
-    
+
     return false;
   }
 
@@ -869,26 +925,26 @@ export class ContratosComponent implements OnInit, OnDestroy {
   abrirFormularioCliente(contrato: Contrato): void {
     this.contratoSelecionado = contrato;
     this.mostrarFormularioCliente = true;
-    
+
     // Preencher dados existentes se houver, senão usar dados mockados
     if (contrato.dadosCliente) {
       this.dadosCliente = { ...contrato.dadosCliente };
     } else {
       this.preencherDadosMockados(contrato);
     }
-    
+
     if (contrato.servico) {
       this.servico = contrato.servico;
     } else {
       this.servico = 'Consultoria Financeira e Implementação de ERP';
     }
-    
+
     if (contrato.inicioContrato) {
       this.inicioContrato = contrato.inicioContrato;
     } else {
       this.inicioContrato = new Date().toISOString().split('T')[0];
     }
-    
+
     if (contrato.inicioRecorrencia) {
       this.inicioRecorrencia = contrato.inicioRecorrencia;
     } else {
@@ -896,19 +952,19 @@ export class ContratosComponent implements OnInit, OnDestroy {
       dataRecorrencia.setMonth(dataRecorrencia.getMonth() + 1);
       this.inicioRecorrencia = dataRecorrencia.toISOString().split('T')[0];
     }
-    
+
     if (contrato.valorContrato) {
       this.valorContrato = contrato.valorContrato;
     } else {
       this.valorContrato = contrato.valor;
     }
-    
+
     if (contrato.valorRecorrencia) {
       this.valorRecorrencia = contrato.valorRecorrencia;
     } else {
       this.valorRecorrencia = Math.round(contrato.valor * 0.15);
     }
-    
+
     // Determinar tipo de contrato baseado em valorRecorrencia
     if (contrato.valorRecorrencia && contrato.valorRecorrencia > 0) {
       this.tipoContrato = 'RECORRENTE';
@@ -968,7 +1024,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
     const contratoId = parseInt(contrato.id);
     this.loading = true;
     this.error = null;
-    
+
     this.contratoService.buscarPorId(contratoId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -1085,7 +1141,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
     if (this.contratoDetalhes) {
       const cobranca = this.contratoDetalhes.cobrancas?.[0];
       const whatsapp = this.contratoDetalhes.whatsapp || this.contratoDetalhes.cliente.celularFinanceiro;
-      
+
       if (!whatsapp) {
         this.error = 'WhatsApp não cadastrado para este contrato.';
         return;
@@ -1118,7 +1174,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
         next: (detalhes) => {
           const cobranca = detalhes.cobrancas?.[0];
           const whatsapp = detalhes.whatsapp || detalhes.cliente.celularFinanceiro;
-          
+
           if (!whatsapp) {
             this.error = 'WhatsApp não cadastrado para este contrato.';
             this.loading = false;
@@ -1178,7 +1234,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
 
   // Verifica se cobrança está vencida/inadimplente
   isCobrancaVencida(cobranca: CobrancaDTO): boolean {
-    if (cobranca.status === 'OVERDUE' || cobranca.status === 'DUNNING_REQUESTED' || 
+    if (cobranca.status === 'OVERDUE' || cobranca.status === 'DUNNING_REQUESTED' ||
         cobranca.status === 'CHARGEBACK_REQUESTED' || cobranca.status === 'CHARGEBACK_DISPUTE') {
       return true;
     }
@@ -1229,7 +1285,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
         this.contratos[index] = { ...this.contratoSelecionado };
       }
     }
-    
+
     this.fecharFormularioCliente();
   }
 
@@ -1310,7 +1366,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
 
   importarDoAsaas(): void {
     if (this.importando) return;
-    
+
     this.importando = true;
     this.error = null;
     this.successMessage = null;
@@ -1337,7 +1393,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
 
   sincronizarTodos(): void {
     if (this.sincronizando) return;
-    
+
     this.sincronizando = true;
     this.error = null;
     this.successMessage = null;
@@ -1347,7 +1403,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (result) => {
           this.sincronizando = false;
-          this.successMessage = result.mensagem || 
+          this.successMessage = result.mensagem ||
             `Sincronização concluída: ${result.cobrancasAtualizadas} cobranças atualizadas.`;
           // Recarregar dados
           this.carregarTotaisGerais();
@@ -1380,13 +1436,13 @@ export class ContratosComponent implements OnInit, OnDestroy {
 
   private converterParaCSV(dados: any[]): string {
     if (dados.length === 0) return '';
-    
+
     const headers = Object.keys(dados[0]);
     const csvContent = [
       headers.join(','),
       ...dados.map(row => headers.map(header => `"${row[header]}"`).join(','))
     ].join('\n');
-    
+
     return csvContent;
   }
 

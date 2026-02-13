@@ -21,7 +21,7 @@ export interface CobrancaDTO {
   valor: number;
   dataVencimento: string;
   dataPagamento?: string;
-  status: 'PENDING' | 'RECEIVED' | 'OVERDUE' | 'REFUNDED' | 'RECEIVED_IN_CASH_UNDONE' | 
+  status: 'PENDING' | 'RECEIVED' | 'OVERDUE' | 'REFUNDED' | 'RECEIVED_IN_CASH_UNDONE' |
           'CHARGEBACK_REQUESTED' | 'CHARGEBACK_DISPUTE' | 'AWAITING_CHARGEBACK_REVERSAL' |
           'DUNNING_REQUESTED' | 'DUNNING_RECEIVED' | 'AWAITING_RISK_ANALYSIS';
   linkPagamento?: string | null;
@@ -50,6 +50,12 @@ export interface ContratoDTO {
   categoria?: 'EM_DIA' | 'PENDENTE' | 'EM_ATRASO' | 'INADIMPLENTE';
   dataCriacao: string;
   dataAtualizacao?: string;
+  dataVenda?: string;
+  dataEncerramento?: string;
+  linkContrato?: string;
+  statusAssinatura?: 'PENDENTE' | 'ASSINADO' | 'CANCELADO';
+  projeto?: string;
+  valorEntrada?: number;
 }
 
 export interface TotaisPorCategoria {
@@ -97,6 +103,13 @@ export interface CriarContratoRequest {
   descontoPercentual?: number; // Percentual de desconto
   descontoValorFixo?: number; // Valor fixo de desconto
   prazoMaximoDesconto?: number; // Dias para aplicar desconto
+  // Novos campos
+  dataVenda?: string;
+  dataEncerramento?: string;
+  linkContrato?: string;
+  statusAssinatura?: 'PENDENTE' | 'ASSINADO' | 'CANCELADO';
+  projeto?: string;
+  valorEntrada?: number;
 }
 
 export interface PageResponse<T> {
@@ -406,14 +419,21 @@ export class ContratoService {
       valorContrato: contrato.valorContrato,
       valorRecorrencia: contrato.valorRecorrencia,
       tipoPagamento: contrato.tipoPagamento,
-      cobrancas: contrato.cobrancas || [], // Incluir cobranças para uso no Kanban
+      cobrancas: contrato.cobrancas || [],
       dadosCliente: {
         razaoSocial: contrato.cliente.razaoSocial,
         nomeFantasia: contrato.cliente.nomeFantasia,
         cnpj: contrato.cliente.cpfCnpj,
         emailFinanceiro: contrato.cliente.emailFinanceiro,
         celularFinanceiro: contrato.cliente.celularFinanceiro
-      }
+      },
+      dataVenda: contrato.dataVenda,
+      dataEncerramento: contrato.dataEncerramento,
+      linkContrato: contrato.linkContrato,
+      statusAssinatura: contrato.statusAssinatura,
+      projeto: contrato.projeto,
+      valorEntrada: contrato.valorEntrada,
+      asaasSubscriptionId: contrato.asaasSubscriptionId
     };
   }
 

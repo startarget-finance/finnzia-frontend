@@ -21,7 +21,7 @@ export interface Contrato {
     valor: number;
     dataVencimento: string;
     dataPagamento?: string;
-    status: 'PENDING' | 'RECEIVED' | 'OVERDUE' | 'REFUNDED' | 'RECEIVED_IN_CASH_UNDONE' | 
+    status: 'PENDING' | 'RECEIVED' | 'OVERDUE' | 'REFUNDED' | 'RECEIVED_IN_CASH_UNDONE' |
             'CHARGEBACK_REQUESTED' | 'CHARGEBACK_DISPUTE' | 'AWAITING_CHARGEBACK_REVERSAL' |
             'DUNNING_REQUESTED' | 'DUNNING_RECEIVED' | 'AWAITING_RISK_ANALYSIS';
     linkPagamento?: string;
@@ -30,6 +30,13 @@ export interface Contrato {
     asaasPaymentId?: string;
   }>;
   categoria?: 'em-dia' | 'pendente' | 'em-atraso' | 'inadimplente';
+  dataVenda?: string;
+  dataEncerramento?: string;
+  linkContrato?: string;
+  statusAssinatura?: 'PENDENTE' | 'ASSINADO' | 'CANCELADO';
+  projeto?: string;
+  valorEntrada?: number;
+  asaasSubscriptionId?: string;
 }
 
 export interface DadosCliente {
