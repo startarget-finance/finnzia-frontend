@@ -188,7 +188,6 @@
           <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Data Venc.</th>
           <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Data Comp.</th>
           <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Cliente/Fornecedor</th>
-          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Razão Social</th>
           <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Categoria</th>
           <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Valor</th>
           <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
@@ -217,11 +216,6 @@
               {{ mov.NomeClienteFornecedor || mov.NomeFantasiaClienteFornecedor || (mov.CodigoClienteFornecedor ? ('Cliente #' + mov.CodigoClienteFornecedor) : '-') }}
             </div>
           </td>
-          <td class="px-4 py-3 text-sm">
-            <div class="text-gray-900 max-w-xs truncate" [title]="mov.RazaoSocialClienteFornecedor">
-              {{ mov.RazaoSocialClienteFornecedor || '-' }}
-            </div>
-          </td>
           <td class="px-4 py-3 text-sm text-gray-900">
             <div class="max-w-xs truncate" [title]="extrairCategoriaRoot(mov)">{{ extrairCategoriaRoot(mov) }}</div>
           </td>
@@ -241,7 +235,7 @@
           </td>
         </tr>
         <tr *ngIf="movimentacoesFiltradas.length === 0">
-          <td colspan="9" class="px-4 py-8 text-center text-sm text-gray-500">
+          <td colspan="8" class="px-4 py-8 text-center text-sm text-gray-500">
             Nenhuma movimentação encontrada
           </td>
         </tr>

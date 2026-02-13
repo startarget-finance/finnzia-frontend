@@ -74,7 +74,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   ];
 
   // Fonte de dados
-  fonteDados: 'bomcontrole' | 'omie' = 'omie'; // Padrão: OMIE
+  fonteDados: 'bomcontrole' | 'omie' = 'bomcontrole'; // Padrão: Bom Controle
 
   private destroy$ = new Subject<void>();
   private textoPesquisaSubject = new Subject<string>();
