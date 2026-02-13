@@ -22,6 +22,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
   filtroDataVencimentoFim: string = '';
   filtroDataPagamentoInicio: string = '';
   filtroDataPagamentoFim: string = '';
+  ordenacao: string = '';
   visualizacao: 'lista' | 'kanban' = 'kanban';
   mostrarFormularioCliente: boolean = false;
   mostrarFormularioNovo: boolean = false;
@@ -212,7 +213,8 @@ export class ContratosComponent implements OnInit, OnDestroy {
       dueDateInicio,
       dueDateFim,
       paymentDateInicio,
-      paymentDateFim
+      paymentDateFim,
+      this.getSortParam()
     )
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -356,8 +358,23 @@ export class ContratosComponent implements OnInit, OnDestroy {
   }
 
   get contratosFiltrados(): Contrato[] {
-    // Os contratos já vêm filtrados do backend
+    // Os contratos já vêm filtrados e ordenados do backend
     return this.contratos;
+  }
+
+  onOrdenacaoChange(): void {
+    this.page = 0;
+    this.carregarContratos();
+  }
+
+  private getSortParam(): string | undefined {
+    switch (this.ordenacao) {
+      case 'mais-perto': return 'dataVencimento,asc';
+      case 'mais-longe': return 'dataVencimento,desc';
+      case 'maior-valor': return 'valorContrato,desc';
+      case 'menor-valor': return 'valorContrato,asc';
+      default: return undefined;
+    }
   }
 
   getStatusClass(status: string): string {

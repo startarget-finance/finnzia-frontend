@@ -227,11 +227,16 @@ export class ContratoService {
     dueDateInicio?: string,
     dueDateFim?: string,
     paymentDateInicio?: string,
-    paymentDateFim?: string
+    paymentDateFim?: string,
+    sort?: string
   ): Observable<PageResponse<ContratoDTO>> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString());
+
+    if (sort && sort.trim() !== '') {
+      params = params.set('sort', sort.trim());
+    }
 
     // Só adiciona parâmetros se tiverem valores válidos
     if (clienteId !== undefined && clienteId !== null) {

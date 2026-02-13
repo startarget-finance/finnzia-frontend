@@ -41,7 +41,7 @@ export const API_CONFIG = {
     // Em produção (deploy): usa a URL do Render
     return isLocalhost 
       ? 'http://localhost:8080'  // Desenvolvimento local
-      : 'https://finnza-backend-2l9v.onrender.com';  // Produção (Render)
+      : 'https://finzzia-backend.onrender.com';  // Produção (Render)
   })(),
 
   // Flag para usar login mockado no front (false = usar backend real)

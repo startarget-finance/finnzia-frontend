@@ -76,7 +76,7 @@
     <!-- ========== CONTROL BAR (Filters) ========== -->
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 mb-6">
       <div class="flex flex-col gap-4">
-        <!-- Row 1: Status, Payment Type, Search -->
+        <!-- Row 1: Status, Ordenação, Search -->
         <div class="flex flex-col sm:flex-row gap-4 items-end">
           <div class="flex-1">
             <label for="statusFilter" class="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Status</label>
@@ -96,18 +96,19 @@
               <option value="CHARGEBACK_REQUESTED">Chargeback</option>
             </select>
           </div>
-          
+
           <div class="flex-1">
-            <label for="billingTypeFilter" class="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Pagamento</label>
+            <label for="ordenacaoFilter" class="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wider">Ordenar por</label>
             <select 
-              id="billingTypeFilter" 
-              [(ngModel)]="filtroFormaPagamento"
-              (ngModelChange)="onFiltroFormaPagamentoChange()"
+              id="ordenacaoFilter" 
+              [(ngModel)]="ordenacao"
+              (ngModelChange)="onOrdenacaoChange()"
               class="w-full h-11 px-3 border border-gray-300 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white transition-all">
-              <option value="todos">Todas</option>
-              <option value="BOLETO">Boleto</option>
-              <option value="CREDIT_CARD">Cartão de Crédito</option>
-              <option value="PIX">PIX</option>
+              <option value="">Ordenar por...</option>
+              <option value="mais-perto">Mais perto de vencer</option>
+              <option value="mais-longe">Mais longe de vencer</option>
+              <option value="maior-valor">Maior valor</option>
+              <option value="menor-valor">Menor valor</option>
             </select>
           </div>
           
