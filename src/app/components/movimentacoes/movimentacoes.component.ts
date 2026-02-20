@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { BomControleService, MovimentacaoFinanceira, FiltrosMovimentacoes } from '../../services/bomcontrole.service';
 import { OmieService, MovimentacaoOmie, MovimentacoesOmieResponse, FiltrosMovimentacoesOmie } from '../../services/omie.service';
+import { CompanySelectorService } from '../../services/company-selector.service';
 
 @Component({
   selector: 'app-movimentacoes',
@@ -37,9 +38,9 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   private cacheKeyAtual: string = '';
   
   // Totais agregados (de todas as movimentações, não apenas da página atual)
-  totalReceitasGeral: number | null = null;
-  totalDespesasGeral: number | null = null;
-  saldoLiquidoGeral: number | null = null;
+  totalReceitasGeral: number = 0;
+  totalDespesasGeral: number = 0;
+  saldoLiquidoGeral: number = 0;
 
   // Paginação
   paginaAtual: number = 1;
@@ -81,7 +82,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
 
   constructor(
     private bomControleService: BomControleService,
-    private omieService: OmieService
+    private omieService: OmieService,
+    private companySelectorService: CompanySelectorService
   ) {
     this.visibleMonth = new Date();
     this.buildCalendar();
@@ -99,13 +101,63 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Carrega automaticamente sem filtro de data inicial
+    // Pré-preencher com mês atual automaticamente
+    this.preencherMesAtual();
+    
+    // Verificar se usuário possui alguma empresa configurada
+    const empresaSelecionada = this.companySelectorService.obterEmpresaSelecionada();
+    
+    if (!empresaSelecionada) {
+      // Incrementar contador e log com informação de empresas permitidas
+      const empresasPermitidas = this.companySelectorService.obterEmpresasAtivas();
+      console.warn(`⚠️ Usuário não possui empresa selecionada, ${empresasPermitidas.length} empresa(s) disponível(is)`);
+      
+      // Se há empresas disponíveis, selecionar a primeira ou a padrão
+      if (empresasPermitidas.length > 0) {
+        this.companySelectorService.selecionarEmpresaPadrao();
+        // Tentar carregar novamente após seleção
+        setTimeout(() => {
+          this.carregarMovimentacoes();
+        }, 100);
+        return;
+      }
+      
+      this.error = 'Nenhuma empresa configurada para o usuário. Acesse "Gerenciar Acessos" para configurar.';
+      this.loading = false;
+      return;
+    }
+    
+    // Carrega automaticamente com filtro de data do mês atual
+    // A empresa é obtida via CompanySelectorService (X-Empresa-Id header)
     this.carregarMovimentacoes();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * Preenche automaticamente com as datas do mês atual
+   * Formato: YYYY-MM-DD
+   */
+  private preencherMesAtual(): void {
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+    
+    // Primeiro dia do mês
+    this.dataInicial = `${ano}-${mes}-01`;
+    
+    // Último dia do mês
+    const ultimoDia = new Date(ano, parseInt(mes), 0).getDate();
+    this.dataFinal = `${ano}-${mes}-${String(ultimoDia).padStart(2, '0')}`;
+    
+    // Atualizar calendário visual
+    this.visibleMonth = new Date(ano, parseInt(mes) - 1);
+    this.buildCalendar();
+    
+    console.log(`📅 Mês atual pré-preenchido: ${this.dataInicial} até ${this.dataFinal}`);
   }
 
   // ===== Carregamento de Dados =====
@@ -121,11 +173,17 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   }
 
   private carregarMovimentacoesBomControle(): void {
+    // Garante que temos datas preenchidas (mês atual como padrão)
+    if (!this.dataInicial || !this.dataFinal) {
+      this.preencherMesAtual();
+    }
+
     // Prepara filtros - agora inclui filtros de UI também
     const filtros: FiltrosMovimentacoes = {
       ...this.filtros,
       dataInicio: this.dataInicial || undefined,
       dataTermino: this.dataFinal || undefined,
+      // idsEmpresa removido - usamos X-Empresa-Id header (via CompanyInterceptor)
       categoria: this.filtrosUI.categoria || undefined,
       tipo: (this.filtrosUI.tipo === 'receita' || this.filtrosUI.tipo === 'despesa') ? this.filtrosUI.tipo : undefined,
       textoPesquisa: this.filtrosUI.textoPesquisa || undefined,
@@ -250,7 +308,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       const inicio = (this.paginaAtual - 1) * this.itensPorPagina;
       const fim = inicio + this.itensPorPagina;
       this.movimentacoes = resultadoLocal.slice(inicio, fim);
-      this.movimentacoesFiltradas = [...this.movimentacoes];
+      this.aplicarFiltrosUI();
       this.totalItens = resultadoLocal.length;
       this.totalPaginas = Math.ceil(this.totalItens / this.itensPorPagina);
       
@@ -258,9 +316,9 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       const cached = this.obterCache();
       if (cached?.totais) {
         console.log('💰 Totais restaurados do cache:', cached.totais);
-        this.totalReceitasGeral = cached.totais.totalReceitas ?? null;
-        this.totalDespesasGeral = cached.totais.totalDespesas ?? null;
-        this.saldoLiquidoGeral = cached.totais.saldoLiquido ?? null;
+        this.totalReceitasGeral = cached.totais.totalReceitas ?? 0;
+        this.totalDespesasGeral = cached.totais.totalDespesas ?? 0;
+        this.saldoLiquidoGeral = cached.totais.saldoLiquido ?? 0;
         console.log('✅ Totais atribuídos do cache:', {
           totalReceitasGeral: this.totalReceitasGeral,
           totalDespesasGeral: this.totalDespesasGeral,
@@ -334,12 +392,12 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       this.totalItens = this.movimentacoes.length;
     }
     
-    // Atualiza totais agregados
-    this.totalReceitasGeral = response.totalReceitas !== undefined ? response.totalReceitas : null;
-    this.totalDespesasGeral = response.totalDespesas !== undefined ? response.totalDespesas : null;
+    // Atualiza totais agregados (calculados de todas as páginas, sempre precisos)
+    this.totalReceitasGeral = response.totalReceitas !== undefined ? response.totalReceitas : 0;
+    this.totalDespesasGeral = response.totalDespesas !== undefined ? response.totalDespesas : 0;
     this.saldoLiquidoGeral = response.saldoLiquido !== undefined ? response.saldoLiquido : 
                               (this.totalReceitasGeral !== null && this.totalDespesasGeral !== null ? 
-                               this.totalReceitasGeral - this.totalDespesasGeral : null);
+                               this.totalReceitasGeral - this.totalDespesasGeral : 0);
     
     // Usa o itensPorPagina retornado pelo backend se disponível
     if (response.paginacao && response.paginacao.itensPorPagina) {
@@ -351,8 +409,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     // Extrai categorias únicas
     this.extrairCategorias();
     
-    // Os filtros já foram aplicados no backend
-    this.movimentacoesFiltradas = [...this.movimentacoes];
+    // Garante que filtros locais (tipo/categoria/pesquisa) também sejam aplicados
+    this.aplicarFiltrosUI();
     
     this.loading = false;
   }
@@ -385,7 +443,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       this.saldoLiquidoGeral = responseAny.saldoLiquido !== undefined && responseAny.saldoLiquido !== null
         ? Number(responseAny.saldoLiquido)
         : (this.totalReceitasGeral !== null && this.totalDespesasGeral !== null 
-           ? this.totalReceitasGeral - this.totalDespesasGeral : null);
+           ? this.totalReceitasGeral - this.totalDespesasGeral : 0);
       
       console.log('✅ Totais atribuídos:', {
         totalReceitasGeral: this.totalReceitasGeral,
@@ -417,8 +475,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     // Extrai categorias únicas (de todos os dados, não apenas da página)
     this.extrairCategorias();
     
-    // Os filtros já foram aplicados no backend, então apenas usa os dados retornados
-    this.movimentacoesFiltradas = [...this.movimentacoes];
+    // Reaplica filtros locais para garantir consistência visual
+    this.aplicarFiltrosUI();
     
     this.loading = false;
   }
@@ -577,16 +635,19 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     if (this.filtrosUI.tipo) {
       filtradas = filtradas.filter(mov => {
         const isReceita = !mov.Debito;
-        const isDespesa = mov.Debito;
+        const isDespesa = !!mov.Debito;
         return this.filtrosUI.tipo === 'receita' ? isReceita : isDespesa;
       });
     }
 
     // Filtro por categoria
     if (this.filtrosUI.categoria) {
-      filtradas = filtradas.filter(mov => 
-        mov.NomeCategoriaFinanceira === this.filtrosUI.categoria
-      );
+      const categoriaSelecionada = this.filtrosUI.categoria.toLowerCase();
+      filtradas = filtradas.filter(mov => {
+        const nomeCategoria = (mov.NomeCategoriaFinanceira || '').toLowerCase();
+        const categoriaRoot = (mov.Valores?.[0]?.NomeCategoriaRoot || '').toLowerCase();
+        return nomeCategoria === categoriaSelecionada || categoriaRoot === categoriaSelecionada;
+      });
     }
 
     // Filtro por texto de pesquisa
@@ -611,6 +672,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   // Os filtros agora são aplicados no backend, então quando mudarem, recarrega os dados
   onFiltroChange(): void {
     this.paginaAtual = 1; // Volta para primeira página ao mudar filtro
+    this.aplicarFiltrosUI();
     this.carregarMovimentacoes();
   }
 
@@ -618,6 +680,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     // Atualiza o filtro e recarrega (com debounce já aplicado pelo subject)
     this.filtrosUI.textoPesquisa = texto;
     this.paginaAtual = 1; // Volta para primeira página ao pesquisar
+    this.aplicarFiltrosUI();
     this.textoPesquisaSubject.next(texto);
   }
 
@@ -630,6 +693,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     this.dataInicial = '';
     this.dataFinal = '';
     this.paginaAtual = 1;
+    this.aplicarFiltrosUI();
     this.carregarMovimentacoes();
   }
 
@@ -723,9 +787,10 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   }
 
   applyRangePicker(): void {
-    if (this.tempRangeStart && this.tempRangeEnd) {
-      const a = this.tempRangeStart <= this.tempRangeEnd ? this.tempRangeStart : this.tempRangeEnd;
-      const b = this.tempRangeStart <= this.tempRangeEnd ? this.tempRangeEnd : this.tempRangeStart;
+    if (this.tempRangeStart) {
+      const rangeEnd = this.tempRangeEnd ?? this.tempRangeStart; // permite selecionar apenas um dia
+      const a = this.tempRangeStart <= rangeEnd ? this.tempRangeStart : rangeEnd;
+      const b = this.tempRangeStart <= rangeEnd ? rangeEnd : this.tempRangeStart;
       
       this.dataInicial = a;
       this.dataFinal = b;
@@ -942,60 +1007,23 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     return tipo ? tipo.label : value;
   }
 
-  // ===== Exportação =====
-  exportarExcel(): void {
-    this.loading = true;
-    const filtros: FiltrosMovimentacoes = {
-      ...this.filtros,
-      dataInicio: this.dataInicial || undefined,
-      dataTermino: this.dataFinal || undefined
-    };
-
-    this.bomControleService.exportarExcel(filtros)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (blob: Blob) => {
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `movimentacoes_${new Date().toISOString().split('T')[0]}.xlsx`;
-          a.click();
-          window.URL.revokeObjectURL(url);
-          this.loading = false;
-        },
-        error: (err: any) => {
-          console.error('Erro ao exportar Excel:', err);
-          this.error = 'Erro ao exportar Excel';
-          this.loading = false;
-        }
-      });
+  /**
+   * Formata valores monetários em BRL
+   * Exemplo: 1234.56 → "R$ 1.234,56"
+   */
+  formatarMoeda(value: number | null | undefined): string {
+    if (value === null || value === undefined) {
+      return 'R$ 0,00';
+    }
+    
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value);
   }
 
-  exportarPDF(): void {
-    this.loading = true;
-    const filtros: FiltrosMovimentacoes = {
-      ...this.filtros,
-      dataInicio: this.dataInicial || undefined,
-      dataTermino: this.dataFinal || undefined
-    };
-
-    this.bomControleService.exportarPDF(filtros)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (blob: Blob) => {
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `movimentacoes_${new Date().toISOString().split('T')[0]}.pdf`;
-          a.click();
-          window.URL.revokeObjectURL(url);
-          this.loading = false;
-        },
-        error: (err: any) => {
-          console.error('Erro ao exportar PDF:', err);
-          this.error = 'Erro ao exportar PDF';
-          this.loading = false;
-        }
-      });
-  }
+  // Métodos de exportação (exportarExcel e exportarPDF) removidos
+  // Implementar futuramente se necessário usando bibliotecas como ExcelJS ou jsPDF
 }

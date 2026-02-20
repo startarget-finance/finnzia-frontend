@@ -197,5 +197,25 @@ export class UsuarioService {
       headers: this.getAuthHeaders()
     });
   }
+
+  /**
+   * GET /api/usuarios/{id}/empresas
+   * Obtém empresas atribuídas a um usuário
+   */
+  obterEmpresasUsuario(usuarioId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/${usuarioId}/empresas`, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  /**
+   * PUT /api/usuarios/{id}/empresas
+   * Atualiza empresas em bulk (atribui múltiplas empresas ao usuário)
+   */
+  atualizarEmpresasUsuario(usuarioId: number, payload: any): Observable<any[]> {
+    return this.http.put<any[]>(`${this.baseUrl}/${usuarioId}/empresas`, payload, {
+      headers: this.getAuthHeaders()
+    });
+  }
 }
 

@@ -7,6 +7,7 @@ import { provideClientHydration } from '@angular/platform-browser';
 import { authInterceptor } from './interceptors/auth.interceptor';
 import { errorInterceptor } from './interceptors/error.interceptor';
 import { loadingInterceptor } from './interceptors/loading.interceptor';
+import { companyInterceptor } from './interceptors/company.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -17,7 +18,8 @@ export const appConfig: ApplicationConfig = {
       withInterceptors([
         authInterceptor,
         errorInterceptor,
-        loadingInterceptor
+        loadingInterceptor,
+        companyInterceptor
       ])
     )
   ]

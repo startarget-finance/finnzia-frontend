@@ -4,6 +4,7 @@ import { BehaviorSubject } from 'rxjs';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { API_CONFIG } from '../config/api.config';
+import { CompanySelectorService } from './company-selector.service';
 
 export interface User {
   email: string;
@@ -34,7 +35,8 @@ export class AuthService {
 
   constructor(
     private router: Router,
-    private http: HttpClient
+    private http: HttpClient,
+    private companySelectorService: CompanySelectorService
   ) {
     this.checkAuthStatus();
   }
@@ -53,6 +55,8 @@ export class AuthService {
   // Login
   async login(email: string, password: string): Promise<boolean> {
     try {
+      // Limpa seleção de empresa de sessões anteriores antes de autenticar
+      this.companySelectorService.limparSessao();
       const response = await this.authenticateWithAPI(email, password);
       
       if (response.success) {
@@ -157,6 +161,9 @@ export class AuthService {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userData');
     localStorage.removeItem('rememberMe');
+    
+    // Limpa cache e notificações de empresa selecionada
+    this.companySelectorService.limparSessao();
     
     this.isAuthenticatedSubject.next(false);
     this.userSubject.next(null);

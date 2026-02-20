@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UsuarioService, Usuario, CriarUsuarioRequest, AtualizarUsuarioRequest, AtualizarPermissoesRequest, PageResponse } from '../../services/usuario.service';
+import { BomControleService } from '../../services/bomcontrole.service';
+import { CompanySelectorService, CompaniaInfo } from '../../services/company-selector.service';
 
 @Component({
   selector: 'app-gerenciar-acessos',
@@ -50,10 +52,81 @@ export class GerenciarAcessosComponent implements OnInit {
   };
   isModalNovoAberto: boolean = false;
 
-  constructor(private usuarioService: UsuarioService) {}
+  // Gerenciamento de empresas (BOMControle)
+  empresasDisponiveis: any[] = [];
+  empresasUsuario: { [key: number]: boolean } = {};
+  empresaPadraoSelecionada: number | null = null;
+  carregandoEmpresas: boolean = false;
+  
+  // Expor Object para o template
+  Object = Object;
+
+  constructor(
+    private usuarioService: UsuarioService,
+    private bomControleService: BomControleService,
+    private companySelectorService: CompanySelectorService
+  ) {}
 
   ngOnInit() {
     this.carregarUsuarios();
+    this.carregarEmpresas();
+    this.carregarEmpresasUsuarioLogado();
+  }
+
+  /**
+   * Carrega empresas do usuário atualmente logado e atualiza o seletor
+   */
+  private carregarEmpresasUsuarioLogado() {
+    this.usuarioService.buscarMeuPerfil().subscribe({
+      next: (usuarioAtual: Usuario) => {
+        this.usuarioService.obterEmpresasUsuario(usuarioAtual.id).subscribe({
+          next: (empresas: any[]) => {
+            // Converter para CompaniaInfo[]
+            const empresasInfo: CompaniaInfo[] = empresas
+              .filter(e => e.ativo)
+              .map(e => ({
+                id: e.id,
+                idEmpresa: e.idEmpresa,
+                nomeEmpresa: e.nomeEmpresa,
+                padrao: e.padrao,
+                ativo: e.ativo,
+                dataCriacao: e.dataCriacao
+              }));
+
+            // Atualiza o seletor de empresas com as empresas do usuário
+            if (empresasInfo.length > 0) {
+              this.companySelectorService.atualizarEmpresas(empresasInfo);
+              console.log(`✅ Empresas do usuário sincronizadas no seletor -> ${empresasInfo.length} empresa(s)`);
+            }
+          },
+          error: (error) => {
+            console.error('Erro ao carregar empresas do usuário logado:', error);
+          }
+        });
+      },
+      error: (error) => {
+        console.error('Erro ao obter perfil do usuário:', error);
+      }
+    });
+  }
+
+  /**
+   * Carrega empresas disponíveis no BOMControle
+   */
+  carregarEmpresas() {
+    this.carregandoEmpresas = true;
+    this.bomControleService.listarEmpresas().subscribe({
+      next: (response: any) => {
+        this.empresasDisponiveis = response.empresas || [];
+        console.log(`📦 ${this.empresasDisponiveis.length} empresas carregadas da API BOMControle`);
+        this.carregandoEmpresas = false;
+      },
+      error: (error: any) => {
+        console.error('Erro ao carregar empresas:', error);
+        this.empresasDisponiveis = [];
+        this.carregandoEmpresas = false;
+      }
+    });
   }
 
   /**
@@ -208,7 +281,40 @@ export class GerenciarAcessosComponent implements OnInit {
       assinatura: false,
       gerenciarAcessos: false
     };
+    
+    // Carregar empresas do usuário
+    this.carregarEmpresasUsuario(usuario.id);
     this.isPermissoesAberto = true;
+  }
+
+  /**
+   * Carrega empresas permite para um usuário
+   */
+  carregarEmpresasUsuario(usuarioId: number) {
+    this.carregandoEmpresas = true;
+    
+    // GET /api/usuarios/{id}/empresas
+    this.usuarioService.obterEmpresasUsuario(usuarioId).subscribe({
+      next: (empresas: any[]) => {
+        this.empresasUsuario = {};
+        this.empresaPadraoSelecionada = null;
+        
+        empresas.forEach(empresa => {
+          this.empresasUsuario[empresa.idEmpresa] = empresa.ativo;
+          if (empresa.padrao) {
+            this.empresaPadraoSelecionada = empresa.idEmpresa;
+          }
+        });
+        
+        console.log(`✅ Carregadas ${Object.keys(this.empresasUsuario).length} empresas do usuário`);
+        this.carregandoEmpresas = false;
+      },
+      error: (error) => {
+        console.error('Erro ao carregar empresas do usuário:', error);
+        this.empresasUsuario = {};
+        this.carregandoEmpresas = false;
+      }
+    });
   }
 
   fecharModalPermissoes() {
@@ -230,12 +336,40 @@ export class GerenciarAcessosComponent implements OnInit {
 
     this.usuarioService.atualizarPermissoes(this.usuarioPermissoes.id, request).subscribe({
       next: (usuarioAtualizado) => {
-        this.carregarUsuarios(); // Recarrega lista
-        this.fecharModalPermissoes();
+        // Salvar empresas do usuário
+        this.salvarEmpresasUsuario(this.usuarioPermissoes!.id);
       },
       error: (error) => {
         this.erro = 'Erro ao atualizar permissões. Tente novamente.';
         console.error('Erro ao atualizar permissões:', error);
+        this.carregando = false;
+      }
+    });
+  }
+
+  /**
+   * Salva empresas atribuídas ao usuário
+   * PUT /api/usuarios/{id}/empresas
+   */
+  salvarEmpresasUsuario(usuarioId: number) {
+    const empresasSelecionadas = Object.keys(this.empresasUsuario)
+      .filter(id => this.empresasUsuario[parseInt(id)])
+      .map(id => parseInt(id));
+
+    const payload = {
+      empresaIds: empresasSelecionadas,
+      idEmpresaPadrao: this.empresaPadraoSelecionada
+    };
+
+    this.usuarioService.atualizarEmpresasUsuario(usuarioId, payload).subscribe({
+      next: (empresas) => {
+        console.log('✅ Empresas do usuário atualizadas com sucesso');
+        this.carregarUsuarios(); // Recarrega lista
+        this.fecharModalPermissoes();
+      },
+      error: (error) => {
+        this.erro = 'Erro ao atualizar empresas. Tente novamente.';
+        console.error('Erro ao atualizar empresas:', error);
         this.carregando = false;
       }
     });
@@ -363,5 +497,21 @@ export class GerenciarAcessosComponent implements OnInit {
       paginas.push(i);
     }
     return paginas;
+  }
+
+  /**
+   * Retorna a contagem de empresas selecionadas
+   */
+  getContagemEmpresasSelecionadas(): number {
+    return Object.values(this.empresasUsuario).filter(v => v).length;
+  }
+
+  /**
+   * Retorna o nome da empresa padrão selecionada
+   */
+  getEmpresaPadraoNome(): string | undefined {
+    if (!this.empresaPadraoSelecionada) return undefined;
+    const empresa = this.empresasDisponiveis.find(e => e.Id === this.empresaPadraoSelecionada);
+    return empresa?.Nome;
   }
 }

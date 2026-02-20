@@ -132,6 +132,10 @@ export class BomControleService {
     if (filtros.tipoData) {
       params = params.set('tipoData', filtros.tipoData);
     }
+    // NÃO enviar idsEmpresa se for null/undefined/0
+    if (filtros.idsEmpresa && filtros.idsEmpresa > 0) {
+      params = params.set('idsEmpresa', filtros.idsEmpresa.toString());
+    }
     if (filtros.categoria) {
       params = params.set('categoria', filtros.categoria);
     }
@@ -257,76 +261,6 @@ export class BomControleService {
   statusCache(): Observable<any> {
     return this.http.get(`${this.apiUrl}/cache/status`, {
       headers: this.getHeaders()
-    });
-  }
-
-  /**
-   * Exporta movimentações para Excel
-   */
-  exportarExcel(filtros: FiltrosMovimentacoes = {}): Observable<Blob> {
-    let params = new HttpParams();
-    
-    if (filtros.dataInicio) {
-      params = params.set('dataInicio', filtros.dataInicio);
-    }
-    if (filtros.dataTermino) {
-      params = params.set('dataTermino', filtros.dataTermino);
-    }
-    if (filtros.tipoData) {
-      params = params.set('tipoData', filtros.tipoData);
-    }
-    if (filtros.idsEmpresa) {
-      params = params.set('idsEmpresa', filtros.idsEmpresa.toString());
-    }
-    if (filtros.idsCliente) {
-      params = params.set('idsCliente', filtros.idsCliente.toString());
-    }
-    if (filtros.idsFornecedor) {
-      params = params.set('idsFornecedor', filtros.idsFornecedor.toString());
-    }
-    if (filtros.textoPesquisa) {
-      params = params.set('textoPesquisa', filtros.textoPesquisa);
-    }
-
-    return this.http.get(`${this.apiUrl}/movimentacoes/exportar/excel`, {
-      headers: this.getHeaders(),
-      params,
-      responseType: 'blob'
-    });
-  }
-
-  /**
-   * Exporta movimentações para PDF
-   */
-  exportarPDF(filtros: FiltrosMovimentacoes = {}): Observable<Blob> {
-    let params = new HttpParams();
-    
-    if (filtros.dataInicio) {
-      params = params.set('dataInicio', filtros.dataInicio);
-    }
-    if (filtros.dataTermino) {
-      params = params.set('dataTermino', filtros.dataTermino);
-    }
-    if (filtros.tipoData) {
-      params = params.set('tipoData', filtros.tipoData);
-    }
-    if (filtros.idsEmpresa) {
-      params = params.set('idsEmpresa', filtros.idsEmpresa.toString());
-    }
-    if (filtros.idsCliente) {
-      params = params.set('idsCliente', filtros.idsCliente.toString());
-    }
-    if (filtros.idsFornecedor) {
-      params = params.set('idsFornecedor', filtros.idsFornecedor.toString());
-    }
-    if (filtros.textoPesquisa) {
-      params = params.set('textoPesquisa', filtros.textoPesquisa);
-    }
-
-    return this.http.get(`${this.apiUrl}/movimentacoes/exportar/pdf`, {
-      headers: this.getHeaders(),
-      params,
-      responseType: 'blob'
     });
   }
 
