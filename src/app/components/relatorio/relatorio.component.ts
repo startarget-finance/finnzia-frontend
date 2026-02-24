@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Chart, registerables } from 'chart.js';
 import { Subject, takeUntil } from 'rxjs';
-import { OmieService, ContasReceberResponse, ContasPagarResponse, FiltrosMovimentacoesOmie } from '../../services/omie.service';
+import { BomControleService, FiltrosMovimentacoes, ResumoFinanceiroResponse } from '../../services/bomcontrole.service';
 
 Chart.register(...registerables);
 
@@ -62,6 +62,10 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
   };
 
   loadingContas: boolean = false;
+  saldoDisponivelAtual: number = 0;
+  saldoDisponivelAnterior: number | null = null;
+  variacaoSaldoPercentual: number | null = null;
+  ultimaAtualizacaoSaldo: Date | null = null;
 
   private destroy$ = new Subject<void>();
 
@@ -204,7 +208,7 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
     { value: 'Outros', label: 'Outros' }
   ];
 
-  constructor(private omieService: OmieService) {}
+  constructor(private bomControleService: BomControleService) {}
 
   ngOnInit() {
     this.visibleMonth = new Date();
@@ -216,7 +220,7 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dataInicial = primeiroDiaAno.toISOString().split('T')[0];
     this.dataFinal = hoje.toISOString().split('T')[0];
     
-    // Carrega dados reais do Omie
+    // Carrega dados reais do Bom Controle
     this.carregarDadosContas();
   }
 
@@ -233,209 +237,78 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   /**
-   * Carrega dados reais de contas a receber e pagar do Omie
+   * Carrega dados reais de contas a receber e pagar do Bom Controle
    * Busca todas as páginas para calcular totais corretos
    */
   carregarDadosContas(): void {
     this.loadingContas = true;
+    this.variacaoSaldoPercentual = null;
+    this.saldoDisponivelAnterior = this.ultimaAtualizacaoSaldo ? this.saldoDisponivelAtual : null;
     
     // Define período padrão se não houver datas selecionadas
     const dataInicio = this.dataInicial || new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
     const dataFim = this.dataFinal || new Date().toISOString().split('T')[0];
     
-    // Busca todas as páginas para calcular totais corretos
-    this.carregarTodasPaginasContasReceber(dataInicio, dataFim);
-    this.carregarTodasPaginasContasPagar(dataInicio, dataFim);
-  }
-
-  /**
-   * Carrega todas as páginas de contas a receber
-   */
-  private carregarTodasPaginasContasReceber(dataInicio: string, dataFim: string): void {
-    const todasContas: any[] = [];
-    let paginaAtual = 1;
-    const registrosPorPagina = 500;
-    let totalPaginas = 1;
-
-    const carregarPagina = () => {
-      const filtros: FiltrosMovimentacoesOmie = {
-        dataInicio: dataInicio,
-        dataFim: dataFim,
-        pagina: paginaAtual,
-        registrosPorPagina: registrosPorPagina
-      };
-
-      this.omieService.listarContasReceber(filtros)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (response: ContasReceberResponse) => {
-            const registros = response.registros || [];
-            todasContas.push(...registros);
-            
-            totalPaginas = response.total_de_paginas || Math.ceil((response.total_de_registros || 0) / registrosPorPagina);
-            
-            // Se há mais páginas, carrega a próxima
-            if (paginaAtual < totalPaginas) {
-              paginaAtual++;
-              carregarPagina();
-            } else {
-              // Processa todas as contas coletadas
-              this.processarContasReceber({ registros: todasContas, total_de_registros: todasContas.length } as ContasReceberResponse);
-              this.loadingContas = false;
-            }
-          },
-          error: (err: any) => {
-            console.error('Erro ao carregar contas a receber:', err);
-            // Processa o que conseguiu carregar
-            if (todasContas.length > 0) {
-              this.processarContasReceber({ registros: todasContas, total_de_registros: todasContas.length } as ContasReceberResponse);
-            }
-            this.loadingContas = false;
-          }
-        });
+    const filtros: FiltrosMovimentacoes = {
+      dataInicio,
+      dataTermino: dataFim
     };
 
-    carregarPagina();
+    this.bomControleService.obterResumoFinanceiro(filtros)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: resumo => this.processarResumoFinanceiro(resumo),
+        error: err => {
+          console.error('Erro ao carregar resumo financeiro do Bom Controle:', err);
+          this.loadingContas = false;
+        }
+      });
   }
 
-  /**
-   * Carrega todas as páginas de contas a pagar
-   */
-  private carregarTodasPaginasContasPagar(dataInicio: string, dataFim: string): void {
-    const todasContas: any[] = [];
-    let paginaAtual = 1;
-    const registrosPorPagina = 500;
-    let totalPaginas = 1;
-
-    const carregarPagina = () => {
-      const filtros: FiltrosMovimentacoesOmie = {
-        dataInicio: dataInicio,
-        dataFim: dataFim,
-        pagina: paginaAtual,
-        registrosPorPagina: registrosPorPagina
-      };
-
-      this.omieService.listarContasPagar(filtros)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (response: ContasPagarResponse) => {
-            const registros = response.registros || [];
-            todasContas.push(...registros);
-            
-            totalPaginas = response.total_de_paginas || Math.ceil((response.total_de_registros || 0) / registrosPorPagina);
-            
-            // Se há mais páginas, carrega a próxima
-            if (paginaAtual < totalPaginas) {
-              paginaAtual++;
-              carregarPagina();
-            } else {
-              // Processa todas as contas coletadas
-              this.processarContasPagar({ registros: todasContas, total_de_registros: todasContas.length } as ContasPagarResponse);
-            }
-          },
-          error: (err: any) => {
-            console.error('Erro ao carregar contas a pagar:', err);
-            // Processa o que conseguiu carregar
-            if (todasContas.length > 0) {
-              this.processarContasPagar({ registros: todasContas, total_de_registros: todasContas.length } as ContasPagarResponse);
-            }
-          }
-        });
+  private processarResumoFinanceiro(resumo: ResumoFinanceiroResponse): void {
+    const receber = resumo?.contasReceber ?? {
+      totalGeral: 0,
+      totalLiquidado: 0,
+      totalPendente: 0,
+      totalContas: 0,
+      contasPendentes: 0
     };
 
-    carregarPagina();
-  }
-
-  /**
-   * Processa resposta de contas a receber
-   */
-  private processarContasReceber(response: ContasReceberResponse): void {
-    const registros = response.registros || [];
-    let totalGeral = 0;
-    let totalRecebido = 0;
-    let totalPendente = 0;
-    let contasPendentes = 0;
-
-    registros.forEach(conta => {
-      const valor = conta.valor_documento || conta.valor_pago || 0;
-      totalGeral += valor;
-      
-      // Verifica se foi recebido - múltiplas formas de verificar
-      const statusTitulo = (conta['status_titulo'] || conta['status'] || '').toString().toUpperCase();
-      const temDataPagamento = conta.data_pagamento != null && conta.data_pagamento !== '' && conta.data_pagamento !== '-';
-      const temRecebimentos = conta['recebimentos'] && Array.isArray(conta['recebimentos']) && conta['recebimentos'].length > 0;
-      const temBaixas = conta['baixas'] && Array.isArray(conta['baixas']) && conta['baixas'].length > 0;
-      
-      const isRecebido = temDataPagamento || 
-                         temRecebimentos || 
-                         temBaixas ||
-                         statusTitulo.includes('RECEBIDO') || 
-                         statusTitulo.includes('BAIXADO') || 
-                         statusTitulo.includes('QUITADO');
-      
-      if (isRecebido) {
-        totalRecebido += valor;
-      } else {
-        totalPendente += valor;
-        contasPendentes++;
-      }
-    });
+    const pagar = resumo?.contasPagar ?? {
+      totalGeral: 0,
+      totalLiquidado: 0,
+      totalPendente: 0,
+      totalContas: 0,
+      contasPendentes: 0
+    };
 
     this.contasReceber = {
-      totalPendente,
-      totalRecebido,
-      totalGeral,
-      totalContas: registros.length,
-      contasPendentes
+      totalGeral: receber.totalGeral ?? 0,
+      totalRecebido: receber.totalLiquidado ?? 0,
+      totalPendente: receber.totalPendente ?? 0,
+      totalContas: receber.totalContas ?? 0,
+      contasPendentes: receber.contasPendentes ?? 0
     };
-    
-    console.log('📊 Contas a Receber processadas:', this.contasReceber);
-  }
-
-  /**
-   * Processa resposta de contas a pagar
-   */
-  private processarContasPagar(response: ContasPagarResponse): void {
-    const registros = response.registros || [];
-    let totalGeral = 0;
-    let totalPago = 0;
-    let totalPendente = 0;
-    let contasPendentes = 0;
-
-    registros.forEach(conta => {
-      const valor = conta.valor_documento || conta.valor_pago || 0;
-      totalGeral += valor;
-      
-      // Verifica se foi pago - múltiplas formas de verificar
-      const statusTitulo = (conta['status_titulo'] || conta['status'] || '').toString().toUpperCase();
-      const temDataPagamento = conta.data_pagamento != null && conta.data_pagamento !== '' && conta.data_pagamento !== '-';
-      const temPagamentos = conta['pagamentos'] && Array.isArray(conta['pagamentos']) && conta['pagamentos'].length > 0;
-      const temBaixas = conta['baixas'] && Array.isArray(conta['baixas']) && conta['baixas'].length > 0;
-      
-      const isPago = temDataPagamento || 
-                     temPagamentos || 
-                     temBaixas ||
-                     statusTitulo.includes('PAGO') || 
-                     statusTitulo.includes('BAIXADO') || 
-                     statusTitulo.includes('QUITADO');
-      
-      if (isPago) {
-        totalPago += valor;
-      } else {
-        totalPendente += valor;
-        contasPendentes++;
-      }
-    });
 
     this.contasPagar = {
-      totalPendente,
-      totalPago,
-      totalGeral,
-      totalContas: registros.length,
-      contasPendentes
+      totalGeral: pagar.totalGeral ?? 0,
+      totalPago: pagar.totalLiquidado ?? 0,
+      totalPendente: pagar.totalPendente ?? 0,
+      totalContas: pagar.totalContas ?? 0,
+      contasPendentes: pagar.contasPendentes ?? 0
     };
-    
-    console.log('📊 Contas a Pagar processadas:', this.contasPagar);
+
+    this.saldoDisponivelAtual = resumo?.saldoDisponivel ?? (this.contasReceber.totalRecebido - this.contasPagar.totalPago);
+
+    if (this.saldoDisponivelAnterior !== null && Math.abs(this.saldoDisponivelAnterior) > 0.01) {
+      const variacao = ((this.saldoDisponivelAtual - this.saldoDisponivelAnterior) / Math.abs(this.saldoDisponivelAnterior)) * 100;
+      this.variacaoSaldoPercentual = Number(variacao.toFixed(1));
+    } else {
+      this.variacaoSaldoPercentual = null;
+    }
+
+    this.ultimaAtualizacaoSaldo = resumo?.atualizadoEm ? new Date(resumo.atualizadoEm) : new Date();
+    this.loadingContas = false;
   }
 
   initChart() {
@@ -689,14 +562,18 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // ===== Date Range Picker Helpers =====
+  prepararRangePicker(): void {
+    this.tempRangeStart = this.dataInicial || null;
+    this.tempRangeEnd = this.dataFinal || null;
+    this.hoverRangeDate = null;
+    this.visibleMonth = this.dataInicial ? new Date(this.dataInicial) : new Date();
+    this.buildCalendar();
+  }
+
   toggleRangePicker(): void {
     this.mostrarRangePicker = !this.mostrarRangePicker;
     if (this.mostrarRangePicker) {
-      this.tempRangeStart = null;
-      this.tempRangeEnd = null;
-      this.hoverRangeDate = null;
-      this.visibleMonth = new Date();
-      this.buildCalendar();
+      this.prepararRangePicker();
     }
   }
 
@@ -716,7 +593,7 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
       
       console.log('Período selecionado:', a, 'até', b);
       
-      // Recarrega dados do Omie com o novo período
+      // Recarrega dados do Bom Controle com o novo período
       this.carregarDadosContas();
     }
     this.mostrarRangePicker = false;

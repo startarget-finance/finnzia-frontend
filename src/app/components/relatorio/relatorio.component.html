@@ -32,12 +32,28 @@
                 <p class="text-xs text-gray-500">Disponível agora</p>
               </div>
             </div>
-            <div class="text-lg font-bold text-emerald-600 mb-1">{{ formatCurrency(160000) }}</div>
-            <div class="flex items-center gap-1 text-xs text-emerald-600">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-              </svg>
-              <span>+12.5% vs mês anterior</span>
+            <div class="text-lg font-bold text-emerald-600 mb-1">
+              <span *ngIf="loadingContas">Carregando...</span>
+              <span *ngIf="!loadingContas">{{ formatCurrency(saldoDisponivelAtual) }}</span>
+            </div>
+            <div class="flex items-center gap-1 text-xs"
+                 [ngClass]="{
+                   'text-emerald-600': variacaoSaldoPercentual !== null && variacaoSaldoPercentual >= 0,
+                   'text-rose-600': variacaoSaldoPercentual !== null && variacaoSaldoPercentual < 0,
+                   'text-gray-500': variacaoSaldoPercentual === null
+                 }">
+              <ng-container *ngIf="variacaoSaldoPercentual !== null; else saldoSemHistorico">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+                <span>{{ variacaoSaldoPercentual >= 0 ? '+' : '' }}{{ variacaoSaldoPercentual | number:'1.1-1' }}% vs período anterior</span>
+              </ng-container>
+              <ng-template #saldoSemHistorico>
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                </svg>
+                <span>Sem histórico suficiente</span>
+              </ng-template>
             </div>
           </div>
 

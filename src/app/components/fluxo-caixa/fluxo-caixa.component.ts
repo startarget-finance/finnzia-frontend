@@ -1,162 +1,167 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
+import { BomControleService, DfcResponse, DfcIndicadores } from '../../services/bomcontrole.service';
+
+type TipoLinha = 'SECAO' | 'RECEITA' | 'DESPESA' | 'RESULTADO' | 'FATURAMENTO' | 'SUBTOTAL_RECEITA' | 'SUBTOTAL_DESPESA';
+
+interface LinhaTabela {
+  nome: string;
+  tipo: TipoLinha;
+  nivel: 0 | 1;
+  grupo?: string | null;
+  valores: (number | null)[];
+  total?: number;
+  media?: number;
+}
+
+interface DfcMetadados {
+  fonteDados: string;
+  fallbackAtivo: boolean;
+  tempoProcessamentoMs: number;
+  paginasProcessadas: number;
+  paginasEstimadas: number;
+  usandoCache: boolean;
+  atualizadoEm: string;
+}
 
 @Component({
   selector: 'app-fluxo-caixa',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule],
   templateUrl: './fluxo-caixa.component.html',
 })
-export class FluxoCaixaComponent {
-  // Meses exibidos no DFC (como no PDF)
+export class FluxoCaixaComponent implements OnInit {
+  filtrosForm: FormGroup;
   meses: string[] = [];
-  anoSelecionado: number = 2025;
+  dfcLinhas: LinhaTabela[] = [];
+  indicadores?: DfcIndicadores;
+  metadados?: DfcMetadados;
+  carregando = false;
+  erro?: string;
+  expandirReceitas = true;
+  expandirDespesas = true;
+  mostrarRangePicker = false;
+  visibleMonth: Date = new Date();
+  calendarDays: Array<{ day: number; inCurrentMonth: boolean; dateStr: string }> = [];
+  private tempRangeStart: string | null = null;
+  private tempRangeEnd: string | null = null;
+  private hoverRangeDate: string | null = null;
+  dataInicial = '';
+  dataFinal = '';
 
-  // Estrutura de uma linha do DFC
-  dfcLinhas: Array<{ nome: string; tipo: 'SECAO' | 'RECEITA' | 'DESPESA' | 'RESULTADO' | 'FATURAMENTO' | 'SUBTOTAL_RECEITA' | 'SUBTOTAL_DESPESA'; nivel: 0 | 1; valores: (number | null)[]; total?: number; media?: number }> = [];
-
-  // Estado de expansão das seções
-  expandirReceitas: boolean = true;
-  expandirDespesas: boolean = true;
-
-  ngOnInit() {
-    this.meses = this.gerarMeses(this.anoSelecionado, 9); // jan..set do ano
-    this.gerarMockDfc();
+  constructor(
+    private readonly fb: FormBuilder,
+    private readonly bomControleService: BomControleService
+  ) {
+    const periodo = this.definirPeriodoInicial();
+    this.dataInicial = periodo.dataInicio;
+    this.dataFinal = periodo.dataTermino;
+    this.filtrosForm = this.fb.group({
+      dataInicio: [periodo.dataInicio],
+      dataTermino: [periodo.dataTermino],
+      usarCache: [true],
+      forcarAtualizacao: [false]
+    });
+    this.visibleMonth = new Date(this.dataInicial);
+    this.buildCalendar();
   }
 
-  gerarMockDfc(): void {
-    const rnd = (min: number, max: number) => Math.round((Math.random() * (max - min) + min) / 1) * 1;
+  ngOnInit(): void {
+    this.carregarDfc();
+  }
 
-    // Seções principais
-    const linhas: FluxoCaixaComponent['dfcLinhas'] = [];
+  carregarDfc(): void {
+    if (this.filtrosForm.invalid) {
+      return;
+    }
+    const { dataInicio, dataTermino, usarCache, forcarAtualizacao } = this.filtrosForm.value;
+    if (new Date(dataInicio) > new Date(dataTermino)) {
+      this.erro = 'A data inicial não pode ser maior que a data final.';
+      return;
+    }
 
-    // Cabeçalho seção Faturamento (Novos Contratos)
-    linhas.push({ nome: 'FATURAMENTO (NOVOS CONTRATOS)', tipo: 'SECAO', nivel: 0, valores: Array(this.meses.length).fill(null) });
-    linhas.push({ nome: 'NFs Emitidas (Conforme Recebimento)', tipo: 'FATURAMENTO', nivel: 1, valores: this.meses.map(() => rnd(80000, 140000)) });
+    this.carregando = true;
+    this.erro = undefined;
 
-    // Total Receitas
-    linhas.push({ nome: 'TOTAL RECEITAS', tipo: 'SECAO', nivel: 0, valores: Array(this.meses.length).fill(null) });
-    linhas.push({ nome: '1. Receitas Operacionais (Recebimentos)', tipo: 'RECEITA', nivel: 1, valores: this.meses.map(() => rnd(90000, 180000)) });
-    linhas.push({ nome: '2. Outras Entradas', tipo: 'RECEITA', nivel: 1, valores: this.meses.map(() => rnd(3000, 15000)) });
-    // Subtotal Receitas
-    linhas.push({ nome: 'Subtotal Receitas', tipo: 'SUBTOTAL_RECEITA', nivel: 1, valores: Array(this.meses.length).fill(null) });
-
-    // Total Despesas
-    linhas.push({ nome: 'TOTAL DESPESAS', tipo: 'SECAO', nivel: 0, valores: Array(this.meses.length).fill(null) });
-    linhas.push({ nome: '1. Custos Operacionais', tipo: 'DESPESA', nivel: 1, valores: this.meses.map(() => rnd(35000, 65000)) });
-    linhas.push({ nome: '2. Despesas Operacionais', tipo: 'DESPESA', nivel: 1, valores: this.meses.map(() => rnd(25000, 55000)) });
-    linhas.push({ nome: '3. Atividades Estratégicas', tipo: 'DESPESA', nivel: 1, valores: this.meses.map(() => rnd(8000, 20000)) });
-    linhas.push({ nome: '4. Atividades de Investimento', tipo: 'DESPESA', nivel: 1, valores: this.meses.map(() => rnd(5000, 15000)) });
-    linhas.push({ nome: '5. Atividades de Financiamento', tipo: 'DESPESA', nivel: 1, valores: this.meses.map(() => rnd(4000, 12000)) });
-    // Subtotal Despesas
-    linhas.push({ nome: 'Subtotal Despesas', tipo: 'SUBTOTAL_DESPESA', nivel: 1, valores: Array(this.meses.length).fill(null) });
-
-    // Resultado
-    linhas.push({ nome: 'RESULTADO', tipo: 'RESULTADO', nivel: 0, valores: Array(this.meses.length).fill(null) });
-
-    // Cálculo de totais e médias
-    this.dfcLinhas = linhas.map(l => ({ ...l, total: this.somar(l.valores), media: this.media(l.valores) }));
-
-    // Preencher valores de subtotais por mês
-    const preencherSubtotal = (tipoDetalhe: 'RECEITA' | 'DESPESA', tipoSubtotal: 'SUBTOTAL_RECEITA' | 'SUBTOTAL_DESPESA') => {
-      const indicesSubtotal = this.dfcLinhas
-        .map((l, idx) => ({ l, idx }))
-        .filter(x => x.l.tipo === tipoSubtotal)
-        .map(x => x.idx);
-
-      indicesSubtotal.forEach(idxSubtotal => {
-        // Encontrar o intervalo de linhas de detalhe acima até a última SECAO
-        let i = idxSubtotal - 1;
-        const detalhes: typeof this.dfcLinhas = [];
-        while (i >= 0 && this.dfcLinhas[i].tipo !== 'SECAO') {
-          if (this.dfcLinhas[i].tipo === tipoDetalhe) detalhes.push(this.dfcLinhas[i]);
-          i--;
+    this.bomControleService
+      .gerarDFC({
+        dataInicio,
+        dataTermino,
+        usarCache,
+        forcarAtualizacao
+      })
+      .pipe(finalize(() => (this.carregando = false)))
+      .subscribe({
+        next: (res) => this.processarResposta(res),
+        error: (err) => {
+          const mensagem = err?.error?.mensagem ?? 'Não foi possível carregar o demonstrativo.';
+          this.erro = mensagem;
         }
-        const valores = this.meses.map((_, col) =>
-          detalhes.reduce((acc, l) => acc + (l.valores[col] ?? 0), 0)
-        );
-        this.dfcLinhas[idxSubtotal].valores = valores;
-        this.dfcLinhas[idxSubtotal].total = this.somar(valores);
-        this.dfcLinhas[idxSubtotal].media = this.media(valores);
       });
+  }
+
+  ajustarPeriodo(meses: number): void {
+    const termino = new Date();
+    const inicio = new Date(termino);
+    inicio.setMonth(inicio.getMonth() - (meses - 1));
+    inicio.setDate(1);
+
+    const dataInicio = this.formatarDataInput(inicio);
+    const dataTermino = this.formatarDataInput(termino);
+
+    this.filtrosForm.patchValue({
+      dataInicio,
+      dataTermino
+    });
+    this.dataInicial = dataInicio;
+    this.dataFinal = dataTermino;
+    this.carregarDfc();
+  }
+
+  private processarResposta(resposta: DfcResponse): void {
+    this.meses = resposta.meses ?? [];
+    this.dfcLinhas = (resposta.linhas ?? []).map((linha) => ({
+      nome: linha.nome,
+      tipo: linha.tipo as TipoLinha,
+      nivel: (linha.nivel ?? 0) as 0 | 1,
+      grupo: linha.grupo,
+      valores: this.alinharValores(linha.valores, this.meses.length),
+      total: linha.total,
+      media: linha.media
+    }));
+    this.indicadores = resposta.indicadores;
+    this.metadados = {
+      fonteDados: resposta.fonteDados,
+      fallbackAtivo: resposta.fallbackAtivo,
+      tempoProcessamentoMs: resposta.tempoProcessamentoMs,
+      paginasProcessadas: resposta.paginasProcessadas,
+      paginasEstimadas: resposta.paginasEstimadas,
+      usandoCache: resposta.usandoCache,
+      atualizadoEm: resposta.atualizadoEm
     };
-
-    preencherSubtotal('RECEITA', 'SUBTOTAL_RECEITA');
-    preencherSubtotal('DESPESA', 'SUBTOTAL_DESPESA');
-
-    // Recalcular resultado: receitas - despesas (por mês)
-    const receitasPorMes = this.somarPorMes(this.dfcLinhas.filter(l => l.tipo === 'RECEITA' || l.tipo === 'FATURAMENTO'));
-    const despesasPorMes = this.somarPorMes(this.dfcLinhas.filter(l => l.tipo === 'DESPESA'));
-    const idxResultado = this.dfcLinhas.findIndex(l => l.tipo === 'RESULTADO');
-    if (idxResultado >= 0) {
-      const valores = this.meses.map((_, i) => receitasPorMes[i] - despesasPorMes[i]);
-      this.dfcLinhas[idxResultado].valores = valores;
-      this.dfcLinhas[idxResultado].total = this.somar(valores);
-      this.dfcLinhas[idxResultado].media = this.media(valores);
-    }
   }
 
-  onAnoChange(novoAno: string): void {
-    const ano = parseInt(novoAno, 10);
-    if (!isNaN(ano)) {
-      this.anoSelecionado = ano;
-      this.meses = this.gerarMeses(this.anoSelecionado, 9);
-      this.gerarMockDfc();
-    }
-  }
-
-  private gerarMeses(ano: number, quantidade: number): string[] {
-    const nomes = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-    return Array.from({ length: quantidade }, (_, i) => `${nomes[i]}/${String(ano).slice(-2)}`);
-  }
-
-  private somar(valores: (number | null)[]): number {
-    return valores.reduce((acc: number, v: number | null) => acc + (v ?? 0), 0);
-  }
-
-  private media(valores: (number | null)[]): number {
-    const existentes = valores.filter(v => typeof v === 'number') as number[];
-    if (existentes.length === 0) return 0;
-    return this.somar(existentes) / existentes.length;
-  }
-
-  private somarPorMes(linhas: FluxoCaixaComponent['dfcLinhas']): number[] {
-    return this.meses.map((_, i) =>
-      linhas.reduce((acc: number, l) => acc + (l.valores[i] ?? 0), 0)
-    );
-  }
-
-  formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  }
-
-  formatCurrencySigned(value: number): string {
-    if (value < 0) {
-      return `(${this.formatCurrency(Math.abs(value))})`;
-    }
-    return this.formatCurrency(value);
-  }
-
-  // Exportações
   exportarCsv(): void {
+    if (!this.dfcLinhas.length) {
+      return;
+    }
     const header = ['Descrição', ...this.meses, 'TOTAL', 'MÉDIA'];
-    const linhas = this.dfcLinhas.map(l => [
-      l.nome,
-      ...l.valores.map(v => (v ?? 0).toString().replace('.', ',')),
-      (l.total ?? 0).toString().replace('.', ','),
-      Math.round((l.media ?? 0)).toString().replace('.', ',')
+    const linhas = this.dfcLinhas.map((linha) => [
+      linha.nome,
+      ...linha.valores.map((v) => (v ?? 0).toString().replace('.', ',')),
+      (linha.total ?? 0).toString().replace('.', ','),
+      (linha.media ?? 0).toString().replace('.', ',')
     ]);
-    const conteudo = [header, ...linhas].map(r => r.join(';')).join('\n');
-    const blob = new Blob(["\ufeff" + conteudo], { type: 'text/csv;charset=utf-8;' });
+    const conteudo = [header, ...linhas].map((row) => row.join(';')).join('\n');
+    const blob = new Blob(['\ufeff' + conteudo], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
+    const periodo = `${this.filtrosForm.value.dataInicio}_${this.filtrosForm.value.dataTermino}`;
     const a = document.createElement('a');
     a.href = url;
-    a.download = `DFC_${this.anoSelecionado}.csv`;
+    a.download = `DFC_${periodo}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -165,10 +170,26 @@ export class FluxoCaixaComponent {
     window.print();
   }
 
-  // Controle de visibilidade de linhas
-  isLinhaVisivel(l: { tipo: string }): boolean {
-    if (l.tipo === 'RECEITA') return this.expandirReceitas;
-    if (l.tipo === 'DESPESA') return this.expandirDespesas;
+  formatCurrency(value?: number | null): string {
+    const numero = value ?? 0;
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numero);
+  }
+
+  formatCurrencySigned(value?: number | null): string {
+    const numero = value ?? 0;
+    if (numero < 0) {
+      return `(${this.formatCurrency(Math.abs(numero))})`;
+    }
+    return this.formatCurrency(numero);
+  }
+
+  isLinhaVisivel(linha: LinhaTabela): boolean {
+    if (linha.tipo === 'RECEITA' || linha.tipo === 'FATURAMENTO') {
+      return this.expandirReceitas;
+    }
+    if (linha.tipo === 'DESPESA') {
+      return this.expandirDespesas;
+    }
     return true;
   }
 
@@ -178,6 +199,189 @@ export class FluxoCaixaComponent {
 
   alternarDespesas(): void {
     this.expandirDespesas = !this.expandirDespesas;
+  }
+
+  get possuiDados(): boolean {
+    return this.dfcLinhas.length > 0 && this.meses.length > 0;
+  }
+
+  private alinharValores(valores: Array<number | null> | undefined, tamanho: number): (number | null)[] {
+    const base = valores ? [...valores] : [];
+    while (base.length < tamanho) {
+      base.push(null);
+    }
+    if (base.length > tamanho) {
+      base.length = tamanho;
+    }
+    return base;
+  }
+
+  private definirPeriodoInicial(): { dataInicio: string; dataTermino: string } {
+    const hoje = new Date();
+    const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const termino = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+    return {
+      dataInicio: this.formatarDataInput(inicio),
+      dataTermino: this.formatarDataInput(termino)
+    };
+  }
+
+  private formatarDataInput(data: Date): string {
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const dia = String(data.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+  }
+
+  private somar(valores: (number | null)[]): number {
+    return valores.reduce((acc: number, valor) => acc + (valor ?? 0), 0);
+  }
+
+  private media(valores: (number | null)[]): number {
+    const existentes = valores.filter((valor) => typeof valor === 'number') as number[];
+    if (!existentes.length) {
+      return 0;
+    }
+    return this.somar(existentes) / existentes.length;
+  }
+
+  // ===== Date Range Picker =====
+  toggleRangePicker(): void {
+    this.mostrarRangePicker = !this.mostrarRangePicker;
+    if (this.mostrarRangePicker) {
+      this.tempRangeStart = null;
+      this.tempRangeEnd = null;
+      this.hoverRangeDate = null;
+      this.visibleMonth = this.dataInicial ? new Date(this.dataInicial + 'T00:00:00') : new Date();
+      this.buildCalendar();
+    }
+  }
+
+  cancelRangePicker(): void {
+    this.mostrarRangePicker = false;
+  }
+
+  applyRangePicker(): void {
+    if (this.tempRangeStart) {
+      const rangeEnd = this.tempRangeEnd ?? this.tempRangeStart;
+      const inicio = this.tempRangeStart <= rangeEnd ? this.tempRangeStart : rangeEnd;
+      const termino = this.tempRangeStart <= rangeEnd ? rangeEnd : this.tempRangeStart;
+      this.atualizarPeriodoSelecionado(inicio, termino);
+      this.carregarDfc();
+    }
+    this.mostrarRangePicker = false;
+  }
+
+  clearRange(): void {
+    this.tempRangeStart = null;
+    this.tempRangeEnd = null;
+    this.hoverRangeDate = null;
+    const periodo = this.definirPeriodoInicial();
+    this.atualizarPeriodoSelecionado(periodo.dataInicio, periodo.dataTermino);
+    this.mostrarRangePicker = false;
+    this.carregarDfc();
+  }
+
+  prevMonth(): void {
+    const d = new Date(this.visibleMonth);
+    d.setMonth(d.getMonth() - 1);
+    this.visibleMonth = d;
+    this.buildCalendar();
+  }
+
+  nextMonth(): void {
+    const d = new Date(this.visibleMonth);
+    d.setMonth(d.getMonth() + 1);
+    this.visibleMonth = d;
+    this.buildCalendar();
+  }
+
+  getMonthYearLabel(): string {
+    const month = this.visibleMonth.toLocaleString('pt-BR', { month: 'long' });
+    const year = this.visibleMonth.getFullYear();
+    return `${month} de ${year}`;
+  }
+
+  onSelectDate(dateStr: string): void {
+    if (!this.tempRangeStart || (this.tempRangeStart && this.tempRangeEnd)) {
+      this.tempRangeStart = dateStr;
+      this.tempRangeEnd = null;
+      return;
+    }
+    if (this.tempRangeStart && !this.tempRangeEnd) {
+      this.tempRangeEnd = dateStr;
+    }
+  }
+
+  onHoverDate(dateStr: string | null): void {
+    this.hoverRangeDate = dateStr;
+  }
+
+  isStart(dateStr: string): boolean {
+    return !!this.tempRangeStart && this.tempRangeStart === dateStr;
+  }
+
+  isEnd(dateStr: string): boolean {
+    return !!this.tempRangeEnd && this.tempRangeEnd === dateStr;
+  }
+
+  isBetween(dateStr: string): boolean {
+    const start = this.tempRangeStart;
+    const end = this.tempRangeEnd || this.hoverRangeDate;
+    if (!start || !end) {
+      return false;
+    }
+    const inicio = start <= end ? start : end;
+    const termino = start <= end ? end : start;
+    return dateStr > inicio && dateStr < termino;
+  }
+
+  private atualizarPeriodoSelecionado(inicio: string, termino: string): void {
+    const inicioFormatado = inicio.split('T')[0];
+    const terminoFormatado = termino.split('T')[0];
+    this.dataInicial = inicioFormatado;
+    this.dataFinal = terminoFormatado;
+    this.filtrosForm.patchValue({
+      dataInicio: inicioFormatado,
+      dataTermino: terminoFormatado
+    });
+  }
+
+  private buildCalendar(): void {
+    const year = this.visibleMonth.getFullYear();
+    const month = this.visibleMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const startWeekDay = firstDay.getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const prevMonthDays = new Date(year, month, 0).getDate();
+    const days: Array<{ day: number; inCurrentMonth: boolean; dateStr: string }> = [];
+
+    for (let i = startWeekDay - 1; i >= 0; i--) {
+      const day = prevMonthDays - i;
+      const date = new Date(year, month - 1, day);
+      days.push({ day, inCurrentMonth: false, dateStr: this.dateToStr(date) });
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(year, month, d);
+      days.push({ day: d, inCurrentMonth: true, dateStr: this.dateToStr(date) });
+    }
+
+    let nextDay = 1;
+    while (days.length % 7 !== 0) {
+      const date = new Date(year, month + 1, nextDay);
+      days.push({ day: nextDay, inCurrentMonth: false, dateStr: this.dateToStr(date) });
+      nextDay++;
+    }
+
+    this.calendarDays = days;
+  }
+
+  private dateToStr(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}T00:00:00`;
   }
 }
 

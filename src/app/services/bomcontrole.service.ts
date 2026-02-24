@@ -59,29 +59,82 @@ export interface MovimentacoesResponse {
   idsMovimentacaoFinanceiraParcela?: string[];
 }
 
-export interface DFCResponse {
-  dfc: Array<{
-    tipo: string;
-    nome: string;
-    nivel: number;
-    valor: number;
-    valoresMensais?: number[]; // Valores por mês
-    porcentagensMensais?: number[]; // Porcentagens por mês
-  }>;
+export interface BlocoResumoFinanceiro {
+  totalGeral: number;
+  totalLiquidado: number;
+  totalPendente: number;
+  totalContas: number;
+  contasPendentes: number;
+}
+
+export interface ResumoFinanceiroResponse {
+  periodo: {
+    dataInicio: string;
+    dataTermino: string;
+  };
+  contasReceber: BlocoResumoFinanceiro;
+  contasPagar: BlocoResumoFinanceiro;
+  saldoDisponivel: number;
+  saldoProjetado: number;
+  totalMovimentacoes: number;
+  usandoCache: boolean;
+  fonteDados: string;
+  atualizadoEm: string;
+}
+
+export interface DfcLinha {
+  nome: string;
+  tipo: 'SECAO' | 'RECEITA' | 'DESPESA' | 'RESULTADO' | 'FATURAMENTO' | 'SUBTOTAL_RECEITA' | 'SUBTOTAL_DESPESA';
+  nivel: number;
+  grupo?: string;
+  valores: Array<number | null>;
+  total: number;
+  media: number;
+}
+
+export interface DfcIndicadores {
+  faturamentoNovosContratos: number;
+  receitasOperacionais: number;
+  outrasEntradas: number;
+  custosOperacionais: number;
+  despesasOperacionais: number;
+  atividadesEstrategicas: number;
+  investimentos: number;
+  financiamentos: number;
   totalReceitas: number;
   totalDespesas: number;
   resultado: number;
-  dataInicio?: string;
-  dataTermino?: string;
-  totalMovimentacoes: number;
-  meses?: string[]; // Lista de meses no formato "MMM/yy"
-  totalMovimentacoesColetadas?: number;
-  totalMovimentacoesDisponiveis?: number;
-  usandoCache?: boolean;
-  tempoDecorrido?: number;
-  rateLimitAtingido?: boolean;
-  timeoutOcorrido?: boolean;
-  aviso?: string;
+  margemPercentual: number;
+  ticketMedio: number;
+  burnRateMensal: number;
+}
+
+export interface DfcResponse {
+  periodo: {
+    dataInicio: string;
+    dataTermino: string;
+  };
+  meses: string[];
+  linhas: DfcLinha[];
+  indicadores: DfcIndicadores;
+  fonteDados: string;
+  fallbackAtivo: boolean;
+  fallbackMetadata?: Record<string, unknown>;
+  totalMovimentacoesProcessadas: number;
+  totalMovimentacoesDisponiveis: number;
+  paginasProcessadas: number;
+  paginasEstimadas: number;
+  tempoProcessamentoMs: number;
+  usandoCache: boolean;
+  atualizadoEm: string;
+}
+
+export interface DfcFiltros {
+  dataInicio: string;
+  dataTermino: string;
+  usarCache?: boolean;
+  forcarAtualizacao?: boolean;
+  idsEmpresa?: number;
 }
 
 export interface FiltrosMovimentacoes {
@@ -94,6 +147,7 @@ export interface FiltrosMovimentacoes {
   textoPesquisa?: string;
   categoria?: string;
   tipo?: 'receita' | 'despesa';
+  statusPagamento?: 'pendente' | 'recebido';
   itensPorPagina?: number;
   numeroDaPagina?: number;
 }
@@ -142,6 +196,9 @@ export class BomControleService {
     if (filtros.tipo) {
       params = params.set('tipo', filtros.tipo);
     }
+    if (filtros.statusPagamento) {
+      params = params.set('statusPagamento', filtros.statusPagamento);
+    }
     if (filtros.textoPesquisa) {
       params = params.set('textoPesquisa', filtros.textoPesquisa);
     }
@@ -153,6 +210,47 @@ export class BomControleService {
     }
 
     return this.http.get<MovimentacoesResponse>(`${this.apiUrl}/movimentacoes`, {
+      headers: this.getHeaders(),
+      params
+    });
+  }
+
+  /**
+   * Obtém o resumo consolidado (receitas, despesas e saldo) com cálculo realizado no backend.
+   * Isso evita varrer todas as páginas no frontend e respeita os limites de rate limit.
+   */
+  obterResumoFinanceiro(filtros: FiltrosMovimentacoes = {}): Observable<ResumoFinanceiroResponse> {
+    let params = new HttpParams();
+
+    if (filtros.dataInicio) {
+      params = params.set('dataInicio', filtros.dataInicio);
+    }
+    if (filtros.dataTermino) {
+      params = params.set('dataTermino', filtros.dataTermino);
+    }
+    if (filtros.tipoData) {
+      params = params.set('tipoData', filtros.tipoData);
+    }
+    if (filtros.idsEmpresa && filtros.idsEmpresa > 0) {
+      params = params.set('idsEmpresa', filtros.idsEmpresa.toString());
+    }
+    if (filtros.idsCliente) {
+      params = params.set('idsCliente', filtros.idsCliente.toString());
+    }
+    if (filtros.idsFornecedor) {
+      params = params.set('idsFornecedor', filtros.idsFornecedor.toString());
+    }
+    if (filtros.textoPesquisa) {
+      params = params.set('textoPesquisa', filtros.textoPesquisa);
+    }
+    if (filtros.categoria) {
+      params = params.set('categoria', filtros.categoria);
+    }
+    if (filtros.tipo) {
+      params = params.set('tipo', filtros.tipo);
+    }
+
+    return this.http.get<ResumoFinanceiroResponse>(`${this.apiUrl}/resumo-financeiro`, {
       headers: this.getHeaders(),
       params
     });
@@ -185,6 +283,9 @@ export class BomControleService {
     if (filtros.textoPesquisa) {
       params = params.set('textoPesquisa', filtros.textoPesquisa);
     }
+    if (filtros.statusPagamento) {
+      params = params.set('statusPagamento', filtros.statusPagamento);
+    }
     if (filtros.itensPorPagina) {
       params = params.set('itensPorPagina', filtros.itensPorPagina.toString());
     }
@@ -203,19 +304,18 @@ export class BomControleService {
    * @param usarCache Se true, usa cache local (padrão: true)
    * @param forcarAtualizacao Se true, força busca na API mesmo com cache (padrão: false)
    */
-  gerarDFC(
-    dataInicio: string, 
-    dataTermino: string, 
-    usarCache: boolean = true, 
-    forcarAtualizacao: boolean = false
-  ): Observable<DFCResponse> {
+  gerarDFC(filtros: DfcFiltros): Observable<DfcResponse> {
     let params = new HttpParams()
-      .set('dataInicio', dataInicio)
-      .set('dataTermino', dataTermino)
-      .set('usarCache', usarCache.toString())
-      .set('forcarAtualizacao', forcarAtualizacao.toString());
+      .set('dataInicio', filtros.dataInicio)
+      .set('dataTermino', filtros.dataTermino)
+      .set('usarCache', String(filtros.usarCache ?? true))
+      .set('forcarAtualizacao', String(filtros.forcarAtualizacao ?? false));
 
-    return this.http.get<DFCResponse>(`${this.apiUrl}/dfc`, {
+    if (filtros.idsEmpresa) {
+      params = params.set('idsEmpresa', filtros.idsEmpresa.toString());
+    }
+
+    return this.http.get<DfcResponse>(`${this.apiUrl}/dfc`, {
       headers: this.getHeaders(),
       params
     });

@@ -1,297 +1,375 @@
-<div class="dashboard-card bg-white rounded-xl shadow-sm p-4">
-  <div class="flex items-center justify-between mb-6">
-    <div class="flex items-center gap-3">
-      <a routerLink="/dashboard" aria-label="Voltar para o Dashboard"
-         class="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-200 bg-white text-gray-700 shadow-sm hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-300">
-        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7 7-7"/>
-        </svg>
-        <span>Voltar</span>
-      </a>
-      <nav aria-label="Breadcrumb" class="text-sm text-gray-600">
-        <ol class="flex items-center gap-2">
-          <li><a routerLink="/dashboard" class="hover:text-gray-900 hover:underline">Dashboard</a></li>
-          <li class="text-gray-400">/</li>
-          <li class="text-gray-900 font-medium">Contas a Pagar</li>
-        </ol>
-      </nav>
-    </div>
-    <div class="flex items-center gap-2">
-      <button type="button" 
-              (click)="exportarExcel()"
-              [disabled]="loading"
-              class="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-        </svg>
-        Exportar Excel
-      </button>
-      <button type="button" 
-              (click)="exportarPDF()"
-              [disabled]="loading"
-              class="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-        </svg>
-        Exportar PDF
-      </button>
+<div class="min-h-screen bg-[#F8FAFC] pb-12 font-sans">
+  <!-- Top Navigation / Header Area -->
+  <div class="bg-white border-b border-gray-200 px-6 py-5 sm:px-8 lg:px-10">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Contas a Pagar</h1>
+          <p class="text-sm text-gray-500 mt-0.5">Gerencie despesas, pagamentos a fornecedores e obrigações financeiras</p>
+        </div>
+      </div>
+      
+      <!-- Actions -->
+      <div class="flex items-center gap-3">
+        <button type="button" 
+                (click)="exportarExcel()"
+                [disabled]="loading"
+                class="inline-flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+          <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          Excel
+        </button>
+        <button type="button" 
+                (click)="exportarPDF()"
+                [disabled]="loading"
+                class="inline-flex items-center gap-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-gray-50 transition-all duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+          <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+          </svg>
+          PDF
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- Loading State -->
-  <div *ngIf="loading" class="flex items-center justify-center py-12">
-    <div class="text-center">
-      <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      <p class="mt-2 text-sm text-gray-600">Carregando contas a pagar...</p>
+  <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 mt-8">
+    
+    <!-- Loading State -->
+    <div *ngIf="loading" class="space-y-6 animate-pulse">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div *ngFor="let i of [1,2,3,4]" class="bg-white h-32 rounded-2xl border border-gray-200 shadow-sm"></div>
+      </div>
+      <div class="bg-white h-24 rounded-2xl border border-gray-200 shadow-sm"></div>
+      <div class="bg-white h-96 rounded-2xl border border-gray-200 shadow-sm"></div>
     </div>
-  </div>
 
-  <!-- Error State -->
-  <div *ngIf="error && !loading" class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-    <div class="flex items-center gap-2">
-      <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-      </svg>
-      <p class="text-sm font-medium text-red-800">{{ error }}</p>
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="mb-8 bg-rose-50 border border-rose-200 rounded-2xl p-5 flex items-start gap-4">
+      <div class="bg-rose-100 p-2 rounded-full shrink-0 mt-0.5">
+        <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-rose-800">Não foi possível carregar os dados</h3>
+        <p class="text-sm text-rose-600 mt-1">{{ error }}</p>
+      </div>
     </div>
-  </div>
 
-  <!-- Filtros -->
-  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-    <div class="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
-      <!-- Período -->
-      <div class="flex items-center gap-2">
-        <div class="relative">
-          <button type="button"
-                  (click)="toggleRangePicker()"
-                  class="inline-flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-50">
-            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-            <span>{{ dataInicial && dataFinal ? (formatDate(dataInicial) + ' – ' + formatDate(dataFinal)) : 'Selecionar Período' }}</span>
-          </button>
-
-          <!-- Popover Calendário -->
-          <div *ngIf="mostrarRangePicker" class="absolute z-50 mt-2 right-0 bg-white border border-gray-200 rounded-xl shadow-xl p-3 w-[320px] max-h-[400px] overflow-y-auto">
-            <div class="flex items-center justify-between mb-2">
-              <button type="button" (click)="prevMonth()" class="p-1 rounded hover:bg-gray-100">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-              </button>
-              <div class="text-sm font-semibold text-gray-900">{{ getMonthYearLabel() }}</div>
-              <button type="button" (click)="nextMonth()" class="p-1 rounded hover:bg-gray-100">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-              </button>
+    <ng-container *ngIf="!loading">
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        
+        <!-- Total de Contas -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between group">
+          <div class="flex items-center justify-between mb-4">
+            <p class="text-sm font-medium text-gray-500">Total de Contas</p>
+            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform duration-200">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
             </div>
+          </div>
+          <div class="min-w-0">
+            <p class="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight truncate">{{ totalContas }}</p>
+            <p class="text-xs text-gray-500 mt-2 font-medium truncate">Registros encontrados</p>
+          </div>
+        </div>
 
-            <div class="grid grid-cols-7 text-[11px] text-gray-500 mb-1">
-              <div class="text-center">dom</div>
-              <div class="text-center">seg</div>
-              <div class="text-center">ter</div>
-              <div class="text-center">qua</div>
-              <div class="text-center">qui</div>
-              <div class="text-center">sex</div>
-              <div class="text-center">sáb</div>
+        <!-- Total Pendente -->
+        <div class="bg-rose-50 rounded-2xl border border-rose-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between group">
+          <div class="flex items-center justify-between mb-4">
+            <p class="text-sm font-medium text-rose-700">A Pagar</p>
+            <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 group-hover:scale-110 transition-transform duration-200">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
             </div>
+          </div>
+          <div class="min-w-0">
+            <p class="text-2xl lg:text-3xl font-bold text-rose-950 tracking-tight truncate">{{ formatCurrency(totalPendente) }}</p>
+            <p class="text-xs text-rose-600/80 mt-2 font-medium truncate">Pendentes no período</p>
+          </div>
+        </div>
 
-            <div class="grid grid-cols-7 gap-1">
-              <ng-container *ngFor="let d of calendarDays">
-                <button type="button"
-                        [disabled]="!d.inCurrentMonth"
-                        (click)="onSelectDate(d.dateStr)"
-                        (mouseenter)="onHoverDate(d.dateStr)"
-                        (mouseleave)="onHoverDate(null)"
-                        [class.opacity-40]="!d.inCurrentMonth"
-                        [class.bg-blue-600]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                        [class.text-white]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                        [class.bg-blue-50]="isBetween(d.dateStr)"
-                        class="text-sm text-gray-900 rounded-lg py-1.5 hover:bg-blue-100 disabled:cursor-not-allowed">
-                  {{ d.day }}
-                </button>
-              </ng-container>
+        <!-- Total Pago -->
+        <div class="bg-gray-50 rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between group">
+          <div class="flex items-center justify-between mb-4">
+            <p class="text-sm font-medium text-gray-600">Total Pago</p>
+            <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 group-hover:scale-110 transition-transform duration-200">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
             </div>
+          </div>
+          <div class="min-w-0">
+            <p class="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight truncate">{{ formatCurrency(totalPago) }}</p>
+            <p class="text-xs text-gray-500 mt-2 font-medium truncate">Liquidadas no período</p>
+          </div>
+        </div>
 
-            <div class="flex items-center justify-between mt-3">
-              <button type="button" (click)="clearRange()" class="text-xs text-gray-600 hover:underline">Limpar</button>
-              <div class="flex gap-2">
-                <button type="button" (click)="cancelRangePicker()" class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 hover:bg-gray-50">Cancelar</button>
-                <button type="button" (click)="applyRangePicker()" class="px-3 py-1.5 text-xs rounded-lg bg-blue-600 text-white hover:bg-blue-700">Aplicar</button>
-              </div>
+        <!-- Total Geral -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between group">
+          <div class="flex items-center justify-between mb-4">
+            <p class="text-sm font-medium text-gray-500">Valor Total</p>
+            <div class="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform duration-200">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+              </svg>
             </div>
+          </div>
+          <div class="min-w-0">
+            <p class="text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight truncate">{{ formatCurrency(totalValor) }}</p>
+            <p class="text-xs text-gray-500 mt-2 font-medium truncate">Soma de todos os títulos</p>
           </div>
         </div>
       </div>
 
-      <!-- Filtros Avançados -->
-      <div class="flex items-center gap-3 flex-wrap">
-        <!-- Pesquisa de Texto -->
-        <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
-          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
-          <input type="text" 
-                 [(ngModel)]="filtrosUI.textoPesquisa"
-                 (ngModelChange)="onTextoPesquisaChange($event)"
-                 placeholder="Pesquisar..."
-                 class="bg-transparent border-0 text-sm text-gray-900 focus:ring-0 focus:outline-none min-w-[200px]">
+      <!-- Filtros Section -->
+      <div class="bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 mb-8 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-4">
+          <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+            </svg>
+            Filtros Avançados
+          </h3>
+          <button type="button" (click)="limparFiltros()" class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            Limpar filtros
+          </button>
         </div>
 
-        <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
-          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <select [(ngModel)]="filtrosUI.status" (ngModelChange)="onFiltroChange()" class="bg-transparent border-0 text-sm text-gray-900 focus:ring-0 focus:outline-none cursor-pointer min-w-[130px]">
-            <option *ngFor="let status of statusOptions" [value]="status.value">{{ status.label }}</option>
-          </select>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <!-- Período -->
+          <div class="relative">
+            <label class="block text-xs font-medium text-gray-500 mb-1.5">Período de Vencimento</label>
+            <button type="button"
+                    (click)="toggleRangePicker()"
+                    class="w-full flex items-center justify-between bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm">
+              <div class="flex items-center gap-2.5 truncate">
+                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span class="truncate font-medium">
+                  <ng-container *ngIf="dataInicial && dataFinal; else placeholderPeriodo">
+                    {{ dataInicial === dataFinal 
+                        ? (formatDate(dataInicial)) 
+                        : (formatDate(dataInicial)) + ' até ' + (formatDate(dataFinal)) }}
+                  </ng-container>
+                  <ng-template #placeholderPeriodo>Selecionar período</ng-template>
+                </span>
+              </div>
+              <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+
+            <!-- Popover Calendário -->
+            <div *ngIf="mostrarRangePicker" class="absolute z-50 mt-2 left-0 bg-white border border-gray-200 rounded-2xl shadow-xl p-4 w-[340px] max-h-[400px] overflow-y-auto">
+              <!-- Calendar Header -->
+              <div class="flex items-center justify-between mb-4">
+                <button type="button" (click)="prevMonth()" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <div class="text-sm font-bold text-gray-900 capitalize">{{ getMonthYearLabel() }}</div>
+                <button type="button" (click)="nextMonth()" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+
+              <!-- Days Grid -->
+              <div class="grid grid-cols-7 text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                <div class="text-center">dom</div><div class="text-center">seg</div><div class="text-center">ter</div>
+                <div class="text-center">qua</div><div class="text-center">qui</div><div class="text-center">sex</div><div class="text-center">sáb</div>
+              </div>
+
+              <div class="grid grid-cols-7 gap-1">
+                <ng-container *ngFor="let d of calendarDays">
+                  <button type="button"
+                          [disabled]="!d.inCurrentMonth"
+                          (click)="onSelectDate(d.dateStr)"
+                          (mouseenter)="onHoverDate(d.dateStr)"
+                          (mouseleave)="onHoverDate(null)"
+                          [class.opacity-30]="!d.inCurrentMonth"
+                          [class.bg-blue-600]="isStart(d.dateStr) || isEnd(d.dateStr)"
+                          [class.text-white]="isStart(d.dateStr) || isEnd(d.dateStr)"
+                          [class.font-semibold]="isStart(d.dateStr) || isEnd(d.dateStr)"
+                          [class.bg-blue-50]="isBetween(d.dateStr)"
+                          [class.text-blue-700]="isBetween(d.dateStr)"
+                          class="text-sm text-gray-700 rounded-lg py-2 hover:bg-gray-100 transition-colors disabled:cursor-not-allowed">
+                    {{ d.day }}
+                  </button>
+                </ng-container>
+              </div>
+
+              <!-- Calendar Actions -->
+              <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                <button type="button" (click)="clearRange()" class="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors">Limpar</button>
+                <div class="flex gap-2">
+                  <button type="button" (click)="cancelRangePicker()" class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">Cancelar</button>
+                  <button type="button" (click)="applyRangePicker()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-gray-800 shadow-sm transition-colors">Aplicar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1.5">Status</label>
+            <div class="relative">
+              <select [(ngModel)]="filtrosUI.status" 
+                      (ngModelChange)="onFiltroChange()"
+                      class="w-full appearance-none bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm text-gray-700 font-medium hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer shadow-sm">
+                <option *ngFor="let status of statusOptions" [value]="status.value">{{ status.label }}</option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-gray-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pesquisa de Texto -->
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-medium text-gray-500 mb-1.5">Pesquisar</label>
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+              </div>
+              <input type="text" 
+                     [(ngModel)]="filtrosUI.textoPesquisa"
+                     (ngModelChange)="onTextoPesquisaChange($event)"
+                     placeholder="Buscar por fornecedor, descrição ou documento..."
+                     class="w-full pl-10 pr-3.5 py-2.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 font-medium placeholder-gray-400 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm">
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Table Section -->
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="w-full">
+          <table class="w-full divide-y divide-gray-200 table-fixed">
+            <thead class="bg-gray-50/50">
+              <tr>
+                <th scope="col" class="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-1/4">Fornecedor</th>
+                <th scope="col" class="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32">Vencimento</th>
+                <th scope="col" class="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32">Pagamento</th>
+                <th scope="col" class="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Descrição/Doc</th>
+                <th scope="col" class="px-4 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-36">Valor</th>
+                <th scope="col" class="px-4 py-3.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-28">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100 bg-white">
+              <tr *ngFor="let conta of contasFiltradas" class="hover:bg-gray-50/80 transition-colors duration-150 group">
+                
+                <!-- Fornecedor -->
+                <td class="px-4 py-4 text-sm align-top">
+                  <div class="flex flex-col">
+                    <span class="font-semibold text-gray-900 line-clamp-2" [title]="conta.NomeClienteFornecedor">
+                      {{ conta.NomeClienteFornecedor || 'Fornecedor não informado' }}
+                    </span>
+                    <span class="text-xs text-gray-500 mt-0.5">
+                      Cód: {{ conta.CodigoClienteFornecedor || '-' }}
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Vencimento -->
+                <td class="px-4 py-4 text-sm text-gray-600 font-medium align-top">
+                  {{ formatDate(conta.DataVencimento) }}
+                </td>
+
+                <!-- Pagamento -->
+                <td class="px-4 py-4 text-sm text-gray-600 align-top">
+                  {{ formatDate(conta.DataQuitacao) || '-' }}
+                </td>
+
+                <!-- Descrição -->
+                <td class="px-4 py-4 text-sm text-gray-600 align-top">
+                   <div class="flex flex-col max-w-full">
+                     <span class="block truncate" [title]="conta.Observacao">{{ conta.Observacao || '-' }}</span>
+                     <span class="text-xs text-gray-400 mt-0.5" *ngIf="conta.Nome">
+                       Doc: {{ conta.Nome }}
+                       <span *ngIf="conta.NumeroParcela">/ {{ conta.NumeroParcela }}</span>
+                     </span>
+                   </div>
+                </td>
+
+                <!-- Valor -->
+                <td class="px-4 py-4 text-sm font-semibold text-right align-top text-gray-900 group-hover:text-rose-700 transition-colors">
+                   {{ formatCurrency(conta.Valor || 0) }}
+                </td>
+
+                <!-- Status -->
+                <td class="px-4 py-4 text-sm align-top text-center">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                        [ngClass]="getStatusBadgeClass(conta)">
+                    {{ getStatusLabel(conta) }}
+                  </span>
+                </td>
+              </tr>
+              
+              <!-- Empty State -->
+              <tr *ngIf="contasFiltradas.length === 0">
+                <td colspan="6" class="px-4 py-12 text-center">
+                  <div class="flex flex-col items-center justify-center">
+
+                    <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                      <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                      </svg>
+                    </div>
+                    <p class="text-sm font-medium text-gray-900">Nenhuma conta encontrada</p>
+                    <p class="text-sm text-gray-500 mt-1">Tente ajustar seus filtros de busca</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div *ngIf="!loading && totalItens > itensPorPagina" class="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="text-sm text-gray-500 text-center sm:text-left">
+          Mostrando <span class="font-medium text-gray-900">{{ (paginaAtual - 1) * itensPorPagina + 1 }}</span> a <span class="font-medium text-gray-900">{{ getMaxItemPagina() }}</span> de <span class="font-medium text-gray-900">{{ totalItens }}</span> resultados
         </div>
         
-        <button type="button" 
-                (click)="limparFiltros()"
-                class="inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-all duration-200 border border-gray-300">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-          </svg>
-          Limpar Filtros
-        </button>
-      </div>
-    </div>
-  </div>
+        <div class="flex justify-center sm:justify-end gap-2">
+          <button type="button"
+                  (click)="paginaAnterior()"
+                  [disabled]="paginaAtual === 1"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all">
+            Anterior
+          </button>
+          
+          <div class="hidden sm:flex items-center gap-1">
+            <button *ngFor="let page of getPaginasVisiveis()"
+                    type="button"
+                    (click)="irParaPagina(page)"
+                    [class.bg-gray-900]="page === paginaAtual"
+                    [class.text-white]="page === paginaAtual"
+                    [class.border-transparent]="page === paginaAtual"
+                    [class.bg-white]="page !== paginaAtual"
+                    [class.text-gray-700]="page !== paginaAtual"
+                    [class.border-gray-300]="page !== paginaAtual"
+                    class="w-10 h-10 flex items-center justify-center text-sm font-medium border rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-sm">
+              {{ page }}
+            </button>
+          </div>
 
-  <!-- Tabela de Contas a Pagar -->
-  <div *ngIf="!loading" class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Fornecedor</th>
-          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Data Vencimento</th>
-          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Data Pagamento</th>
-          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Descrição</th>
-          <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Valor</th>
-          <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
-        <tr *ngFor="let conta of contasFiltradas" class="hover:bg-gray-50 transition-colors">
-          <td class="px-4 py-3 text-sm">
-            <div class="font-medium text-gray-900">
-              {{ conta.nome_cliente_fornecedor || ('Fornecedor #' + (conta.codigo_cliente_fornecedor || '-')) }}
-            </div>
-            <div *ngIf="conta.numero_documento" class="text-xs text-gray-500">
-              Doc: {{ conta.numero_documento }}
-              <span *ngIf="conta.numero_parcela"> | Parcela: {{ conta.numero_parcela }}</span>
-            </div>
-          </td>
-          <td class="px-4 py-3 text-sm text-gray-900">{{ formatDate(conta.data_vencimento) }}</td>
-          <td class="px-4 py-3 text-sm text-gray-900">{{ formatDate(conta.data_pagamento) || '-' }}</td>
-          <td class="px-4 py-3 text-sm">
-            <div class="text-gray-900 max-w-xs truncate" [title]="conta.observacao || conta.numero_documento">
-              {{ conta.observacao || conta.numero_documento || '-' }}
-            </div>
-          </td>
-          <td class="px-4 py-3 text-sm text-right font-mono font-medium text-red-600">
-            {{ formatCurrency(conta.valor_documento || conta.valor_pago || 0) }}
-          </td>
-          <td class="px-4 py-3 text-sm">
-            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
-                  [ngClass]="getStatusBadgeClass(conta)">
-              {{ getStatusLabel(conta) }}
-            </span>
-          </td>
-        </tr>
-        <tr *ngIf="contasFiltradas.length === 0">
-          <td colspan="6" class="px-4 py-8 text-center text-sm text-gray-500">
-            Nenhuma conta a pagar encontrada
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Paginação -->
-  <div *ngIf="!loading && totalItens > itensPorPagina" class="mt-6 flex items-center justify-between">
-    <div class="text-sm text-gray-700">
-      Mostrando {{ (paginaAtual - 1) * itensPorPagina + 1 }} a {{ getMaxItemPagina() }} de {{ totalItens }} contas
-    </div>
-    <div class="flex items-center gap-2">
-      <button type="button"
-              (click)="paginaAnterior()"
-              [disabled]="paginaAtual === 1"
-              class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-        Anterior
-      </button>
-      <div class="flex items-center gap-1">
-        <button *ngFor="let page of getPaginasVisiveis()"
-                type="button"
-                (click)="irParaPagina(page)"
-                [class.bg-blue-600]="page === paginaAtual"
-                [class.text-white]="page === paginaAtual"
-                [class.text-gray-700]="page !== paginaAtual"
-                class="px-3 py-2 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50">
-          {{ page }}
-        </button>
-      </div>
-      <button type="button"
-              (click)="proximaPagina()"
-              [disabled]="paginaAtual === totalPaginas"
-              class="px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-        Próxima
-      </button>
-    </div>
-  </div>
-
-  <!-- Resumo -->
-  <div class="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Total de Contas</p>
-          <p class="text-2xl font-bold text-gray-900 mt-2">{{ totalContas }}</p>
-        </div>
-        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-          </svg>
+          <button type="button"
+                  (click)="proximaPagina()"
+                  [disabled]="paginaAtual === totalPaginas"
+                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all">
+            Próxima
+          </button>
         </div>
       </div>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Geral</p>
-          <p class="text-2xl font-bold text-red-600 mt-2">{{ formatCurrency(totalValor) }}</p>
-        </div>
-        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-          <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-          </svg>
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Pago</p>
-          <p class="text-2xl font-bold text-green-600 mt-2">{{ formatCurrency(totalPago) }}</p>
-        </div>
-        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-          <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <div class="flex items-center justify-between">
-        <div>
-          <p class="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Pendente</p>
-          <p class="text-2xl font-bold text-yellow-600 mt-2">{{ formatCurrency(totalPendente) }}</p>
-        </div>
-        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-          <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-        </div>
-      </div>
-    </div>
+    </ng-container>
   </div>
 </div>

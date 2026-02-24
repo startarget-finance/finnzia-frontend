@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
-import { OmieService, MovimentacaoOmie, ContasReceberResponse, FiltrosMovimentacoesOmie } from '../../services/omie.service';
+import { BomControleService, MovimentacaoFinanceira, FiltrosMovimentacoes } from '../../services/bomcontrole.service';
 
 @Component({
   selector: 'app-contas-a-receber',
@@ -16,25 +16,25 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
   mostrarRangePicker: boolean = false;
   visibleMonth: Date = new Date();
   calendarDays: Array<{ day: number, inCurrentMonth: boolean, dateStr: string }> = [];
-  private tempRangeStart: string | null = null;
-  private tempRangeEnd: string | null = null;
-  private hoverRangeDate: string | null = null;
+  tempRangeStart: string | null = null;
+  tempRangeEnd: string | null = null;
+  hoverRangeDate: string | null = null;
   
   // Datas selecionadas
   dataInicial: string = '';
   dataFinal: string = '';
 
   // Dados
-  contas: MovimentacaoOmie[] = [];
-  contasFiltradas: MovimentacaoOmie[] = [];
+  contas: MovimentacaoFinanceira[] = [];
+  contasFiltradas: MovimentacaoFinanceira[] = [];
   loading: boolean = false;
   error: string | null = null;
   
   // Totais
   totalContas: number = 0;
-  totalValor: number = 0;
-  totalRecebido: number = 0;
-  totalPendente: number = 0;
+  totalValor: number = 0; // Soma total dos títulos (valor original ou atual)
+  totalRecebido: number = 0;  // Soma do que já foi pago (liquidado)
+  totalPendente: number = 0; // Soma do que está em aberto
 
   // Paginação
   paginaAtual: number = 1;
@@ -44,7 +44,7 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
 
   // Filtros
   filtrosUI = {
-    status: '' as 'todas' | 'recebido' | 'pendente' | '',
+    status: '' as 'recebido' | 'pendente' | '',
     textoPesquisa: ''
   };
 
@@ -59,7 +59,7 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
   private textoPesquisaSubject = new Subject<string>();
 
   constructor(
-    private omieService: OmieService
+    private bomControleService: BomControleService
   ) {
     this.visibleMonth = new Date();
     this.buildCalendar();
@@ -77,14 +77,9 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Define período padrão se não houver datas selecionadas
     if (!this.dataInicial || !this.dataFinal) {
-      const hoje = new Date();
-      const primeiroDiaAno = new Date(hoje.getFullYear(), 0, 1);
-      this.dataInicial = primeiroDiaAno.toISOString().split('T')[0];
-      this.dataFinal = hoje.toISOString().split('T')[0];
+      this.preencherMesAtual();
     }
-    
     this.carregarContas();
   }
 
@@ -98,19 +93,26 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.error = null;
 
-    const filtros: FiltrosMovimentacoesOmie = {
+    if (!this.dataInicial || !this.dataFinal) {
+      this.preencherMesAtual();
+    }
+
+    const filtros: FiltrosMovimentacoes = {
       dataInicio: this.dataInicial || undefined,
-      dataFim: this.dataFinal || undefined,
-      pagina: this.paginaAtual,
-      registrosPorPagina: this.itensPorPagina
+      dataTermino: this.dataFinal || undefined,
+      tipo: 'receita', // Apenas contas a receber
+      textoPesquisa: this.filtrosUI.textoPesquisa || undefined,
+      statusPagamento: this.getStatusPagamentoFiltro(),
+      numeroDaPagina: this.paginaAtual,
+      itensPorPagina: this.itensPorPagina
     };
 
-    console.log('🔍 Carregando contas a receber com filtros:', filtros);
+    console.log('🔍 Carregando contas a receber (Bom Controle) com filtros:', filtros);
     
-    this.omieService.listarContasReceber(filtros)
+    this.bomControleService.buscarMovimentacoes(filtros)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (response: ContasReceberResponse) => {
+        next: (response: any) => {
           this.processarResposta(response);
         },
         error: (err: any) => {
@@ -121,61 +123,41 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
       });
   }
 
-  private processarResposta(response: ContasReceberResponse): void {
-    this.contas = response.registros || [];
-    this.totalItens = response.total_de_registros || 0;
-    this.totalPaginas = Math.ceil(this.totalItens / this.itensPorPagina);
-    
-    // Aplica filtros locais
+  private processarResposta(response: any): void {
+    // A resposta do BomControleService.buscarMovimentacoes retorna { movimentacoes, total, ... }
+    const movimentacoes: MovimentacaoFinanceira[] = response.movimentacoes || [];
+    this.contas = movimentacoes.filter(mov => this.isContaReceber(mov));
+     this.totalItens = response.total || response.total_de_registros || this.contas.length;
+     
+     if (response.paginacao && response.paginacao.itensPorPagina) {
+         this.itensPorPagina = response.paginacao.itensPorPagina;
+     }
+     
+     this.totalPaginas = Math.ceil(this.totalItens / this.itensPorPagina);
+     
     this.aplicarFiltrosLocais();
-    
-    // Calcula totais
-    this.calcularTotais();
-    
-    this.loading = false;
+     this.calcularTotais();
+     
+     this.loading = false;
+  }
+
+  private getStatusPagamentoFiltro(): 'pendente' | 'recebido' | undefined {
+    const status = this.filtrosUI.status;
+    return status === 'pendente' || status === 'recebido' ? status : undefined;
   }
 
   private aplicarFiltrosLocais(): void {
-    let filtradas = [...this.contas];
-
-    // Filtro por status
-    if (this.filtrosUI.status === 'recebido') {
-      filtradas = filtradas.filter(c => this.isRecebido(c));
-    } else if (this.filtrosUI.status === 'pendente') {
-      filtradas = filtradas.filter(c => !this.isRecebido(c));
-    }
-
-    // Filtro por texto
-    if (this.filtrosUI.textoPesquisa) {
-      const texto = this.filtrosUI.textoPesquisa.toLowerCase();
-      filtradas = filtradas.filter(c => {
-        const nome = (c.nome_cliente_fornecedor || '').toLowerCase();
-        const codigoCliente = (c.codigo_cliente_fornecedor || '').toString().toLowerCase();
-        const numeroDoc = (c.numero_documento || '').toString().toLowerCase();
-        const numeroParcela = (c.numero_parcela || '').toString().toLowerCase();
-        const observacao = (c.observacao || '').toLowerCase();
-        const statusTitulo = ((c['status_titulo'] || c['status'] || '')).toString().toLowerCase();
-        
-        return nome.includes(texto) || 
-               codigoCliente.includes(texto) ||
-               numeroDoc.includes(texto) ||
-               numeroParcela.includes(texto) ||
-               observacao.includes(texto) ||
-               statusTitulo.includes(texto);
-      });
-    }
-
-    this.contasFiltradas = filtradas;
+    this.contasFiltradas = [...this.contas];
   }
 
   private calcularTotais(): void {
-    this.totalContas = this.contas.length;
+    this.totalContas = this.contasFiltradas.length;
     this.totalValor = 0;
     this.totalRecebido = 0;
     this.totalPendente = 0;
 
-    this.contas.forEach(conta => {
-      const valor = conta.valor_documento || conta.valor_pago || 0;
+    this.contasFiltradas.forEach(conta => {
+      const valor = conta.Valor || 0;
       this.totalValor += valor;
       
       if (this.isRecebido(conta)) {
@@ -186,41 +168,35 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
     });
   }
 
-  private isRecebido(conta: MovimentacaoOmie): boolean {
-    // Verifica se há data de pagamento
-    if (conta.data_pagamento != null && conta.data_pagamento !== '') {
-      return true;
+  private isRecebido(conta: MovimentacaoFinanceira): boolean {
+    return !!conta.DataQuitacao;
+  }
+
+  private isContaReceber(conta: MovimentacaoFinanceira): boolean {
+    if (typeof conta.Debito === 'boolean') {
+      return conta.Debito === false;
     }
-    
-    // Verifica status do título (campos do Omie)
-    const statusTitulo = conta['status_titulo'] || conta['status'];
-    if (statusTitulo) {
-      const statusUpper = statusTitulo.toString().toUpperCase();
-      // Status que indicam recebimento: RECEBIDO, BAIXADO, QUITADO
-      if (statusUpper.includes('RECEBIDO') || statusUpper.includes('BAIXADO') || statusUpper.includes('QUITADO')) {
-        return true;
-      }
-      // Status que indicam pendência: ATRASADO, VENCE HOJE, A VENCER, PENDENTE
-      if (statusUpper.includes('ATRASADO') || statusUpper.includes('VENCE HOJE') || 
-          statusUpper.includes('A VENCER') || statusUpper.includes('PENDENTE')) {
-        return false;
-      }
-    }
-    
-    // Verifica se há recebimentos (baixas) na conta
-    const recebimentos = conta['recebimentos'] || conta['baixas'];
-    if (recebimentos && Array.isArray(recebimentos) && recebimentos.length > 0) {
-      return true;
-    }
-    
-    return false;
+
+    const tipo = (conta.NomeTipoMovimentacao || '').toLowerCase();
+    return tipo.includes('receita') || tipo.includes('receber');
+  }
+
+  private preencherMesAtual(): void {
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = hoje.getMonth();
+    const primeiroDia = new Date(ano, mes, 1);
+    const ultimoDia = new Date(ano, mes + 1, 0);
+    this.dataInicial = this.dateToStr(primeiroDia);
+    this.dataFinal = this.dateToStr(ultimoDia);
+    this.visibleMonth = new Date(ano, mes, 1);
+    this.buildCalendar();
   }
 
   // ===== Filtros =====
   onFiltroChange(): void {
     this.paginaAtual = 1;
-    this.aplicarFiltrosLocais();
-    this.calcularTotais();
+    this.carregarContas();
   }
 
   onTextoPesquisaChange(texto: string): void {
@@ -232,8 +208,8 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
       status: '',
       textoPesquisa: ''
     };
-    this.aplicarFiltrosLocais();
-    this.calcularTotais();
+    this.paginaAtual = 1;
+    this.carregarContas();
   }
 
   // ===== Paginação =====
@@ -269,38 +245,19 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
     }
     
     for (let i = inicio; i <= fim; i++) {
-      paginas.push(i);
+        paginas.push(i);
     }
-    
     return paginas;
   }
 
   // ===== Date Range Picker =====
-  buildCalendar(): void {
-    const year = this.visibleMonth.getFullYear();
-    const month = this.visibleMonth.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - startDate.getDay());
-    
-    this.calendarDays = [];
-    const currentDate = new Date(startDate);
-    
-    for (let i = 0; i < 42; i++) {
-      const dateStr = currentDate.toISOString().split('T')[0];
-      this.calendarDays.push({
-        day: currentDate.getDate(),
-        inCurrentMonth: currentDate.getMonth() === month,
-        dateStr: dateStr
-      });
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-  }
-
   toggleRangePicker(): void {
     this.mostrarRangePicker = !this.mostrarRangePicker;
     if (this.mostrarRangePicker) {
+      this.tempRangeStart = null;
+      this.tempRangeEnd = null;
+      this.hoverRangeDate = null;
+      this.visibleMonth = this.dataInicial ? new Date(this.dataInicial) : new Date();
       this.buildCalendar();
     }
   }
@@ -313,15 +270,22 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
   }
 
   clearRange(): void {
+    this.preencherMesAtual();
     this.tempRangeStart = null;
     this.tempRangeEnd = null;
     this.hoverRangeDate = null;
+    this.paginaAtual = 1;
+    this.carregarContas();
   }
 
   applyRangePicker(): void {
-    if (this.tempRangeStart && this.tempRangeEnd) {
-      this.dataInicial = this.tempRangeStart;
-      this.dataFinal = this.tempRangeEnd;
+    if (this.tempRangeStart) {
+      const rangeEnd = this.tempRangeEnd ?? this.tempRangeStart;
+      const inicio = this.tempRangeStart <= rangeEnd ? this.tempRangeStart : rangeEnd;
+      const fim = this.tempRangeStart <= rangeEnd ? rangeEnd : this.tempRangeStart;
+
+      this.dataInicial = inicio;
+      this.dataFinal = fim;
       this.paginaAtual = 1;
       this.carregarContas();
     }
@@ -331,47 +295,33 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
     this.hoverRangeDate = null;
   }
 
-  onSelectDate(dateStr: string): void {
-    if (!this.tempRangeStart || (this.tempRangeStart && this.tempRangeEnd)) {
-      this.tempRangeStart = dateStr;
-      this.tempRangeEnd = null;
-    } else if (this.tempRangeStart && !this.tempRangeEnd) {
-      if (dateStr < this.tempRangeStart) {
-        this.tempRangeEnd = this.tempRangeStart;
-        this.tempRangeStart = dateStr;
-      } else {
-        this.tempRangeEnd = dateStr;
-      }
-    }
-  }
+  buildCalendar(): void {
+    const year = this.visibleMonth.getFullYear();
+    const month = this.visibleMonth.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const startWeekDay = firstDay.getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const prevMonthDays = new Date(year, month, 0).getDate();
+    const days: Array<{ day: number, inCurrentMonth: boolean, dateStr: string }> = [];
 
-  onHoverDate(dateStr: string | null): void {
-    this.hoverRangeDate = dateStr;
-  }
-
-  isStart(dateStr: string): boolean {
-    return this.tempRangeStart === dateStr || 
-           (!!this.dataInicial && this.dataInicial === dateStr && !this.mostrarRangePicker);
-  }
-
-  isEnd(dateStr: string): boolean {
-    return this.tempRangeEnd === dateStr || 
-           (!!this.dataFinal && this.dataFinal === dateStr && !this.mostrarRangePicker);
-  }
-
-  isBetween(dateStr: string): boolean {
-    if (this.mostrarRangePicker && this.tempRangeStart && !this.tempRangeEnd && this.hoverRangeDate) {
-      const start = this.tempRangeStart < this.hoverRangeDate ? this.tempRangeStart : this.hoverRangeDate;
-      const end = this.tempRangeStart < this.hoverRangeDate ? this.hoverRangeDate : this.tempRangeStart;
-      return dateStr > start && dateStr < end;
+    for (let i = startWeekDay - 1; i >= 0; i--) {
+      const day = prevMonthDays - i;
+      const date = new Date(year, month - 1, day);
+      days.push({ day, inCurrentMonth: false, dateStr: this.dateToStr(date) });
     }
-    if (this.tempRangeStart && this.tempRangeEnd) {
-      return dateStr > this.tempRangeStart && dateStr < this.tempRangeEnd;
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const date = new Date(year, month, d);
+      days.push({ day: d, inCurrentMonth: true, dateStr: this.dateToStr(date) });
     }
-    if (this.dataInicial && this.dataFinal && !this.mostrarRangePicker) {
-      return dateStr > this.dataInicial && dateStr < this.dataFinal;
+
+    while (days.length % 7 !== 0) {
+      const nextIndex = days.length - startWeekDay - daysInMonth + 1;
+      const date = new Date(year, month + 1, nextIndex);
+      days.push({ day: date.getDate(), inCurrentMonth: false, dateStr: this.dateToStr(date) });
     }
-    return false;
+
+    this.calendarDays = days;
   }
 
   prevMonth(): void {
@@ -388,88 +338,125 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
     return this.visibleMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
   }
 
-  // ===== Utilitários =====
+  onSelectDate(dateStr: string): void {
+    if (!this.tempRangeStart || (this.tempRangeStart && this.tempRangeEnd)) {
+      this.tempRangeStart = dateStr;
+      this.tempRangeEnd = null;
+      return;
+    }
+    this.tempRangeEnd = dateStr;
+  }
+
+  onHoverDate(dateStr: string | null): void {
+    this.hoverRangeDate = dateStr;
+  }
+
+  isStart(dateStr: string): boolean {
+    if (this.tempRangeStart) {
+      return this.tempRangeStart === dateStr;
+    }
+    return !this.mostrarRangePicker && !!this.dataInicial && this.dataInicial === dateStr;
+  }
+
+  isEnd(dateStr: string): boolean {
+    if (this.tempRangeEnd) {
+      return this.tempRangeEnd === dateStr;
+    }
+    return !this.mostrarRangePicker && !!this.dataFinal && this.dataFinal === dateStr;
+  }
+
+  isBetween(dateStr: string): boolean {
+    const start = this.tempRangeStart;
+    const end = this.tempRangeEnd || this.hoverRangeDate;
+    if (!start || !end) return false;
+
+    const inicio = start <= end ? start : end;
+    const fim = start <= end ? end : start;
+    return dateStr > inicio && dateStr < fim;
+  }
+
+  private dateToStr(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // ===== Helpers de Formatação =====
   formatDate(dateStr: string | undefined): string {
-    if (!dateStr) return '-';
+    if (!dateStr) return '';
+    const sanitized = dateStr.trim();
+
     try {
-      // Omie retorna datas no formato DD/MM/YYYY
-      if (dateStr.includes('/')) {
-        const partes = dateStr.split('/');
+      if (sanitized.includes('/')) {
+        const partes = sanitized.split('/');
         if (partes.length === 3) {
-          // Converte DD/MM/YYYY para Date
-          const date = new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]));
+          const date = new Date(parseInt(partes[2], 10), parseInt(partes[1], 10) - 1, parseInt(partes[0], 10));
           return date.toLocaleDateString('pt-BR');
         }
-        return dateStr;
+        return sanitized;
       }
-      // Formato ISO ou YYYY-MM-DD
-      const date = new Date(dateStr);
+
+      const [anoStr, mesStr, diaStr] = sanitized.split('-');
+      if (anoStr && mesStr && diaStr) {
+        const ano = parseInt(anoStr, 10);
+        const mes = parseInt(mesStr, 10) - 1;
+        const dia = parseInt(diaStr, 10);
+        if (!Number.isNaN(ano) && !Number.isNaN(mes) && !Number.isNaN(dia)) {
+          const date = new Date(ano, mes, dia);
+          return date.toLocaleDateString('pt-BR');
+        }
+      }
+
+      const date = new Date(sanitized);
+      if (Number.isNaN(date.getTime())) {
+        return sanitized;
+      }
       return date.toLocaleDateString('pt-BR');
     } catch {
-      return dateStr;
+      return sanitized;
     }
   }
 
   formatCurrency(value: number): string {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   }
 
   getMaxItemPagina(): number {
     return Math.min(this.paginaAtual * this.itensPorPagina, this.totalItens);
   }
 
-  getStatusBadgeClass(conta: MovimentacaoOmie): string {
-    const statusTitulo = (conta['status_titulo'] || conta['status'] || '').toString().toUpperCase();
-    
-    // Status recebido/quitado
-    if (statusTitulo.includes('RECEBIDO') || statusTitulo.includes('BAIXADO') || statusTitulo.includes('QUITADO') || this.isRecebido(conta)) {
-      return 'bg-green-100 text-green-800';
+  getStatusBadgeClass(conta: MovimentacaoFinanceira): string {
+    if (this.isRecebido(conta)) {
+      return 'bg-emerald-100 text-emerald-800';
     }
-    
-    // Status atrasado
-    if (statusTitulo.includes('ATRASADO')) {
-      return 'bg-red-100 text-red-800';
+    // Verifica se venceu
+    if (conta.DataVencimento) {
+      const hoje = this.dateToStr(new Date());
+      if (conta.DataVencimento < hoje) {
+        return 'bg-red-100 text-red-800';
+      }
     }
-    
-    // Status vence hoje
-    if (statusTitulo.includes('VENCE HOJE')) {
-      return 'bg-orange-100 text-orange-800';
-    }
-    
-    // Status a vencer/pendente
-    if (statusTitulo.includes('A VENCER') || statusTitulo.includes('PENDENTE')) {
-      return 'bg-yellow-100 text-yellow-800';
-    }
-    
-    // Default
-    return 'bg-gray-100 text-gray-800';
+    return 'bg-yellow-100 text-yellow-800';
   }
 
-  getStatusLabel(conta: MovimentacaoOmie): string {
-    // Usa o status_titulo do Omie se disponível
-    const statusTitulo = conta['status_titulo'] || conta['status'];
-    if (statusTitulo) {
-      return statusTitulo.toString();
+  getStatusLabel(conta: MovimentacaoFinanceira): string {
+    if (this.isRecebido(conta)) { return 'RECEBIDO'; }
+    if (conta.DataVencimento) {
+      const hoje = this.dateToStr(new Date());
+      if (conta.DataVencimento < hoje) {
+        return 'ATRASADO';
+      }
     }
-    
-    // Fallback para lógica padrão
-    if (this.isRecebido(conta)) {
-      return 'Recebido';
-    }
-    return 'Pendente';
+    return 'PENDENTE';
   }
 
   // ===== Exportação =====
   exportarExcel(): void {
-    // TODO: Implementar exportação para Excel
     alert('Funcionalidade de exportação para Excel será implementada em breve');
   }
 
   exportarPDF(): void {
-    // TODO: Implementar exportação para PDF
     alert('Funcionalidade de exportação para PDF será implementada em breve');
   }
 }
