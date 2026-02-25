@@ -1,11 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { UsuarioService } from '../../services/usuario.service';
 import { CompanySelectorService, CompaniaInfo } from '../../services/company-selector.service';
+import { API_CONFIG } from '../../config/api.config';
 
 @Component({
   selector: 'app-login',
@@ -14,7 +16,7 @@ import { CompanySelectorService, CompaniaInfo } from '../../services/company-sel
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, OnDestroy {
   // Dados do formulário
   loginForm = {
     email: '',
@@ -23,9 +25,11 @@ export class LoginComponent implements OnInit {
 
   // Estados da UI
   isLoading = false;
+  loadingMessage = 'Entrando...';
   showPassword = false;
   rememberMe = false;
   errorMessage = '';
+  private loadingTimer?: ReturnType<typeof setTimeout>;
 
   // Validação
   isFormValid = false;
@@ -35,7 +39,8 @@ export class LoginComponent implements OnInit {
     private route: ActivatedRoute,
     private authService: AuthService,
     private usuarioService: UsuarioService,
-    private companySelectorService: CompanySelectorService
+    private companySelectorService: CompanySelectorService,
+    private http: HttpClient
   ) {}
 
   ngOnInit(): void {
@@ -44,6 +49,9 @@ export class LoginComponent implements OnInit {
       this.router.navigate(['/dashboard']);
       return;
     }
+
+    // Pré-aquece o backend (Render free tier hiberna após inatividade)
+    this.preAquecerBackend();
 
     // Verificar query params para mensagens
     this.route.queryParams.subscribe(params => {
@@ -86,7 +94,14 @@ export class LoginComponent implements OnInit {
     }
 
     this.isLoading = true;
+    this.loadingMessage = 'Entrando...';
     this.errorMessage = '';
+    // Após 5s sem resposta, avisa que o servidor pode estar iniciando
+    this.loadingTimer = setTimeout(() => {
+      if (this.isLoading) {
+        this.loadingMessage = 'Aguarde, servidor iniciando...';
+      }
+    }, 5000);
 
     try {
       // Usar o serviço de autenticação
@@ -104,7 +119,17 @@ export class LoginComponent implements OnInit {
       this.errorMessage = 'Erro interno. Tente novamente mais tarde.';
     } finally {
       this.isLoading = false;
+      if (this.loadingTimer) { clearTimeout(this.loadingTimer); }
     }
+  }
+
+  ngOnDestroy(): void {
+    if (this.loadingTimer) { clearTimeout(this.loadingTimer); }
+  }
+
+  private preAquecerBackend(): void {
+    const healthUrl = `${API_CONFIG.BACKEND_API_URL}/actuator/health`;
+    this.http.get(healthUrl, { headers: { 'X-Skip-Loading': 'true' } }).subscribe({ error: () => {} });
   }
 
 

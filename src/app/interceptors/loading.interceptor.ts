@@ -9,8 +9,8 @@ import { LoadingService } from '../services/loading.service';
 export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
   const loadingService = inject(LoadingService);
 
-  // Apenas para requisições da API
-  const isApiRequest = req.url.includes('/api/');
+  // Apenas para requisições da API (exceto login/auth — tela de login tem seu próprio estado)
+  const isApiRequest = req.url.includes('/api/') && !req.url.includes('/api/auth/');
   if (isApiRequest) {
     loadingService.show();
   }
