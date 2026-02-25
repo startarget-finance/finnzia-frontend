@@ -99,21 +99,22 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.loadingMessage = 'Entrando...';
     this.errorMessage = '';
-    // Após 5s sem resposta, avisa que o servidor pode estar iniciando
+    // Após 8s sem resposta, avisa que o servidor pode estar iniciando
     this.loadingTimer = setTimeout(() => {
       if (this.isLoading) {
-        this.loadingMessage = 'Aguarde, servidor iniciando...';
+        this.loadingMessage = 'Servidor iniciando, aguarde (~60s)...';
       }
-    }, 5000);
+    }, 8000);
 
     try {
       // Usar o serviço de autenticação
-      const success = await this.authService.login(this.loginForm.email, this.loginForm.password);
-      
-      if (success) {
+      const result = await this.authService.loginWithResult(this.loginForm.email, this.loginForm.password);
+
+      if (result.success) {
         await this.sincronizarEmpresasPosLogin();
-        // Redirecionar para dashboard
         this.router.navigate(['/dashboard']);
+      } else if (result.timeout) {
+        this.errorMessage = 'Servidor demorou para responder. Clique em Entrar novamente — já deve estar acordado.';
       } else {
         this.errorMessage = 'Email ou senha incorretos. Tente novamente.';
       }

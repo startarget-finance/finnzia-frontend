@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, TimeoutError } from 'rxjs';
+import { timeout } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { API_CONFIG } from '../config/api.config';
@@ -52,23 +53,30 @@ export class AuthService {
     }
   }
 
-  // Login
-  async login(email: string, password: string): Promise<boolean> {
+  // Login retornando objeto com detalhes do resultado
+  async loginWithResult(email: string, password: string): Promise<{ success: boolean; timeout?: boolean }> {
     try {
-      // Limpa seleção de empresa de sessões anteriores antes de autenticar
       this.companySelectorService.limparSessao();
       const response = await this.authenticateWithAPI(email, password);
-      
+
+      if (response.timeout) {
+        return { success: false, timeout: true };
+      }
       if (response.success) {
         this.setUserSession(response.user, response.token);
-        return true;
+        return { success: true };
       }
-      
-      return false;
+      return { success: false };
     } catch (error) {
       console.error('Erro no login:', error);
-      return false;
+      return { success: false };
     }
+  }
+
+  // Login (compatibilidade legada)
+  async login(email: string, password: string): Promise<boolean> {
+    const result = await this.loginWithResult(email, password);
+    return result.success;
   }
 
   // Autenticação com API (backend real ou mock, controlado por flag)
@@ -124,8 +132,11 @@ export class AuthService {
         };
       };
 
+      // Timeout de 75s para lidar com cold start do Render (pode demorar até 60s)
       const apiResponse = await firstValueFrom(
-        this.http.post<LoginApiResponse>(url, { email, senha: password })
+        this.http.post<LoginApiResponse>(url, { email, senha: password }).pipe(
+          timeout(75000)
+        )
       );
 
       const mappedUser: User = {
@@ -142,6 +153,10 @@ export class AuthService {
         user: mappedUser
       };
     } catch (error) {
+      if (error instanceof TimeoutError) {
+        console.error('Timeout no login — servidor demorou mais de 75s');
+        return { success: false, timeout: true };
+      }
       console.error('Erro ao autenticar no backend:', error);
       return { success: false };
     }
