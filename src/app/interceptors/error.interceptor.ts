@@ -13,9 +13,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: HttpErrorResponse) => {
       // Não processar 401 do endpoint de login — credenciais inválidas são tratadas pelo LoginComponent
       const isLoginRequest = req.url.includes('/api/auth/login');
-      // Não mostrar erro do health check (pre-aquecimento silencioso do backend)
-      const isHealthCheck = req.url.includes('/actuator/health');
-      if (!(error.status === 401 && isLoginRequest) && !isHealthCheck) {
+      if (!(error.status === 401 && isLoginRequest)) {
         errorService.handleError(error);
       }
 
