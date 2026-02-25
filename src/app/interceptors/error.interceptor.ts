@@ -11,8 +11,11 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      // Processar erro através do serviço centralizado
-      errorService.handleError(error);
+      // Não processar 401 do endpoint de login — credenciais inválidas são tratadas pelo LoginComponent
+      const isLoginRequest = req.url.includes('/api/auth/login');
+      if (!(error.status === 401 && isLoginRequest)) {
+        errorService.handleError(error);
+      }
 
       // Retornar erro para que componentes possam tratar se necessário
       return throwError(() => error);

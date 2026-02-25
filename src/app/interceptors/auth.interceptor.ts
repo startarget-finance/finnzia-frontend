@@ -34,7 +34,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       // Se erro 401 (Unauthorized), fazer logout e redirecionar
-      if (error.status === 401) {
+      // Ignorar se for a própria requisição de login (credenciais inválidas não são sessão expirada)
+      const isLoginRequest = req.url.includes('/api/auth/login');
+      if (error.status === 401 && !isLoginRequest) {
         authService.logout();
         router.navigate(['/login'], { 
           queryParams: { 
