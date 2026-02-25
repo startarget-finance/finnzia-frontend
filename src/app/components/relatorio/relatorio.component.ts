@@ -214,13 +214,7 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
     this.visibleMonth = new Date();
     this.buildCalendar();
     
-    // Define período padrão (ano atual até hoje)
-    const hoje = new Date();
-    const primeiroDiaAno = new Date(hoje.getFullYear(), 0, 1);
-    this.dataInicial = primeiroDiaAno.toISOString().split('T')[0];
-    this.dataFinal = hoje.toISOString().split('T')[0];
-    
-    // Carrega dados reais do Bom Controle
+    // Sem período padrão: carregarDadosContas usa 2000-01-01 a 2099-12-31 (todos os pendentes)
     this.carregarDadosContas();
   }
 
@@ -245,9 +239,11 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
     this.variacaoSaldoPercentual = null;
     this.saldoDisponivelAnterior = this.ultimaAtualizacaoSaldo ? this.saldoDisponivelAtual : null;
     
-    // Define período padrão se não houver datas selecionadas
-    const dataInicio = this.dataInicial || new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0];
-    const dataFim = this.dataFinal || new Date().toISOString().split('T')[0];
+    // Sem filtro de data selecionado: busca do início dos tempos até 3 meses à frente (captura todos os pendentes relevantes)
+    const hoje = new Date();
+    const tresM = new Date(hoje.getFullYear(), hoje.getMonth() + 3, hoje.getDate());
+    const dataInicio = this.dataInicial || '2000-01-01';
+    const dataFim = this.dataFinal || tresM.toISOString().split('T')[0];
     
     const filtros: FiltrosMovimentacoes = {
       dataInicio,

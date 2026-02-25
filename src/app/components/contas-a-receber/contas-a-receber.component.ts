@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -59,7 +59,8 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
   private textoPesquisaSubject = new Subject<string>();
 
   constructor(
-    private bomControleService: BomControleService
+    private bomControleService: BomControleService,
+    public location: Location
   ) {
     this.visibleMonth = new Date();
     this.buildCalendar();
@@ -127,16 +128,32 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
     // A resposta do BomControleService.buscarMovimentacoes retorna { movimentacoes, total, ... }
     const movimentacoes: MovimentacaoFinanceira[] = response.movimentacoes || [];
     this.contas = movimentacoes.filter(mov => this.isContaReceber(mov));
-     this.totalItens = response.total || response.total_de_registros || this.contas.length;
-     
-     if (response.paginacao && response.paginacao.itensPorPagina) {
-         this.itensPorPagina = response.paginacao.itensPorPagina;
-     }
-     
-     this.totalPaginas = Math.ceil(this.totalItens / this.itensPorPagina);
-     
-    this.aplicarFiltrosLocais();
-     this.calcularTotais();
+
+    // Só atualiza totais em busca nova (página 1) — nunca durante paginação
+    if (this.paginaAtual === 1) {
+      const totalBackend = response.total ?? response.total_de_registros ?? response.totalRegistros ?? null;
+      this.totalItens = (totalBackend !== null && totalBackend > 0) ? totalBackend : this.contas.length;
+
+      if (response.paginacao && response.paginacao.itensPorPagina) {
+        this.itensPorPagina = response.paginacao.itensPorPagina;
+      }
+
+      this.totalPaginas = Math.ceil(this.totalItens / this.itensPorPagina);
+      this.aplicarFiltrosLocais();
+      // Usa totalReceitas do backend se disponível (soma real de todos os registros)
+      if (response.totalReceitas != null && response.totalReceitas > 0) {
+        this.totalValor = response.totalReceitas;
+        this.calcularTotaisParciais();
+      } else {
+        this.calcularTotais();
+      }
+    } else {
+      if (response.paginacao && response.paginacao.itensPorPagina) {
+        this.itensPorPagina = response.paginacao.itensPorPagina;
+      }
+      this.totalPaginas = Math.ceil(this.totalItens / this.itensPorPagina);
+      this.aplicarFiltrosLocais();
+    }
      
      this.loading = false;
   }
@@ -159,7 +176,23 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
     this.contasFiltradas.forEach(conta => {
       const valor = conta.Valor || 0;
       this.totalValor += valor;
-      
+
+      if (this.isRecebido(conta)) {
+        this.totalRecebido += valor;
+      } else {
+        this.totalPendente += valor;
+      }
+    });
+  }
+
+  // Calcula só recebido/pendente sem sobrescrever totalValor (já vem do backend)
+  private calcularTotaisParciais(): void {
+    this.totalContas = this.contasFiltradas.length;
+    this.totalRecebido = 0;
+    this.totalPendente = 0;
+
+    this.contasFiltradas.forEach(conta => {
+      const valor = conta.Valor || 0;
       if (this.isRecebido(conta)) {
         this.totalRecebido += valor;
       } else {

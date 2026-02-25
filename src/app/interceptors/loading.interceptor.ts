@@ -10,16 +10,16 @@ export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
   const loadingService = inject(LoadingService);
 
   // Apenas para requisições da API
-  if (req.url.includes('/api/')) {
-    loadingService.setLoading(true);
+  const isApiRequest = req.url.includes('/api/');
+  if (isApiRequest) {
+    loadingService.show();
   }
 
   return next(req).pipe(
     finalize(() => {
-      // Pequeno delay para evitar flicker em requisições muito rápidas
-      setTimeout(() => {
-        loadingService.setLoading(false);
-      }, 100);
+      if (isApiRequest) {
+        loadingService.hide();
+      }
     })
   );
 };

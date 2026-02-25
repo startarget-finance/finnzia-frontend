@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -59,7 +59,8 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
   private textoPesquisaSubject = new Subject<string>();
 
   constructor(
-    private bomControleService: BomControleService
+    private bomControleService: BomControleService,
+    public location: Location
   ) {
     this.visibleMonth = new Date();
     this.buildCalendar();
@@ -126,21 +127,32 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
     // A resposta do BomControleService.buscarMovimentacoes retorna { movimentacoes, total, ... }
     const movimentacoes: MovimentacaoFinanceira[] = response.movimentacoes || [];
     this.contas = movimentacoes.filter(mov => this.isContaPagar(mov));
-    this.totalItens = response.total || response.total_de_registros || this.contas.length;
-    
-    if (response.paginacao && response.paginacao.itensPorPagina) {
+
+    // Só atualiza totais em busca nova (página 1) — nunca durante paginação
+    if (this.paginaAtual === 1) {
+      const totalBackend = response.total ?? response.total_de_registros ?? response.totalRegistros ?? null;
+      this.totalItens = (totalBackend !== null && totalBackend > 0) ? totalBackend : this.contas.length;
+
+      if (response.paginacao && response.paginacao.itensPorPagina) {
         this.itensPorPagina = response.paginacao.itensPorPagina;
+      }
+
+      this.totalPaginas = Math.ceil(this.totalItens / this.itensPorPagina);
+      this.aplicarFiltrosLocais();
+      // Usa totalDespesas do backend se disponível (soma real de todos os registros)
+      if (response.totalDespesas != null && response.totalDespesas > 0) {
+        this.totalValor = response.totalDespesas;
+        this.calcularTotaisParciais();
+      } else {
+        this.calcularTotais();
+      }
+    } else {
+      if (response.paginacao && response.paginacao.itensPorPagina) {
+        this.itensPorPagina = response.paginacao.itensPorPagina;
+      }
+      this.totalPaginas = Math.ceil(this.totalItens / this.itensPorPagina);
+      this.aplicarFiltrosLocais();
     }
-    
-    this.totalPaginas = Math.ceil(this.totalItens / this.itensPorPagina);
-    
-    // Aplicar filtros locais de status (se necessário, caso o backend não filtre status)
-    // O backend do Bom Controle filtra por data e tipo, mas status 'pago'/'pendente' 
-    // geralmente é verificado via DataQuitacao
-    this.aplicarFiltrosLocais();
-    
-    // Calcular totais baseados nos dados retornados (ou totais globais se vierem na resposta)
-    this.calcularTotais();
     
     this.loading = false;
   }
@@ -165,8 +177,6 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
   }
 
   private calcularTotais(): void {
-    // Idealmente, usaríamos totais vindos do backend se disponíveis, 
-    // mas calculamos aqui com base na página atual/filtrada para feedback imediato
     this.totalContas = this.contasFiltradas.length;
     this.totalValor = 0;
     this.totalPago = 0;
@@ -175,7 +185,23 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
     this.contasFiltradas.forEach(conta => {
       const valor = conta.Valor || 0;
       this.totalValor += valor;
-      
+
+      if (this.isPago(conta)) {
+        this.totalPago += valor;
+      } else {
+        this.totalPendente += valor;
+      }
+    });
+  }
+
+  // Calcula só pago/pendente sem sobrescrever totalValor (já vem do backend)
+  private calcularTotaisParciais(): void {
+    this.totalContas = this.contasFiltradas.length;
+    this.totalPago = 0;
+    this.totalPendente = 0;
+
+    this.contasFiltradas.forEach(conta => {
+      const valor = conta.Valor || 0;
       if (this.isPago(conta)) {
         this.totalPago += valor;
       } else {
