@@ -136,7 +136,7 @@
         </div>
         <div class="min-w-0">
           <p class="text-2xl lg:text-3xl font-bold text-rose-950 tracking-tight truncate">{{ formatCurrency(metrics.totalDespesas) }}</p>
-          <p class="text-xs text-rose-600/80 mt-2 font-medium truncate">Burn rate {{ formatCurrency(metrics.burnRateMensal) }}/mês</p>
+          <p class="text-xs mt-2 font-medium invisible">&nbsp;</p>
         </div>
       </div>
 
@@ -164,9 +164,7 @@
              [class.text-rose-950]="metrics.resultado < 0">
             {{ formatCurrency(metrics.resultado) }}
           </p>
-          <p class="text-xs mt-2 font-medium truncate"
-             [class.text-emerald-600]="metrics.resultado >= 0"
-             [class.text-rose-600]="metrics.resultado < 0">Ticket médio {{ formatCurrency(metrics.ticketMedio) }}</p>
+          <p class="text-xs mt-2 font-medium invisible">&nbsp;</p>
         </div>
       </div>
     </div>
