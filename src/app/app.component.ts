@@ -64,6 +64,12 @@ export class AppComponent implements OnInit {
     if (!this.authService.isAuthenticated()) {
       return;
     }
+    // Evitar chamada dupla: o LoginComponent já sincronizou as empresas logo após o login.
+    // Só busca da API se o seletor estiver vazio (ex: refresh direto na página protegida).
+    const empresasJaCarregadas = this.companySelectorService.obterEmpresasAtivas();
+    if (empresasJaCarregadas.length > 0) {
+      return;
+    }
     this.usuarioService.buscarMeuPerfil().subscribe({
       next: (usuarioAtual) => {
         if (usuarioAtual && usuarioAtual.id) {
