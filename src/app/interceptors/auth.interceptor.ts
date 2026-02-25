@@ -46,8 +46,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         });
       }
 
-      // Se erro 403 (Forbidden), redirecionar para dashboard
-      if (error.status === 403) {
+      // Se erro 403 (Forbidden), redirecionar para dashboard apenas se já estiver autenticado
+      if (error.status === 403 && authService.getToken()) {
         router.navigate(['/dashboard'], { 
           queryParams: { 
             forbidden: 'true',

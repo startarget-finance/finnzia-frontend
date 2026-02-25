@@ -58,6 +58,9 @@ export class AppComponent implements OnInit {
    * suas empresas serão carregadas automaticamente
    */
   private sincronizarEmpresasDoUsuario(): void {
+    if (!this.authService.isAuthenticated()) {
+      return;
+    }
     this.usuarioService.buscarMeuPerfil().subscribe({
       next: (usuarioAtual) => {
         if (usuarioAtual && usuarioAtual.id) {
