@@ -103,7 +103,8 @@ export class LoginComponent implements OnInit, OnDestroy {
       const result = await this.authService.loginWithResult(this.loginForm.email, this.loginForm.password);
 
       if (result.success) {
-        await this.sincronizarEmpresasPosLogin();
+        // Não bloquear a navegação: sincronizar empresas em background
+        this.sincronizarEmpresasPosLogin();
         this.router.navigate(['/dashboard']);
       } else if (result.timeout) {
         this.errorMessage = 'Servidor demorou para responder. Clique em Entrar novamente — já deve estar acordado.';
