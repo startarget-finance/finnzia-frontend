@@ -1,6 +1,6 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, PLATFORM_ID, Inject } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from './services/auth.service';
 import { UsuarioService } from './services/usuario.service';
@@ -43,10 +43,13 @@ export class AppComponent implements OnInit {
     private authService: AuthService,
     private usuarioService: UsuarioService,
     private companySelectorService: CompanySelectorService,
-    private router: Router
+    private router: Router,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
   ngOnInit() {
+    // Bloquear chamadas HTTP durante SSR para evitar page freeze no Vercel
+    if (!isPlatformBrowser(this.platformId)) { return; }
     this.sincronizarEmpresasDoUsuario();
     this.carregarEmpresas();
     this.subscribeToCompanyChanges();

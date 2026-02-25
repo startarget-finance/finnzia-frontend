@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, PLATFORM_ID, Inject } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -40,7 +40,8 @@ export class LoginComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private usuarioService: UsuarioService,
     private companySelectorService: CompanySelectorService,
-    private http: HttpClient
+    private http: HttpClient,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
   ngOnInit(): void {
@@ -50,8 +51,10 @@ export class LoginComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Pré-aquece o backend (Render free tier hiberna após inatividade)
-    this.preAquecerBackend();
+    // Pré-aquece o backend apenas no browser (evita SSR block)
+    if (isPlatformBrowser(this.platformId)) {
+      this.preAquecerBackend();
+    }
 
     // Verificar query params para mensagens
     this.route.queryParams.subscribe(params => {
