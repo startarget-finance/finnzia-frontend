@@ -50,7 +50,10 @@ export class AppComponent implements OnInit {
   ngOnInit() {
     // Bloquear chamadas HTTP durante SSR para evitar page freeze no Vercel
     if (!isPlatformBrowser(this.platformId)) { return; }
-    this.sincronizarEmpresasDoUsuario();
+    // Não sincronizar empresas em páginas públicas (landing, login, etc.)
+    if (!this.isAuthPublicPage()) {
+      this.sincronizarEmpresasDoUsuario();
+    }
     this.carregarEmpresas();
     this.subscribeToCompanyChanges();
   }

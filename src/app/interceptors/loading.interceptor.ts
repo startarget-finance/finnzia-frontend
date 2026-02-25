@@ -10,7 +10,10 @@ export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
   const loadingService = inject(LoadingService);
 
   // Apenas para requisições da API (exceto login/auth — tela de login tem seu próprio estado)
-  const isApiRequest = req.url.includes('/api/') && !req.url.includes('/api/auth/');
+  // Também ignorar chamadas de background sync (busca de perfil/empresas do usuário)
+  const isBackgroundSync = req.url.includes('/api/usuarios/me') ||
+    (req.url.includes('/api/usuarios/') && req.url.includes('/empresas'));
+  const isApiRequest = req.url.includes('/api/') && !req.url.includes('/api/auth/') && !isBackgroundSync;
   if (isApiRequest) {
     loadingService.show();
   }
