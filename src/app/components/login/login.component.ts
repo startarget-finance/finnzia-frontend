@@ -1,13 +1,11 @@
 import { Component, OnInit, OnDestroy, PLATFORM_ID, Inject } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { UsuarioService } from '../../services/usuario.service';
 import { CompanySelectorService, CompaniaInfo } from '../../services/company-selector.service';
-import { API_CONFIG } from '../../config/api.config';
 
 @Component({
   selector: 'app-login',
@@ -40,7 +38,6 @@ export class LoginComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private usuarioService: UsuarioService,
     private companySelectorService: CompanySelectorService,
-    private http: HttpClient,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
@@ -49,11 +46,6 @@ export class LoginComponent implements OnInit, OnDestroy {
     if (this.authService.isAuthenticated()) {
       this.router.navigate(['/dashboard']);
       return;
-    }
-
-    // Pré-aquece o backend apenas no browser (evita SSR block)
-    if (isPlatformBrowser(this.platformId)) {
-      this.preAquecerBackend();
     }
 
     // Verificar query params para mensagens
@@ -131,12 +123,6 @@ export class LoginComponent implements OnInit, OnDestroy {
     if (this.loadingTimer) { clearTimeout(this.loadingTimer); }
   }
 
-  private preAquecerBackend(): void {
-    const healthUrl = `${API_CONFIG.BACKEND_API_URL}/actuator/health`;
-    this.http.get(healthUrl, { headers: { 'X-Skip-Loading': 'true' } }).subscribe({ error: () => {} });
-  }
-
-
   // Esqueci minha senha
   onForgotPassword(): void {
     this.router.navigate(['/esqueci-senha']);
@@ -167,8 +153,8 @@ export class LoginComponent implements OnInit, OnDestroy {
 
       const empresas = await firstValueFrom(this.usuarioService.obterEmpresasUsuario(usuarioAtual.id));
       const empresasInfo: CompaniaInfo[] = (empresas || [])
-        .filter(empresa => empresa.ativo)
-        .map(empresa => ({
+        .filter((empresa: any) => empresa.ativo)
+        .map((empresa: any) => ({
           id: empresa.id,
           idEmpresa: empresa.idEmpresa,
           nomeEmpresa: empresa.nomeEmpresa,
