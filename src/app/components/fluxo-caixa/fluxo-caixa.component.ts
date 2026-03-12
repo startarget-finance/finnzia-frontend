@@ -201,6 +201,40 @@ export class FluxoCaixaComponent implements OnInit {
     this.expandirDespesas = !this.expandirDespesas;
   }
 
+  /** Redefine o período para o mês atual e recarrega o DFC (equivalente a “resetar filtros”). */
+  resetarPeriodo(): void {
+    const periodo = this.definirPeriodoInicial();
+    this.filtrosForm.patchValue({
+      dataInicio: periodo.dataInicio,
+      dataTermino: periodo.dataTermino
+    });
+    this.dataInicial = periodo.dataInicio;
+    this.dataFinal = periodo.dataTermino;
+    this.visibleMonth = new Date(this.dataInicial);
+    this.buildCalendar();
+    this.carregarDfc();
+  }
+
+  mostrarModalDetalhesDfc = false;
+  tipoModalDetalhesDfc: 'receita' | 'despesa' = 'receita';
+
+  abrirModalDetalhesDfc(tipo: 'receita' | 'despesa'): void {
+    this.tipoModalDetalhesDfc = tipo;
+    this.mostrarModalDetalhesDfc = true;
+  }
+
+  fecharModalDetalhesDfc(): void {
+    this.mostrarModalDetalhesDfc = false;
+  }
+
+  /** Linhas do DFC que compõem receitas (RECEITA, FATURAMENTO) ou despesas (DESPESA). */
+  getLinhasDetalhesDfc(tipo: 'receita' | 'despesa'): LinhaTabela[] {
+    if (tipo === 'receita') {
+      return this.dfcLinhas.filter((l) => l.tipo === 'RECEITA' || l.tipo === 'FATURAMENTO');
+    }
+    return this.dfcLinhas.filter((l) => l.tipo === 'DESPESA');
+  }
+
   get possuiDados(): boolean {
     return this.dfcLinhas.length > 0 && this.meses.length > 0;
   }

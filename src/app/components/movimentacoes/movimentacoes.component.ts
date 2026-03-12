@@ -29,6 +29,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   // Dados
   movimentacoes: MovimentacaoFinanceira[] = [];
   movimentacoesFiltradas: MovimentacaoFinanceira[] = [];
+  /** Lista completa filtrada quando disponível (ex.: cache Omie) — usada para ordenar sobre todos os itens */
+  movimentacoesFiltradasCompleta: MovimentacaoFinanceira[] = [];
   loading: boolean = false;
   error: string | null = null;
   
@@ -55,12 +57,19 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     numeroDaPagina: 1
   };
 
-  // Filtros de UI (categoria, tipo, etc.)
+  // Filtros de UI (categoria, tipo, status, etc.)
   filtrosUI = {
     categoria: '',
     tipo: '' as 'receita' | 'despesa' | '',
+    status: '' as 'pendente' | 'quitado' | '',
     textoPesquisa: ''
   };
+
+  /**
+   * Mensagem de erro de validação (ex.: intervalo de datas inválido).
+   * Diferente de erros de API.
+   */
+  validationError: string | null = null;
 
   // Opções para filtros
   tipos = [
@@ -68,6 +77,19 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     { value: 'receita', label: 'Receita' },
     { value: 'despesa', label: 'Despesa' }
   ];
+  statusOpcoes = [
+    { value: '', label: 'Todos os Status' },
+    { value: 'pendente', label: 'Pendente' },
+    { value: 'quitado', label: 'Quitado' }
+  ];
+
+  // Ordenação da tabela
+  sortBy: '' | 'tipo' | 'data' | 'valor' | 'status' = '';
+  sortOrder: 'asc' | 'desc' = 'asc';
+
+  // Modal de detalhes (por categoria/cliente)
+  mostrarModalDetalhes = false;
+  tipoModalDetalhes: 'receita' | 'despesa' = 'receita';
 
   // Categorias dinâmicas (serão carregadas das movimentações)
   categorias: Array<{ value: string, label: string }> = [
@@ -162,8 +184,20 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
 
   // ===== Carregamento de Dados =====
   carregarMovimentacoes(): void {
+    // Validação básica de intervalo de datas quando ambos estiverem preenchidos
+    if (this.dataInicial && this.dataFinal) {
+      const inicio = this.parseLocalDateStr(this.dataInicial);
+      const fim = this.parseLocalDateStr(this.dataFinal);
+      if (inicio > fim) {
+        this.validationError = 'A data inicial não pode ser maior que a data final.';
+        this.loading = false;
+        return;
+      }
+    }
+
     this.loading = true;
     this.error = null;
+    this.validationError = null;
 
     if (this.fonteDados === 'omie') {
       this.carregarMovimentacoesOmie();
@@ -179,14 +213,18 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     }
 
     // Prepara filtros - agora inclui filtros de UI também
+    const statusPagamento = this.filtrosUI.status === 'quitado' ? 'recebido' as const
+      : this.filtrosUI.status === 'pendente' ? 'pendente' as const : undefined;
     const filtros: FiltrosMovimentacoes = {
       ...this.filtros,
       dataInicio: this.dataInicial || undefined,
       dataTermino: this.dataFinal || undefined,
-      // idsEmpresa removido - usamos X-Empresa-Id header (via CompanyInterceptor)
       categoria: this.filtrosUI.categoria || undefined,
       tipo: (this.filtrosUI.tipo === 'receita' || this.filtrosUI.tipo === 'despesa') ? this.filtrosUI.tipo : undefined,
+      statusPagamento,
       textoPesquisa: this.filtrosUI.textoPesquisa || undefined,
+      orderBy: this.sortBy || undefined,
+      orderDirection: this.sortBy ? this.sortOrder : undefined,
       numeroDaPagina: this.paginaAtual,
       itensPorPagina: this.itensPorPagina
     };
@@ -279,19 +317,27 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       );
     }
 
+    const status = (filtros as FiltrosMovimentacoesOmie & { status?: string }).status;
+    if (status === 'pendente') {
+      resultado = resultado.filter(mov => !(mov as any).DataQuitacao);
+    } else if (status === 'quitado') {
+      resultado = resultado.filter(mov => !!(mov as any).DataQuitacao);
+    }
+
     console.log(`✅ Busca local concluída: ${resultado.length} itens encontrados`);
     return resultado;
   }
 
   private carregarMovimentacoesOmie(): void {
-    const filtros: FiltrosMovimentacoesOmie = {
+    const filtros: FiltrosMovimentacoesOmie & { status?: string } = {
       dataInicio: this.dataInicial || undefined,
       dataFim: this.dataFinal || undefined,
       pagina: this.paginaAtual,
       registrosPorPagina: this.itensPorPagina,
       tipo: (this.filtrosUI.tipo === 'receita' || this.filtrosUI.tipo === 'despesa') ? this.filtrosUI.tipo : undefined,
       categoria: this.filtrosUI.categoria || undefined,
-      textoPesquisa: this.filtrosUI.textoPesquisa || undefined
+      textoPesquisa: this.filtrosUI.textoPesquisa || undefined,
+      status: this.filtrosUI.status || undefined
     };
 
     // ESTRATÉGIA 1: Cache Agressivo (Anti-Block)
@@ -300,11 +346,11 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     const periodoMudou = this.cacheKeyAtual !== this.gerarChaveCache();
     
     // Se período não mudou e temos cache, busca localmente (sem requisição ao servidor)
-    if (temCacheValido && !periodoMudou && (filtros.tipo || filtros.categoria || filtros.textoPesquisa)) {
+    if (temCacheValido && !periodoMudou) {
       console.log('🚀 Modo cache: aplicando filtros localmente sem requisição ao servidor');
       const resultadoLocal = this.buscarLocalMemoizada(filtros);
-      
-      // Aplica paginação local
+      this.movimentacoesFiltradasCompleta = resultadoLocal;
+      // Aplica paginação local (slice será aplicado na exibição após ordenação)
       const inicio = (this.paginaAtual - 1) * this.itensPorPagina;
       const fim = inicio + this.itensPorPagina;
       this.movimentacoes = resultadoLocal.slice(inicio, fim);
@@ -379,7 +425,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
 
   private processarRespostaBomControle(response: any): void {
     console.log('✅ Resposta completa do Bom Controle:', JSON.stringify(response, null, 2));
-    
+    this.movimentacoesFiltradasCompleta = [];
     this.movimentacoes = response.movimentacoes || [];
     console.log(`📦 Itens recebidos: ${this.movimentacoes.length}`);
     
@@ -417,7 +463,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
 
   private processarRespostaOmie(response: MovimentacoesOmieResponse): void {
     console.log('✅ Resposta completa do OMIE:', JSON.stringify(response, null, 2));
-    
+    this.movimentacoesFiltradasCompleta = [];
     // Normaliza movimentações do OMIE para o formato esperado
     const movimentacoesOmie = response.movimentacoes || [];
     const movimentacoesNormalizadas = movimentacoesOmie.map(mov => this.normalizarMovimentacaoOmie(mov));
@@ -650,6 +696,14 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       });
     }
 
+    // Filtro por status (pendente / quitado)
+    if (this.filtrosUI.status) {
+      filtradas = filtradas.filter(mov => {
+        const quitado = !!(mov as any).DataQuitacao;
+        return this.filtrosUI.status === 'quitado' ? quitado : !quitado;
+      });
+    }
+
     // Filtro por texto de pesquisa
     if (this.filtrosUI.textoPesquisa) {
       const texto = this.filtrosUI.textoPesquisa.toLowerCase();
@@ -676,6 +730,17 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     this.carregarMovimentacoes();
   }
 
+  /**
+   * Atalho para aplicar filtro de tipo a partir dos cards de resumo.
+   * Se o tipo já estiver selecionado, limpa o filtro (toggle).
+   */
+  aplicarFiltroTipo(tipo: 'receita' | 'despesa'): void {
+    this.filtrosUI.tipo = this.filtrosUI.tipo === tipo ? '' : tipo;
+    this.paginaAtual = 1;
+    this.aplicarFiltrosUI();
+    this.carregarMovimentacoes();
+  }
+
   onTextoPesquisaChange(texto: string): void {
     // Atualiza o filtro e recarrega (com debounce já aplicado pelo subject)
     this.filtrosUI.textoPesquisa = texto;
@@ -688,11 +753,13 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     this.filtrosUI = {
       categoria: '',
       tipo: '',
+      status: '',
       textoPesquisa: ''
     };
     this.dataInicial = '';
     this.dataFinal = '';
     this.paginaAtual = 1;
+    this.validationError = null;
     this.aplicarFiltrosUI();
     this.carregarMovimentacoes();
   }
@@ -875,6 +942,12 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     return `${y}-${m}-${d}`;
   }
 
+  /** Interpreta YYYY-MM-DD como data local (evita 1 dia a menos por UTC). */
+  private parseLocalDateStr(dateStr: string): Date {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+
   onSelectDate(dateStr: string): void {
     if (!this.tempRangeStart || (this.tempRangeStart && this.tempRangeEnd)) {
       this.tempRangeStart = dateStr;
@@ -960,14 +1033,27 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
           const dia = partes[0].padStart(2, '0');
           const mes = partes[1].padStart(2, '0');
           const ano = partes[2];
-          const date = new Date(`${ano}-${mes}-${dia}`);
+          const date = new Date(Number(ano), Number(mes) - 1, Number(dia));
           if (!isNaN(date.getTime())) {
             return date.toLocaleDateString('pt-BR');
           }
         }
       }
-      
-      // Tenta parsear como ISO (YYYY-MM-DD) ou formato padrão
+
+      // Trata formatos ISO (YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ssZ) sem aplicar fuso horário
+      // para evitar o problema de "voltar 1 dia" em timezones negativas.
+      const isoMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (isoMatch) {
+        const ano = Number(isoMatch[1]);
+        const mes = Number(isoMatch[2]);
+        const dia = Number(isoMatch[3]);
+        const date = new Date(ano, mes - 1, dia);
+        if (!isNaN(date.getTime())) {
+          return date.toLocaleDateString('pt-BR');
+        }
+      }
+
+      // Última tentativa: parse padrão
       const date = new Date(dateStr);
       if (!isNaN(date.getTime())) {
         return date.toLocaleDateString('pt-BR');
@@ -1005,6 +1091,128 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   getTipoLabel(value: string): string {
     const tipo = this.tipos.find(t => t.value === value);
     return tipo ? tipo.label : value;
+  }
+
+  /**
+   * Quantidade de filtros atualmente ativos (tipo, categoria, texto e período).
+   * Usado apenas para feedback visual na tela.
+   */
+  getTotalFiltrosAtivos(): number {
+    let total = 0;
+    if (this.filtrosUI.tipo) total++;
+    if (this.filtrosUI.categoria) total++;
+    if (this.filtrosUI.status) total++;
+    if (this.filtrosUI.textoPesquisa) total++;
+    if (this.dataInicial) total++;
+    if (this.dataFinal) total++;
+    return total;
+  }
+
+  /** Lista completa ordenada (todos os itens quando há lista completa; senão só da página atual). Bom Controle: servidor já retorna ordenado. */
+  get movimentacoesOrdenadas(): MovimentacaoFinanceira[] {
+    if (this.fonteDados === 'bomcontrole') {
+      return [...this.movimentacoesFiltradas];
+    }
+    const list = this.movimentacoesFiltradasCompleta.length > 0
+      ? [...this.movimentacoesFiltradasCompleta]
+      : [...this.movimentacoesFiltradas];
+    if (!this.sortBy) return list;
+    const order = this.sortOrder === 'desc' ? -1 : 1;
+    list.sort((a, b) => {
+      let va: number | string | undefined, vb: number | string | undefined;
+      switch (this.sortBy) {
+        case 'tipo':
+          va = a.Debito ? 'despesa' : 'receita';
+          vb = b.Debito ? 'despesa' : 'receita';
+          break;
+        case 'data':
+          va = a.DataVencimento || '';
+          vb = b.DataVencimento || '';
+          break;
+        case 'valor':
+          va = a.Valor ?? 0;
+          vb = b.Valor ?? 0;
+          break;
+        case 'status':
+          va = (a as any).DataQuitacao ? 'quitado' : 'pendente';
+          vb = (b as any).DataQuitacao ? 'quitado' : 'pendente';
+          break;
+        default:
+          return 0;
+      }
+      if (typeof va === 'string' && typeof vb === 'string') return order * (va.localeCompare(vb));
+      return order * ((va as number) - (vb as number));
+    });
+    return list;
+  }
+
+  /** Fatia da lista ordenada para a página atual (ordena sobre todos os dados quando há lista completa). */
+  get movimentacoesParaExibir(): MovimentacaoFinanceira[] {
+    const ordenadas = this.movimentacoesOrdenadas;
+    if (this.movimentacoesFiltradasCompleta.length > 0) {
+      const inicio = (this.paginaAtual - 1) * this.itensPorPagina;
+      const fim = inicio + this.itensPorPagina;
+      return ordenadas.slice(inicio, fim);
+    }
+    return ordenadas;
+  }
+
+  toggleSort(col: 'tipo' | 'data' | 'valor' | 'status'): void {
+    if (this.sortBy === col) {
+      this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortBy = col;
+      this.sortOrder = 'asc';
+    }
+    if (this.fonteDados === 'bomcontrole') {
+      this.paginaAtual = 1;
+      this.carregarMovimentacoes();
+    }
+  }
+
+  abrirModalDetalhes(tipo: 'receita' | 'despesa'): void {
+    this.tipoModalDetalhes = tipo;
+    this.mostrarModalDetalhes = true;
+  }
+
+  fecharModalDetalhes(): void {
+    this.mostrarModalDetalhes = false;
+  }
+
+  /** Detalhes agregados por categoria para o tipo (receita/despesa) */
+  getDetalhesPorCategoria(tipo: 'receita' | 'despesa'): Array<{ nome: string; total: number; quantidade: number }> {
+    const fonte = this.obterCache()?.data || this.movimentacoes;
+    const isReceita = tipo === 'receita';
+    const filtradas = fonte.filter(mov => (mov.Debito ? !isReceita : isReceita));
+    const map = new Map<string, { total: number; quantidade: number }>();
+    filtradas.forEach(mov => {
+      const nome = mov.NomeCategoriaFinanceira || mov.Valores?.[0]?.NomeCategoriaRoot || '(Sem categoria)';
+      const cur = map.get(nome) || { total: 0, quantidade: 0 };
+      cur.total += mov.Valor ?? 0;
+      cur.quantidade += 1;
+      map.set(nome, cur);
+    });
+    return Array.from(map.entries())
+      .map(([nome, v]) => ({ nome, total: v.total, quantidade: v.quantidade }))
+      .sort((a, b) => b.total - a.total);
+  }
+
+  /** Detalhes agregados por cliente/fornecedor para o tipo (receita/despesa) */
+  getDetalhesPorCliente(tipo: 'receita' | 'despesa'): Array<{ nome: string; total: number; quantidade: number }> {
+    const fonte = this.obterCache()?.data || this.movimentacoes;
+    const isReceita = tipo === 'receita';
+    const filtradas = fonte.filter(mov => (mov.Debito ? !isReceita : isReceita));
+    const map = new Map<string, { total: number; quantidade: number }>();
+    filtradas.forEach(mov => {
+      const nome = (mov as any).NomeClienteFornecedor || (mov as any).NomeFantasiaClienteFornecedor || '(Sem cliente/fornecedor)';
+      const cur = map.get(nome) || { total: 0, quantidade: 0 };
+      cur.total += mov.Valor ?? 0;
+      cur.quantidade += 1;
+      map.set(nome, cur);
+    });
+    return Array.from(map.entries())
+      .map(([nome, v]) => ({ nome, total: v.total, quantidade: v.quantidade }))
+      .sort((a, b) => b.total - a.total);
   }
 
   /**

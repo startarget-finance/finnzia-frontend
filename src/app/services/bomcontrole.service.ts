@@ -148,6 +148,8 @@ export interface FiltrosMovimentacoes {
   categoria?: string;
   tipo?: 'receita' | 'despesa';
   statusPagamento?: 'pendente' | 'recebido';
+  orderBy?: string;       // 'data' | 'valor' | 'status' | 'tipo'
+  orderDirection?: 'asc' | 'desc';
   itensPorPagina?: number;
   numeroDaPagina?: number;
 }
@@ -198,6 +200,12 @@ export class BomControleService {
     }
     if (filtros.statusPagamento) {
       params = params.set('statusPagamento', filtros.statusPagamento);
+    }
+    if (filtros.orderBy) {
+      params = params.set('orderBy', filtros.orderBy);
+    }
+    if (filtros.orderDirection) {
+      params = params.set('orderDirection', filtros.orderDirection);
     }
     if (filtros.textoPesquisa) {
       params = params.set('textoPesquisa', filtros.textoPesquisa);

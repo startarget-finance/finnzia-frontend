@@ -3,7 +3,7 @@ import { CommonModule, Location } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
-import { BomControleService, MovimentacaoFinanceira, FiltrosMovimentacoes } from '../../services/bomcontrole.service';
+import { BomControleService, MovimentacaoFinanceira, FiltrosMovimentacoes, ResumoFinanceiroResponse } from '../../services/bomcontrole.service';
 
 @Component({
   selector: 'app-contas-a-pagar',
@@ -107,8 +107,24 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
       itensPorPagina: this.itensPorPagina
     };
 
-    console.log('🔍 Carregando contas a pagar (Bom Controle) com filtros:', filtros);
-    
+    // Totais dos cards vêm do resumo (mesmo endpoint do Relatório) para bater o valor entre as telas
+    if (this.paginaAtual === 1 && this.dataInicial && this.dataFinal) {
+      this.bomControleService.obterResumoFinanceiro({
+        dataInicio: this.dataInicial,
+        dataTermino: this.dataFinal
+      }).pipe(takeUntil(this.destroy$)).subscribe({
+        next: (resumo: ResumoFinanceiroResponse) => {
+          const pagar = resumo?.contasPagar;
+          if (pagar) {
+            this.totalValor = pagar.totalGeral ?? 0;
+            this.totalPago = pagar.totalLiquidado ?? 0;
+            this.totalPendente = pagar.totalPendente ?? 0;
+          }
+        },
+        error: () => { /* em caso de falha, totais serão preenchidos pelo processarResposta se backend enviar totais */ }
+      });
+    }
+
     this.bomControleService.buscarMovimentacoes(filtros)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -128,7 +144,7 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
     const movimentacoes: MovimentacaoFinanceira[] = response.movimentacoes || [];
     this.contas = movimentacoes.filter(mov => this.isContaPagar(mov));
 
-    // Só atualiza totais em busca nova (página 1) — nunca durante paginação
+    // Só atualiza totais de contagem/paginação em busca nova (página 1). Valor/Pago/Pendente vêm do resumo.
     if (this.paginaAtual === 1) {
       const totalBackend = response.total ?? response.total_de_registros ?? response.totalRegistros ?? null;
       this.totalItens = (totalBackend !== null && totalBackend > 0) ? totalBackend : this.contas.length;
@@ -139,7 +155,7 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
 
       this.totalPaginas = Math.ceil(this.totalItens / this.itensPorPagina);
       this.aplicarFiltrosLocais();
-      // Usa totalDespesas do backend se disponível (soma real de todos os registros)
+      // Fallback: preenche totais com a primeira página; o resumo (quando chegar) sobrescreve para bater com o Relatório
       if (response.totalDespesas != null && response.totalDespesas > 0) {
         this.totalValor = response.totalDespesas;
         this.calcularTotaisParciais();

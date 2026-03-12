@@ -1,16 +1,105 @@
 <div class="min-h-screen bg-gray-50 p-4">
   <div class="max-w-7xl mx-auto">
     <!-- Header do Relatório -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-      <div class="flex items-center gap-4">
-        <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
-          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-          </svg>
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold text-gray-900">Relatório Financeiro</h1>
+            <p class="text-gray-600 text-sm">Análise detalhada dos dados financeiros</p>
+          </div>
         </div>
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900">Relatório Financeiro</h1>
-          <p class="text-gray-600 text-sm">Análise detalhada dos dados financeiros</p>
+      </div>
+
+      <!-- Barra de Filtros -->
+      <div class="border-t border-gray-100 pt-5 mt-5">
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Filtros de período</p>
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-sm text-gray-600">Visão:</span>
+            <button type="button" (click)="aplicarAtalhoPeriodo('mes')"
+              class="px-3 py-2 text-sm font-medium rounded-lg border transition-colors"
+              [class.bg-blue-600]="isAtalhoAtivo('mes')" [class.text-white]="isAtalhoAtivo('mes')"
+              [class.border-blue-600]="isAtalhoAtivo('mes')"
+              [class.bg-white]="!isAtalhoAtivo('mes')" [class.text-gray-700]="!isAtalhoAtivo('mes')"
+              [class.border-gray-200]="!isAtalhoAtivo('mes')" [class.hover:bg-gray-50]="!isAtalhoAtivo('mes')">Este mês</button>
+            <button type="button" (click)="aplicarAtalhoPeriodo('trimestre')"
+              class="px-3 py-2 text-sm font-medium rounded-lg border transition-colors"
+              [class.bg-blue-600]="isAtalhoAtivo('trimestre')" [class.text-white]="isAtalhoAtivo('trimestre')"
+              [class.border-blue-600]="isAtalhoAtivo('trimestre')"
+              [class.bg-white]="!isAtalhoAtivo('trimestre')" [class.text-gray-700]="!isAtalhoAtivo('trimestre')"
+              [class.border-gray-200]="!isAtalhoAtivo('trimestre')" [class.hover:bg-gray-50]="!isAtalhoAtivo('trimestre')">Último trimestre</button>
+            <button type="button" (click)="aplicarAtalhoPeriodo('ano')"
+              class="px-3 py-2 text-sm font-medium rounded-lg border transition-colors"
+              [class.bg-blue-600]="isAtalhoAtivo('ano')" [class.text-white]="isAtalhoAtivo('ano')"
+              [class.border-blue-600]="isAtalhoAtivo('ano')"
+              [class.bg-white]="!isAtalhoAtivo('ano')" [class.text-gray-700]="!isAtalhoAtivo('ano')"
+              [class.border-gray-200]="!isAtalhoAtivo('ano')" [class.hover:bg-gray-50]="!isAtalhoAtivo('ano')">Este ano</button>
+          </div>
+          <span class="text-gray-400 text-sm">ou</span>
+          <div class="relative">
+            <button type="button" (click)="toggleRangePicker()"
+              class="inline-flex items-center gap-2 bg-white border border-gray-200 shadow-sm rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:border-blue-300 transition-colors">
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              <span>{{ getPeriodoRelatorioLabel() }}</span>
+            </button>
+            <!-- Popover Calendário -->
+            <div *ngIf="mostrarRangePicker" class="absolute z-50 mt-2 left-0 bg-white border border-gray-100 rounded-xl shadow-xl p-4 w-[320px]">
+              <div class="flex items-center justify-between mb-4">
+                <button type="button" (click)="prevMonth()" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <span class="text-sm font-bold text-gray-800">{{ getMonthYearLabel() }}</span>
+                <button type="button" (click)="nextMonth()" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+              <div class="grid grid-cols-7 text-[11px] font-semibold text-gray-400 mb-2 uppercase">
+                <div class="text-center">dom</div><div class="text-center">seg</div><div class="text-center">ter</div><div class="text-center">qua</div><div class="text-center">qui</div><div class="text-center">sex</div><div class="text-center">sáb</div>
+              </div>
+              <div class="grid grid-cols-7 gap-0.5">
+                <ng-container *ngFor="let d of calendarDays">
+                  <button type="button" (click)="onSelectDate(d.dateStr)" (mouseenter)="onHoverDate(d.dateStr)" (mouseleave)="onHoverDate(null)"
+                    class="w-8 h-8 text-sm rounded-lg transition-colors"
+                    [class.bg-blue-600]="isStart(d.dateStr) || isEnd(d.dateStr)"
+                    [class.text-white]="isStart(d.dateStr) || isEnd(d.dateStr)"
+                    [class.bg-blue-100]="isBetween(d.dateStr)"
+                    [class.text-gray-400]="!d.inCurrentMonth"
+                    [class.text-gray-800]="d.inCurrentMonth && !isStart(d.dateStr) && !isEnd(d.dateStr) && !isBetween(d.dateStr)">
+                    {{ d.day }}
+                  </button>
+                </ng-container>
+              </div>
+              <div class="flex gap-2 mt-4">
+                <button type="button" (click)="clearRange()" class="flex-1 px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">Limpar</button>
+                <button type="button" (click)="applyRangePicker()" class="flex-1 px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700">Aplicar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 mt-4">Filtros do relatório (gráfico)</p>
+        <div class="flex flex-wrap items-center gap-3">
+          <select [ngModel]="filtros.tipo" (ngModelChange)="filtros.tipo=$event; onFiltroChange()"
+            class="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option *ngFor="let t of tipos" [value]="t.value">{{ t.label }}</option>
+          </select>
+          <select [ngModel]="filtros.categoria" (ngModelChange)="filtros.categoria=$event; onFiltroChange()"
+            class="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option *ngFor="let c of categorias" [value]="c.value">{{ c.label }}</option>
+          </select>
+          <select [ngModel]="filtros.empresa" (ngModelChange)="filtros.empresa=$event; onFiltroChange()"
+            class="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option *ngFor="let e of empresas" [value]="e.value">{{ e.label }}</option>
+          </select>
+          <button type="button" (click)="limparFiltros()" class="px-3 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">Limpar filtros</button>
         </div>
       </div>
     </div>
@@ -32,7 +121,7 @@
                 <p class="text-xs text-gray-500">Disponível agora</p>
               </div>
             </div>
-            <div class="text-lg font-bold text-emerald-600 mb-1">
+            <div class="text-lg font-bold text-emerald-600 mb-1 min-h-[2rem] flex items-center tabular-nums">
               <span *ngIf="loadingContas">Carregando...</span>
               <span *ngIf="!loadingContas">{{ formatCurrency(saldoDisponivelAtual) }}</span>
             </div>
@@ -78,7 +167,7 @@
                 </svg>
               </a>
             </div>
-            <div class="text-lg font-bold text-blue-600 mb-1">
+            <div class="text-lg font-bold text-blue-600 mb-1 min-h-[2rem] flex items-center tabular-nums">
               <span *ngIf="loadingContas">Carregando...</span>
               <span *ngIf="!loadingContas">{{ formatCurrency(contasReceber.totalPendente) }}</span>
             </div>
@@ -112,7 +201,7 @@
                 </svg>
               </a>
             </div>
-            <div class="text-lg font-bold text-red-600 mb-1">
+            <div class="text-lg font-bold text-red-600 mb-1 min-h-[2rem] flex items-center tabular-nums">
               <span *ngIf="loadingContas">Carregando...</span>
               <span *ngIf="!loadingContas">{{ formatCurrency(contasPagar.totalPendente) }}</span>
             </div>
@@ -138,7 +227,11 @@
                 <p class="text-xs text-gray-500">Previsão do período</p>
               </div>
             </div>
-            <div class="text-lg font-bold text-purple-600">{{ formatCurrency(126000) }}</div>
+            <div class="text-lg font-bold text-purple-600 min-h-[2rem] flex items-center tabular-nums">
+              <span *ngIf="projecaoSaldo !== null">{{ formatCurrency(projecaoSaldo) }}</span>
+              <span *ngIf="projecaoSaldo === null && !loadingContas">—</span>
+              <span *ngIf="loadingContas">Carregando...</span>
+            </div>
           </div>
         </div>
 
@@ -146,21 +239,40 @@
       <div class="dashboard-card bg-white rounded-xl shadow-sm p-4">
         <div class="flex items-center justify-between mb-4">
           <div class="flex items-center gap-3">
-            <h3 class="text-lg font-semibold text-gray-900">📈 Evolução Financeira</h3>
-            <div class="inline-flex rounded-lg overflow-hidden border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Evolução Financeira</h3>
+            <div class="inline-flex rounded-lg overflow-hidden border border-gray-200 bg-gray-100/50 p-0.5">
+              <button (click)="setPeriodoGrafico('diario')"
+                      [class.bg-white]="periodoGrafico==='diario'"
+                      [class.shadow-sm]="periodoGrafico==='diario'"
+                      [class.text-gray-900]="periodoGrafico==='diario'"
+                      [class.text-gray-600]="periodoGrafico!=='diario'"
+                      class="px-4 py-2 text-sm font-semibold rounded-md transition-all">Diário</button>
               <button (click)="setPeriodoGrafico('mensal')"
-                      [class.bg-gray-900]="periodoGrafico==='mensal'"
-                      [class.text-white]="periodoGrafico==='mensal'"
-                      class="px-4 py-1 text-sm font-semibold hover:bg-gray-100">MENSAL</button>
-              <button (click)="setPeriodoGrafico('anual')"
-                      [class.bg-gray-900]="periodoGrafico==='anual'"
-                      [class.text-white]="periodoGrafico==='anual'"
-                      class="px-4 py-1 text-sm font-semibold hover:bg-gray-100">ANUAL</button>
+                      [class.bg-white]="periodoGrafico==='mensal'"
+                      [class.shadow-sm]="periodoGrafico==='mensal'"
+                      [class.text-gray-900]="periodoGrafico==='mensal'"
+                      [class.text-gray-600]="periodoGrafico!=='mensal'"
+                      class="px-4 py-2 text-sm font-semibold rounded-md transition-all">Mensal</button>
             </div>
           </div>
         </div>
-        <div class="h-[26.25rem] cursor-pointer" title="Clique em um dia para ver as movimentações">
-          <canvas id="receitaChart"></canvas>
+        <p class="text-xs text-gray-500 mb-2">Clique em um dia ou mês no gráfico para ver as movimentações em um modal.</p>
+        <div *ngIf="errorGrafico" class="mb-4 p-3 rounded-lg bg-rose-50 border border-rose-200 text-sm text-rose-700">
+          {{ errorGrafico }}
+        </div>
+        <div class="relative h-[26.25rem] rounded-lg bg-gray-50">
+          <div class="absolute inset-0 cursor-pointer" title="Clique em um dia para ver as movimentações">
+            <canvas id="receitaChart"></canvas>
+          </div>
+          <div *ngIf="loadingGrafico" class="absolute inset-0 flex items-center justify-center bg-white/80 rounded-lg z-10">
+            <div class="text-center text-gray-600">
+              <svg class="animate-spin h-10 w-10 mx-auto mb-2 text-blue-600" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Carregando dados do gráfico...
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -193,6 +305,91 @@
           </svg>
           Categoria: {{ getCategoriaLabel(filtros.categoria) }}
         </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Movimentações do dia -->
+  <div *ngIf="dataSelecionada" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+       (click)="limparFiltroDia()" role="dialog" aria-modal="true" aria-labelledby="modal-movimentacoes-title">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden"
+         (click)="$event.stopPropagation()">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50/80">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <div>
+            <h2 id="modal-movimentacoes-title" class="text-lg font-semibold text-gray-900">Movimentações do dia</h2>
+            <p class="text-sm text-gray-500">{{ getDataSelecionadaLabel() }}</p>
+          </div>
+        </div>
+        <button type="button" (click)="limparFiltroDia()"
+                class="p-2 rounded-lg text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label="Fechar">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <!-- Body -->
+      <div class="flex-1 overflow-hidden flex flex-col min-h-0">
+        <div *ngIf="movimentacoesFiltradas.length === 0" class="flex-1 flex items-center justify-center p-12 text-gray-500">
+          <div class="text-center">
+            <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            <p class="font-medium">Nenhuma movimentação neste dia.</p>
+          </div>
+        </div>
+        <div *ngIf="movimentacoesFiltradas.length > 0" class="flex-1 overflow-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-100 sticky top-0 z-10">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tipo</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Vencimento</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Descrição</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Cliente / Fornecedor</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Categoria</th>
+                <th class="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Valor</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 bg-white">
+              <tr *ngFor="let mov of movimentacoesFiltradas" class="hover:bg-gray-50 transition-colors">
+                <td class="px-4 py-3">
+                  <span [class.text-emerald-600]="!mov.Debito" [class.text-rose-600]="mov.Debito" class="font-medium">
+                    {{ getTipoMovimentacaoLabel(mov) }}
+                  </span>
+                </td>
+                <td class="px-4 py-3 text-gray-700 tabular-nums">{{ mov.DataVencimento | date:'dd/MM/yyyy' }}</td>
+                <td class="px-4 py-3 text-gray-700 max-w-[220px] truncate" [title]="mov.Observacao || mov.Nome">{{ mov.Observacao || mov.Nome || '—' }}</td>
+                <td class="px-4 py-3 text-gray-700">{{ mov.NomeClienteFornecedor || mov.NomeFantasiaClienteFornecedor || mov.RazaoSocialClienteFornecedor || '—' }}</td>
+                <td class="px-4 py-3 text-gray-600">{{ mov.NomeCategoriaFinanceira || '—' }}</td>
+                <td class="px-4 py-3 text-right tabular-nums font-semibold" [class.text-rose-600]="mov.Debito" [class.text-emerald-600]="!mov.Debito">
+                  {{ formatCurrency(mov.Valor) }}
+                </td>
+                <td class="px-4 py-3 text-center">
+                  <span [class.bg-amber-100]="!mov.DataQuitacao" [class.text-amber-800]="!mov.DataQuitacao" [class.bg-emerald-100]="mov.DataQuitacao" [class.text-emerald-800]="mov.DataQuitacao" class="px-2.5 py-1 rounded-full text-xs font-medium">
+                    {{ getStatusMovimentacao(mov) }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- Footer com totais -->
+        <div *ngIf="movimentacoesFiltradas.length > 0" class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between text-sm">
+          <span class="text-gray-600">{{ movimentacoesFiltradas.length }} movimentação(ões)</span>
+          <div class="flex gap-6">
+            <span class="text-emerald-600 font-semibold">Receitas: {{ formatCurrency(getTotalReceitasDia()) }}</span>
+            <span class="text-rose-600 font-semibold">Despesas: {{ formatCurrency(getTotalDespesasDia()) }}</span>
+            <span class="text-gray-900 font-semibold">Saldo: {{ formatCurrency(getTotalReceitasDia() - getTotalDespesasDia()) }}</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>

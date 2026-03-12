@@ -1,4 +1,4 @@
-﻿<div class="min-h-screen bg-[#F8FAFC] pb-12 font-sans">
+<div class="min-h-screen bg-[#F8FAFC] pb-12 font-sans">
   <!-- Top Navigation / Header Area -->
   <div class="bg-white border-b border-gray-200 px-6 py-5 sm:px-8 lg:px-10">
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -53,8 +53,14 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         
         <!-- Receitas -->
-        <div class="bg-emerald-50 rounded-2xl border border-emerald-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between group">
-          <div class="flex items-center justify-between mb-4">
+        <div class="relative text-left bg-emerald-50 rounded-2xl border border-emerald-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between group"
+             [class.ring-2]="filtrosUI.tipo === 'receita'"
+             [class.ring-emerald-400]="filtrosUI.tipo === 'receita'">
+          <button type="button"
+                  (click)="aplicarFiltroTipo('receita')"
+                  class="absolute inset-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  aria-label="Filtrar por receitas"></button>
+          <div class="flex items-center justify-between mb-4 relative z-10">
             <p class="text-sm font-medium text-emerald-700">Receitas</p>
             <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform duration-200">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,15 +68,31 @@
               </svg>
             </div>
           </div>
-          <div class="min-w-0">
+          <div class="min-w-0 relative z-10">
             <p class="text-2xl lg:text-3xl font-bold text-emerald-950 tracking-tight truncate">{{ formatarMoeda(totalReceitasGeral) }}</p>
-            <p class="text-xs text-emerald-600/80 mt-2 font-medium truncate">No período selecionado</p>
+            <div class="mt-2 min-h-[2.75rem] flex flex-col justify-end">
+              <p class="text-xs text-emerald-600/80 font-medium truncate">
+                No período selecionado
+                <span *ngIf="filtrosUI.tipo === 'receita'" class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/70 text-[10px] font-semibold uppercase tracking-wide border border-emerald-200">Filtro ativo</span>
+              </p>
+              <button type="button"
+                      (click)="abrirModalDetalhes('receita'); $event.stopPropagation()"
+                      class="mt-2 text-xs font-medium text-emerald-600 hover:text-emerald-800 underline focus:outline-none relative z-20">
+                Ver detalhes
+              </button>
+            </div>
           </div>
         </div>
 
         <!-- Despesas -->
-        <div class="bg-rose-50 rounded-2xl border border-rose-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between group">
-          <div class="flex items-center justify-between mb-4">
+        <div class="relative text-left bg-rose-50 rounded-2xl border border-rose-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between group"
+             [class.ring-2]="filtrosUI.tipo === 'despesa'"
+             [class.ring-rose-400]="filtrosUI.tipo === 'despesa'">
+          <button type="button"
+                  (click)="aplicarFiltroTipo('despesa')"
+                  class="absolute inset-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-rose-400"
+                  aria-label="Filtrar por despesas"></button>
+          <div class="flex items-center justify-between mb-4 relative z-10">
             <p class="text-sm font-medium text-rose-700">Despesas</p>
             <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 group-hover:scale-110 transition-transform duration-200">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,18 +100,31 @@
               </svg>
             </div>
           </div>
-          <div class="min-w-0">
+          <div class="min-w-0 relative z-10">
             <p class="text-2xl lg:text-3xl font-bold text-rose-950 tracking-tight truncate">{{ formatarMoeda(totalDespesasGeral) }}</p>
-            <p class="text-xs text-rose-600/80 mt-2 font-medium truncate">No período selecionado</p>
+            <div class="mt-2 min-h-[2.75rem] flex flex-col justify-end">
+              <p class="text-xs text-rose-600/80 font-medium truncate">
+                No período selecionado
+                <span *ngIf="filtrosUI.tipo === 'despesa'" class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/70 text-[10px] font-semibold uppercase tracking-wide border border-rose-200">Filtro ativo</span>
+              </p>
+              <button type="button"
+                      (click)="abrirModalDetalhes('despesa'); $event.stopPropagation()"
+                      class="mt-2 text-xs font-medium text-rose-600 hover:text-rose-800 underline focus:outline-none relative z-20">
+                Ver detalhes
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- Saldo Líquido -->
-        <div class="rounded-2xl border p-6 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between group"
-             [class.bg-emerald-50]="saldoLiquidoGeral >= 0"
-             [class.border-emerald-100]="saldoLiquidoGeral >= 0"
-             [class.bg-rose-50]="saldoLiquidoGeral < 0"
-             [class.border-rose-100]="saldoLiquidoGeral < 0">
+        <!-- Saldo Líquido (clicável = limpar filtros) -->
+        <button type="button"
+                (click)="limparFiltros()"
+                class="text-left rounded-2xl border p-6 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between group focus:outline-none focus:ring-2 focus:ring-gray-400"
+                [class.bg-emerald-50]="saldoLiquidoGeral >= 0"
+                [class.border-emerald-100]="saldoLiquidoGeral >= 0"
+                [class.bg-rose-50]="saldoLiquidoGeral < 0"
+                [class.border-rose-100]="saldoLiquidoGeral < 0"
+                title="Clique para limpar filtros">
           <div class="flex items-center justify-between mb-4">
             <p class="text-sm font-medium"
                [class.text-emerald-700]="saldoLiquidoGeral >= 0"
@@ -108,11 +143,13 @@
                [class.text-rose-950]="saldoLiquidoGeral < 0">
               {{ formatarMoeda(saldoLiquidoGeral) }}
             </p>
-            <p class="text-xs mt-2 font-medium truncate"
-               [class.text-emerald-600]="saldoLiquidoGeral >= 0"
-               [class.text-rose-600]="saldoLiquidoGeral < 0">Receitas - Despesas</p>
+            <div class="mt-2 min-h-[2.75rem] flex flex-col justify-end">
+              <p class="text-xs font-medium truncate"
+                 [class.text-emerald-600]="saldoLiquidoGeral >= 0"
+                 [class.text-rose-600]="saldoLiquidoGeral < 0">Receitas - Despesas · Clique para limpar filtros</p>
+            </div>
           </div>
-        </div>
+        </button>
 
         <!-- Movimentações -->
         <div class="bg-blue-50 rounded-2xl border border-blue-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between group">
@@ -126,7 +163,9 @@
           </div>
           <div class="min-w-0">
             <p class="text-2xl lg:text-3xl font-bold text-blue-950 tracking-tight truncate">{{ totalItens }}</p>
-            <p class="text-xs text-blue-600/80 mt-2 font-medium truncate">Registros no período</p>
+            <div class="mt-2 min-h-[2.75rem] flex flex-col justify-end">
+              <p class="text-xs text-blue-600/80 font-medium truncate">Registros no período</p>
+            </div>
           </div>
         </div>
       </div>
@@ -140,13 +179,17 @@
             </svg>
             Filtros de Busca
           </h3>
+          <div *ngIf="getTotalFiltrosAtivos() > 0" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium border border-blue-100">
+            <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+            {{ getTotalFiltrosAtivos() }} filtro{{ getTotalFiltrosAtivos() > 1 ? 's' : '' }} ativo{{ getTotalFiltrosAtivos() > 1 ? 's' : '' }}
+          </div>
           <button type="button" (click)="limparFiltros()" class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             Limpar filtros
           </button>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           
           <!-- Período -->
           <div class="relative">
@@ -246,6 +289,21 @@
             </div>
           </div>
 
+          <!-- Status (Pendente / Quitado) -->
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1.5">Status</label>
+            <div class="relative">
+              <select [(ngModel)]="filtrosUI.status" 
+                      (ngModelChange)="onFiltroChange()"
+                      class="w-full appearance-none bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm text-gray-700 font-medium hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer shadow-sm">
+                <option *ngFor="let opt of statusOpcoes" [value]="opt.value">{{ opt.label }}</option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-gray-400">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </div>
+            </div>
+          </div>
+
           <!-- Pesquisa -->
           <div>
             <label class="block text-xs font-medium text-gray-500 mb-1.5">Pesquisar</label>
@@ -266,23 +324,39 @@
         </div>
       </div>
 
+      <!-- Validation Error (ex.: intervalo de datas inválido) -->
+      <div *ngIf="validationError && !loading" class="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-start gap-2">
+        <svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M12 5a7 7 0 11-4.95 2.05A7 7 0 0112 5z"/>
+        </svg>
+        <p>{{ validationError }}</p>
+      </div>
+
       <!-- Tabela de Movimentações -->
       <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
         <div class="w-full">
           <table class="w-full divide-y divide-gray-200 table-fixed">
             <thead class="bg-gray-50/50">
               <tr>
-                <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">Tipo</th>
-                <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28">Data Venc.</th>
-                <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Descrição</th>
-                <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-40">Cliente/Forn.</th>
-                <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32">Categoria</th>
-                <th scope="col" class="px-3 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-28">Valor</th>
-                <th scope="col" class="px-3 py-3.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-24">Status</th>
+                <th scope="col" (click)="toggleSort('tipo')" class="px-3 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24 cursor-pointer select-none hover:bg-gray-100 rounded-tl-lg align-middle">
+                  <span class="inline-flex items-center gap-1">Tipo<span *ngIf="sortBy === 'tipo'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span></span>
+                </th>
+                <th scope="col" (click)="toggleSort('data')" class="px-3 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28 cursor-pointer select-none hover:bg-gray-100 align-middle">
+                  <span class="inline-flex items-center gap-1">Data Venc.<span *ngIf="sortBy === 'data'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span></span>
+                </th>
+                <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider align-middle">Descrição</th>
+                <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-40 align-middle">Cliente/Forn.</th>
+                <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32 align-middle">Categoria</th>
+                <th scope="col" (click)="toggleSort('valor')" class="px-3 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-28 cursor-pointer select-none hover:bg-gray-100 align-middle">
+                  <span class="inline-flex items-center gap-1">Valor<span *ngIf="sortBy === 'valor'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span></span>
+                </th>
+                <th scope="col" (click)="toggleSort('status')" class="px-3 py-3.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-24 cursor-pointer select-none hover:bg-gray-100 rounded-tr-lg align-middle">
+                  <span class="inline-flex items-center gap-1">Status<span *ngIf="sortBy === 'status'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span></span>
+                </th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 bg-white">
-              <tr *ngFor="let mov of movimentacoesFiltradas" class="hover:bg-gray-50/80 transition-colors duration-150 group cursor-pointer">
+              <tr *ngFor="let mov of movimentacoesParaExibir" class="hover:bg-gray-50/80 transition-colors duration-150 group cursor-pointer">
                 
                 <!-- Tipo -->
                 <td class="px-3 py-5 whitespace-nowrap align-top">
@@ -341,7 +415,7 @@
               </tr>
 
               <!-- Empty State -->
-              <tr *ngIf="movimentacoesFiltradas.length === 0">
+              <tr *ngIf="movimentacoesParaExibir.length === 0">
                 <td colspan="7" class="px-6 py-20 text-center">
                   <div class="flex flex-col items-center justify-center">
                     <div class="w-12 h-12 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-center mb-4">
@@ -359,6 +433,42 @@
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Modal Detalhes por Categoria / Cliente -->
+      <div *ngIf="mostrarModalDetalhes" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" (click)="fecharModalDetalhes()">
+        <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col" (click)="$event.stopPropagation()">
+          <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900">
+              Detalhes {{ tipoModalDetalhes === 'receita' ? 'Receitas' : 'Despesas' }} — por categoria e cliente
+            </h3>
+            <button type="button" (click)="fecharModalDetalhes()" class="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div class="px-6 py-4 overflow-y-auto flex-1 space-y-6">
+            <div>
+              <h4 class="text-sm font-semibold text-gray-700 mb-2">Por categoria</h4>
+              <ul class="space-y-1.5 text-sm">
+                <li *ngFor="let item of getDetalhesPorCategoria(tipoModalDetalhes)" class="flex justify-between items-center py-1.5 border-b border-gray-50">
+                  <span class="text-gray-900 font-medium truncate mr-2">{{ item.nome }}</span>
+                  <span class="shrink-0" [class.text-rose-600]="tipoModalDetalhes === 'despesa'" [class.text-emerald-600]="tipoModalDetalhes === 'receita'">{{ formatarMoeda(item.total) }} ({{ item.quantidade }})</span>
+                </li>
+                <li *ngIf="getDetalhesPorCategoria(tipoModalDetalhes).length === 0" class="text-gray-500 py-2">Nenhum dado no período.</li>
+              </ul>
+            </div>
+            <div>
+              <h4 class="text-sm font-semibold text-gray-700 mb-2">Por cliente / fornecedor</h4>
+              <ul class="space-y-1.5 text-sm">
+                <li *ngFor="let item of getDetalhesPorCliente(tipoModalDetalhes)" class="flex justify-between items-center py-1.5 border-b border-gray-50">
+                  <span class="text-gray-900 font-medium truncate mr-2">{{ item.nome }}</span>
+                  <span class="shrink-0" [class.text-rose-600]="tipoModalDetalhes === 'despesa'" [class.text-emerald-600]="tipoModalDetalhes === 'receita'">{{ formatarMoeda(item.total) }} ({{ item.quantidade }})</span>
+                </li>
+                <li *ngIf="getDetalhesPorCliente(tipoModalDetalhes).length === 0" class="text-gray-500 py-2">Nenhum dado no período.</li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
 

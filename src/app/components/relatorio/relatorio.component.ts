@@ -1,12 +1,14 @@
-import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Chart, registerables } from 'chart.js';
 import { Subject, takeUntil } from 'rxjs';
-import { BomControleService, FiltrosMovimentacoes, ResumoFinanceiroResponse } from '../../services/bomcontrole.service';
+import { BomControleService, FiltrosMovimentacoes, ResumoFinanceiroResponse, MovimentacaoFinanceira } from '../../services/bomcontrole.service';
 
 Chart.register(...registerables);
+
+const PAGE_SIZE = 500;
 
 @Component({
   selector: 'app-relatorio',
@@ -17,7 +19,7 @@ Chart.register(...registerables);
 })
 export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
   // Propriedades do gráfico
-  periodoGrafico: 'mensal' | 'anual' = 'mensal';
+  periodoGrafico: 'diario' | 'mensal' = 'diario';
   receitaChart: Chart | null = null;
 
   // UI: Date Range Picker (igual ao dashboard)
@@ -31,6 +33,8 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
   // Datas selecionadas para exibir no botão
   dataInicial: string = '';
   dataFinal: string = '';
+  /** Atalho de período ativo: mes | trimestre | ano (vazio se período customizado) */
+  atalhoPeriodoAtivo: 'mes' | 'trimestre' | 'ano' | '' = 'mes';
 
   // Dados reais de contas a receber e pagar
   contasReceber: {
@@ -66,102 +70,31 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
   saldoDisponivelAnterior: number | null = null;
   variacaoSaldoPercentual: number | null = null;
   ultimaAtualizacaoSaldo: Date | null = null;
+  /** Projeção de saldo do período (vindo do resumo financeiro) */
+  projecaoSaldo: number | null = null;
 
   private destroy$ = new Subject<void>();
 
-  // Dados mockados para o gráfico
-  dadosFiltrados = {
-    receitas: 45000,
-    despesas: 32000,
-    margemLiquida: 28.9,
-    lucro: 13000,
-    indicadores: {
-      crescimentoReceita: 12.5
-    }
-  };
-
-  // Dados do gráfico
+  // Dados do gráfico (preenchidos com dados reais)
   chartData = {
-    labels: Array.from({ length: 31 }, (_, i) => (i + 1).toString()),
-    receita: [5000, 3000, 4000, 0, 0, 0, 0, 6000, 7000, 0, 0, 0, 0, 0, 0, 8000, 0, 0, 0, 0, 0, 0, 9000, 10000, 0, 0, 0, 0, 0, 0, 5000],
-    despesa: [0, 0, 0, 0, 0, 15000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 12000, 0, 0, 0, 0, 0, 8000, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    renegociado: [0, 0, 0, 2000, 0, 0, 0, 0, 0, 1500, 0, 0, 0, 0, 0, 0, 0, 3000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1000],
-    saldoProjetado: [5000, 8000, 12000, 10000, 10000, -5000, -5000, 1000, 8000, 8000, 8000, 8000, 8000, 8000, 8000, 4000, 4000, 4000, 4000, 4000, 4000, -4000, 5000, 15000, 15000, 15000, 15000, 15000, 15000, 15000, 20000]
+    labels: [] as string[],
+    dates: [] as string[], // YYYY-MM-DD para cada índice (para clique)
+    receita: [] as number[],
+    despesa: [] as number[],
+    renegociado: [] as number[],
+    saldoProjetado: [] as number[]
   };
 
-  // Dados mockados das movimentações por dia
-  movimentacoesPorDia: { [key: number]: any[] } = {
-    1: [
-      { tipo: 'RECEITA', cliente: 'Cliente A', descricao: 'Pagamento DE Cliente A', categoria: 'Vendas', valor: 5000, dia: 1, empresa: 'empresa1', conta: 'conta1' }
-    ],
-    2: [
-      { tipo: 'RECEITA', cliente: 'Cliente B', descricao: 'Pagamento DE Cliente B', categoria: 'Vendas', valor: 3000, dia: 2, empresa: 'empresa2', conta: 'conta2' }
-    ],
-    3: [
-      { tipo: 'RECEITA', cliente: 'Cliente C', descricao: 'Pagamento DE Cliente C', categoria: 'Vendas', valor: 4000, dia: 3, empresa: 'empresa1', conta: 'conta1' }
-    ],
-    4: [
-      { tipo: 'RENEGOCIAÇÃO', cliente: 'Cliente D', descricao: 'Renegociação DE Cliente D', categoria: 'Vendas', valor: 2000, dia: 4, empresa: 'empresa3', conta: 'conta3' }
-    ],
-    6: [
-      { tipo: 'DESPESA', cliente: 'Fornecedor X', descricao: 'Pagamento DO(A) Fornecedor X', categoria: 'Operacional', valor: 15000, dia: 6, empresa: 'empresa1', conta: 'conta1' }
-    ],
-    8: [
-      { tipo: 'RECEITA', cliente: 'Cliente E', descricao: 'Pagamento DE Cliente E', categoria: 'Vendas', valor: 6000, dia: 8, empresa: 'empresa2', conta: 'conta2' }
-    ],
-    9: [
-      { tipo: 'RECEITA', cliente: 'Cliente F', descricao: 'Pagamento DE Cliente F', categoria: 'Vendas', valor: 7000, dia: 9, empresa: 'empresa1', conta: 'conta1' }
-    ],
-    10: [
-      { tipo: 'RENEGOCIAÇÃO', cliente: 'Cliente G', descricao: 'Renegociação DE Cliente G', categoria: 'Vendas', valor: 1500, dia: 10, empresa: 'empresa2', conta: 'conta2' }
-    ],
-    15: [
-      { tipo: 'DESPESA', cliente: 'Fornecedor Y', descricao: 'Pagamento DO(A) Fornecedor Y', categoria: 'Operacional', valor: 12000, dia: 15, empresa: 'empresa1', conta: 'conta1' },
-      { tipo: 'RECEITA', cliente: 'Cliente H', descricao: 'Pagamento DE Cliente H', categoria: 'Vendas', valor: 8000, dia: 15, empresa: 'empresa3', conta: 'conta3' }
-    ],
-    18: [
-      { tipo: 'RENEGOCIAÇÃO', cliente: 'Cliente I', descricao: 'Renegociação DE Cliente I', categoria: 'Vendas', valor: 3000, dia: 18, empresa: 'empresa1', conta: 'conta1' }
-    ],
-    21: [
-      { tipo: 'DESPESA', cliente: 'Fornecedor Z', descricao: 'Pagamento DO(A) Fornecedor Z', categoria: 'Operacional', valor: 8000, dia: 21, empresa: 'empresa2', conta: 'conta2' }
-    ],
-    23: [
-      { tipo: 'RECEITA', cliente: 'Cliente J', descricao: 'Pagamento DE Cliente J', categoria: 'Vendas', valor: 9000, dia: 23, empresa: 'empresa3', conta: 'conta3' }
-    ],
-    24: [
-      { tipo: 'RECEITA', cliente: 'Cliente K', descricao: 'Pagamento DE Cliente K', categoria: 'Vendas', valor: 10000, dia: 24, empresa: 'empresa1', conta: 'conta1' }
-    ],
-    31: [
-      { tipo: 'RECEITA', cliente: 'Cliente L', descricao: 'Pagamento DE Cliente L', categoria: 'Vendas', valor: 5000, dia: 31, empresa: 'empresa2', conta: 'conta2' }
-    ],
-    // Dias sem movimentações para testar a mensagem
-    5: [],
-    7: [],
-    11: [],
-    12: [],
-    13: [],
-    14: [],
-    16: [],
-    17: [],
-    19: [],
-    20: [],
-    22: [],
-    25: [],
-    26: [],
-    27: [],
-    28: [],
-    29: [],
-    30: []
-  };
+  // Movimentações reais agrupadas por data (YYYY-MM-DD)
+  movimentacoesPorDia: Record<string, MovimentacaoFinanceira[]> = {};
 
-  // Estado para controle de filtro por dia
-  diaSelecionado: number | null = null;
-  movimentacoesFiltradas: any[] = [];
+  loadingGrafico = false;
+  errorGrafico: string | null = null;
 
-  // Paginação
-  paginaAtual: number = 1;
-  itensPorPagina: number = 10;
-  totalItens: number = 0;
+  // Dia clicado no gráfico (data YYYY-MM-DD) e lista para exibir abaixo
+  dataSelecionada: string | null = null;
+  movimentacoesFiltradas: MovimentacaoFinanceira[] = [];
+
 
   // Filtros funcionais
   filtros = {
@@ -213,13 +146,12 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit() {
     this.visibleMonth = new Date();
     this.buildCalendar();
-    
-    // Sem período padrão: carregarDadosContas usa 2000-01-01 a 2099-12-31 (todos os pendentes)
-    this.carregarDadosContas();
+    this.aplicarAtalhoPeriodo('mes');
   }
 
   ngAfterViewInit() {
     this.initChart();
+    this.carregarDadosGrafico();
   }
 
   ngOnDestroy() {
@@ -304,66 +236,282 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.ultimaAtualizacaoSaldo = resumo?.atualizadoEm ? new Date(resumo.atualizadoEm) : new Date();
+    this.projecaoSaldo = resumo?.saldoProjetado ?? null;
     this.loadingContas = false;
+  }
+
+  /**
+   * Carrega movimentações do período e agrega por dia para o gráfico.
+   */
+  carregarDadosGrafico(): void {
+    if (!this.dataInicial || !this.dataFinal) return;
+    this.loadingGrafico = true;
+    this.errorGrafico = null;
+    this.dataSelecionada = null;
+    this.movimentacoesFiltradas = [];
+
+    const allMovs: MovimentacaoFinanceira[] = [];
+    let page = 1;
+
+    const fetchPage = (): void => {
+      const filtros: FiltrosMovimentacoes = {
+        dataInicio: this.dataInicial,
+        dataTermino: this.dataFinal,
+        tipoData: 'DataVencimento',
+        itensPorPagina: PAGE_SIZE,
+        numeroDaPagina: page
+      };
+      this.bomControleService.buscarMovimentacoes(filtros)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (res) => {
+            const list = res.movimentacoes || [];
+            allMovs.push(...list);
+            const total = res.paginacao?.totalItens ?? res.total ?? list.length;
+            if (allMovs.length < total && list.length === PAGE_SIZE) {
+              page++;
+              fetchPage();
+            } else {
+              this.agregarDadosPorDia(allMovs);
+              this.loadingGrafico = false;
+            }
+          },
+          error: (err) => {
+            this.errorGrafico = err?.error?.mensagem || 'Erro ao carregar dados do gráfico';
+            this.loadingGrafico = false;
+            this.preencherChartDataVazio();
+          }
+        });
+    };
+    fetchPage();
+  }
+
+  private preencherChartDataVazio(): void {
+    const inicio = this.parseLocalDateStr(this.dataInicial);
+    const fim = this.parseLocalDateStr(this.dataFinal);
+    const labels: string[] = [];
+    const dates: string[] = [];
+    const receita: number[] = [];
+    const despesa: number[] = [];
+    const renegociado: number[] = [];
+    const saldoProjetado: number[] = [];
+    let saldoAcum = 0;
+    for (let d = new Date(inicio); d <= fim; d.setDate(d.getDate() + 1)) {
+      const dateStr = this.dateToStr(new Date(d));
+      dates.push(dateStr);
+      labels.push(this.periodoGrafico === 'mensal' ? d.toLocaleDateString('pt-BR', { month: 'short' }) : String(d.getDate()));
+      receita.push(0);
+      despesa.push(0);
+      renegociado.push(0);
+      saldoProjetado.push(saldoAcum);
+    }
+    this.chartData = { labels, dates, receita, despesa, renegociado, saldoProjetado };
+    this.movimentacoesPorDia = {};
+    this.updateChartData();
+  }
+
+  private agregarDadosPorDia(movs: MovimentacaoFinanceira[]): void {
+    const inicio = this.parseLocalDateStr(this.dataInicial);
+    const fim = this.parseLocalDateStr(this.dataFinal);
+    const isAnual = this.periodoGrafico === 'mensal';
+
+    if (isAnual) {
+      const porMes: Record<string, { receita: number; despesa: number; renegociado: number; movs: MovimentacaoFinanceira[] }> = {};
+      const iter = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
+      while (iter <= fim) {
+        const key = this.dateToStr(new Date(iter));
+        porMes[key] = { receita: 0, despesa: 0, renegociado: 0, movs: [] };
+        iter.setMonth(iter.getMonth() + 1);
+      }
+      for (const m of movs) {
+        const dateStr = (m.DataVencimento || '').toString().split('T')[0];
+        if (!dateStr) continue;
+        const [y, mo] = dateStr.split('-');
+        const monthKey = `${y}-${mo}-01`;
+        if (!porMes[monthKey]) continue;
+        const valor = m.Valor ?? 0;
+        const isDebito = m.Debito === true;
+        const nomeTipo = (m.NomeTipoMovimentacao || '').toLowerCase();
+        const isReneg = nomeTipo.includes('renegoci');
+        if (isReneg) porMes[monthKey].renegociado += valor;
+        else if (isDebito) porMes[monthKey].despesa += valor;
+        else porMes[monthKey].receita += valor;
+        porMes[monthKey].movs.push(m);
+      }
+      const labels: string[] = [];
+      const dates: string[] = [];
+      const receita: number[] = [];
+      const despesa: number[] = [];
+      const renegociado: number[] = [];
+      const saldoProjetado: number[] = [];
+      let saldoAcum = 0;
+      const iter2 = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
+      while (iter2 <= fim) {
+        const monthKey = this.dateToStr(new Date(iter2));
+        const bloco = porMes[monthKey] || { receita: 0, despesa: 0, renegociado: 0, movs: [] };
+        saldoAcum += bloco.receita + bloco.renegociado - bloco.despesa;
+        dates.push(monthKey);
+        labels.push(iter2.toLocaleDateString('pt-BR', { month: 'short' }));
+        receita.push(bloco.receita);
+        despesa.push(bloco.despesa);
+        renegociado.push(bloco.renegociado);
+        saldoProjetado.push(saldoAcum);
+        this.movimentacoesPorDia[monthKey] = bloco.movs;
+        iter2.setMonth(iter2.getMonth() + 1);
+      }
+      this.chartData = { labels, dates, receita, despesa, renegociado, saldoProjetado };
+    } else {
+      const porDia: Record<string, { receita: number; despesa: number; renegociado: number; movs: MovimentacaoFinanceira[] }> = {};
+      const iter = new Date(inicio);
+      while (iter <= fim) {
+        const dateStr = this.dateToStr(new Date(iter));
+        porDia[dateStr] = { receita: 0, despesa: 0, renegociado: 0, movs: [] };
+        iter.setDate(iter.getDate() + 1);
+      }
+      for (const m of movs) {
+        const dateStr = (m.DataVencimento || '').toString().split('T')[0];
+        if (!dateStr || !porDia[dateStr]) continue;
+        const valor = m.Valor ?? 0;
+        const isDebito = m.Debito === true;
+        const nomeTipo = (m.NomeTipoMovimentacao || '').toLowerCase();
+        const isReneg = nomeTipo.includes('renegoci');
+        if (isReneg) porDia[dateStr].renegociado += valor;
+        else if (isDebito) porDia[dateStr].despesa += valor;
+        else porDia[dateStr].receita += valor;
+        porDia[dateStr].movs.push(m);
+      }
+      const labels: string[] = [];
+      const dates: string[] = [];
+      const receita: number[] = [];
+      const despesa: number[] = [];
+      const renegociado: number[] = [];
+      const saldoProjetado: number[] = [];
+      let saldoAcum = 0;
+      const iter2 = new Date(inicio);
+      while (iter2 <= fim) {
+        const dateStr = this.dateToStr(new Date(iter2));
+        const bloco = porDia[dateStr] || { receita: 0, despesa: 0, renegociado: 0, movs: [] };
+        saldoAcum += bloco.receita + bloco.renegociado - bloco.despesa;
+        dates.push(dateStr);
+        labels.push(String(iter2.getDate()));
+        receita.push(bloco.receita);
+        despesa.push(bloco.despesa);
+        renegociado.push(bloco.renegociado);
+        saldoProjetado.push(saldoAcum);
+        this.movimentacoesPorDia[dateStr] = bloco.movs;
+        iter2.setDate(iter2.getDate() + 1);
+      }
+      this.chartData = { labels, dates, receita, despesa, renegociado, saldoProjetado };
+    }
+    this.updateChartData();
+  }
+
+  private updateChartData(): void {
+    if (!this.receitaChart) return;
+    this.receitaChart.data.labels = this.chartData.labels;
+    (this.receitaChart.data.datasets[0] as any).data = this.chartData.receita;
+    // Despesa em valor negativo para as barras irem para baixo (mais intuitivo)
+    (this.receitaChart.data.datasets[1] as any).data = this.chartData.despesa.map(v => -Math.abs(v));
+    (this.receitaChart.data.datasets[2] as any).data = this.chartData.renegociado;
+    (this.receitaChart.data.datasets[3] as any).data = this.chartData.saldoProjetado;
+    const xScale = this.receitaChart.scales['x'];
+    const xOpts = xScale?.options as { title?: { text: string } } | undefined;
+    if (xOpts?.title) {
+      xOpts.title.text = this.periodoGrafico === 'mensal' ? 'Mês' : 'Dia';
+    }
+    this.receitaChart.update('none');
   }
 
   initChart() {
     const ctx = document.getElementById('receitaChart') as HTMLCanvasElement;
     if (!ctx) return;
 
+    const emptyArr = this.chartData.labels?.length ? this.chartData.receita : [];
+    const despesaParaChart = this.chartData.despesa.length ? this.chartData.despesa.map(v => -Math.abs(v)) : [0];
     this.receitaChart = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: this.chartData.labels,
+        labels: this.chartData.labels.length ? this.chartData.labels : [''],
         datasets: [
           {
             label: 'Receita',
-            data: this.chartData.receita,
-            backgroundColor: 'rgba(34, 197, 94, 0.8)',
-            borderColor: 'rgba(34, 197, 94, 1)',
-            borderWidth: 1,
-            type: 'bar'
+            data: this.chartData.receita.length ? this.chartData.receita : [0],
+            backgroundColor: 'rgba(22, 163, 74, 0.9)',
+            borderColor: 'rgba(22, 163, 74, 1)',
+            borderWidth: 0,
+            borderRadius: { topLeft: 4, topRight: 4 },
+            type: 'bar',
+            order: 2,
+            maxBarThickness: 28
           },
           {
             label: 'Despesa',
-            data: this.chartData.despesa,
-            backgroundColor: 'rgba(239, 68, 68, 0.8)',
-            borderColor: 'rgba(239, 68, 68, 1)',
-            borderWidth: 1,
-            type: 'bar'
+            data: despesaParaChart,
+            backgroundColor: 'rgba(220, 38, 38, 0.9)',
+            borderColor: 'rgba(220, 38, 38, 1)',
+            borderWidth: 0,
+            borderRadius: { bottomLeft: 4, bottomRight: 4 },
+            type: 'bar',
+            order: 2,
+            maxBarThickness: 28
           },
           {
             label: 'Renegociado',
-            data: this.chartData.renegociado,
-            backgroundColor: 'rgba(234, 179, 8, 0.8)',
-            borderColor: 'rgba(234, 179, 8, 1)',
-            borderWidth: 1,
-            type: 'bar'
+            data: this.chartData.renegociado.length ? this.chartData.renegociado : [0],
+            backgroundColor: 'rgba(202, 138, 4, 0.9)',
+            borderColor: 'rgba(202, 138, 4, 1)',
+            borderWidth: 0,
+            borderRadius: { topLeft: 4, topRight: 4 },
+            type: 'bar',
+            order: 2,
+            maxBarThickness: 28
           },
           {
-            label: 'Saldo total projetado no período',
-            data: this.chartData.saldoProjetado,
+            label: 'Saldo projetado',
+            data: this.chartData.saldoProjetado.length ? this.chartData.saldoProjetado : [0],
             backgroundColor: 'transparent',
-            borderColor: 'rgba(59, 130, 246, 1)',
-            borderWidth: 2,
-            borderDash: [5, 5],
+            borderColor: 'rgba(37, 99, 235, 1)',
+            borderWidth: 2.5,
+            borderDash: [6, 4],
             type: 'line',
             fill: false,
-            tension: 0.1
+            tension: 0.25,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            pointBackgroundColor: 'rgba(37, 99, 235, 1)',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 1.5,
+            order: 1
           }
         ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: { padding: { top: 8, right: 12, bottom: 4, left: 4 } },
         plugins: {
           legend: {
             position: 'top',
+            align: 'end',
             labels: {
               usePointStyle: true,
+              pointStyle: 'circle',
               padding: 20,
-              font: {
-                size: 12
+              font: { size: 12 }
+            },
+            onClick: () => {}
+          },
+          tooltip: {
+            backgroundColor: 'rgba(30, 41, 59, 0.95)',
+            titleFont: { size: 13, weight: 'bold' },
+            bodyFont: { size: 12 },
+            padding: 12,
+            cornerRadius: 8,
+            callbacks: {
+              label: (ctx) => {
+                const v = ctx.raw as number;
+                const displayVal = ctx.dataset.label === 'Despesa' ? Math.abs(v) : v;
+                return `${ctx.dataset.label}: ${this.formatCurrency(displayVal)}`;
               }
             }
           }
@@ -371,44 +519,53 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
         scales: {
           y: {
             beginAtZero: true,
-            grid: {
-              color: 'rgba(0, 0, 0, 0.1)'
-            },
+            position: 'left',
+            grid: { color: 'rgba(0, 0, 0, 0.06)', drawTicks: false },
+            border: { display: false },
             ticks: {
-              callback: function(value) {
-                return 'R$ ' + value.toLocaleString('pt-BR');
-              }
+              font: { size: 11 },
+              padding: 8,
+              callback: (value) => 'R$ ' + Number(value).toLocaleString('pt-BR', { maximumFractionDigits: 0 })
             }
           },
           x: {
-            grid: {
-              display: false
-            },
-            title: {
-              display: true,
-              text: 'Dias'
-            }
+            grid: { display: false },
+            border: { display: false },
+            ticks: { font: { size: 11 }, padding: 8, maxRotation: 0 },
+            title: { display: true, text: this.periodoGrafico === 'mensal' ? 'Mês' : 'Dia', font: { size: 12 } }
           }
         },
-        interaction: {
-          intersect: false,
-          mode: 'index'
-        },
-        onClick: (event, elements) => {
-          if (elements.length > 0) {
-            const elementIndex = elements[0].index;
-            const dia = elementIndex + 1;
-            this.filtrarMovimentacoesPorDia(dia);
+        interaction: { intersect: false, mode: 'index' },
+        onClick: (_event, elements) => {
+          if (elements.length > 0 && this.chartData.dates?.length) {
+            const idx = elements[0].index;
+            const dateStr = this.chartData.dates[idx];
+            if (dateStr) this.selecionarDiaNoGrafico(dateStr);
           }
         }
       }
     });
   }
 
-  setPeriodoGrafico(periodo: 'mensal' | 'anual') {
+  selecionarDiaNoGrafico(dateStr: string): void {
+    this.dataSelecionada = dateStr;
+    this.movimentacoesFiltradas = this.movimentacoesPorDia[dateStr] || [];
+  }
+
+  setPeriodoGrafico(periodo: 'diario' | 'mensal'): void {
     this.periodoGrafico = periodo;
-    // Aqui você pode implementar a lógica para alterar os dados do gráfico
-    // baseado no período selecionado
+    const todas = this.getTodasMovimentacoesDoPeriodo();
+    if (todas.length) {
+      this.agregarDadosPorDia(todas);
+    } else {
+      this.carregarDadosGrafico();
+    }
+  }
+
+  private getTodasMovimentacoesDoPeriodo(): MovimentacaoFinanceira[] {
+    const out: MovimentacaoFinanceira[] = [];
+    Object.values(this.movimentacoesPorDia).forEach(m => out.push(...m));
+    return out;
   }
 
   formatCurrency(value: number): string {
@@ -418,119 +575,46 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
     }).format(value);
   }
 
-  // Métodos para filtrar movimentações
-  filtrarMovimentacoesPorDia(dia: number): void {
-    this.diaSelecionado = dia;
-    this.movimentacoesFiltradas = this.movimentacoesPorDia[dia] || [];
-  }
-
   limparFiltroDia(): void {
-    this.diaSelecionado = null;
+    this.dataSelecionada = null;
     this.movimentacoesFiltradas = [];
   }
 
-  getTodasMovimentacoes(): any[] {
-    const todas: any[] = [];
-    Object.values(this.movimentacoesPorDia).forEach(movimentacoes => {
-      todas.push(...movimentacoes);
-    });
-    return this.aplicarFiltros(todas).sort((a, b) => b.dia - a.dia); // Ordena por dia decrescente
+  @HostListener('document:keydown.escape')
+  fecharModalComEscape(): void {
+    if (this.dataSelecionada) this.limparFiltroDia();
   }
 
-  // Métodos de paginação
-  getMovimentacoesPaginadas(): any[] {
-    const todasMovimentacoes = this.diaSelecionado ? this.movimentacoesFiltradas : this.getTodasMovimentacoes();
-    this.totalItens = todasMovimentacoes.length;
-    
-    const inicio = (this.paginaAtual - 1) * this.itensPorPagina;
-    const fim = inicio + this.itensPorPagina;
-    
-    return todasMovimentacoes.slice(inicio, fim);
-  }
-
-  getTotalPaginas(): number {
-    return Math.ceil(this.totalItens / this.itensPorPagina);
-  }
-
-  getPaginasVisiveis(): number[] {
-    const totalPaginas = this.getTotalPaginas();
-    const paginas: number[] = [];
-    
-    if (totalPaginas <= 7) {
-      for (let i = 1; i <= totalPaginas; i++) {
-        paginas.push(i);
-      }
-    } else {
-      if (this.paginaAtual <= 4) {
-        for (let i = 1; i <= 5; i++) {
-          paginas.push(i);
-        }
-        paginas.push(-1); // Separador
-        paginas.push(totalPaginas);
-      } else if (this.paginaAtual >= totalPaginas - 3) {
-        paginas.push(1);
-        paginas.push(-1); // Separador
-        for (let i = totalPaginas - 4; i <= totalPaginas; i++) {
-          paginas.push(i);
-        }
-      } else {
-        paginas.push(1);
-        paginas.push(-1); // Separador
-        for (let i = this.paginaAtual - 1; i <= this.paginaAtual + 1; i++) {
-          paginas.push(i);
-        }
-        paginas.push(-1); // Separador
-        paginas.push(totalPaginas);
-      }
+  getDataSelecionadaLabel(): string {
+    if (!this.dataSelecionada) return '';
+    const d = this.parseLocalDateStr(this.dataSelecionada);
+    if (this.periodoGrafico === 'mensal' && this.dataSelecionada.endsWith('-01')) {
+      return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
     }
-    
-    return paginas;
+    return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
   }
 
-  irParaPagina(pagina: number): void {
-    if (pagina >= 1 && pagina <= this.getTotalPaginas()) {
-      this.paginaAtual = pagina;
-    }
+  getTipoMovimentacaoLabel(m: MovimentacaoFinanceira): string {
+    return m.Debito ? 'Despesa' : 'Receita';
   }
 
-  proximaPagina(): void {
-    if (this.paginaAtual < this.getTotalPaginas()) {
-      this.paginaAtual++;
-    }
+  getStatusMovimentacao(m: MovimentacaoFinanceira): string {
+    return m.DataQuitacao ? 'Quitado' : 'Pendente';
   }
 
-  paginaAnterior(): void {
-    if (this.paginaAtual > 1) {
-      this.paginaAtual--;
-    }
+  getTotalReceitasDia(): number {
+    return this.movimentacoesFiltradas
+      .filter(m => !m.Debito)
+      .reduce((sum, m) => sum + (m.Valor ?? 0), 0);
   }
 
-  alterarItensPorPagina(novosItens: number): void {
-    this.itensPorPagina = novosItens;
-    this.paginaAtual = 1; // Volta para a primeira página
+  getTotalDespesasDia(): number {
+    return this.movimentacoesFiltradas
+      .filter(m => m.Debito)
+      .reduce((sum, m) => sum + (m.Valor ?? 0), 0);
   }
 
-  // Expor Math para o template
-  Math = Math;
-
-  // Métodos para filtros funcionais
-  aplicarFiltros(movimentacoes: any[]): any[] {
-    return movimentacoes.filter(mov => {
-      const filtroEmpresa = !this.filtros.empresa || mov.empresa === this.filtros.empresa;
-      const filtroConta = !this.filtros.conta || mov.conta === this.filtros.conta;
-      const filtroTipo = !this.filtros.tipo || mov.tipo === this.filtros.tipo;
-      const filtroCategoria = !this.filtros.categoria || mov.categoria === this.filtros.categoria;
-      
-      return filtroEmpresa && filtroConta && filtroTipo && filtroCategoria;
-    });
-  }
-
-  onFiltroChange(): void {
-    // Aplica os filtros automaticamente quando qualquer filtro muda
-    if (this.diaSelecionado) {
-      this.movimentacoesFiltradas = this.aplicarFiltros(this.movimentacoesPorDia[this.diaSelecionado] || []);
-    }
-  }
+  onFiltroChange(): void {}
 
   aplicarFiltrosManualmente(): void {
     this.onFiltroChange();
@@ -562,7 +646,7 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
     this.tempRangeStart = this.dataInicial || null;
     this.tempRangeEnd = this.dataFinal || null;
     this.hoverRangeDate = null;
-    this.visibleMonth = this.dataInicial ? new Date(this.dataInicial) : new Date();
+    this.visibleMonth = this.dataInicial ? this.parseLocalDateStr(this.dataInicial) : new Date();
     this.buildCalendar();
   }
 
@@ -579,20 +663,50 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
 
   applyRangePicker(): void {
     if (this.tempRangeStart && this.tempRangeEnd) {
-      // Garante ordem
       const a = this.tempRangeStart <= this.tempRangeEnd ? this.tempRangeStart : this.tempRangeEnd;
       const b = this.tempRangeStart <= this.tempRangeEnd ? this.tempRangeEnd : this.tempRangeStart;
-      
-      // Salva as datas selecionadas
       this.dataInicial = a;
       this.dataFinal = b;
-      
-      console.log('Período selecionado:', a, 'até', b);
-      
-      // Recarrega dados do Bom Controle com o novo período
+      this.atalhoPeriodoAtivo = '';
       this.carregarDadosContas();
+      this.carregarDadosGrafico();
     }
     this.mostrarRangePicker = false;
+  }
+
+  aplicarAtalhoPeriodo(tipo: 'mes' | 'trimestre' | 'ano'): void {
+    this.atalhoPeriodoAtivo = tipo;
+    const hoje = new Date();
+    let inicio: Date;
+    let fim: Date;
+    if (tipo === 'mes') {
+      inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+      fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+    } else if (tipo === 'trimestre') {
+      fim = new Date(hoje);
+      inicio = new Date(hoje.getFullYear(), hoje.getMonth() - 2, hoje.getDate());
+    } else {
+      inicio = new Date(hoje.getFullYear(), 0, 1);
+      fim = new Date(hoje.getFullYear(), 11, 31);
+    }
+    this.dataInicial = this.dateToStr(inicio);
+    this.dataFinal = this.dateToStr(fim);
+    this.carregarDadosContas();
+    this.carregarDadosGrafico();
+  }
+
+  isAtalhoAtivo(tipo: 'mes' | 'trimestre' | 'ano'): boolean {
+    return this.atalhoPeriodoAtivo === tipo;
+  }
+
+  getPeriodoRelatorioLabel(): string {
+    if (this.dataInicial && this.dataFinal) {
+      const a = this.parseLocalDateStr(this.dataInicial);
+      const b = this.parseLocalDateStr(this.dataFinal);
+      return a.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) + ' – ' +
+        b.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+    return 'Selecionar período';
   }
 
   clearRange(): void {
@@ -659,6 +773,12 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
     return `${y}-${m}-${d}`;
   }
 
+  /** Interpreta YYYY-MM-DD como data local (evita 1 dia a menos por UTC). */
+  private parseLocalDateStr(dateStr: string): Date {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+
   onSelectDate(dateStr: string): void {
     if (!this.tempRangeStart || (this.tempRangeStart && this.tempRangeEnd)) {
       this.tempRangeStart = dateStr;
@@ -691,161 +811,6 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
     const a = start <= end ? start : end;
     const b = start <= end ? end : start;
     return dateStr > a && dateStr < b;
-  }
-
-  // Métodos para cálculos dos itens selecionados
-  getTotalReceitas(): number {
-    const todasMovimentacoes = this.diaSelecionado ? this.movimentacoesFiltradas : this.getTodasMovimentacoes();
-    return todasMovimentacoes
-      .filter(mov => mov.tipo === 'RECEITA')
-      .reduce((total, mov) => total + mov.valor, 0);
-  }
-
-  getTotalDespesas(): number {
-    const todasMovimentacoes = this.diaSelecionado ? this.movimentacoesFiltradas : this.getTodasMovimentacoes();
-    return todasMovimentacoes
-      .filter(mov => mov.tipo === 'DESPESA')
-      .reduce((total, mov) => total + mov.valor, 0);
-  }
-
-  getSaldoLiquido(): number {
-    return this.getTotalReceitas() - this.getTotalDespesas();
-  }
-
-  getTotalItens(): number {
-    // Retorna o total de itens considerando todos os filtros aplicados
-    const todasMovimentacoes = this.diaSelecionado ? this.movimentacoesFiltradas : this.getTodasMovimentacoes();
-    return todasMovimentacoes.length;
-  }
-
-  // Métodos para estatísticas avançadas
-  getTotalItensPorTipo(tipo: string): number {
-    const todasMovimentacoes = this.diaSelecionado ? this.movimentacoesFiltradas : this.getTodasMovimentacoes();
-    return todasMovimentacoes.filter(mov => mov.tipo === tipo).length;
-  }
-
-  getTotalItensPorCategoria(categoria: string): number {
-    const todasMovimentacoes = this.diaSelecionado ? this.movimentacoesFiltradas : this.getTodasMovimentacoes();
-    return todasMovimentacoes.filter(mov => mov.categoria === categoria).length;
-  }
-
-  getTotalItensPorEmpresa(empresa: string): number {
-    const todasMovimentacoes = this.diaSelecionado ? this.movimentacoesFiltradas : this.getTodasMovimentacoes();
-    return todasMovimentacoes.filter(mov => mov.empresa === empresa).length;
-  }
-
-  getValorMedioPorTransacao(): number {
-    const todasMovimentacoes = this.diaSelecionado ? this.movimentacoesFiltradas : this.getTodasMovimentacoes();
-    if (todasMovimentacoes.length === 0) return 0;
-    const valorTotal = todasMovimentacoes.reduce((total, mov) => total + mov.valor, 0);
-    return valorTotal / todasMovimentacoes.length;
-  }
-
-  getMaiorTransacao(): any {
-    const todasMovimentacoes = this.diaSelecionado ? this.movimentacoesFiltradas : this.getTodasMovimentacoes();
-    if (todasMovimentacoes.length === 0) return null;
-    return todasMovimentacoes.reduce((maior, mov) => mov.valor > maior.valor ? mov : maior);
-  }
-
-  getMenorTransacao(): any {
-    const todasMovimentacoes = this.diaSelecionado ? this.movimentacoesFiltradas : this.getTodasMovimentacoes();
-    if (todasMovimentacoes.length === 0) return null;
-    return todasMovimentacoes.reduce((menor, mov) => mov.valor < menor.valor ? mov : menor);
-  }
-
-  getPercentualPorTipo(tipo: string): number {
-    const total = this.getTotalItens();
-    if (total === 0) return 0;
-    return (this.getTotalItensPorTipo(tipo) / total) * 100;
-  }
-
-  getPercentualPorEmpresa(empresa: string): number {
-    const total = this.getTotalItens();
-    if (total === 0) return 0;
-    return (this.getTotalItensPorEmpresa(empresa) / total) * 100;
-  }
-
-  getPercentualPorCategoria(categoria: string): number {
-    const total = this.getTotalItens();
-    if (total === 0) return 0;
-    return (this.getTotalItensPorCategoria(categoria) / total) * 100;
-  }
-
-  getDiasComMovimentacao(): number {
-    return Object.keys(this.movimentacoesPorDia).filter(dia => 
-      this.movimentacoesPorDia[parseInt(dia)].length > 0
-    ).length;
-  }
-
-  getDiasSemMovimentacao(): number {
-    return 31 - this.getDiasComMovimentacao();
-  }
-
-  // Métodos para exportação
-  exportarParaCSV(): void {
-    const todasMovimentacoes = this.diaSelecionado ? this.movimentacoesFiltradas : this.getTodasMovimentacoes();
-    
-    const headers = ['Parcela', 'Tipo', 'Data Venc.', 'Data Comp.', 'Cliente/Fornecedor', 'Empresa', 'Categoria', 'Valor (R$)'];
-    const csvContent = [
-      headers.join(','),
-      ...todasMovimentacoes.map(mov => [
-        '∞',
-        mov.tipo,
-        `${mov.dia}/10/2024`,
-        `${mov.dia}/10/2024`,
-        `"${mov.cliente}"`,
-        `"${this.getEmpresaLabel(mov.empresa)}"`,
-        mov.categoria,
-        mov.valor.toFixed(2).replace('.', ',')
-      ].join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `movimentacoes_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-
-  exportarParaPDF(): void {
-    // Implementação básica para PDF (seria necessário uma biblioteca como jsPDF)
-    console.log('Exportação para PDF - funcionalidade a ser implementada');
-    alert('Funcionalidade de exportação para PDF será implementada em breve!');
-  }
-
-  // Métodos para análise de tendências
-  getTendenciaReceitas(): 'crescimento' | 'queda' | 'estavel' {
-    // Lógica simplificada - em um sistema real, compararia com períodos anteriores
-    const receitas = this.getTotalReceitas();
-    if (receitas > 50000) return 'crescimento';
-    if (receitas < 30000) return 'queda';
-    return 'estavel';
-  }
-
-  getIndicadorPerformance(): number {
-    // Score de 0 a 100 baseado em vários fatores
-    const totalItens = this.getTotalItens();
-    const saldoLiquido = this.getSaldoLiquido();
-    const diasComMovimentacao = this.getDiasComMovimentacao();
-    
-    let score = 0;
-    
-    // Score baseado no número de transações (0-30 pontos)
-    score += Math.min(totalItens * 2, 30);
-    
-    // Score baseado no saldo líquido (0-40 pontos)
-    if (saldoLiquido > 0) {
-      score += Math.min(saldoLiquido / 1000, 40);
-    }
-    
-    // Score baseado na atividade (0-30 pontos)
-    score += Math.min(diasComMovimentacao * 1.5, 30);
-    
-    return Math.round(Math.min(score, 100));
   }
 
   // Labels para os filtros

@@ -3,7 +3,11 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
-import { DADOS_FINANCEIROS_MOCK, DadosFinanceiros, CONTRATOS_MOCK, Contrato } from '../../data/mock-data';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { DadosFinanceiros } from '../../models/dados-financeiros.model';
+import { BomControleService, ResumoFinanceiroResponse, FiltrosMovimentacoes } from '../../services/bomcontrole.service';
+import { CompanySelectorService } from '../../services/company-selector.service';
 
 Chart.register(...registerables);
 
@@ -14,7 +18,10 @@ Chart.register(...registerables);
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent implements OnInit, OnDestroy {
-  dados: DadosFinanceiros = DADOS_FINANCEIROS_MOCK;
+  private resumoSubscription?: Subscription;
+  private empresaSubscription?: Subscription;
+  resumoFonteDados: string | null = null;
+  resumoCarregando: boolean = false;
   receitaChart: Chart | null = null;
   despesasChart: Chart | null = null;
   currentDate: Date = new Date();
@@ -54,33 +61,54 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private hoverRangeDate: string | null = null;
   
   // Dados filtrados por período
-  dadosFiltrados: DadosFinanceiros = this.dados;
+  dadosFiltrados: DadosFinanceiros = this.getResumoPadrao();
+
+  /** Parse YYYY-MM-DD como data local (evita dia errado por UTC). */
+  private parseLocalDateStr(dateStr: string): Date {
+    if (!dateStr || dateStr.length < 10) return new Date(NaN);
+    const [y, m, d] = dateStr.substring(0, 10).split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  private getResumoPadrao(): DadosFinanceiros {
+    return {
+      receitas: 0,
+      despesas: 0,
+      lucro: 0,
+      contratosAtivos: 0,
+      contratosPendentes: 0,
+      contratosVencidos: 0,
+      margemBruta: 0,
+      margemLiquida: 0,
+      roi: 0,
+      receitaMensal: [],
+      despesasPorCategoria: [],
+      indicadores: {
+        crescimentoReceita: 0,
+        eficienciaOperacional: 0,
+        satisfacaoCliente: 0,
+        produtividade: 0
+      }
+    };
+  }
 
 
   constructor(
-    @Inject(PLATFORM_ID) private platformId: Object
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private bomControleService: BomControleService,
+    private companySelectorService: CompanySelectorService
   ) {}
 
   ngOnInit() {
     this.inicializarFiltros();
-    this.filtrarDadosPorPeriodo();
-    this.calcularMediasContratosUltimos3Meses();
-    this.calcularMediaCustoFixo();
-    this.calcularMediaCustoVariavel();
-    this.calcularMediaCustoEstrategico();
-    this.calcularCustoFinanceiroInvestimento();
-    this.calcularTotalClientesAtivos();
-    this.calcularChurnPercent();
-    this.calcularLtvMeses();
-    this.calcularInadimplencia();
-    
-    if (isPlatformBrowser(this.platformId)) {
-      this.criarGraficoReceitas();
-      this.criarGraficoDespesas();
-    }
-    // Inicializa calendário do range picker
-    this.visibleMonth = new Date(this.dataInicial || new Date());
+    this.onTipoFiltroAlterado();
+    this.visibleMonth = this.dataInicial ? this.parseLocalDateStr(this.dataInicial) : new Date();
     this.buildCalendar();
+    this.empresaSubscription = this.companySelectorService.empresaSelecionada$.subscribe((empresa) => {
+      if (empresa?.idEmpresa) {
+        this.carregarResumoFinanceiro();
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -90,6 +118,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.despesasChart) {
       this.despesasChart.destroy();
     }
+    this.resumoSubscription?.unsubscribe();
+    this.empresaSubscription?.unsubscribe();
   }
 
   // ===== Date Range Picker Helpers =====
@@ -99,7 +129,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.tempRangeStart = this.dataInicial;
       this.tempRangeEnd = this.dataFinal;
       this.hoverRangeDate = null;
-      this.visibleMonth = new Date(this.dataInicial || new Date());
+      this.visibleMonth = this.dataInicial ? this.parseLocalDateStr(this.dataInicial) : new Date();
       this.buildCalendar();
     }
   }
@@ -476,6 +506,64 @@ export class DashboardComponent implements OnInit, OnDestroy {
     return margem.toFixed(1) + '%';
   }
 
+  public carregarResumoFinanceiro(): void {
+    if (!this.dataInicial || !this.dataFinal) {
+      return;
+    }
+
+    const filtros: FiltrosMovimentacoes = {
+      dataInicio: this.dataInicial,
+      dataTermino: this.dataFinal
+    };
+
+    const empresaSelecionada = this.companySelectorService.obterEmpresaSelecionada();
+    if (empresaSelecionada?.idEmpresa) {
+      filtros.idsEmpresa = empresaSelecionada.idEmpresa;
+    }
+
+    this.resumoSubscription?.unsubscribe();
+    this.resumoCarregando = true;
+    this.resumoSubscription = this.bomControleService.obterResumoFinanceiro(filtros)
+      .pipe(finalize(() => { this.resumoCarregando = false; }))
+      .subscribe({
+        next: (resumo) => this.atualizarResumoComDados(resumo),
+        error: (error) => {
+          console.error('Erro ao carregar o resumo financeiro:', error);
+        }
+      });
+  }
+
+  private atualizarResumoComDados(resumo: ResumoFinanceiroResponse): void {
+    if (!resumo) {
+      return;
+    }
+
+    const totalReceitas = resumo.contasReceber?.totalGeral ?? this.dadosFiltrados.receitas;
+    const totalDespesas = resumo.contasPagar?.totalGeral ?? this.dadosFiltrados.despesas;
+    const saldoProjetado = Number.isFinite(resumo.saldoProjetado)
+      ? resumo.saldoProjetado
+      : (totalReceitas - totalDespesas);
+    const margemLiquida = totalReceitas > 0 ? (saldoProjetado / totalReceitas) * 100 : 0;
+
+    this.dadosFiltrados.receitas = totalReceitas;
+    this.dadosFiltrados.despesas = totalDespesas;
+    this.dadosFiltrados.lucro = saldoProjetado;
+    this.dadosFiltrados.margemLiquida = Number.isFinite(margemLiquida) ? margemLiquida : 0;
+
+    const liquidadas = resumo.contasReceber?.totalLiquidado ?? 0;
+    const percentualLiquidez = totalReceitas > 0
+      ? (liquidadas / totalReceitas) * 100
+      : this.dadosFiltrados.indicadores.crescimentoReceita;
+    this.dadosFiltrados.indicadores = {
+      ...this.dadosFiltrados.indicadores,
+      crescimentoReceita: Number.isFinite(percentualLiquidez)
+        ? Number(percentualLiquidez.toFixed(1))
+        : this.dadosFiltrados.indicadores.crescimentoReceita
+    };
+
+    this.resumoFonteDados = resumo.fonteDados ?? null;
+  }
+
   // Médias para cards do Dashboard Financeiro
   getMediaReceitas(): number {
     const serie = this.dadosFiltrados?.receitaMensal || [];
@@ -547,7 +635,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private calcularContratosPorTrimestre(): void {
-    const dataIni = new Date(this.dataInicial);
+    const dataIni = this.parseLocalDateStr(this.dataInicial);
     const ano = dataIni.getFullYear();
     const trimestre = Math.ceil((dataIni.getMonth() + 1) / 3);
     
@@ -569,7 +657,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private calcularContratosPorAno(): void {
-    const dataIni = new Date(this.dataInicial);
+    const dataIni = this.parseLocalDateStr(this.dataInicial);
     const ano = dataIni.getFullYear();
     
     const contratosPorAno: {[key: string]: {valor: number, quantidade: number}} = {
@@ -643,7 +731,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private calcularCustoEstrategicoPorTrimestre(): void {
-    const dataIni = new Date(this.dataInicial);
+    const dataIni = this.parseLocalDateStr(this.dataInicial);
     const ano = dataIni.getFullYear();
     const trimestre = Math.ceil((dataIni.getMonth() + 1) / 3);
     
@@ -659,7 +747,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private calcularCustoEstrategicoPorAno(): void {
-    const dataIni = new Date(this.dataInicial);
+    const dataIni = this.parseLocalDateStr(this.dataInicial);
     const ano = dataIni.getFullYear();
     
     const custosPorAno: {[key: string]: number} = {
@@ -695,7 +783,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private calcularCustoFinanceiroPorTrimestre(): void {
-    const dataIni = new Date(this.dataInicial);
+    const dataIni = this.parseLocalDateStr(this.dataInicial);
     const ano = dataIni.getFullYear();
     const trimestre = Math.ceil((dataIni.getMonth() + 1) / 3);
     
@@ -711,7 +799,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private calcularCustoFinanceiroPorAno(): void {
-    const dataIni = new Date(this.dataInicial);
+    const dataIni = this.parseLocalDateStr(this.dataInicial);
     const ano = dataIni.getFullYear();
     
     const custosPorAno: {[key: string]: number} = {
@@ -733,7 +821,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.totalClientesAtivos = clientesPorMes[mesAtual] || 1000;
         break;
       case 'trimestre':
-        const dataIni = new Date(this.dataInicial);
+        const dataIni = this.parseLocalDateStr(this.dataInicial);
         const ano = dataIni.getFullYear();
         const trimestre = Math.ceil((dataIni.getMonth() + 1) / 3);
         const clientesPorTrimestre: {[key: string]: number} = {
@@ -743,7 +831,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.totalClientesAtivos = clientesPorTrimestre[chaveTrimestre] || 3000;
         break;
       case 'ano':
-        const anoAtual = new Date(this.dataInicial).getFullYear();
+        const anoAtual = this.parseLocalDateStr(this.dataInicial).getFullYear();
         const clientesPorAno: {[key: string]: number} = {
           '2025': 11900, '2024': 10500, '2023': 8500
         };
@@ -764,7 +852,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.churnPercent = churnPorMes[mesAtual] || 3.0;
         break;
       case 'trimestre':
-        const dataIni = new Date(this.dataInicial);
+        const dataIni = this.parseLocalDateStr(this.dataInicial);
         const ano = dataIni.getFullYear();
         const trimestre = Math.ceil((dataIni.getMonth() + 1) / 3);
         const churnPorTrimestre: {[key: string]: number} = {
@@ -774,7 +862,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.churnPercent = churnPorTrimestre[chaveTrimestre] || 3.2;
         break;
       case 'ano':
-        const anoAtual = new Date(this.dataInicial).getFullYear();
+        const anoAtual = this.parseLocalDateStr(this.dataInicial).getFullYear();
         const churnPorAno: {[key: string]: number} = {
           '2025': 2.6, '2024': 3.1, '2023': 3.8
         };
@@ -795,7 +883,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.ltvMeses = ltvPorMes[mesAtual] || 24;
         break;
       case 'trimestre':
-        const dataIni = new Date(this.dataInicial);
+        const dataIni = this.parseLocalDateStr(this.dataInicial);
         const ano = dataIni.getFullYear();
         const trimestre = Math.ceil((dataIni.getMonth() + 1) / 3);
         const ltvPorTrimestre: {[key: string]: number} = {
@@ -805,7 +893,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.ltvMeses = ltvPorTrimestre[chaveTrimestre] || 23;
         break;
       case 'ano':
-        const anoAtual = new Date(this.dataInicial).getFullYear();
+        const anoAtual = this.parseLocalDateStr(this.dataInicial).getFullYear();
         const ltvPorAno: {[key: string]: number} = {
           '2025': 25, '2024': 22, '2023': 18
         };
@@ -832,7 +920,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.inadimplenciaTaxa = inadTaxaPorMes[mesAtual] || 4.0;
         break;
       case 'trimestre':
-        const dataIni = new Date(this.dataInicial);
+        const dataIni = this.parseLocalDateStr(this.dataInicial);
         const ano = dataIni.getFullYear();
         const trimestre = Math.ceil((dataIni.getMonth() + 1) / 3);
         const inadValorPorTrimestre: {[key: string]: number} = {
@@ -846,7 +934,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.inadimplenciaTaxa = inadTaxaPorTrimestre[chaveTrimestre] || 4.0;
         break;
       case 'ano':
-        const anoAtual = new Date(this.dataInicial).getFullYear();
+        const anoAtual = this.parseLocalDateStr(this.dataInicial).getFullYear();
         const inadValorPorAno: {[key: string]: number} = {
           '2025': 627000, '2024': 580000, '2023': 520000
         };
@@ -896,8 +984,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   onFiltroAlterado(): void {
-    console.log('Filtro alterado:', { tipoFiltro: this.tipoFiltro, dataInicial: this.dataInicial, dataFinal: this.dataFinal });
-    this.filtrarDadosPorPeriodo();
     this.calcularMediasContratosUltimos3Meses();
     this.calcularMediaCustoFixo();
     this.calcularMediaCustoVariavel();
@@ -907,6 +993,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.calcularChurnPercent();
     this.calcularLtvMeses();
     this.calcularInadimplencia();
+    this.carregarResumoFinanceiro();
     
     // Atualiza os gráficos
     if (isPlatformBrowser(this.platformId)) {
@@ -942,14 +1029,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   getTrimestreSelecionado(): string {
-    const dataIni = new Date(this.dataInicial);
+    const dataIni = this.parseLocalDateStr(this.dataInicial);
     const ano = dataIni.getFullYear();
     const trimestre = Math.ceil((dataIni.getMonth() + 1) / 3);
     return `${ano}-Q${trimestre}`;
   }
 
   getAnoSelecionado(): string {
-    const dataIni = new Date(this.dataInicial);
+    const dataIni = this.parseLocalDateStr(this.dataInicial);
     return dataIni.getFullYear().toString();
   }
 
@@ -973,578 +1060,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.onFiltroAlterado();
   }
 
-  private filtrarDadosPorPeriodo(): void {
-    switch (this.tipoFiltro) {
-      case 'mes':
-        this.filtrarDadosPorMes();
-        break;
-      case 'trimestre':
-        this.filtrarDadosPorTrimestre();
-        break;
-      case 'ano':
-        this.filtrarDadosPorAno();
-        break;
-    }
-  }
-
-  private filtrarDadosPorMes(): void {
-    const mesAtual = this.dataInicial.substring(0, 7); // YYYY-MM
-    // Dados mock para 10 meses de 2025 (janeiro a outubro) com valores diferentes
-    const dadosPorMes: {[key: string]: DadosFinanceiros} = {
-      '2025-10': {
-        receitas: 400000,
-        despesas: 130000,
-        lucro: 270000,
-        contratosAtivos: 7,
-        contratosPendentes: 3,
-        contratosVencidos: 1,
-        margemBruta: 67.5,
-        margemLiquida: 67.5,
-        roi: 207.7,
-        receitaMensal: [
-          { mes: 'Ago', valor: 36000 },
-          { mes: 'Set', valor: 38000 },
-          { mes: 'Out', valor: 40000 }
-        ],
-        despesasPorCategoria: [
-          { categoria: 'Salários', valor: 70000 },
-          { categoria: 'Tecnologia', valor: 22000 },
-          { categoria: 'Marketing', valor: 18000 },
-          { categoria: 'Consultoria', valor: 13000 },
-          { categoria: 'Outros', valor: 7000 }
-        ],
-        indicadores: {
-          crescimentoReceita: 38.5,
-          eficienciaOperacional: 90.2,
-          satisfacaoCliente: 96.9,
-          produtividade: 172.4
-        }
-      },
-      '2025-09': {
-        receitas: 380000,
-        despesas: 125000,
-        lucro: 255000,
-        contratosAtivos: 6,
-        contratosPendentes: 4,
-        contratosVencidos: 2,
-        margemBruta: 67.1,
-        margemLiquida: 67.1,
-        roi: 204.0,
-        receitaMensal: [
-          { mes: 'Jul', valor: 34000 },
-          { mes: 'Ago', valor: 36000 },
-          { mes: 'Set', valor: 38000 }
-        ],
-        despesasPorCategoria: [
-          { categoria: 'Salários', valor: 68000 },
-          { categoria: 'Tecnologia', valor: 20000 },
-          { categoria: 'Marketing', valor: 17000 },
-          { categoria: 'Consultoria', valor: 12000 },
-          { categoria: 'Outros', valor: 8000 }
-        ],
-        indicadores: {
-          crescimentoReceita: 35.7,
-          eficienciaOperacional: 88.6,
-          satisfacaoCliente: 95.8,
-          produtividade: 168.1
-        }
-      },
-      '2025-08': {
-        receitas: 350000,
-        despesas: 120000,
-        lucro: 230000,
-        contratosAtivos: 6,
-        contratosPendentes: 5,
-        contratosVencidos: 2,
-        margemBruta: 65.7,
-        margemLiquida: 65.7,
-        roi: 191.7,
-        receitaMensal: [
-          { mes: 'Jun', valor: 32000 },
-          { mes: 'Jul', valor: 34000 },
-          { mes: 'Ago', valor: 35000 }
-        ],
-        despesasPorCategoria: [
-          { categoria: 'Salários', valor: 65000 },
-          { categoria: 'Tecnologia', valor: 18000 },
-          { categoria: 'Marketing', valor: 15000 },
-          { categoria: 'Consultoria', valor: 12000 },
-          { categoria: 'Outros', valor: 10000 }
-        ],
-        indicadores: {
-          crescimentoReceita: 32.1,
-          eficienciaOperacional: 86.4,
-          satisfacaoCliente: 94.2,
-          produtividade: 162.8
-        }
-      },
-      '2025-07': {
-        receitas: 320000,
-        despesas: 110000,
-        lucro: 210000,
-        contratosAtivos: 5,
-        contratosPendentes: 6,
-        contratosVencidos: 3,
-        margemBruta: 65.6,
-        margemLiquida: 65.6,
-        roi: 190.9,
-        receitaMensal: [
-          { mes: 'Mai', valor: 30000 },
-          { mes: 'Jun', valor: 32000 },
-          { mes: 'Jul', valor: 32000 }
-        ],
-        despesasPorCategoria: [
-          { categoria: 'Salários', valor: 60000 },
-          { categoria: 'Tecnologia', valor: 17000 },
-          { categoria: 'Marketing', valor: 14000 },
-          { categoria: 'Consultoria', valor: 11000 },
-          { categoria: 'Outros', valor: 8000 }
-        ],
-        indicadores: {
-          crescimentoReceita: 28.5,
-          eficienciaOperacional: 84.1,
-          satisfacaoCliente: 92.6,
-          produtividade: 157.3
-        }
-      },
-      '2025-06': {
-        receitas: 280000,
-        despesas: 100000,
-        lucro: 180000,
-        contratosAtivos: 5,
-        contratosPendentes: 7,
-        contratosVencidos: 4,
-        margemBruta: 64.3,
-        margemLiquida: 64.3,
-        roi: 180.0,
-        receitaMensal: [
-          { mes: 'Abr', valor: 26000 },
-          { mes: 'Mai', valor: 28000 },
-          { mes: 'Jun', valor: 28000 }
-        ],
-        despesasPorCategoria: [
-          { categoria: 'Salários', valor: 55000 },
-          { categoria: 'Tecnologia', valor: 15000 },
-          { categoria: 'Marketing', valor: 13000 },
-          { categoria: 'Consultoria', valor: 10000 },
-          { categoria: 'Outros', valor: 7000 }
-        ],
-        indicadores: {
-          crescimentoReceita: 24.8,
-          eficienciaOperacional: 81.7,
-          satisfacaoCliente: 90.9,
-          produtividade: 151.6
-        }
-      },
-      '2025-05': {
-        receitas: 250000,
-        despesas: 90000,
-        lucro: 160000,
-        contratosAtivos: 4,
-        contratosPendentes: 8,
-        contratosVencidos: 5,
-        margemBruta: 64.0,
-        margemLiquida: 64.0,
-        roi: 177.8,
-        receitaMensal: [
-          { mes: 'Mar', valor: 23000 },
-          { mes: 'Abr', valor: 25000 },
-          { mes: 'Mai', valor: 25000 }
-        ],
-        despesasPorCategoria: [
-          { categoria: 'Salários', valor: 50000 },
-          { categoria: 'Tecnologia', valor: 13000 },
-          { categoria: 'Marketing', valor: 12000 },
-          { categoria: 'Consultoria', valor: 9000 },
-          { categoria: 'Outros', valor: 6000 }
-        ],
-        indicadores: {
-          crescimentoReceita: 21.2,
-          eficienciaOperacional: 79.2,
-          satisfacaoCliente: 89.1,
-          produtividade: 145.9
-        }
-      },
-      '2025-04': {
-        receitas: 220000,
-        despesas: 80000,
-        lucro: 140000,
-        contratosAtivos: 4,
-        contratosPendentes: 9,
-        contratosVencidos: 6,
-        margemBruta: 63.6,
-        margemLiquida: 63.6,
-        roi: 175.0,
-        receitaMensal: [
-          { mes: 'Fev', valor: 20000 },
-          { mes: 'Mar', valor: 22000 },
-          { mes: 'Abr', valor: 22000 }
-        ],
-        despesasPorCategoria: [
-          { categoria: 'Salários', valor: 45000 },
-          { categoria: 'Tecnologia', valor: 12000 },
-          { categoria: 'Marketing', valor: 11000 },
-          { categoria: 'Consultoria', valor: 8000 },
-          { categoria: 'Outros', valor: 4000 }
-        ],
-        indicadores: {
-          crescimentoReceita: 17.6,
-          eficienciaOperacional: 76.8,
-          satisfacaoCliente: 87.3,
-          produtividade: 140.2
-        }
-      },
-      '2025-03': {
-        receitas: 190000,
-        despesas: 75000,
-        lucro: 115000,
-        contratosAtivos: 3,
-        contratosPendentes: 10,
-        contratosVencidos: 7,
-        margemBruta: 60.5,
-        margemLiquida: 60.5,
-        roi: 153.3,
-        receitaMensal: [
-          { mes: 'Jan', valor: 17000 },
-          { mes: 'Fev', valor: 19000 },
-          { mes: 'Mar', valor: 19000 }
-        ],
-        despesasPorCategoria: [
-          { categoria: 'Salários', valor: 40000 },
-          { categoria: 'Tecnologia', valor: 11000 },
-          { categoria: 'Marketing', valor: 10000 },
-          { categoria: 'Consultoria', valor: 8000 },
-          { categoria: 'Outros', valor: 6000 }
-        ],
-        indicadores: {
-          crescimentoReceita: 14.1,
-          eficienciaOperacional: 74.3,
-          satisfacaoCliente: 85.4,
-          produtividade: 134.5
-        }
-      },
-      '2025-02': {
-        receitas: 160000,
-        despesas: 70000,
-        lucro: 90000,
-        contratosAtivos: 3,
-        contratosPendentes: 11,
-        contratosVencidos: 8,
-        margemBruta: 56.3,
-        margemLiquida: 56.3,
-        roi: 128.6,
-        receitaMensal: [
-          { mes: 'Dez', valor: 15000 },
-          { mes: 'Jan', valor: 16000 },
-          { mes: 'Fev', valor: 16000 }
-        ],
-        despesasPorCategoria: [
-          { categoria: 'Salários', valor: 35000 },
-          { categoria: 'Tecnologia', valor: 10000 },
-          { categoria: 'Marketing', valor: 9000 },
-          { categoria: 'Consultoria', valor: 8000 },
-          { categoria: 'Outros', valor: 8000 }
-        ],
-        indicadores: {
-          crescimentoReceita: 10.5,
-          eficienciaOperacional: 71.8,
-          satisfacaoCliente: 83.6,
-          produtividade: 128.8
-        }
-      },
-      '2025-01': {
-        receitas: 130000,
-        despesas: 65000,
-        lucro: 65000,
-        contratosAtivos: 2,
-        contratosPendentes: 12,
-        contratosVencidos: 9,
-        margemBruta: 50.0,
-        margemLiquida: 50.0,
-        roi: 100.0,
-        receitaMensal: [
-          { mes: 'Nov', valor: 12000 },
-          { mes: 'Dez', valor: 13000 },
-          { mes: 'Jan', valor: 13000 }
-        ],
-        despesasPorCategoria: [
-          { categoria: 'Salários', valor: 30000 },
-          { categoria: 'Tecnologia', valor: 9000 },
-          { categoria: 'Marketing', valor: 8000 },
-          { categoria: 'Consultoria', valor: 10000 },
-          { categoria: 'Outros', valor: 8000 }
-        ],
-        indicadores: {
-          crescimentoReceita: 6.9,
-          eficienciaOperacional: 69.2,
-          satisfacaoCliente: 81.7,
-          produtividade: 123.1
-        }
-      }
-    };
-
-    // Usa dados específicos do mês ou dados padrão
-    this.dadosFiltrados = dadosPorMes[mesAtual] || this.dados;
-    console.log('Dados filtrados para', mesAtual, ':', this.dadosFiltrados.receitas);
-  }
-
-  private filtrarDadosPorTrimestre(): void {
-    const dataIni = new Date(this.dataInicial);
-    const ano = dataIni.getFullYear();
-    const trimestre = Math.ceil((dataIni.getMonth() + 1) / 3);
-    
-    // Dados mock para trimestres (agregação de 3 meses)
-    const dadosPorTrimestre: {[key: string]: DadosFinanceiros} = {
-      '2025-Q4': {
-        receitas: 400000 + 380000 + 350000, // Out+Set+Ago
-        despesas: 130000 + 125000 + 120000,
-        lucro: 270000 + 255000 + 230000,
-        contratosAtivos: 7,
-        contratosPendentes: 3,
-        contratosVencidos: 1,
-        margemBruta: 67.5,
-        margemLiquida: 67.5,
-        roi: 207.7,
-        receitaMensal: [
-          { mes: 'Ago', valor: 35000 },
-          { mes: 'Set', valor: 38000 },
-          { mes: 'Out', valor: 40000 }
-        ],
-        despesasPorCategoria: [
-          { categoria: 'Salários', valor: 203000 },
-          { categoria: 'Tecnologia', valor: 60000 },
-          { categoria: 'Marketing', valor: 50000 },
-          { categoria: 'Consultoria', valor: 37000 },
-          { categoria: 'Outros', valor: 25000 }
-        ],
-        indicadores: {
-          crescimentoReceita: 38.5,
-          eficienciaOperacional: 90.2,
-          satisfacaoCliente: 96.9,
-          produtividade: 172.4
-        }
-      },
-      '2025-Q3': {
-        receitas: 350000 + 320000 + 280000, // Jul+Jun+Mai
-        despesas: 120000 + 110000 + 100000,
-        lucro: 230000 + 210000 + 180000,
-        contratosAtivos: 6,
-        contratosPendentes: 4,
-        contratosVencidos: 2,
-        margemBruta: 65.7,
-        margemLiquida: 65.7,
-        roi: 191.7,
-        receitaMensal: [
-          { mes: 'Mai', valor: 25000 },
-          { mes: 'Jun', valor: 28000 },
-          { mes: 'Jul', valor: 32000 }
-        ],
-        despesasPorCategoria: [
-          { categoria: 'Salários', valor: 180000 },
-          { categoria: 'Tecnologia', valor: 50000 },
-          { categoria: 'Marketing', valor: 42000 },
-          { categoria: 'Consultoria', valor: 33000 },
-          { categoria: 'Outros', valor: 25000 }
-        ],
-        indicadores: {
-          crescimentoReceita: 32.1,
-          eficienciaOperacional: 86.4,
-          satisfacaoCliente: 94.2,
-          produtividade: 162.8
-        }
-      },
-      '2025-Q2': {
-        receitas: 280000 + 250000 + 220000, // Abr+Mar+Fev
-        despesas: 100000 + 90000 + 80000,
-        lucro: 180000 + 160000 + 140000,
-        contratosAtivos: 5,
-        contratosPendentes: 5,
-        contratosVencidos: 3,
-        margemBruta: 64.3,
-        margemLiquida: 64.3,
-        roi: 180.0,
-        receitaMensal: [
-          { mes: 'Fev', valor: 16000 },
-          { mes: 'Mar', valor: 19000 },
-          { mes: 'Abr', valor: 22000 }
-        ],
-        despesasPorCategoria: [
-          { categoria: 'Salários', valor: 150000 },
-          { categoria: 'Tecnologia', valor: 40000 },
-          { categoria: 'Marketing', valor: 36000 },
-          { categoria: 'Consultoria', valor: 27000 },
-          { categoria: 'Outros', valor: 15000 }
-        ],
-        indicadores: {
-          crescimentoReceita: 24.8,
-          eficienciaOperacional: 81.7,
-          satisfacaoCliente: 90.9,
-          produtividade: 151.6
-        }
-      },
-      '2025-Q1': {
-        receitas: 220000 + 190000 + 160000, // Jan+Dez+Nov (2024)
-        despesas: 80000 + 75000 + 70000,
-        lucro: 140000 + 115000 + 90000,
-        contratosAtivos: 4,
-        contratosPendentes: 6,
-        contratosVencidos: 4,
-        margemBruta: 63.6,
-        margemLiquida: 63.6,
-        roi: 175.0,
-        receitaMensal: [
-          { mes: 'Nov', valor: 12000 },
-          { mes: 'Dez', valor: 15000 },
-          { mes: 'Jan', valor: 16000 }
-        ],
-        despesasPorCategoria: [
-          { categoria: 'Salários', valor: 120000 },
-          { categoria: 'Tecnologia', valor: 32000 },
-          { categoria: 'Marketing', valor: 29000 },
-          { categoria: 'Consultoria', valor: 26000 },
-          { categoria: 'Outros', valor: 18000 }
-        ],
-        indicadores: {
-          crescimentoReceita: 17.6,
-          eficienciaOperacional: 76.8,
-          satisfacaoCliente: 87.3,
-          produtividade: 140.2
-        }
-      }
-    };
-
-    const chaveTrimestre = `${ano}-Q${trimestre}`;
-    this.dadosFiltrados = dadosPorTrimestre[chaveTrimestre] || this.dados;
-    console.log('Dados filtrados para trimestre', chaveTrimestre, ':', this.dadosFiltrados.receitas);
-  }
-
-  private filtrarDadosPorAno(): void {
-    const dataIni = new Date(this.dataInicial);
-    const ano = dataIni.getFullYear();
-    
-    // Dados mock para anos (agregação de 12 meses)
-    const dadosPorAno: {[key: string]: DadosFinanceiros} = {
-      '2025': {
-        receitas: 4000000, // Agregação de todos os meses
-        despesas: 1300000,
-        lucro: 2700000,
-        contratosAtivos: 8,
-        contratosPendentes: 2,
-        contratosVencidos: 1,
-        margemBruta: 67.5,
-        margemLiquida: 67.5,
-        roi: 207.7,
-        receitaMensal: [
-          { mes: 'Jan', valor: 13000 },
-          { mes: 'Fev', valor: 16000 },
-          { mes: 'Mar', valor: 19000 },
-          { mes: 'Abr', valor: 22000 },
-          { mes: 'Mai', valor: 25000 },
-          { mes: 'Jun', valor: 28000 },
-          { mes: 'Jul', valor: 32000 },
-          { mes: 'Ago', valor: 35000 },
-          { mes: 'Set', valor: 38000 },
-          { mes: 'Out', valor: 40000 }
-        ],
-        despesasPorCategoria: [
-          { categoria: 'Salários', valor: 700000 },
-          { categoria: 'Tecnologia', valor: 200000 },
-          { categoria: 'Marketing', valor: 180000 },
-          { categoria: 'Consultoria', valor: 150000 },
-          { categoria: 'Outros', valor: 70000 }
-        ],
-        indicadores: {
-          crescimentoReceita: 38.5,
-          eficienciaOperacional: 90.2,
-          satisfacaoCliente: 96.9,
-          produtividade: 172.4
-        }
-      },
-      '2024': {
-        receitas: 2800000,
-        despesas: 900000,
-        lucro: 1900000,
-        contratosAtivos: 6,
-        contratosPendentes: 4,
-        contratosVencidos: 3,
-        margemBruta: 67.9,
-        margemLiquida: 67.9,
-        roi: 211.1,
-        receitaMensal: [
-          { mes: 'Jan', valor: 20000 },
-          { mes: 'Fev', valor: 22000 },
-          { mes: 'Mar', valor: 24000 },
-          { mes: 'Abr', valor: 26000 },
-          { mes: 'Mai', valor: 28000 },
-          { mes: 'Jun', valor: 30000 },
-          { mes: 'Jul', valor: 32000 },
-          { mes: 'Ago', valor: 34000 },
-          { mes: 'Set', valor: 36000 },
-          { mes: 'Out', valor: 38000 },
-          { mes: 'Nov', valor: 40000 },
-          { mes: 'Dez', valor: 42000 }
-        ],
-        despesasPorCategoria: [
-          { categoria: 'Salários', valor: 500000 },
-          { categoria: 'Tecnologia', valor: 150000 },
-          { categoria: 'Marketing', valor: 120000 },
-          { categoria: 'Consultoria', valor: 100000 },
-          { categoria: 'Outros', valor: 30000 }
-        ],
-        indicadores: {
-          crescimentoReceita: 25.0,
-          eficienciaOperacional: 85.0,
-          satisfacaoCliente: 92.0,
-          produtividade: 160.0
-        }
-      },
-      '2023': {
-        receitas: 2000000,
-        despesas: 700000,
-        lucro: 1300000,
-        contratosAtivos: 4,
-        contratosPendentes: 6,
-        contratosVencidos: 5,
-        margemBruta: 65.0,
-        margemLiquida: 65.0,
-        roi: 185.7,
-        receitaMensal: [
-          { mes: 'Jan', valor: 15000 },
-          { mes: 'Fev', valor: 16000 },
-          { mes: 'Mar', valor: 17000 },
-          { mes: 'Abr', valor: 18000 },
-          { mes: 'Mai', valor: 19000 },
-          { mes: 'Jun', valor: 20000 },
-          { mes: 'Jul', valor: 21000 },
-          { mes: 'Ago', valor: 22000 },
-          { mes: 'Set', valor: 23000 },
-          { mes: 'Out', valor: 24000 },
-          { mes: 'Nov', valor: 25000 },
-          { mes: 'Dez', valor: 26000 }
-        ],
-        despesasPorCategoria: [
-          { categoria: 'Salários', valor: 400000 },
-          { categoria: 'Tecnologia', valor: 120000 },
-          { categoria: 'Marketing', valor: 100000 },
-          { categoria: 'Consultoria', valor: 60000 },
-          { categoria: 'Outros', valor: 20000 }
-        ],
-        indicadores: {
-          crescimentoReceita: 15.0,
-          eficienciaOperacional: 80.0,
-          satisfacaoCliente: 88.0,
-          produtividade: 140.0
-        }
-      }
-    };
-
-    this.dadosFiltrados = dadosPorAno[ano.toString()] || this.dados;
-    console.log('Dados filtrados para ano', ano, ':', this.dadosFiltrados.receitas);
-  }
-
   getPeriodoAtualLabel(): string {
-    const dataIni = new Date(this.dataInicial);
-    const dataFim = new Date(this.dataFinal);
+    const dataIni = this.parseLocalDateStr(this.dataInicial);
+    const dataFim = this.parseLocalDateStr(this.dataFinal);
     
     switch (this.tipoFiltro) {
       case 'mes':
@@ -1560,7 +1078,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   getStatusFiltro(): string {
-    const dataIni = new Date(this.dataInicial);
+    const dataIni = this.parseLocalDateStr(this.dataInicial);
     const mes = dataIni.getMonth() + 1;
     
     // Simula status baseado no mês selecionado
@@ -1568,6 +1086,31 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (mes >= 6) return 'Bom';
     if (mes >= 3) return 'Regular';
     return 'Inicial';
+  }
+
+  /** Atalhos de período: aplica visão e intervalo em um clique */
+  aplicarAtalhoPeriodo(atalho: 'mes' | 'trimestre' | 'ano'): void {
+    this.tipoFiltro = atalho;
+    this.onTipoFiltroAlterado();
+  }
+
+  /** Indica se o atalho está ativo (período atual corresponde ao atalho) */
+  isAtalhoAtivo(atalho: 'mes' | 'trimestre' | 'ano'): boolean {
+    if (this.tipoFiltro !== atalho) return false;
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    if (atalho === 'mes') {
+      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+      const inicio = `${ano}-${mes}-01`;
+      return this.dataInicial === inicio;
+    }
+    if (atalho === 'trimestre') {
+      const trimestre = Math.ceil((hoje.getMonth() + 1) / 3);
+      const mesInicial = (trimestre - 1) * 3 + 1;
+      const esperado = `${ano}-${String(mesInicial).padStart(2, '0')}-01`;
+      return this.dataInicial === esperado;
+    }
+    return this.dataInicial === `${ano}-01-01` && this.dataFinal === `${ano}-12-31`;
   }
 
 }

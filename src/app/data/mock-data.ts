@@ -1,3 +1,5 @@
+import { DadosFinanceiros } from '../models/dados-financeiros.model';
+
 export interface Contrato {
   id: string;
   titulo: string;
@@ -54,26 +56,6 @@ export interface DadosCliente {
   valorRecorrencia: string;
   dataVenda: string;
   dataPrimeiraParcelaRecorrencia: string;
-}
-
-export interface DadosFinanceiros {
-  receitas: number;
-  despesas: number;
-  lucro: number;
-  contratosAtivos: number;
-  contratosPendentes: number;
-  contratosVencidos: number;
-  margemBruta: number;
-  margemLiquida: number;
-  roi: number;
-  receitaMensal: Array<{mes: string, valor: number}>;
-  despesasPorCategoria: Array<{categoria: string, valor: number}>;
-  indicadores: {
-    crescimentoReceita: number;
-    eficienciaOperacional: number;
-    satisfacaoCliente: number;
-    produtividade: number;
-  };
 }
 
 export const CONTRATOS_MOCK: Contrato[] = [
