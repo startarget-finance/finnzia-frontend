@@ -846,138 +846,55 @@
     </section>
 
     <!-- Diagnóstico -->
-    <section id="diagnostico" class="pt-6 scroll-mt-24" [class.mt-20]="!segmentoAtual && !apenasDiagnostico" [class.min-h-screen]="apenasDiagnostico" [class.flex]="apenasDiagnostico" [class.flex-col]="apenasDiagnostico" [class.items-center]="apenasDiagnostico" [class.justify-center]="apenasDiagnostico">
+    <section id="diagnostico" class="pt-6 scroll-mt-28 md:scroll-mt-32" [class.mt-20]="!segmentoAtual && !apenasDiagnostico" [class.min-h-screen]="apenasDiagnostico" [class.flex]="apenasDiagnostico" [class.flex-col]="apenasDiagnostico" [class.items-center]="apenasDiagnostico" [class.justify-center]="apenasDiagnostico">
       <div class="max-w-5xl mx-auto px-4 w-full" [class.flex-1]="apenasDiagnostico" [class.flex]="apenasDiagnostico" [class.flex-col]="apenasDiagnostico" [class.justify-center]="apenasDiagnostico">
-        <div class="bg-gradient-to-br from-purple-600/20 via-blue-600/20 to-teal-500/20 rounded-2xl shadow-2xl border border-purple-500/30 p-8 md:p-10 space-y-6 backdrop-blur-xl overflow-hidden relative">
+        <div class="bg-gradient-to-br from-purple-600/20 via-blue-600/20 to-teal-500/20 rounded-2xl shadow-2xl border border-purple-500/30 p-5 md:p-7 space-y-5 backdrop-blur-xl overflow-hidden relative">
           <div class="relative z-10">
-            <div class="mb-10 text-center md:text-left">
-              <h3 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
+            <div class="mb-5 md:mb-6 text-center md:text-left">
+              <h3 class="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 md:mb-4 leading-tight">
                 Quer saber onde o dinheiro está "vazando"?
               </h3>
-              <p class="text-xl md:text-2xl text-slate-200 font-semibold max-w-2xl mx-auto md:mx-0 leading-relaxed">
+              <p class="text-base md:text-lg text-slate-200 font-semibold max-w-2xl mx-auto md:mx-0 leading-relaxed">
                 Preencha o Formulário e Desbloqueie o Caminho para o Sucesso Financeiro!
               </p>
             </div>
             
-            <!-- Formulário de diagnóstico -->
-            <form class="space-y-4" #diagnosticoForm="ngForm">
-              <!-- Nome Completo -->
-              <div>
-                <input
-                  type="text"
-                  [(ngModel)]="formData.nome"
-                  name="nome"
-                  placeholder="Nome Completo"
-                  required
-                  class="w-full rounded-xl border-0 bg-slate-700/50 px-4 py-3.5 text-white placeholder:text-slate-400 focus:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition" />
+            <!-- Diagnóstico via embed (Typeform, Responde.ai, etc.) — sem backend próprio -->
+            <ng-container *ngIf="diagnosticoEmbedConfigurado; else diagnosticoEmbedPlaceholder">
+              <div class="max-w-2xl mx-auto rounded-xl border border-white/[0.06] bg-[#050A1E] ring-1 ring-inset ring-white/[0.04]">
+                <iframe
+                  [src]="diagnosticoEmbedUrlSeguro!"
+                  class="w-full min-h-[560px] h-[min(88dvh,900px)] sm:min-h-[640px] sm:h-[min(90dvh,960px)] border-0 block bg-[#050A1E] rounded-xl"
+                  title="Formulário de diagnóstico financeiro"
+                  allow="camera; microphone; clipboard-write; fullscreen"
+                  referrerpolicy="no-referrer-when-downgrade"
+                ></iframe>
               </div>
-              
-              <!-- Telefone e Email (lado a lado) -->
-              <div class="grid md:grid-cols-2 gap-4">
-                <div>
-                  <input
-                    type="tel"
-                    [(ngModel)]="formData.telefone"
-                    name="telefone"
-                    placeholder="Telefone ou Celular"
-                    class="w-full rounded-xl border-0 bg-slate-700/50 px-4 py-3.5 text-white placeholder:text-slate-400 focus:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition" />
-                </div>
-                <div>
-                  <input
-                    type="email"
-                    [(ngModel)]="formData.email"
-                    name="email"
-                    placeholder="E-mail"
-                    required
-                    class="w-full rounded-xl border-0 bg-slate-700/50 px-4 py-3.5 text-white placeholder:text-slate-400 focus:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition" />
-                </div>
+              <p class="text-center text-sm text-slate-400 mt-5">
+                <a
+                  [href]="diagnosticoEmbedUrlAbrirNovaAba"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-blue-300 hover:text-blue-200 underline underline-offset-2"
+                >
+                  Abrir formulário em nova aba
+                </a>
+              </p>
+            </ng-container>
+            <ng-template #diagnosticoEmbedPlaceholder>
+              <div
+                class="rounded-xl border border-amber-500/35 bg-amber-500/10 px-5 py-8 text-center space-y-3"
+              >
+                <p class="text-amber-100 font-medium">
+                  Configure o link do formulário em <span class="font-mono text-sm">api.config.ts</span>
+                </p>
+                <p class="text-amber-200/90 text-sm max-w-xl mx-auto leading-relaxed">
+                  Defina <span class="font-mono text-xs">LANDING_DIAGNOSTICO_EMBED_URL</span> com a URL do
+                  Typeform, Responde.ai (modo embed) ou outra ferramenta que permita <span class="font-mono text-xs">iframe</span>.
+                  Os envios ficam na própria ferramenta; não é necessário endpoint no backend Finnzia.
+                </p>
               </div>
-              
-              <!-- Faturamento e Segmento (lado a lado) -->
-              <div class="grid md:grid-cols-2 gap-4">
-                <div class="relative">
-                  <select
-                    [(ngModel)]="formData.faturamento"
-                    name="faturamento"
-                    class="w-full rounded-xl border-0 bg-slate-700/50 px-4 py-3.5 text-white appearance-none focus:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition">
-                    <option value="" class="bg-slate-800 text-slate-400">Faturamento mensal aproximado</option>
-                    <option value="até 50 mil por mês" class="bg-slate-800">até 50 mil por mês</option>
-                    <option value="De 50mil a 100mil por mês" class="bg-slate-800">De 50mil a 100mil por mês</option>
-                    <option value="De 100mil a 300mil por mês" class="bg-slate-800">De 100mil a 300mil por mês</option>
-                    <option value="Acima de 300mil mensais" class="bg-slate-800">Acima de 300mil mensais</option>
-                  </select>
-                  <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                  </div>
-                </div>
-                <div class="relative">
-                  <select
-                    [(ngModel)]="formData.segmento"
-                    name="segmento"
-                    class="w-full rounded-xl border-0 bg-slate-700/50 px-4 py-3.5 text-white appearance-none focus:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition">
-                    <option value="" class="bg-slate-800 text-slate-400">Selecione um segmento</option>
-                    <option value="Agência de Marketing" class="bg-slate-800">Agência de Marketing</option>
-                    <option value="Restaurante" class="bg-slate-800">Restaurante</option>
-                    <option value="Prestador de Serviço" class="bg-slate-800">Prestador de Serviço</option>
-                    <option value="Outro" class="bg-slate-800">Outro</option>
-                  </select>
-                  <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Onde está o problema hoje? -->
-              <div>
-                <textarea
-                  rows="4"
-                  [(ngModel)]="formData.contexto"
-                  name="contexto"
-                  placeholder="Onde está o problema hoje?"
-                  class="w-full rounded-xl border-0 bg-slate-700/50 px-4 py-3.5 text-white placeholder:text-slate-400 focus:bg-slate-700/70 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition resize-none"></textarea>
-              </div>
-              
-              <!-- Botão embaixo do campo "Onde está o problema hoje?" -->
-              <div class="flex justify-center py-4">
-                <button
-                  type="button"
-                  (click)="salvarDiagnostico($event)"
-                  [disabled]="salvandoDiagnostico"
-                  class="inline-flex justify-center items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 text-slate-900 font-semibold shadow-xl shadow-amber-500/40 hover:shadow-2xl hover:brightness-110 transition text-sm md:text-base disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:brightness-100 min-w-[220px] uppercase tracking-wide">
-                  <svg *ngIf="!salvandoDiagnostico" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                  </svg>
-                  <svg *ngIf="salvandoDiagnostico" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  <span>{{ salvandoDiagnostico ? 'Enviando...' : 'Quero transformar meu negócio' }}</span>
-                </button>
-              </div>
-              
-              <!-- Mensagens de feedback -->
-              <div class="space-y-3">
-                <!-- Mensagem de sucesso -->
-                <div *ngIf="diagnosticoSalvo" class="flex items-center gap-2 px-4 py-3 rounded-lg bg-green-500/20 border border-green-500/40 text-green-300 text-sm animate-fade-in">
-                  <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                  </svg>
-                  <span>Diagnóstico salvo com sucesso! Entraremos em contato em breve.</span>
-                </div>
-
-                <!-- Mensagem de erro -->
-                <div *ngIf="erroEnvio" class="flex items-start gap-2 px-4 py-3 rounded-lg bg-red-500/20 border border-red-500/40 text-red-300 text-sm animate-fade-in">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                  </svg>
-                  <span>{{ mensagemErro }}</span>
-                </div>
-              </div>
-            </form>
+            </ng-template>
           </div>
         </div>
       </div>
@@ -1014,18 +931,6 @@
       </footer>
     </section>
   </main>
-
-  <!-- Botão Flutuante WhatsApp -->
-  <a 
-    [href]="getWhatsAppUrl()"
-    target="_blank"
-    class="fixed bottom-6 right-6 z-50 w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-full shadow-2xl hover:shadow-green-500/50 flex items-center justify-center transition-all duration-300 hover:scale-110 hover:brightness-110 group"
-    aria-label="Fale conosco no WhatsApp"
-  >
-    <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-    </svg>
-  </a>
 
   <footer *ngIf="!apenasDiagnostico" class="relative bg-slate-950 text-slate-200 py-12 mt-20">
     <div class="max-w-6xl mx-auto px-4">

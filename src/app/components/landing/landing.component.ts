@@ -1,30 +1,18 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { ClintService } from '../../services/clint.service';
-import { LeadService, LeadData } from '../../services/lead.service';
-import { ComparacaoServicosComponent, FeatureComparacao } from '../comparacao-servicos/comparacao-servicos.component';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { API_CONFIG } from '../../config/api.config';
+import { ComparacaoServicosComponent } from '../comparacao-servicos/comparacao-servicos.component';
 
 @Component({
   standalone: true,
   selector: 'app-landing',
-  imports: [CommonModule, FormsModule, ComparacaoServicosComponent],
+  imports: [CommonModule, ComparacaoServicosComponent],
   templateUrl: './landing.component.html'
 })
 export class LandingComponent implements OnInit, AfterViewInit {
-  // Dados do formulário de diagnóstico
-  formData = {
-    nome: '',
-    email: '',
-    telefone: '',
-    segmento: '',
-    faturamento: '',
-    contexto: ''
-  };
-
-  // Número do WhatsApp
-  readonly whatsappNumber = '554991984101';
+  diagnosticoEmbedUrlSeguro: SafeResourceUrl | null = null;
 
   // Segmento atual (para mostrar apenas uma seção)
   segmentoAtual: string | null = null;
@@ -84,38 +72,52 @@ export class LandingComponent implements OnInit, AfterViewInit {
     }
   ];
 
-  // Estado de envio
-  enviandoClint = false;
-  salvandoDiagnostico = false;
-  diagnosticoSalvo = false;
-  erroEnvio = false;
-  mensagemErro = '';
-
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private clintService: ClintService,
-    private leadService: LeadService
+    private sanitizer: DomSanitizer
   ) {}
 
-  ngOnInit(): void {
-    // Verificar se deve mostrar apenas o diagnóstico
-    this.apenasDiagnostico = this.route.snapshot.data['apenasDiagnostico'] || false;
-    
-    // Verificar se há um segmento específico na rota
-    this.segmentoAtual = this.route.snapshot.data['segmento'] || null;
-    
-    // Pré-preencher o segmento no formulário se houver um segmento específico
-    if (this.segmentoAtual) {
-      const mapeamentoSegmentos: { [key: string]: string } = {
-        'restaurantes': 'Restaurante',
-        'prestadores': 'Prestador de Serviço',
-        'agencias': 'Agência de Marketing'
-      };
-      this.formData.segmento = mapeamentoSegmentos[this.segmentoAtual] || '';
+  /** URL do embed (Typeform / Responde.ai / etc.) quando configurada em api.config.ts */
+  get diagnosticoEmbedConfigurado(): boolean {
+    const raw = API_CONFIG.LANDING_DIAGNOSTICO_EMBED_URL?.trim() ?? '';
+    return raw.length > 0;
+  }
+
+  /** URL com parâmetros opcionais (ex.: segmento da rota) para mapear em campos ocultos no provedor */
+  get diagnosticoEmbedUrlAbrirNovaAba(): string {
+    return this.montarUrlDiagnosticoEmbed();
+  }
+
+  private montarUrlDiagnosticoEmbed(): string {
+    const base = API_CONFIG.LANDING_DIAGNOSTICO_EMBED_URL?.trim() ?? '';
+    if (!base) {
+      return '';
     }
-    
-    // Se houver segmento específico, fazer scroll automático após um pequeno delay
+    const params = new URLSearchParams();
+    if (this.segmentoAtual) {
+      params.set('segmento', this.segmentoAtual);
+      params.set('utm_source', 'finnzia-landing');
+    }
+    const q = params.toString();
+    if (!q) {
+      return base;
+    }
+    const sep = base.includes('?') ? '&' : '?';
+    return `${base}${sep}${q}`;
+  }
+
+  private atualizarDiagnosticoEmbedSeguro(): void {
+    const full = this.montarUrlDiagnosticoEmbed();
+    this.diagnosticoEmbedUrlSeguro =
+      full.length > 0 ? this.sanitizer.bypassSecurityTrustResourceUrl(full) : null;
+  }
+
+  ngOnInit(): void {
+    this.apenasDiagnostico = this.route.snapshot.data['apenasDiagnostico'] || false;
+    this.segmentoAtual = this.route.snapshot.data['segmento'] || null;
+    this.atualizarDiagnosticoEmbedSeguro();
+
     if (this.segmentoAtual && !this.apenasDiagnostico) {
       setTimeout(() => {
         this.scrollToSegmento(this.segmentoAtual!);
@@ -123,27 +125,23 @@ export class LandingComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // Verificar se deve mostrar uma seção específica
   mostrarSecao(secao: string): boolean {
-    // Só mostrar seções quando há um segmento específico (não na home)
     if (!this.segmentoAtual) {
-      return false; // Não mostrar seções na home
+      return false;
     }
-    // Mapear nomes das seções (o que vem na rota vs o ID da seção)
     const mapeamento: { [key: string]: string[] } = {
       'restaurantes': ['restaurantes'],
       'prestadores': ['servicos', 'prestadores'],
       'agencias': ['agencias']
     };
-    
+
     const secoesPermitidas = mapeamento[this.segmentoAtual] || [];
     return secoesPermitidas.includes(secao);
   }
 
-  // Scroll para o segmento específico
   scrollToSegmento(segmento: string): void {
     let elementoId = '';
-    switch(segmento) {
+    switch (segmento) {
       case 'restaurantes':
         elementoId = 'restaurantes';
         break;
@@ -154,7 +152,7 @@ export class LandingComponent implements OnInit, AfterViewInit {
         elementoId = 'agencias';
         break;
     }
-    
+
     if (elementoId) {
       const el = document.getElementById(elementoId);
       if (el) {
@@ -181,7 +179,6 @@ export class LandingComponent implements OnInit, AfterViewInit {
     document.body.style.overflow = '';
   }
 
-  // Métodos do carousel de vídeos
   proximoVideo(): void {
     this.pausarVideoAtual();
     this.videoAtualIndex = (this.videoAtualIndex + 1) % this.videos.length;
@@ -210,26 +207,25 @@ export class LandingComponent implements OnInit, AfterViewInit {
       const previewVideo = document.querySelector(`video[data-video-id="${videoAtual.id}"]`) as HTMLVideoElement;
       const mainVideo = document.querySelector(`video[data-video-id="${videoAtual.id}-main"]`) as HTMLVideoElement;
       const poster = document.querySelector('.video-poster') as HTMLElement;
-      
+
       if (previewVideo) {
         previewVideo.classList.remove('hidden');
         previewVideo.currentTime = 0.1;
         previewVideo.pause();
       }
-      
+
       if (mainVideo) {
         mainVideo.classList.add('hidden');
         mainVideo.pause();
         mainVideo.currentTime = 0;
       }
-      
+
       if (poster) {
         poster.style.display = 'flex';
       }
     }
   }
 
-  // Métodos do carousel de vídeos de agências
   proximoVideoAgencia(): void {
     this.pausarVideoAgenciaAtual();
     this.videoAgenciaAtualIndex = (this.videoAgenciaAtualIndex + 1) % this.videosAgencias.length;
@@ -257,30 +253,29 @@ export class LandingComponent implements OnInit, AfterViewInit {
     if (videoAtual) {
       const container = document.querySelector('.video-container-agencia') as HTMLElement;
       if (!container) return;
-      
+
       const previewVideo = container.querySelector(`video[data-video-id="${videoAtual.id}"]`) as HTMLVideoElement;
       const mainVideo = container.querySelector(`video[data-video-id="${videoAtual.id}-main"]`) as HTMLVideoElement;
       const poster = container.querySelector('.video-poster') as HTMLElement;
-      
+
       if (previewVideo) {
         previewVideo.classList.remove('hidden');
         previewVideo.currentTime = 0.1;
         previewVideo.pause();
       }
-      
+
       if (mainVideo) {
         mainVideo.classList.add('hidden');
         mainVideo.pause();
         mainVideo.currentTime = 0;
       }
-      
+
       if (poster) {
         poster.style.display = 'flex';
       }
     }
   }
 
-  // Métodos do carousel de depoimentos
   proximoDepoimento(): void {
     this.depoimentoAtualIndex = (this.depoimentoAtualIndex + 1) % this.depoimentos.length;
   }
@@ -293,7 +288,6 @@ export class LandingComponent implements OnInit, AfterViewInit {
     this.depoimentoAtualIndex = index;
   }
 
-  // Métodos para swipe nos depoimentos escritos
   onDepoimentoTouchStart(event: TouchEvent): void {
     this.swipeStartX = event.touches[0].clientX;
     this.swipeStartY = event.touches[0].clientY;
@@ -302,11 +296,10 @@ export class LandingComponent implements OnInit, AfterViewInit {
 
   onDepoimentoTouchMove(event: TouchEvent): void {
     if (!this.swipeStartX || !this.swipeStartY) return;
-    
+
     const deltaX = event.touches[0].clientX - this.swipeStartX;
     const deltaY = event.touches[0].clientY - this.swipeStartY;
-    
-    // Verificar se é um swipe horizontal (não vertical)
+
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
       this.isSwiping = true;
     }
@@ -320,14 +313,12 @@ export class LandingComponent implements OnInit, AfterViewInit {
     }
 
     const deltaX = event.changedTouches[0].clientX - this.swipeStartX;
-    const threshold = 50; // Mínimo de pixels para considerar swipe
+    const threshold = 50;
 
     if (Math.abs(deltaX) > threshold) {
       if (deltaX > 0) {
-        // Swipe para direita - depoimento anterior
         this.depoimentoAnterior();
       } else {
-        // Swipe para esquerda - próximo depoimento
         this.proximoDepoimento();
       }
     }
@@ -337,7 +328,6 @@ export class LandingComponent implements OnInit, AfterViewInit {
     this.isSwiping = false;
   }
 
-  // Métodos para mouse drag nos depoimentos escritos
   onDepoimentoMouseDown(event: MouseEvent): void {
     this.swipeStartX = event.clientX;
     this.swipeStartY = event.clientY;
@@ -347,10 +337,10 @@ export class LandingComponent implements OnInit, AfterViewInit {
 
   onDepoimentoMouseMove(event: MouseEvent): void {
     if (!this.swipeStartX || !this.swipeStartY) return;
-    
+
     const deltaX = event.clientX - this.swipeStartX;
     const deltaY = event.clientY - this.swipeStartY;
-    
+
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
       this.isSwiping = true;
     }
@@ -380,285 +370,49 @@ export class LandingComponent implements OnInit, AfterViewInit {
   }
 
   scrollToDiagnostico(): void {
-    // Se estiver na rota de diagnóstico, não precisa fazer nada
     if (this.apenasDiagnostico) {
       return;
     }
-    
-    // Se estiver na home ou em outra página, redirecionar para /diagnostico
+
     if (!this.segmentoAtual) {
       this.router.navigate(['/diagnostico']);
       return;
     }
-    
-    // Se estiver em uma página de segmento, fazer scroll
+
     const el = document.getElementById('diagnostico');
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }
 
-
-  /**
-   * Envia o formulário para a Clint
-   */
-  enviarFormulario(event?: Event): void {
-    // Prevenir comportamento padrão do formulário
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-
-    console.log('Enviando formulário...', this.formData);
-
-    // Validação básica
-    if (!this.formData.nome || !this.formData.email) {
-      alert('Por favor, preencha pelo menos o nome e email.');
-      return;
-    }
-
-    // Enviar para a Clint
-    this.enviarParaClint();
-  }
-
-  salvarDiagnostico(event?: Event): void {
-    // Prevenir comportamento padrão do formulário
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-
-    // Validação básica
-    if (!this.formData.nome || !this.formData.email) {
-      this.erroEnvio = true;
-      this.mensagemErro = 'Por favor, preencha pelo menos o nome e email.';
-      setTimeout(() => {
-        this.erroEnvio = false;
-        this.mensagemErro = '';
-      }, 5000);
-      return;
-    }
-
-    // Estado de loading
-    this.salvandoDiagnostico = true;
-    this.diagnosticoSalvo = false;
-    this.erroEnvio = false;
-    this.mensagemErro = '';
-
-    // Preparar dados do lead
-    const leadData: LeadData = {
-      nome: this.formData.nome,
-      email: this.formData.email,
-      telefone: this.formData.telefone || undefined,
-      segmento: this.formData.segmento || undefined,
-      faturamento: this.formData.faturamento || undefined,
-      contexto: this.formData.contexto || undefined
-    };
-
-    // Enviar para SheetMonkey
-    this.leadService.enviarLead(leadData).subscribe({
-      next: (response) => {
-        this.salvandoDiagnostico = false;
-        console.log('Lead enviado com sucesso:', response);
-        this.diagnosticoSalvo = true;
-        
-        // Limpar formulário após sucesso
-        this.limparFormulario();
-        
-        // Esconder mensagem de sucesso após 5 segundos
-        setTimeout(() => {
-          this.diagnosticoSalvo = false;
-        }, 5000);
-      },
-      error: (error) => {
-        this.salvandoDiagnostico = false;
-        console.error('Erro ao enviar lead:', error);
-        this.erroEnvio = true;
-        this.mensagemErro = error.message || 'Erro ao salvar diagnóstico. Por favor, tente novamente.';
-        
-        // Esconder mensagem de erro após 7 segundos
-        setTimeout(() => {
-          this.erroEnvio = false;
-          this.mensagemErro = '';
-        }, 7000);
-      }
-    });
-  }
-
-  /**
-   * Extrai DDI e número do telefone
-   */
-  private extrairDDIeTelefone(telefone: string): { ddi: string; phone: string } {
-    if (!telefone) {
-      return { ddi: '', phone: '' };
-    }
-
-    // Remove caracteres não numéricos
-    const numeros = telefone.replace(/\D/g, '');
-
-    // Se começar com 55 (Brasil), extrai DDI
-    if (numeros.startsWith('55') && numeros.length >= 12) {
-      return {
-        ddi: '55',
-        phone: numeros.substring(2) // Remove o 55 do início
-      };
-    }
-
-    // Se começar com 0 e depois 55, remove o 0
-    if (numeros.startsWith('055') && numeros.length >= 13) {
-      return {
-        ddi: '55',
-        phone: numeros.substring(3)
-      };
-    }
-
-    // Se não tiver DDI explícito, assume Brasil (55) e usa o número completo
-    if (numeros.length >= 10) {
-      return {
-        ddi: '55',
-        phone: numeros
-      };
-    }
-
-    // Caso padrão
-    return {
-      ddi: '55',
-      phone: numeros
-    };
-  }
-
-  /**
-   * Envia os dados do formulário para a Clint via webhook
-   */
-  enviarParaClint(): void {
-    this.enviandoClint = true;
-
-    // Extrair DDI e telefone
-    const { ddi, phone } = this.extrairDDIeTelefone(this.formData.telefone);
-
-    // Preparar dados para a Clint
-    // A Clint espera campos customizados dentro do objeto 'fields'
-    // Os nomes dos campos devem corresponder aos campos configurados na Clint
-    const contactData: any = {
-      name: this.formData.nome,
-      email: this.formData.email,
-      username: this.formData.email.split('@')[0], // Usa a parte antes do @ como username
-      fields: {}
-    };
-
-    // Adicionar telefone e DDI apenas se preenchidos
-    if (phone) {
-      contactData.ddi = ddi;
-      contactData.phone = phone;
-    }
-
-    // Adicionar campos customizados no objeto fields
-    // IMPORTANTE: Os nomes devem corresponder EXATAMENTE aos campos mapeados na Clint
-    
-    // Segmento → "Segmento" na Clint
-    if (this.formData.segmento) {
-      contactData.fields['Segmento'] = this.formData.segmento;
-    }
-
-    // Faturamento mensal aproximado → "Número de funcionários" na Clint
-    if (this.formData.faturamento) {
-      contactData.fields['Número de funcionários'] = this.formData.faturamento;
-    }
-
-    // Contexto / principal dor → "Notas do contato" na Clint
-    if (this.formData.contexto) {
-      contactData.fields['Notas do contato'] = this.formData.contexto;
-    }
-
-    // Campos adicionais de rastreamento
-    contactData.fields['Origem'] = 'Landing Page - Diagnóstico';
-    contactData.fields['Data de envio'] = new Date().toISOString();
-
-    this.clintService.createContact(contactData).subscribe({
-      next: (response) => {
-        console.log('Contato criado na Clint com sucesso:', response);
-        this.enviandoClint = false;
-        
-        // Mostrar mensagem de sucesso
-        alert('Formulário enviado com sucesso! Entraremos em contato em breve.');
-        
-        // Limpar formulário após sucesso
-        this.formData = {
-          nome: '',
-          email: '',
-          telefone: '',
-          segmento: '',
-          faturamento: '',
-          contexto: ''
-        };
-      },
-      error: (error) => {
-        console.error('Erro ao enviar para a Clint:', error);
-        this.enviandoClint = false;
-        
-        // Mostrar mensagem de erro
-        alert('Erro ao enviar formulário. Por favor, tente novamente ou entre em contato pelo WhatsApp.');
-      }
-    });
-  }
-
-  /**
-   * Limpa o formulário de diagnóstico
-   */
-  limparFormulario(): void {
-    this.formData = {
-      nome: '',
-      email: '',
-      telefone: '',
-      segmento: '',
-      faturamento: '',
-      contexto: ''
-    };
-  }
-
-  // Método para obter a URL do WhatsApp para o botão flutuante
-  getWhatsAppUrl(): string {
-    const mensagem = 'Olá! Gostaria de saber mais sobre a Finzzia.';
-    const mensagemEncoded = encodeURIComponent(mensagem);
-    return `https://wa.me/${this.whatsappNumber}?text=${mensagemEncoded}`;
-  }
-
-  // Métodos para controlar reprodução de vídeos
   playingVideos: { [key: string]: boolean } = {};
 
   ngAfterViewInit(): void {
-    // Configurar vídeos para mostrar primeiro frame como capa
     this.setupVideoPosters();
   }
 
   setupVideoPosters(): void {
-    // IDs dos vídeos do carousel principal
     const videoIds = this.videos.map(v => v.id);
-    // IDs dos vídeos das seções de agências
     const agenciaVideoIds = ['video-agencia1', 'video-agencia2', 'video-agencia3'];
     const allVideoIds = [...videoIds, ...agenciaVideoIds];
-    
+
     allVideoIds.forEach(videoId => {
       const previewVideo = document.querySelector(`video[data-video-id="${videoId}"]`) as HTMLVideoElement;
       if (!previewVideo) return;
 
-      // Garantir que o vídeo está pausado e no primeiro frame
       previewVideo.pause();
       previewVideo.currentTime = 0;
-      
-      // Quando o vídeo carregar metadados, garantir primeiro frame
+
       previewVideo.addEventListener('loadedmetadata', () => {
-        previewVideo.currentTime = 0.1; // Pequeno offset para garantir que há frame
+        previewVideo.currentTime = 0.1;
         previewVideo.pause();
       });
 
-      // Quando o vídeo carregar dados suficientes, garantir primeiro frame
       previewVideo.addEventListener('loadeddata', () => {
         previewVideo.currentTime = 0.1;
         previewVideo.pause();
       });
 
-      // Tentar carregar o primeiro frame
       previewVideo.load();
     });
   }
@@ -666,37 +420,34 @@ export class LandingComponent implements OnInit, AfterViewInit {
   onVideoMetadataLoaded(videoId: string, event: Event): void {
     const video = event.target as HTMLVideoElement;
     if (video) {
-      // Garantir que o vídeo está no primeiro frame e pausado
       video.currentTime = 0.1;
       video.pause();
     }
   }
 
   playVideo(videoId: string, event?: Event): void {
-    // Encontrar o container do vídeo (pode ser .video-container ou .video-container-agencia)
     let container = document.querySelector('.video-container') as HTMLElement;
     if (!container) {
       container = document.querySelector('.video-container-agencia') as HTMLElement;
     }
-    
+
     if (!container) {
       console.error('Container de vídeo não encontrado');
       return;
     }
-    
-    // Encontrar os vídeos dentro do container (mesmo que estejam ocultos)
+
     const previewVideo = container.querySelector(`video[data-video-id="${videoId}"]`) as HTMLVideoElement;
     const mainVideo = container.querySelector(`video[data-video-id="${videoId}-main"]`) as HTMLVideoElement;
     const poster = container.querySelector('.video-poster') as HTMLElement;
-    
+
     if (previewVideo) {
       previewVideo.classList.add('hidden');
     }
-    
+
     if (poster) {
       poster.style.display = 'none';
     }
-    
+
     if (mainVideo) {
       mainVideo.classList.remove('hidden');
       mainVideo.muted = false;
@@ -704,27 +455,25 @@ export class LandingComponent implements OnInit, AfterViewInit {
         console.error('Erro ao reproduzir vídeo:', error);
       });
     }
-    
+
     this.playingVideos[videoId] = true;
   }
 
   pauseVideo(videoId: string, event: Event): void {
     const video = event.target as HTMLVideoElement;
-    
-    // Encontrar o container do vídeo (pode ser .video-container ou .video-container-agencia)
+
     let container = document.querySelector('.video-container') as HTMLElement;
     if (!container) {
       container = document.querySelector('.video-container-agencia') as HTMLElement;
     }
-    
+
     if (!container) return;
-    
+
     const previewVideo = container.querySelector(`video[data-video-id="${videoId}"]`) as HTMLVideoElement;
     const mainVideo = container.querySelector(`video[data-video-id="${videoId}-main"]`) as HTMLVideoElement;
     const poster = container.querySelector('.video-poster') as HTMLElement;
-    
+
     if (poster && video.paused) {
-      // Mostrar preview e poster novamente
       if (previewVideo) {
         previewVideo.classList.remove('hidden');
       }
@@ -733,12 +482,11 @@ export class LandingComponent implements OnInit, AfterViewInit {
       }
       poster.style.display = 'flex';
     }
-    
+
     this.playingVideos[videoId] = false;
   }
-  
+
   onPosterClick(videoId: string): void {
     this.playVideo(videoId);
   }
 }
-
