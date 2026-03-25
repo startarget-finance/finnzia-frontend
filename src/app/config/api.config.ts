@@ -84,7 +84,7 @@ export const API_CONFIG = {
       return String(process.env['LANDING_DIAGNOSTICO_EMBED_URL']).trim();
     }
     /** Typeform — diagnóstico / leads (produção local sem env) */
-    const FALLBACK = 'https://form.typeform.com/to/sgXL5eR6';
+    const FALLBACK = 'https://7o5ahbu8gim.typeform.com/to/di1oLeiP';
     return FALLBACK.trim();
   })()
 };
