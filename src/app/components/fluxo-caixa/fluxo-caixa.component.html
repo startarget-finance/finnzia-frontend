@@ -1,30 +1,68 @@
-<div class="min-h-screen bg-[#F8FAFC] pb-12 font-sans">
+<div class="min-h-screen bg-[#F8FAFC] pb-12 font-sans flex flex-col">
   <!-- Top Navigation / Header Area -->
-  <div class="bg-white border-b border-gray-200 px-6 py-5 sm:px-8 lg:px-10">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div class="flex items-center gap-4">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Demonstrativo de Fluxo de Caixa</h1>
-          <p class="text-sm text-gray-500 mt-0.5">Acompanhe as entradas, saídas e o resultado consolidado</p>
+  <div class="bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-5">
+    <div class="mx-auto w-full max-w-[1440px] flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-start gap-4">
+        <div class="mt-0.5 h-11 w-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-sm ring-1 ring-black/5">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Demonstrativo de Fluxo de Caixa</h1>
+            <span class="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-semibold text-gray-600">
+              <span class="text-gray-400 mr-1.5">Período</span>
+              <ng-container *ngIf="dataInicial && dataFinal; else periodoBadgePlaceholder">
+                {{ (dataInicial + 'T00:00:00' | date:'dd/MM/yyyy') }} — {{ (dataFinal + 'T00:00:00' | date:'dd/MM/yyyy') }}
+              </ng-container>
+              <ng-template #periodoBadgePlaceholder>não selecionado</ng-template>
+            </span>
+          </div>
+          <p class="text-sm text-gray-500 mt-1 max-w-2xl">Análise consolidada de entradas, saídas e resultado por competência.</p>
         </div>
       </div>
+
+      <!-- Exportar removido a pedido -->
     </div>
   </div>
 
-  <div class="max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 mt-8 space-y-6">
+  <div class="mx-auto w-full max-w-[1440px] px-4 sm:px-6 lg:px-8 mt-6 flex-1 min-h-0 flex flex-col gap-6">
     
     <!-- Filtros Section -->
-    <div class="bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 shadow-sm">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-4">
-        <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
-          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-          </svg>
-          Filtros de Busca
-        </h3>
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm ring-1 ring-black/5 overflow-visible">
+      <div class="px-5 sm:px-6 py-4 border-b border-gray-100 bg-gradient-to-b from-gray-50/70 to-white">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex items-center gap-2">
+            <div class="h-9 w-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-semibold text-gray-900">Filtros</h3>
+              <p class="text-xs text-gray-500 mt-0.5">Defina período e ações rápidas.</p>
+            </div>
+          </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+            <button type="button" class="px-3 py-2 text-xs font-semibold border border-gray-200 rounded-xl hover:border-blue-400 hover:text-blue-700 transition-colors bg-white text-gray-700 shadow-sm" (click)="ajustarPeriodo(3)">3M</button>
+            <button type="button" class="px-3 py-2 text-xs font-semibold border border-gray-200 rounded-xl hover:border-blue-400 hover:text-blue-700 transition-colors bg-white text-gray-700 shadow-sm" (click)="ajustarPeriodo(6)">6M</button>
+            <button type="button" class="px-3 py-2 text-xs font-semibold border border-gray-200 rounded-xl hover:border-blue-400 hover:text-blue-700 transition-colors bg-white text-gray-700 shadow-sm" (click)="ajustarPeriodo(12)">12M</button>
+            <div class="w-px h-6 bg-gray-200 mx-1 hidden sm:block"></div>
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors bg-white shadow-sm"
+              (click)="exportarCsv()"
+            >
+              <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              Exportar CSV
+            </button>
+          </div>
+        </div>
       </div>
 
-      <form [formGroup]="filtrosForm" (ngSubmit)="carregarDfc()" class="grid gap-4 lg:grid-cols-4 items-end">
+      <form [formGroup]="filtrosForm" (ngSubmit)="carregarDfc()" class="p-5 sm:p-6 grid gap-4 lg:grid-cols-4 items-end">
         <div class="lg:col-span-2">
           <label class="block text-xs font-medium text-gray-500 mb-1.5">Período</label>
           <div class="relative">
@@ -92,16 +130,7 @@
             </div>
           </div>
         </div>
-        <div class="flex flex-wrap gap-2 lg:col-span-2 lg:justify-end">
-          <button type="button" class="px-3 py-2.5 text-xs font-semibold border border-gray-200 rounded-xl hover:border-blue-400 hover:text-blue-600 transition-colors bg-white text-gray-700 shadow-sm" (click)="ajustarPeriodo(3)">Últimos 3M</button>
-          <button type="button" class="px-3 py-2.5 text-xs font-semibold border border-gray-200 rounded-xl hover:border-blue-400 hover:text-blue-600 transition-colors bg-white text-gray-700 shadow-sm" (click)="ajustarPeriodo(6)">Últimos 6M</button>
-          <button type="button" class="px-3 py-2.5 text-xs font-semibold border border-gray-200 rounded-xl hover:border-blue-400 hover:text-blue-600 transition-colors bg-white text-gray-700 shadow-sm" (click)="ajustarPeriodo(12)">Últimos 12M</button>
-          <button type="submit" class="px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-xl shadow-sm hover:bg-blue-500 disabled:opacity-60 transition-colors" [disabled]="carregando">
-            {{ carregando ? 'Atualizando...' : 'Atualizar visão' }}
-          </button>
-          <button type="button" class="px-3 py-2.5 text-sm font-semibold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors bg-white shadow-sm" (click)="exportarCsv()">Exportar CSV</button>
-          <button type="button" class="px-3 py-2.5 text-sm font-semibold text-white bg-gray-900 rounded-xl hover:bg-gray-800 transition-colors shadow-sm" (click)="imprimir()">Imprimir</button>
-        </div>
+        <!-- Exportar removido a pedido -->
       </form>
     </div>
 
@@ -109,7 +138,7 @@
     <div *ngIf="indicadores as metrics" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       
       <!-- Receitas -->
-      <div class="bg-emerald-50 rounded-2xl border border-emerald-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between group">
+      <div class="bg-white rounded-xl border border-[#E5E7EB] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)] flex flex-col justify-between group">
         <div class="flex items-center justify-between mb-4">
           <p class="text-sm font-medium text-emerald-700">Receitas Totais</p>
           <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform duration-200">
@@ -119,8 +148,8 @@
           </div>
         </div>
         <div class="min-w-0">
-          <p class="text-2xl lg:text-3xl font-bold text-emerald-950 tracking-tight truncate text-right tabular-nums min-h-[2.25rem] flex items-end justify-end">{{ formatCurrency(metrics.totalReceitas) }}</p>
-          <div class="mt-2 min-h-[2.75rem] flex flex-col justify-end">
+          <p class="text-2xl font-bold text-emerald-950 tracking-tight truncate text-center tabular-nums min-h-[2.25rem] flex items-center justify-center">{{ formatCurrency(metrics.totalReceitas) }}</p>
+          <div class="mt-2 min-h-[2.25rem] flex flex-col justify-end">
             <p class="text-xs text-emerald-600/80 font-medium truncate">Margem {{ metrics.margemPercentual | number:'1.1-1' }}%</p>
             <button type="button" (click)="abrirModalDetalhesDfc('receita')" class="mt-2 text-xs font-medium text-emerald-600 hover:text-emerald-800 underline focus:outline-none">Ver detalhes</button>
           </div>
@@ -128,7 +157,7 @@
       </div>
 
       <!-- Despesas -->
-      <div class="bg-rose-50 rounded-2xl border border-rose-100 p-6 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between group">
+      <div class="bg-white rounded-xl border border-[#E5E7EB] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)] flex flex-col justify-between group">
         <div class="flex items-center justify-between mb-4">
           <p class="text-sm font-medium text-rose-700">Despesas Totais</p>
           <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 group-hover:scale-110 transition-transform duration-200">
@@ -138,8 +167,8 @@
           </div>
         </div>
         <div class="min-w-0">
-          <p class="text-2xl lg:text-3xl font-bold text-rose-950 tracking-tight truncate text-right tabular-nums min-h-[2.25rem] flex items-end justify-end">{{ formatCurrency(metrics.totalDespesas) }}</p>
-          <div class="mt-2 min-h-[2.75rem] flex flex-col justify-end">
+          <p class="text-2xl font-bold text-rose-950 tracking-tight truncate text-center tabular-nums min-h-[2.25rem] flex items-center justify-center">{{ formatCurrency(metrics.totalDespesas) }}</p>
+          <div class="mt-2 min-h-[2.25rem] flex flex-col justify-end">
             <p class="text-xs font-medium truncate">
               <button type="button" (click)="abrirModalDetalhesDfc('despesa')" class="text-rose-600 hover:text-rose-800 underline focus:outline-none">Ver detalhes</button>
             </p>
@@ -150,7 +179,7 @@
       <!-- Resultado do Período (clicável = resetar período) -->
       <button type="button"
               (click)="resetarPeriodo()"
-              class="text-left rounded-2xl border p-6 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between group focus:outline-none focus:ring-2 focus:ring-gray-400"
+              class="text-left rounded-2xl border p-5 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between group focus:outline-none focus:ring-2 focus:ring-gray-400"
               [class.bg-emerald-50]="metrics.resultado >= 0"
               [class.border-emerald-100]="metrics.resultado >= 0"
               [class.bg-rose-50]="metrics.resultado < 0"
@@ -169,12 +198,12 @@
           </div>
         </div>
         <div class="min-w-0">
-          <p class="text-2xl lg:text-3xl font-bold tracking-tight truncate text-right tabular-nums min-h-[2.25rem] flex items-end justify-end"
+          <p class="text-2xl font-bold tracking-tight truncate text-center tabular-nums min-h-[2.25rem] flex items-center justify-center"
              [class.text-emerald-950]="metrics.resultado >= 0"
              [class.text-rose-950]="metrics.resultado < 0">
             {{ formatCurrency(metrics.resultado) }}
           </p>
-          <div class="mt-2 min-h-[2.75rem] flex flex-col justify-end">
+          <div class="mt-2 min-h-[2.25rem] flex flex-col justify-end">
             <p class="text-xs font-medium truncate"
                [class.text-emerald-600]="metrics.resultado >= 0"
                [class.text-rose-600]="metrics.resultado < 0">Clique para voltar ao mês atual</p>
@@ -199,7 +228,7 @@
     <div *ngIf="metadados" class="hidden"></div>
 
     <!-- Tabela DFC -->
-    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative">
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden relative flex flex-col min-h-0">
       <div *ngIf="carregando" class="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 text-sm text-gray-600 z-10">
         <svg class="w-8 h-8 animate-spin text-blue-600" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>
         <span class="font-medium">Atualizando dados...</span>
@@ -215,24 +244,26 @@
         <p class="text-sm text-gray-500 mt-1">Ajuste o período selecionado e tente novamente.</p>
       </div>
 
-      <div *ngIf="possuiDados" class="overflow-x-auto">
-        <table class="w-full text-sm divide-y divide-gray-200">
-          <thead class="bg-gray-50/80">
+      <div *ngIf="possuiDados"
+           tabindex="0"
+           class="flex-1 min-h-0 overflow-auto overflow-y-auto [scrollbar-gutter:stable] focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+        <table class="min-w-max w-full text-[12px] leading-4 border-separate border-spacing-0 table-fixed">
+          <thead class="bg-gray-50 sticky top-0 z-20">
             <tr>
-              <th class="px-4 py-4 text-left font-semibold text-gray-600 w-72 sticky left-0 bg-gray-50/80 border-r border-gray-200 z-10 uppercase tracking-wider text-xs">Descrição</th>
+              <th class="px-3 py-2 text-left font-semibold text-gray-600 w-80 sticky top-0 left-0 bg-gray-50 border-r border-b border-gray-200 z-30 uppercase tracking-wider text-[11px] shadow-[2px_0_0_0_rgba(0,0,0,0.06)]">Descrição</th>
               <ng-container *ngFor="let mes of meses">
-                <th class="px-3 py-4 text-right font-semibold text-gray-600 uppercase tracking-wider text-xs whitespace-nowrap">{{ mes }}</th>
+                <th class="px-2.5 py-2 text-right font-semibold text-gray-600 uppercase tracking-wider text-[11px] whitespace-nowrap w-32 sticky top-0 bg-gray-50 border-b border-r border-gray-200">{{ mes }}</th>
               </ng-container>
-              <th class="px-4 py-4 text-right font-semibold text-gray-600 uppercase tracking-wider text-xs bg-gray-100/50">TOTAL</th>
-              <th class="px-4 py-4 text-right font-semibold text-gray-600 uppercase tracking-wider text-xs bg-gray-100/50">MÉDIA</th>
+              <th class="px-3 py-2 text-right font-semibold text-gray-600 uppercase tracking-wider text-[11px] bg-gray-100 w-36 sticky top-0 border-b border-r border-gray-200">TOTAL</th>
+              <th class="px-3 py-2 text-right font-semibold text-gray-600 uppercase tracking-wider text-[11px] bg-gray-100 w-36 sticky top-0 border-b border-gray-200">MÉDIA</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100 bg-white">
+          <tbody class="bg-white">
             <ng-container *ngFor="let linha of dfcLinhas">
               
               <!-- Seção Principal (Receitas/Despesas) -->
-              <tr *ngIf="linha.tipo === 'SECAO'" class="bg-gray-50/50 group">
-                <td class="px-4 py-3 font-bold text-gray-900 sticky left-0 bg-gray-50/50 border-r border-gray-200 flex items-center gap-2.5 z-10">
+              <tr *ngIf="linha.tipo === 'SECAO'" class="bg-gray-50 hover:bg-blue-50/50 transition-colors">
+                <td class="px-3 py-1.5 font-bold text-gray-900 sticky left-0 bg-gray-50 border-r border-b border-gray-200 flex items-center gap-2 z-10 shadow-[2px_0_0_0_rgba(0,0,0,0.06)]">
                   <button *ngIf="linha.nome.includes('RECEITAS')" type="button" (click)="alternarReceitas()" class="w-6 h-6 inline-flex items-center justify-center rounded-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors shadow-sm">
                     <svg *ngIf="!expandirReceitas" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
                     <svg *ngIf="expandirReceitas" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
@@ -243,65 +274,83 @@
                   </button>
                   <span class="uppercase tracking-wide text-xs">{{ linha.nome }}</span>
                 </td>
-                <td class="px-3 py-3" *ngFor="let _ of meses"></td>
-                <td class="px-4 py-3 bg-gray-100/30"></td>
-                <td class="px-4 py-3 bg-gray-100/30"></td>
+                <ng-container *ngIf="getResumoSecao(linha) as resumo; else secaoVazia">
+                  <td
+                    class="px-2.5 py-1.5 text-right font-mono tabular-nums whitespace-nowrap border-b border-r border-gray-200"
+                    *ngFor="let v of resumo.valores"
+                    [class.text-emerald-700]="resumo.estilo === 'receita'"
+                    [class.text-rose-700]="resumo.estilo === 'despesa'"
+                  >
+                    {{ resumo.estilo === 'despesa' ? formatCurrencySigned(v) : formatCurrency(v) }}
+                  </td>
+                  <td class="px-3 py-1.5 text-right font-mono font-semibold tabular-nums whitespace-nowrap bg-gray-100/60 border-b border-r border-gray-200"
+                    [class.text-emerald-800]="resumo.estilo === 'receita'"
+                    [class.text-rose-800]="resumo.estilo === 'despesa'"
+                  >
+                    {{ resumo.estilo === 'despesa' ? formatCurrencySigned(resumo.total) : formatCurrency(resumo.total) }}
+                  </td>
+                  <td class="px-3 py-1.5 text-right font-mono font-semibold tabular-nums whitespace-nowrap bg-gray-100/60 border-b border-gray-200"
+                    [class.text-emerald-800]="resumo.estilo === 'receita'"
+                    [class.text-rose-800]="resumo.estilo === 'despesa'"
+                  >
+                    {{ resumo.estilo === 'despesa' ? formatCurrencySigned(resumo.media) : formatCurrency(resumo.media) }}
+                  </td>
+                </ng-container>
+                <ng-template #secaoVazia>
+                  <td class="px-2.5 py-1.5 border-b border-r border-gray-200" *ngFor="let _ of meses"></td>
+                  <td class="px-3 py-1.5 bg-gray-100/40 border-b border-r border-gray-200"></td>
+                  <td class="px-3 py-1.5 bg-gray-100/40 border-b border-gray-200"></td>
+                </ng-template>
               </tr>
 
               <!-- Linha de Receita -->
-              <tr *ngIf="(linha.tipo === 'RECEITA' || linha.tipo === 'FATURAMENTO') && isLinhaVisivel(linha)" class="group hover:bg-emerald-50/40 transition-colors">
-                <td class="px-4 py-3 text-gray-700 sticky left-0 bg-white border-r border-gray-100 z-10 group-hover:bg-emerald-50/40 transition-colors">
-                  <div class="flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-2">
-                      <div class="w-1 h-4 rounded-full bg-emerald-400 shrink-0"></div>
-                      <span [class.pl-4]="linha.nivel === 1" class="block font-medium text-sm">{{ linha.nome }}</span>
-                    </div>
-                    <span *ngIf="linha.grupo" class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md border border-emerald-200 text-emerald-700 bg-emerald-50">{{ linha.grupo }}</span>
+              <tr *ngIf="(linha.tipo === 'RECEITA' || linha.tipo === 'FATURAMENTO') && isLinhaVisivel(linha)" class="odd:bg-gray-50 hover:bg-blue-50 transition-colors">
+                <td class="px-3 py-1.5 text-gray-800 sticky left-0 bg-white border-r border-b border-gray-200 z-30 shadow-[2px_0_0_0_rgba(0,0,0,0.06)]">
+                  <div class="flex items-center gap-2">
+                    <div class="w-1 h-3.5 rounded-full bg-emerald-500 shrink-0"></div>
+                    <span [class.pl-4]="linha.nivel === 1" class="block font-medium">{{ linha.nome }}</span>
                   </div>
                 </td>
-                <td class="px-3 py-3 text-right text-emerald-600 font-medium whitespace-nowrap" *ngFor="let valor of linha.valores">{{ formatCurrency(valor) }}</td>
-                <td class="px-4 py-3 text-right font-semibold text-emerald-700 whitespace-nowrap bg-emerald-50/50">{{ formatCurrency(linha.total) }}</td>
-                <td class="px-4 py-3 text-right font-semibold text-emerald-700 whitespace-nowrap bg-emerald-50/50">{{ formatCurrency(linha.media) }}</td>
+                <td class="px-2.5 py-1.5 text-right font-mono tabular-nums whitespace-nowrap border-b border-r border-gray-200" *ngFor="let valor of linha.valores">{{ formatCurrency(valor) }}</td>
+                <td class="px-3 py-1.5 text-right font-mono font-semibold tabular-nums whitespace-nowrap bg-gray-100/50 border-b border-r border-gray-200">{{ formatCurrency(linha.total) }}</td>
+                <td class="px-3 py-1.5 text-right font-mono font-semibold tabular-nums whitespace-nowrap bg-gray-100/50 border-b border-gray-200">{{ formatCurrency(linha.media) }}</td>
               </tr>
 
               <!-- Linha de Despesa -->
-              <tr *ngIf="linha.tipo === 'DESPESA' && isLinhaVisivel(linha)" class="group hover:bg-rose-50/40 transition-colors">
-                <td class="px-4 py-3 text-gray-700 sticky left-0 bg-white border-r border-gray-100 z-10 group-hover:bg-rose-50/40 transition-colors">
-                  <div class="flex items-center justify-between gap-2">
-                    <div class="flex items-center gap-2">
-                      <div class="w-1 h-4 rounded-full bg-rose-400 shrink-0"></div>
-                      <span [class.pl-4]="linha.nivel === 1" class="block font-medium text-sm">{{ linha.nome }}</span>
-                    </div>
-                    <span *ngIf="linha.grupo" class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider rounded-md border border-rose-200 text-rose-700 bg-rose-50">{{ linha.grupo }}</span>
+              <tr *ngIf="linha.tipo === 'DESPESA' && isLinhaVisivel(linha)" class="odd:bg-gray-50 hover:bg-blue-50 transition-colors">
+                <td class="px-3 py-1.5 text-gray-800 sticky left-0 bg-white border-r border-b border-gray-200 z-30 shadow-[2px_0_0_0_rgba(0,0,0,0.06)]">
+                  <div class="flex items-center gap-2">
+                    <div class="w-1 h-3.5 rounded-full bg-rose-500 shrink-0"></div>
+                    <span [class.pl-4]="linha.nivel === 1" class="block font-medium">{{ linha.nome }}</span>
                   </div>
                 </td>
-                <td class="px-3 py-3 text-right text-rose-600 font-medium whitespace-nowrap" *ngFor="let valor of linha.valores">{{ formatCurrencySigned(valor) }}</td>
-                <td class="px-4 py-3 text-right font-semibold text-rose-700 whitespace-nowrap bg-rose-50/50">{{ formatCurrencySigned(linha.total) }}</td>
-                <td class="px-4 py-3 text-right font-semibold text-rose-700 whitespace-nowrap bg-rose-50/50">{{ formatCurrencySigned(linha.media) }}</td>
+                <td class="px-2.5 py-1.5 text-right font-mono tabular-nums whitespace-nowrap border-b border-r border-gray-200" *ngFor="let valor of linha.valores">{{ formatCurrencySigned(valor) }}</td>
+                <td class="px-3 py-1.5 text-right font-mono font-semibold tabular-nums whitespace-nowrap bg-gray-100/50 border-b border-r border-gray-200">{{ formatCurrencySigned(linha.total) }}</td>
+                <td class="px-3 py-1.5 text-right font-mono font-semibold tabular-nums whitespace-nowrap bg-gray-100/50 border-b border-gray-200">{{ formatCurrencySigned(linha.media) }}</td>
               </tr>
 
               <!-- Subtotal Receita -->
-              <tr *ngIf="linha.tipo === 'SUBTOTAL_RECEITA'" class="bg-emerald-50/80 border-y border-emerald-100">
-                <td class="px-4 py-3.5 font-bold text-emerald-900 sticky left-0 bg-emerald-50/80 border-r border-emerald-100 z-10 uppercase text-xs tracking-wide">{{ linha.nome }}</td>
-                <td class="px-3 py-3.5 text-right font-semibold text-emerald-800 whitespace-nowrap" *ngFor="let valor of linha.valores">{{ formatCurrency(valor) }}</td>
-                <td class="px-4 py-3.5 text-right font-bold text-emerald-900 whitespace-nowrap bg-emerald-100/50">{{ formatCurrency(linha.total) }}</td>
-                <td class="px-4 py-3.5 text-right font-bold text-emerald-900 whitespace-nowrap bg-emerald-100/50">{{ formatCurrency(linha.media) }}</td>
+              <tr *ngIf="linha.tipo === 'SUBTOTAL_RECEITA'" class="bg-emerald-50 font-semibold">
+                <td class="px-3 py-1.5 font-bold text-emerald-950 sticky left-0 bg-emerald-50 border-r border-b border-emerald-200 z-30 uppercase text-[11px] tracking-wide shadow-[2px_0_0_0_rgba(0,0,0,0.06)]">{{ linha.nome }}</td>
+                <td class="px-2.5 py-1.5 text-right font-mono tabular-nums whitespace-nowrap border-b border-emerald-200" *ngFor="let valor of linha.valores">{{ formatCurrency(valor) }}</td>
+                <td class="px-3 py-1.5 text-right font-mono font-bold tabular-nums whitespace-nowrap bg-emerald-100/50 border-b border-emerald-200">{{ formatCurrency(linha.total) }}</td>
+                <td class="px-3 py-1.5 text-right font-mono font-bold tabular-nums whitespace-nowrap bg-emerald-100/50 border-b border-emerald-200">{{ formatCurrency(linha.media) }}</td>
               </tr>
 
               <!-- Subtotal Despesa -->
-              <tr *ngIf="linha.tipo === 'SUBTOTAL_DESPESA'" class="bg-rose-50/80 border-y border-rose-100">
-                <td class="px-4 py-3.5 font-bold text-rose-900 sticky left-0 bg-rose-50/80 border-r border-rose-100 z-10 uppercase text-xs tracking-wide">{{ linha.nome }}</td>
-                <td class="px-3 py-3.5 text-right font-semibold text-rose-800 whitespace-nowrap" *ngFor="let valor of linha.valores">{{ formatCurrencySigned(valor) }}</td>
-                <td class="px-4 py-3.5 text-right font-bold text-rose-900 whitespace-nowrap bg-rose-100/50">{{ formatCurrencySigned(linha.total) }}</td>
-                <td class="px-4 py-3.5 text-right font-bold text-rose-900 whitespace-nowrap bg-rose-100/50">{{ formatCurrencySigned(linha.media) }}</td>
+              <tr *ngIf="linha.tipo === 'SUBTOTAL_DESPESA'" class="bg-rose-50 font-semibold">
+                <td class="px-3 py-1.5 font-bold text-rose-950 sticky left-0 bg-rose-50 border-r border-b border-rose-200 z-30 uppercase text-[11px] tracking-wide shadow-[2px_0_0_0_rgba(0,0,0,0.06)]">{{ linha.nome }}</td>
+                <td class="px-2.5 py-1.5 text-right font-mono tabular-nums whitespace-nowrap border-b border-rose-200" *ngFor="let valor of linha.valores">{{ formatCurrencySigned(valor) }}</td>
+                <td class="px-3 py-1.5 text-right font-mono font-bold tabular-nums whitespace-nowrap bg-rose-100/50 border-b border-rose-200">{{ formatCurrencySigned(linha.total) }}</td>
+                <td class="px-3 py-1.5 text-right font-mono font-bold tabular-nums whitespace-nowrap bg-rose-100/50 border-b border-rose-200">{{ formatCurrencySigned(linha.media) }}</td>
               </tr>
 
               <!-- Resultado Final -->
-              <tr *ngIf="linha.tipo === 'RESULTADO'" class="bg-gray-900 border-t-2 border-gray-900">
-                <td class="px-4 py-4 font-bold text-white sticky left-0 bg-gray-900 border-r border-gray-800 z-10 uppercase text-sm tracking-wider">{{ linha.nome }}</td>
-                <td class="px-3 py-4 text-right font-bold whitespace-nowrap" *ngFor="let valor of linha.valores" [ngClass]="(valor ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'">{{ formatCurrency(valor) }}</td>
-                <td class="px-4 py-4 text-right font-black whitespace-nowrap bg-gray-800" [ngClass]="(linha.total ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'">{{ formatCurrency(linha.total) }}</td>
-                <td class="px-4 py-4 text-right font-black whitespace-nowrap bg-gray-800" [ngClass]="(linha.media ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'">{{ formatCurrency(linha.media) }}</td>
+              <tr *ngIf="linha.tipo === 'RESULTADO'" class="bg-gray-900">
+                <td class="px-3 py-2 font-bold text-white sticky left-0 bg-gray-900 border-r border-b border-gray-800 z-10 uppercase tracking-wider">{{ linha.nome }}</td>
+                <td class="px-2.5 py-2 text-right font-mono font-bold tabular-nums whitespace-nowrap border-b border-gray-800" *ngFor="let valor of linha.valores" [ngClass]="(valor ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'">{{ formatCurrency(valor) }}</td>
+                <td class="px-3 py-2 text-right font-mono font-black tabular-nums whitespace-nowrap bg-gray-800 border-b border-gray-800" [ngClass]="(linha.total ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'">{{ formatCurrency(linha.total) }}</td>
+                <td class="px-3 py-2 text-right font-mono font-black tabular-nums whitespace-nowrap bg-gray-800 border-b border-gray-800" [ngClass]="(linha.media ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'">{{ formatCurrency(linha.media) }}</td>
               </tr>
             </ng-container>
           </tbody>

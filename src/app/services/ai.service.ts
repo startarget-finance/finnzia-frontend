@@ -20,6 +20,7 @@ export interface ChatResponse {
 export class AiService {
   private readonly apiUrl = API_CONFIG.OPENAI_API_URL;
   private readonly apiKey = API_CONFIG.OPENAI_API_KEY;
+  private readonly backendAiChatUrl = `${API_CONFIG.BACKEND_API_URL}/api/ai/chat`;
   
   private readonly headers = new HttpHeaders({
     'Content-Type': 'application/json',
@@ -29,6 +30,11 @@ export class AiService {
   constructor(private http: HttpClient) {}
 
   sendMessage(message: string): Observable<ChatResponse> {
+    // Prefer backend call (no keys in browser)
+    if (API_CONFIG.USE_BACKEND_AI) {
+      return this.sendBackendChatMessage(message);
+    }
+
     // Se usar API simulada (gratuita)
     if (API_CONFIG.USE_MOCK_API) {
       return this.getMockResponse(message);
@@ -46,6 +52,26 @@ export class AiService {
 
     // Fallback para API simulada
     return this.getMockResponse(message);
+  }
+
+  private sendBackendChatMessage(message: string): Observable<ChatResponse> {
+    return new Observable(observer => {
+      this.http.post<any>(this.backendAiChatUrl, { message }).subscribe({
+        next: (response: any) => {
+          const ts = response?.timestamp ? new Date(response.timestamp) : new Date();
+          observer.next({
+            message: response?.message ?? 'Resposta gerada pela IA (backend).',
+            timestamp: ts
+          });
+          observer.complete();
+        },
+        error: (error) => {
+          console.error('Erro ao chamar backend da IA:', error);
+          // Fallback: usa mock local pra não quebrar a UI
+          this.getMockResponse(message).subscribe(observer);
+        }
+      });
+    });
   }
 
   private sendOpenAIMessage(message: string): Observable<ChatResponse> {

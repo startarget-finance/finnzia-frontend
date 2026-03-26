@@ -17,6 +17,13 @@ interface LinhaTabela {
   media?: number;
 }
 
+type ResumoSecao = {
+  valores: number[];
+  total: number;
+  media: number;
+  estilo: 'receita' | 'despesa' | 'neutro';
+};
+
 interface DfcMetadados {
   fonteDados: string;
   fallbackAtivo: boolean;
@@ -199,6 +206,71 @@ export class FluxoCaixaComponent implements OnInit {
 
   alternarDespesas(): void {
     this.expandirDespesas = !this.expandirDespesas;
+  }
+
+  /**
+   * Retorna o resumo (soma) das linhas pertencentes a uma SECAO, para exibir totals
+   * mesmo quando a seção está recolhida.
+   */
+  getResumoSecao(secao: LinhaTabela): ResumoSecao | null {
+    if (secao.tipo !== 'SECAO' || !this.dfcLinhas?.length) {
+      return null;
+    }
+
+    const idx = this.dfcLinhas.indexOf(secao);
+    if (idx < 0) {
+      return null;
+    }
+
+    const valores = Array.from({ length: this.meses.length }, () => 0);
+    let total = 0;
+    let count = 0;
+    let viuReceita = false;
+    let viuDespesa = false;
+
+    for (let i = idx + 1; i < this.dfcLinhas.length; i++) {
+      const linha = this.dfcLinhas[i];
+      if (linha.tipo === 'SECAO' || linha.tipo === 'RESULTADO') {
+        break;
+      }
+      if (linha.tipo === 'RECEITA' || linha.tipo === 'FATURAMENTO' || linha.tipo === 'DESPESA') {
+        if (linha.tipo === 'DESPESA') {
+          viuDespesa = true;
+        } else {
+          viuReceita = true;
+        }
+
+        for (let c = 0; c < valores.length; c++) {
+          valores[c] += linha.valores?.[c] ?? 0;
+        }
+        total += linha.total ?? 0;
+        count++;
+      }
+    }
+
+    const media = this.meses.length ? total / this.meses.length : 0;
+    const estilo: ResumoSecao['estilo'] =
+      secao.nome.toUpperCase().includes('DESPESA') || (viuDespesa && !viuReceita)
+        ? 'despesa'
+        : (viuReceita && !viuDespesa)
+          ? 'receita'
+          : 'neutro';
+
+    if (!count) {
+      return {
+        valores,
+        total,
+        media,
+        estilo
+      };
+    }
+
+    return {
+      valores,
+      total,
+      media,
+      estilo
+    };
   }
 
   /** Redefine o período para o mês atual e recarrega o DFC (equivalente a “resetar filtros”). */

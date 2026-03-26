@@ -26,17 +26,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
   despesasChart: Chart | null = null;
   currentDate: Date = new Date();
   graficoExpandido: boolean = false;
-  mediaNovosContratosReais3m: number = 0;
-  mediaNovosContratosUnidades3m: number = 0;
-  custoFinanceiroInvestimento: number = 0;
-  mediaCustoFixo: number = 0;
-  mediaCustoVariavel: number = 0;
-  mediaCustoEstrategico: number = 0;
-  totalClientesAtivos: number = 0;
-  churnPercent: number = 0;
-  ltvMeses: number = 0;
-  inadimplenciaValor: number = 0;
-  inadimplenciaTaxa: number = 0;
+  // Estes KPIs não vêm completos do endpoint atual; mantemos como `null` para não exibir "mocks".
+  // Quando/Se o backend fornecer, a gente troca para números reais.
+  mediaNovosContratosReais3m: number | null = null;
+  mediaNovosContratosUnidades3m: number | null = null;
+  custoFinanceiroInvestimento: number | null = null;
+  mediaCustoFixo: number | null = null;
+  mediaCustoVariavel: number | null = null;
+  mediaCustoEstrategico: number | null = null;
+  totalClientesAtivos: number | null = null;
+  churnPercent: number | null = null;
+  ltvMeses: number | null = null;
+  inadimplenciaValor: number | null = null;
+  inadimplenciaTaxa: number | null = null;
   // Projeção usada para exibir ao lado do gráfico
   projecaoSaldoFinal: number = 0;
   
@@ -269,42 +271,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
     let renegociadoSerie: number[] = [];
     let despesaSerie: number[] = [];
 
-    if (this.periodoGrafico === 'mensal') {
-      // Diários 1..31
-      receitaSerie = labels.map((_, i) => {
-        const d = i + 1;
-        if (d % 7 === 2) return 26000;
-        if (d % 5 === 3) return 12000;
-        if (d % 3 === 0) return 6000;
-        return 0;
-      });
-      renegociadoSerie = labels.map((_, i) => {
-        const d = i + 1;
-        if (d % 9 === 4) return 5000;
-        if (d % 13 === 8) return 4000;
-        return 0;
-      });
-      despesaSerie = labels.map((_, i) => {
-        const d = i + 1;
-        if (d === 6) return 70000;
-        if (d === 15) return 48000;
-        if (d === 21) return 16000;
-        if (d === 30) return 20000;
-        if (d % 10 === 0) return 9000;
-        if (d % 4 === 0) return 6000;
-        if (d % 2 === 0) return 3000;
-        return 0;
-      });
-    } else {
-      // Mensal por mês (12)
-      receitaSerie = [13000,16000,19000,22000,25000,28000,32000,35000,38000,40000,42000,45000];
-      renegociadoSerie = [2000,3000,0,4000,0,5000,0,3000,0,4000,0,6000];
-      despesaSerie = [8000,9000,11000,12000,13000,14000,15000,16000,17000,20000,15000,18000];
-    }
+    // Sem mocks: distribui os totais reais igualmente pelas labels do gráfico.
+    // Como o endpoint atual não retorna série diária/mensal, isso evita números "fabricados".
+    const totalReceitas = this.dadosFiltrados?.receitas ?? 0;
+    const totalDespesas = this.dadosFiltrados?.despesas ?? 0;
+    const totalRenegociado = 0; // disponível apenas se o backend entregar esse breakdown
 
-    // Saldo projetado acumulado
+    const receitaPorLabel = labels.length ? totalReceitas / labels.length : 0;
+    const despesaPorLabel = labels.length ? totalDespesas / labels.length : 0;
+    const renegociadoPorLabel = labels.length ? totalRenegociado / labels.length : 0;
+
+    receitaSerie = labels.map(() => receitaPorLabel);
+    renegociadoSerie = labels.map(() => renegociadoPorLabel);
+    despesaSerie = labels.map(() => despesaPorLabel);
+
+    // Saldo projetado acumulado (derivado dos totais reais)
     const saldoProjetado: number[] = [];
-    let saldo = this.periodoGrafico === 'mensal' ? 95000 : 50000;
+    let saldo = 0;
     labels.forEach((_, i) => {
       saldo += (receitaSerie[i] + renegociadoSerie[i]) - despesaSerie[i];
       saldoProjetado.push(Math.max(saldo, 0));
@@ -442,9 +425,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const config: ChartConfiguration = {
       type: 'doughnut',
       data: {
-        labels: (this.dadosFiltrados?.despesasPorCategoria || []).map(item => item.categoria),
+        labels: (() => {
+          const porCategoria = this.dadosFiltrados?.despesasPorCategoria || [];
+          if (porCategoria.length) return porCategoria.map(item => item.categoria);
+          return ['Despesas'];
+        })(),
         datasets: [{
-          data: (this.dadosFiltrados?.despesasPorCategoria || []).map(item => item.valor),
+          data: (() => {
+            const porCategoria = this.dadosFiltrados?.despesasPorCategoria || [];
+            if (porCategoria.length) return porCategoria.map(item => item.valor);
+            return [this.dadosFiltrados?.despesas || 0];
+          })(),
           backgroundColor: [
             '#667eea',
             '#764ba2',
@@ -482,7 +473,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
 
-  formatCurrency(value: number): string {
+  formatCurrency(value?: number | null): string {
+    if (value === null || value === undefined || !Number.isFinite(value)) {
+      return '—';
+    }
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
@@ -562,6 +556,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
     };
 
     this.resumoFonteDados = resumo.fonteDados ?? null;
+
+    // KPIs adicionais calculados no backend.
+    this.mediaNovosContratosReais3m = resumo.mediaNovosContratosReais3m ?? null;
+    this.mediaNovosContratosUnidades3m = resumo.mediaNovosContratosUnidades3m ?? null;
+    this.custoFinanceiroInvestimento = resumo.custoFinanceiroInvestimento ?? null;
+    this.mediaCustoFixo = resumo.mediaCustoFixo ?? null;
+    this.mediaCustoVariavel = resumo.mediaCustoVariavel ?? null;
+    this.mediaCustoEstrategico = resumo.mediaCustoEstrategico ?? null;
+    this.totalClientesAtivos = resumo.totalClientesAtivos ?? null;
+    this.churnPercent = resumo.churnPercent ?? null;
+    this.ltvMeses = resumo.ltvMeses ?? null;
+    this.inadimplenciaValor = resumo.inadimplenciaValor ?? null;
+    this.inadimplenciaTaxa = resumo.inadimplenciaTaxa ?? null;
+
+    // Atualiza gráficos com base nos totais reais retornados do backend.
+    if (isPlatformBrowser(this.platformId)) {
+      this.criarGraficoReceitas();
+      this.criarGraficoDespesas();
+    }
   }
 
   // Médias para cards do Dashboard Financeiro
@@ -948,34 +961,53 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private inicializarFiltros(): void {
-    // Inicializa meses
-    this.mesesDisponiveis = [
-      { value: '2025-10', label: 'outubro 2025' },
-      { value: '2025-09', label: 'setembro 2025' },
-      { value: '2025-08', label: 'agosto 2025' },
-      { value: '2025-07', label: 'julho 2025' },
-      { value: '2025-06', label: 'junho 2025' },
-      { value: '2025-05', label: 'maio 2025' },
-      { value: '2025-04', label: 'abril 2025' },
-      { value: '2025-03', label: 'março 2025' },
-      { value: '2025-02', label: 'fevereiro 2025' },
-      { value: '2025-01', label: 'janeiro 2025' }
-    ];
+    // Fica dinâmico (sem “mocks” fixos de 2023/2024/2025).
+    const hoje = new Date();
 
-    // Inicializa trimestres
-    this.trimestresDisponiveis = [
-      { value: '2025-Q4', label: '4º Trimestre 2025' },
-      { value: '2025-Q3', label: '3º Trimestre 2025' },
-      { value: '2025-Q2', label: '2º Trimestre 2025' },
-      { value: '2025-Q1', label: '1º Trimestre 2025' }
+    // Últimos 12 meses (inclui mês atual)
+    const nomesMes: string[] = [
+      'janeiro',
+      'fevereiro',
+      'março',
+      'abril',
+      'maio',
+      'junho',
+      'julho',
+      'agosto',
+      'setembro',
+      'outubro',
+      'novembro',
+      'dezembro'
     ];
+    const meses: Array<{ value: string; label: string }> = [];
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+      const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const label = `${nomesMes[d.getMonth()]} ${d.getFullYear()}`;
+      meses.push({ value, label });
+    }
+    this.mesesDisponiveis = meses;
 
-    // Inicializa anos
-    this.anosDisponiveis = [
-      { value: '2025', label: '2025' },
-      { value: '2024', label: '2024' },
-      { value: '2023', label: '2023' }
-    ];
+    // Últimos 4 trimestres
+    const trimestres: Array<{ value: string; label: string }> = [];
+    for (let i = 0; i < 4; i++) {
+      const d = new Date(hoje.getFullYear(), hoje.getMonth() - i * 3, 1);
+      const ano = d.getFullYear();
+      const trimestre = Math.ceil((d.getMonth() + 1) / 3);
+      const value = `${ano}-Q${trimestre}`;
+      const label = `${trimestre}º Trimestre ${ano}`;
+      trimestres.push({ value, label });
+    }
+    // Garante ordem (do mais antigo para o mais recente)
+    this.trimestresDisponiveis = trimestres.sort((a, b) => a.value.localeCompare(b.value));
+
+    // Últimos 3 anos
+    const anos: Array<{ value: string; label: string }> = [];
+    for (let i = 2; i >= 0; i--) {
+      const ano = hoje.getFullYear() - i;
+      anos.push({ value: String(ano), label: String(ano) });
+    }
+    this.anosDisponiveis = anos;
 
     // Define valores padrão
     this.dataInicial = '';
@@ -984,22 +1016,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   onFiltroAlterado(): void {
-    this.calcularMediasContratosUltimos3Meses();
-    this.calcularMediaCustoFixo();
-    this.calcularMediaCustoVariavel();
-    this.calcularMediaCustoEstrategico();
-    this.calcularCustoFinanceiroInvestimento();
-    this.calcularTotalClientesAtivos();
-    this.calcularChurnPercent();
-    this.calcularLtvMeses();
-    this.calcularInadimplencia();
     this.carregarResumoFinanceiro();
-    
-    // Atualiza os gráficos
-    if (isPlatformBrowser(this.platformId)) {
-      this.criarGraficoReceitas();
-      this.criarGraficoDespesas();
-    }
   }
 
   onTipoFiltroAlterado(): void {
@@ -1078,13 +1095,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   getStatusFiltro(): string {
-    const dataIni = this.parseLocalDateStr(this.dataInicial);
-    const mes = dataIni.getMonth() + 1;
-    
-    // Simula status baseado no mês selecionado
-    if (mes >= 9) return 'Excelente';
-    if (mes >= 6) return 'Bom';
-    if (mes >= 3) return 'Regular';
+    const percentual = this.getLucroPercentual();
+    if (percentual >= 20) return 'Excelente';
+    if (percentual >= 10) return 'Bom';
+    if (percentual >= 0) return 'Regular';
     return 'Inicial';
   }
 

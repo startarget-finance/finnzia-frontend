@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { UsuarioService, Usuario, CriarUsuarioRequest, AtualizarUsuarioRequest, AtualizarPermissoesRequest, PageResponse } from '../../services/usuario.service';
 import { BomControleService } from '../../services/bomcontrole.service';
 import { CompanySelectorService, CompaniaInfo } from '../../services/company-selector.service';
+import { EmpresaConfigService } from '../../services/empresa-config.service';
 
 @Component({
   selector: 'app-gerenciar-acessos',
@@ -61,10 +62,19 @@ export class GerenciarAcessosComponent implements OnInit {
   // Expor Object para o template
   Object = Object;
 
+  // Configuração Asaas por empresa
+  empresaSelecionadaParaConfig: number | null = null;
+  asaasApiKeyInput = '';
+  asaasBaseUrlInput = '';
+  configAsaasStatus: 'idle' | 'loading' | 'saved' | 'error' = 'idle';
+  configAsaasMessage = '';
+  asaasConfiguradoParaEmpresa = false;
+
   constructor(
     private usuarioService: UsuarioService,
     private bomControleService: BomControleService,
-    private companySelectorService: CompanySelectorService
+    private companySelectorService: CompanySelectorService,
+    private empresaConfigService: EmpresaConfigService
   ) {}
 
   ngOnInit() {
@@ -513,5 +523,77 @@ export class GerenciarAcessosComponent implements OnInit {
     if (!this.empresaPadraoSelecionada) return undefined;
     const empresa = this.empresasDisponiveis.find(e => e.Id === this.empresaPadraoSelecionada);
     return empresa?.Nome;
+  }
+
+  /**
+   * Ao selecionar empresa para config Asaas, carrega status atual
+   */
+  onEmpresaConfigChange() {
+    this.asaasApiKeyInput = '';
+    this.configAsaasStatus = 'idle';
+    this.configAsaasMessage = '';
+    if (!this.empresaSelecionadaParaConfig) {
+      this.asaasConfiguradoParaEmpresa = false;
+      return;
+    }
+    this.configAsaasStatus = 'loading';
+    this.empresaConfigService.getConfig(this.empresaSelecionadaParaConfig).subscribe({
+      next: (res) => {
+        this.asaasConfiguradoParaEmpresa = res.asaasConfigurado;
+        this.asaasBaseUrlInput = res.asaasBaseUrl || '';
+        this.configAsaasStatus = 'idle';
+      },
+      error: () => {
+        this.asaasConfiguradoParaEmpresa = false;
+        this.configAsaasStatus = 'idle';
+      }
+    });
+  }
+
+  /**
+   * Salva chave API Asaas para a empresa selecionada
+   */
+  salvarConfigAsaas() {
+    if (this.empresaSelecionadaParaConfig == null) {
+      this.configAsaasMessage = 'Selecione uma empresa.';
+      this.configAsaasStatus = 'error';
+      return;
+    }
+    if (!this.asaasApiKeyInput?.trim() && !this.asaasConfiguradoParaEmpresa) {
+      this.configAsaasMessage = 'Informe a chave API do Asaas (obrigatório na primeira vez).';
+      this.configAsaasStatus = 'error';
+      return;
+    }
+    this.configAsaasStatus = 'loading';
+    this.configAsaasMessage = '';
+    this.empresaConfigService.saveConfig(
+      this.empresaSelecionadaParaConfig,
+      this.asaasApiKeyInput?.trim() || '',
+      this.asaasBaseUrlInput?.trim() || undefined
+    ).subscribe({
+      next: (res: { message?: string; contratosImportados?: number; importacaoErro?: string }) => {
+        this.configAsaasStatus = 'saved';
+        if (res.contratosImportados != null && res.contratosImportados >= 0) {
+          this.configAsaasMessage = `Chave salva. ${res.contratosImportados} contrato(s) importado(s) do Asaas.`;
+        } else if (res.importacaoErro) {
+          this.configAsaasMessage = `Chave salva. Importação do Asaas falhou: ${res.importacaoErro}`;
+        } else {
+          this.configAsaasMessage = res.message || 'Chave salva com sucesso.';
+        }
+        this.asaasApiKeyInput = '';
+        this.asaasConfiguradoParaEmpresa = true;
+      },
+      error: (err) => {
+        this.configAsaasStatus = 'error';
+        const msg = err.error?.message || err.message;
+        if (err.status === 403) {
+          this.configAsaasMessage = 'Sem permissão. Seu usuário precisa da permissão "Gerenciar Acessos".';
+        } else if (msg) {
+          this.configAsaasMessage = msg;
+        } else {
+          this.configAsaasMessage = 'Erro ao salvar. Verifique se o backend está online e tente novamente.';
+        }
+      }
+    });
   }
 }

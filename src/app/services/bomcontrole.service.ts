@@ -80,6 +80,21 @@ export interface ResumoFinanceiroResponse {
   usandoCache: boolean;
   fonteDados: string;
   atualizadoEm: string;
+
+  // =========================
+  // KPIs do dashboard
+  // =========================
+  mediaNovosContratosReais3m?: number | null;
+  mediaNovosContratosUnidades3m?: number | null;
+  custoFinanceiroInvestimento?: number | null;
+  mediaCustoFixo?: number | null;
+  mediaCustoVariavel?: number | null;
+  mediaCustoEstrategico?: number | null;
+  totalClientesAtivos?: number | null;
+  churnPercent?: number | null;
+  ltvMeses?: number | null;
+  inadimplenciaValor?: number | null;
+  inadimplenciaTaxa?: number | null;
 }
 
 export interface DfcLinha {

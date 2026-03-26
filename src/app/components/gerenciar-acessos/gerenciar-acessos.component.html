@@ -253,8 +253,8 @@
     </div>
 
     <!-- Modal de Novo Usuário -->
-    <div *ngIf="isModalNovoAberto" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+    <div *ngIf="isModalNovoAberto" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+      <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 my-8">
         <div class="p-6">
           <h3 class="text-lg font-semibold text-gray-900 mb-4">Novo Usuário</h3>
           
@@ -291,6 +291,53 @@
                 type="password" 
                 [(ngModel)]="novoUsuario.senha"
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <!-- Chave API Asaas por empresa (opcional) -->
+            <div class="border-t border-gray-200 pt-4 mt-4">
+              <h4 class="text-sm font-semibold text-gray-700 mb-2">🔑 Chave API Asaas por empresa (opcional)</h4>
+              <p class="text-xs text-gray-600 mb-2">Selecione a empresa, cole a chave e clique em <strong>Salvar chave</strong>.</p>
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                <div class="sm:col-span-4">
+                  <label class="block text-xs font-medium text-gray-700 mb-1">Empresa</label>
+                  <select
+                    [(ngModel)]="empresaSelecionadaParaConfig"
+                    (ngModelChange)="onEmpresaConfigChange()"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                    <option [ngValue]="null">Selecione uma empresa</option>
+                    <option *ngFor="let e of empresasDisponiveis" [ngValue]="e.Id">{{ e.Nome }} (ID {{ e.Id }})</option>
+                  </select>
+                </div>
+                <div class="sm:col-span-3">
+                  <label class="block text-xs font-medium text-gray-700 mb-1">Chave API Asaas</label>
+                  <input
+                    type="password"
+                    [(ngModel)]="asaasApiKeyInput"
+                    [placeholder]="asaasConfiguradoParaEmpresa ? '•••••••• (deixe para manter)' : 'Cole a chave'"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                </div>
+                <div class="sm:col-span-3">
+                  <label class="block text-xs font-medium text-gray-700 mb-1">URL base (opcional)</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="asaasBaseUrlInput"
+                    placeholder="https://sandbox.asaas.com"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                </div>
+                <div class="sm:col-span-2">
+                  <button
+                    type="button"
+                    (click)="salvarConfigAsaas()"
+                    [disabled]="configAsaasStatus === 'loading' || !empresaSelecionadaParaConfig"
+                    class="w-full px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm">
+                    {{ configAsaasStatus === 'loading' ? 'Salvando...' : 'Salvar chave' }}
+                  </button>
+                </div>
+              </div>
+              <div *ngIf="configAsaasStatus === 'saved'" class="mt-3 text-sm font-medium text-green-800 bg-green-100 border border-green-300 rounded-lg px-3 py-2 flex items-center gap-2">
+                <span aria-hidden="true">✓</span> {{ configAsaasMessage }}
+              </div>
+              <div *ngIf="configAsaasStatus === 'error' && configAsaasMessage" class="mt-3 text-sm font-medium text-red-800 bg-red-100 border border-red-300 rounded-lg px-3 py-2">{{ configAsaasMessage }}</div>
             </div>
           </div>
           
@@ -405,6 +452,57 @@
             <strong>✓ Selecionadas:</strong> {{ getContagemEmpresasSelecionadas() }} empresa(s)
             <span *ngIf="getEmpresaPadraoNome()"> | <strong>Padrão:</strong> {{ getEmpresaPadraoNome() }}</span>
           </div>
+        </div>
+
+        <!-- Separador -->
+        <div class="border-t border-gray-200 my-6"></div>
+
+        <!-- Seção 3: Chave API Asaas por empresa -->
+        <div class="mb-8">
+          <h4 class="text-sm font-semibold text-gray-700 mb-2">🔑 Chave API Asaas por empresa</h4>
+          <p class="text-xs text-gray-600 mb-1">Cada empresa pode usar uma conta Asaas diferente.</p>
+          <p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 mb-3">Passo a passo: 1) Selecione a empresa no dropdown  2) Cole a chave no campo  3) Clique em <strong>Salvar chave</strong> (o botão azul ao lado da URL). Só depois use &quot;Salvar Alterações&quot; se quiser.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+            <div class="sm:col-span-4">
+              <label class="block text-xs font-medium text-gray-700 mb-1">Empresa</label>
+              <select
+                [(ngModel)]="empresaSelecionadaParaConfig"
+                (ngModelChange)="onEmpresaConfigChange()"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <option [ngValue]="null">Selecione uma empresa</option>
+                <option *ngFor="let e of empresasDisponiveis" [ngValue]="e.Id">{{ e.Nome }} (ID {{ e.Id }})</option>
+              </select>
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-xs font-medium text-gray-700 mb-1">Chave API Asaas</label>
+              <input
+                type="password"
+                [(ngModel)]="asaasApiKeyInput"
+                [placeholder]="asaasConfiguradoParaEmpresa ? '•••••••• (deixe para manter)' : 'Cole a chave'"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+            </div>
+            <div class="sm:col-span-3">
+              <label class="block text-xs font-medium text-gray-700 mb-1">URL base (opcional)</label>
+              <input
+                type="text"
+                [(ngModel)]="asaasBaseUrlInput"
+                placeholder="https://sandbox.asaas.com"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+            </div>
+            <div class="sm:col-span-2">
+              <button
+                type="button"
+                (click)="salvarConfigAsaas()"
+                [disabled]="configAsaasStatus === 'loading' || !empresaSelecionadaParaConfig"
+                class="w-full px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm">
+                {{ configAsaasStatus === 'loading' ? 'Salvando...' : 'Salvar chave' }}
+              </button>
+            </div>
+          </div>
+          <div *ngIf="configAsaasStatus === 'saved'" class="mt-3 text-sm font-medium text-green-800 bg-green-100 border border-green-300 rounded-lg px-3 py-2 flex items-center gap-2">
+            <span aria-hidden="true">✓</span> {{ configAsaasMessage }}
+          </div>
+          <div *ngIf="configAsaasStatus === 'error' && configAsaasMessage" class="mt-3 text-sm font-medium text-red-800 bg-red-100 border border-red-300 rounded-lg px-3 py-2">{{ configAsaasMessage }}</div>
         </div>
 
         <!-- Botões de Ação -->
