@@ -115,9 +115,12 @@ export const API_CONFIG = {
 //        https://form.typeform.com/to/XXXXXXXX
 //    - Cole essa URL em api.config.ts em FALLBACK (const FALLBACK = '...') OU defina no deploy:
 //        variável de ambiente LANDING_DIAGNOSTICO_EMBED_URL com o mesmo valor.
-//    - Campos ocultos: a landing envia ?segmento=agencias|restaurantes|prestadores e utm_source=finnzia-landing
-//      quando o visitante veio de uma rota de segmento; no Typeform, crie hidden fields com esses nomes
-//      para receber os valores (ou ignore se não precisar).
+  //    - Campos ocultos: a landing envia ?segmento=agencias|restaurantes|prestadores e utm_source=finnzia-landing
+  //      quando o visitante veio de uma rota de segmento; no Typeform, crie hidden fields com esses nomes
+  //      para receber os valores (ou ignore se não precisar).
+  //    - Página de conclusão: no Typeform, em "Thank you screen" / redirect, pode apontar para
+  //      https://SEU_DOMINIO/obrigado — ou confiar no listener de postMessage na landing (evento de envio)
+  //      que já navega para /obrigado quando o embed está na mesma aba.
 //
 //    RESPONDE.AI
 //    - No painel, abra o fluxo/link público ou a opção de embed/incorporar.

@@ -238,7 +238,8 @@ export class AppComponent implements OnInit {
            url === '/restaurantes' ||
            url === '/prestadores' ||
            url === '/agencias' ||
-           url === '/diagnostico';
+           url === '/diagnostico' ||
+           url === '/obrigado';
   }
 
   toggleUserMenu(event?: MouseEvent) {

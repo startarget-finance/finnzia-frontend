@@ -1,5 +1,5 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, AfterViewInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { API_CONFIG } from '../../config/api.config';
@@ -11,8 +11,10 @@ import { ComparacaoServicosComponent } from '../comparacao-servicos/comparacao-s
   imports: [CommonModule, ComparacaoServicosComponent],
   templateUrl: './landing.component.html'
 })
-export class LandingComponent implements OnInit, AfterViewInit {
+export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   diagnosticoEmbedUrlSeguro: SafeResourceUrl | null = null;
+
+  private readonly onDiagnosticoEmbedMessageBound = this.onDiagnosticoEmbedMessage.bind(this);
 
   // Segmento atual (para mostrar apenas uma seção)
   segmentoAtual: string | null = null;
@@ -75,7 +77,8 @@ export class LandingComponent implements OnInit, AfterViewInit {
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
   /** URL do embed (Typeform / Responde.ai / etc.) quando configurada em api.config.ts */
@@ -389,6 +392,71 @@ export class LandingComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     this.setupVideoPosters();
+    if (isPlatformBrowser(this.platformId) && this.diagnosticoEmbedConfigurado) {
+      window.addEventListener('message', this.onDiagnosticoEmbedMessageBound);
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      window.removeEventListener('message', this.onDiagnosticoEmbedMessageBound);
+    }
+  }
+
+  /**
+   * Typeform (e embeds compatíveis) enviam postMessage ao concluir o formulário.
+   * Redireciona para /obrigado sem depender só do redirect configurado no provedor.
+   */
+  private onDiagnosticoEmbedMessage(event: MessageEvent): void {
+    if (!this.isTrustedTypeformOrigin(event.origin)) {
+      return;
+    }
+    if (!this.isFormSubmitEmbedMessage(event.data)) {
+      return;
+    }
+    this.router.navigate(['/obrigado']);
+  }
+
+  private isTrustedTypeformOrigin(origin: string): boolean {
+    if (!origin || typeof origin !== 'string') {
+      return false;
+    }
+    try {
+      const host = new URL(origin).hostname;
+      return host === 'form.typeform.com' || host.endsWith('.typeform.com');
+    } catch {
+      return false;
+    }
+  }
+
+  private isFormSubmitEmbedMessage(raw: unknown): boolean {
+    let data: unknown = raw;
+    if (typeof raw === 'string') {
+      const s = raw.trim();
+      if (s === 'form-submit' || s === 'TF_SUBMIT') {
+        return true;
+      }
+      if (!s.startsWith('{')) {
+        return false;
+      }
+      try {
+        data = JSON.parse(s) as unknown;
+      } catch {
+        return s.includes('form-submit');
+      }
+    }
+    if (!data || typeof data !== 'object') {
+      return false;
+    }
+    const o = data as Record<string, unknown>;
+    const type = o['type'];
+    if (type === 'form-submit' || type === 'TF_SUBMIT' || type === 'form-submit-success') {
+      return true;
+    }
+    if (o['event'] === 'form-submit') {
+      return true;
+    }
+    return false;
   }
 
   setupVideoPosters(): void {

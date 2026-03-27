@@ -28,6 +28,10 @@ export const routes: Routes = [
     data: { apenasDiagnostico: true }
   },
   {
+    path: 'obrigado',
+    loadComponent: () => import('./components/obrigado/obrigado.component').then(m => m.ObrigadoComponent)
+  },
+  {
     path: 'login',
     loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent)
   },
