@@ -54,9 +54,17 @@ export interface ContratoDTO {
   dataEncerramento?: string;
   linkContrato?: string;
   statusAssinatura?: 'PENDENTE' | 'ASSINADO' | 'CANCELADO';
+  workflowStatus?: 'NOVO' | 'ASSINATURA' | 'COBRANCA' | 'ATIVO';
+  financialStatus?: 'EM_DIA' | 'ATRASADO' | 'INADIMPLENTE';
   projeto?: string;
   valorEntrada?: number;
 }
+
+export type WorkflowAction =
+  | 'ENVIAR_PARA_ASSINATURA'
+  | 'MARCAR_COMO_ASSINADO'
+  | 'GERAR_COBRANCA'
+  | 'ATIVAR_CONTRATO';
 
 export interface TotaisPorCategoria {
   totalContratos: number;
@@ -241,7 +249,9 @@ export class ContratoService {
     dueDateFim?: string,
     paymentDateInicio?: string,
     paymentDateFim?: string,
-    sort?: string
+    sort?: string,
+    workflowStatus?: ContratoDTO['workflowStatus'],
+    financialStatus?: ContratoDTO['financialStatus']
   ): Observable<PageResponse<ContratoDTO>> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -276,6 +286,12 @@ export class ContratoService {
     if (paymentDateFim && paymentDateFim.trim() !== '') {
       params = params.set('paymentDateLe', paymentDateFim.trim());
     }
+    if (workflowStatus) {
+      params = params.set('workflowStatus', workflowStatus);
+    }
+    if (financialStatus) {
+      params = params.set('financialStatus', financialStatus);
+    }
 
     return this.http.get<PageResponse<ContratoDTO>>(`${this.baseUrl}/filtros`, {
       headers: this.getHeaders(),
@@ -287,6 +303,17 @@ export class ContratoService {
       }),
       catchError(error => {
         console.error('Erro ao buscar contratos com filtros:', error);
+        throw error;
+      })
+    );
+  }
+
+  atualizarWorkflow(id: number, action: WorkflowAction): Observable<ContratoDTO> {
+    return this.http.post<ContratoDTO>(`${this.baseUrl}/${id}/workflow`, { action }, {
+      headers: this.getHeaders()
+    }).pipe(
+      catchError(error => {
+        console.error('Erro ao atualizar workflow do contrato:', error);
         throw error;
       })
     );
@@ -431,6 +458,8 @@ export class ContratoService {
       dataEncerramento: contrato.dataEncerramento,
       linkContrato: contrato.linkContrato,
       statusAssinatura: contrato.statusAssinatura,
+      workflowStatus: contrato.workflowStatus || 'NOVO',
+      financialStatus: contrato.financialStatus || this.mapearFinancialStatus(contrato.categoria),
       projeto: contrato.projeto,
       valorEntrada: contrato.valorEntrada,
       asaasSubscriptionId: contrato.asaasSubscriptionId
@@ -448,6 +477,17 @@ export class ContratoService {
       'INADIMPLENTE': 'inadimplente'
     };
     return categoriaMap[categoria] || 'pendente';
+  }
+
+  mapearFinancialStatus(categoria?: string): 'EM_DIA' | 'ATRASADO' | 'INADIMPLENTE' {
+    switch ((categoria || '').toUpperCase()) {
+      case 'INADIMPLENTE':
+        return 'INADIMPLENTE';
+      case 'EM_ATRASO':
+        return 'ATRASADO';
+      default:
+        return 'EM_DIA';
+    }
   }
 
   /**

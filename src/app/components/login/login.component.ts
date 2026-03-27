@@ -91,10 +91,10 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.loadingMessage = 'Entrando...';
     this.errorMessage = '';
-    // Após 8s sem resposta, avisa que o servidor pode estar iniciando
+    // Após alguns segundos sem resposta, mantém a UX clara sem expor detalhes de infraestrutura
     this.loadingTimer = setTimeout(() => {
       if (this.isLoading) {
-        this.loadingMessage = 'Servidor iniciando, aguarde (~60s)...';
+        this.loadingMessage = 'Conectando...';
       }
     }, 8000);
 
@@ -107,7 +107,7 @@ export class LoginComponent implements OnInit, OnDestroy {
         this.sincronizarEmpresasPosLogin();
         this.router.navigate(['/dashboard']);
       } else if (result.timeout) {
-        this.errorMessage = 'Servidor demorou para responder. Clique em Entrar novamente — já deve estar acordado.';
+        this.errorMessage = 'Não foi possível conectar no momento. Tente novamente em alguns segundos.';
       } else {
         this.errorMessage = 'Email ou senha incorretos. Tente novamente.';
       }
