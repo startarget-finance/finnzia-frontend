@@ -7,8 +7,8 @@
   </div>
 
   <div class="rounded-xl border border-slate-200/70 bg-slate-50/50 p-4 sm:p-5 space-y-4">
-    <div class="flex flex-col xl:flex-row xl:items-end gap-4">
-      <div class="flex-1 min-w-[220px]">
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-3 xl:gap-4">
+      <div class="xl:col-span-4 min-w-0">
         <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Pesquisa</label>
         <input
           [(ngModel)]="filtroQ"
@@ -17,33 +17,33 @@
           placeholder="Razão social, fantasia, CPF/CNPJ, e-mail…"
         />
       </div>
-      <div class="flex flex-wrap items-end gap-3">
-        <div>
+      <div class="xl:col-span-8 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 items-end">
+        <div class="min-w-0 sm:col-span-2 xl:col-span-2">
           <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Empresa</label>
           <select
             [(ngModel)]="filtroEmpresaId"
-            class="mt-1.5 h-10 min-w-[200px] px-3.5 rounded-lg border border-slate-200/90 text-sm bg-white text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            class="mt-1.5 h-10 w-full px-3.5 rounded-lg border border-slate-200/90 text-sm bg-white text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
           >
             <option [ngValue]="null">Todas</option>
             <option *ngFor="let e of empresasDisponiveis" [ngValue]="e.idEmpresa">{{ e.nomeEmpresa }}</option>
           </select>
         </div>
-        <div>
+        <div class="min-w-0">
           <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Tipo</label>
           <select
             [(ngModel)]="filtroTipoPessoa"
-            class="mt-1.5 h-10 min-w-[120px] px-3.5 rounded-lg border border-slate-200/90 text-sm bg-white text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            class="mt-1.5 h-10 w-full px-3.5 rounded-lg border border-slate-200/90 text-sm bg-white text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
           >
             <option value="">Todos</option>
             <option value="PJ">PJ</option>
             <option value="PF">PF</option>
           </select>
         </div>
-        <div>
+        <div class="min-w-0">
           <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Situação</label>
           <select
             [(ngModel)]="filtroAtivo"
-            class="mt-1.5 h-10 min-w-[120px] px-3.5 rounded-lg border border-slate-200/90 text-sm bg-white text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            class="mt-1.5 h-10 w-full px-3.5 rounded-lg border border-slate-200/90 text-sm bg-white text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
           >
             <option value="todos">Todos</option>
             <option value="sim">Ativo</option>
@@ -53,35 +53,37 @@
         <button
           type="button"
           (click)="aplicarFiltros()"
-          class="h-10 px-4 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 shadow-sm transition-colors"
+          class="h-10 px-4 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 shadow-sm transition-colors w-full"
         >
           Aplicar
         </button>
-        <button
-          type="button"
-          (click)="limparFiltros()"
-          title="Limpar filtros"
-          class="h-10 w-10 rounded-lg border border-slate-200/80 bg-white text-slate-600 hover:bg-slate-50 shadow-sm flex items-center justify-center"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-        <button
-          type="button"
-          (click)="carregar()"
-          title="Atualizar"
-          class="h-10 w-10 rounded-lg border border-slate-200/80 bg-white text-slate-600 hover:bg-slate-50 shadow-sm flex items-center justify-center"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-            />
-          </svg>
-        </button>
+        <div class="flex items-end gap-2 sm:col-span-2 xl:col-span-1">
+          <button
+            type="button"
+            (click)="limparFiltros()"
+            title="Limpar filtros"
+            class="h-10 flex-1 xl:flex-none xl:w-10 rounded-lg border border-slate-200/80 bg-white text-slate-600 hover:bg-slate-50 shadow-sm flex items-center justify-center"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            (click)="carregar()"
+            title="Atualizar"
+            class="h-10 flex-1 xl:flex-none xl:w-10 rounded-lg border border-slate-200/80 bg-white text-slate-600 hover:bg-slate-50 shadow-sm flex items-center justify-center"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
     <div class="flex justify-end pt-1 border-t border-slate-200/60">
