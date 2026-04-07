@@ -70,6 +70,12 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'frente-caixa-comercial',
+    loadComponent: () =>
+      import('./components/frente-caixa-comercial/frente-caixa-comercial.component').then(m => m.FrenteCaixaComercialComponent),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'assinatura',
     loadComponent: () => import('./components/assinatura/assinatura.component').then(m => m.AssinaturaComponent),
     canActivate: [AuthGuard]
@@ -92,6 +98,11 @@ export const routes: Routes = [
   {
     path: 'contas-a-receber',
     loadComponent: () => import('./components/contas-a-receber/contas-a-receber.component').then(m => m.ContasAReceberComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'parametrizacao',
+    loadComponent: () => import('./components/parametrizacao/parametrizacao.component').then(m => m.ParametrizacaoComponent),
     canActivate: [AuthGuard]
   },
   {

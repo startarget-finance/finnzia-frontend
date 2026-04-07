@@ -196,6 +196,16 @@ export class AppComponent implements OnInit {
     return this.hasPermission('contratos');
   }
 
+  /** Mesma permissão de contratos: visão operacional do time comercial. */
+  canAccessFrenteCaixaComercial(): boolean {
+    return this.hasPermission('contratos');
+  }
+
+  /** Parametrização operacional usada por Financeiro/DFC. */
+  canAccessParametrizacao(): boolean {
+    return this.hasPermission('fluxo-caixa');
+  }
+
   canAccessChat(): boolean {
     return this.hasPermission('chat');
   }

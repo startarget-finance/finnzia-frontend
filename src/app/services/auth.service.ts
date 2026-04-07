@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject, TimeoutError } from 'rxjs';
 import { timeout } from 'rxjs/operators';
 import { Router } from '@angular/router';
@@ -53,8 +53,11 @@ export class AuthService {
     }
   }
 
-  // Login retornando objeto com detalhes do resultado
-  async loginWithResult(email: string, password: string): Promise<{ success: boolean; timeout?: boolean }> {
+  /** Resultado do login (mensagem opcional vem do body do backend, ex.: 401). */
+  async loginWithResult(
+    email: string,
+    password: string
+  ): Promise<{ success: boolean; timeout?: boolean; backendMessage?: string }> {
     try {
       this.companySelectorService.limparSessao();
       const response = await this.authenticateWithAPI(email, password);
@@ -66,11 +69,30 @@ export class AuthService {
         this.setUserSession(response.user, response.token);
         return { success: true };
       }
-      return { success: false };
+      return { success: false, backendMessage: response.backendMessage };
     } catch (error) {
       console.error('Erro no login:', error);
       return { success: false };
     }
+  }
+
+  private logDicaPrimeiroAdminSeLocalhost(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const h = window.location.hostname;
+    if (h !== 'localhost' && h !== '127.0.0.1') {
+      return;
+    }
+    const base = API_CONFIG.BACKEND_API_URL || 'http://localhost:8080';
+    console.info(
+      '[Finnzia] Login retornou 401 — na maioria dos casos é email/senha errados ou usuário inativo.\n' +
+        'Confira a senha no banco ou use "Esqueci minha senha" (se configurado).\n' +
+        'Só use primeiro admin se o banco estiver realmente sem nenhum usuário:\n' +
+        `POST ${base}/api/usuarios/primeiro-admin\n` +
+        'Content-Type: application/json\n\n' +
+        '{"nome":"Administrador","email":"seu@email.com","senha":"123456","role":"ADMIN"}'
+    );
   }
 
   // Login (compatibilidade legada)
@@ -152,13 +174,26 @@ export class AuthService {
         token: apiResponse.token,  // Corrigido: usar 'token' do backend
         user: mappedUser
       };
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof TimeoutError) {
         console.error('Timeout no login — servidor demorou mais de 75s');
         return { success: false, timeout: true };
       }
+      let backendMessage: string | undefined;
+      if (error instanceof HttpErrorResponse) {
+        const body = error.error;
+        if (body && typeof body === 'object' && body !== null && 'message' in body) {
+          const m = (body as { message?: unknown }).message;
+          if (typeof m === 'string' && m.length > 0) {
+            backendMessage = m;
+          }
+        }
+        if (error.status === 401) {
+          this.logDicaPrimeiroAdminSeLocalhost();
+        }
+      }
       console.error('Erro ao autenticar no backend:', error);
-      return { success: false };
+      return { success: false, backendMessage };
     }
   }
 

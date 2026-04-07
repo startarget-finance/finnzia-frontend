@@ -6,6 +6,14 @@ import { ContratoDTO, ContratoService, WorkflowAction } from '../../services/con
 import { ContractTableComponent } from './contract-table.component';
 import { ContractDrawerComponent } from './contract-drawer.component';
 import { WorkflowBoardComponent } from './workflow-board.component';
+import {
+  ContratoGrupoCliente,
+  groupContratosByClienteId,
+  grupoContratoPrincipal,
+  grupoFinancialWorst,
+  grupoValorMensalTotal,
+  grupoWorkflowRepresentativo
+} from './contratos-group.utils';
 
 @Component({
   selector: 'app-contratos',
@@ -62,6 +70,13 @@ export class ContratosComponent implements OnInit, OnDestroy {
   enviosSizeLocal = 10;
   carteiraPageLocal = 0;
   carteiraSizeLocal = 10;
+  kanbanPageLocal = 0;
+  kanbanSizeLocal = 10;
+  readonly pageSizeOptionsLocal = [6, 10, 20, 50];
+  readonly pageSizeOptionsOperacao = [12, 24, 48, 96];
+
+  /** Linhas expandidas nas listas comerciais agrupadas (propostas, dashboard assinados, envios). */
+  private expandedComercialPorCliente: Record<number, boolean> = {};
 
   private destroy$ = new Subject<void>();
   private filtroTextoSubject = new Subject<string>();
@@ -113,11 +128,13 @@ export class ContratosComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           this.contratos = response.content || [];
-          if (!this.fluxoContratoId && this.propostasLista.length > 0) {
-            this.fluxoContratoId = this.propostasLista[0].id;
+          const gruposPropostas = groupContratosByClienteId(this.propostasLista);
+          const idPrincipalFluxo = gruposPropostas[0] ? grupoContratoPrincipal(gruposPropostas[0]).id : null;
+          if (!this.fluxoContratoId && idPrincipalFluxo != null) {
+            this.fluxoContratoId = idPrincipalFluxo;
           }
-          if (this.fluxoContratoId && !this.contratos.some(c => c.id === this.fluxoContratoId)) {
-            this.fluxoContratoId = this.propostasLista[0]?.id ?? null;
+          if (this.fluxoContratoId && !this.contratos.some((c) => c.id === this.fluxoContratoId)) {
+            this.fluxoContratoId = idPrincipalFluxo ?? this.propostasLista[0]?.id ?? null;
           }
           this.totalElements = response.totalElements || 0;
           this.totalPages = response.totalPages || 0;
@@ -143,6 +160,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
     this.clientesPageLocal = 0;
     this.enviosPageLocal = 0;
     this.carteiraPageLocal = 0;
+    this.kanbanPageLocal = 0;
     this.carregarContratos();
   }
 
@@ -272,6 +290,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
   alterarTab(tab: 'tabela' | 'pipeline') {
     this.activeTab = tab;
     this.page = 0;
+    this.kanbanPageLocal = 0;
     this.carregarContratos();
   }
 
@@ -284,6 +303,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
     this.clientesPageLocal = 0;
     this.enviosPageLocal = 0;
     this.carteiraPageLocal = 0;
+    this.kanbanPageLocal = 0;
     this.carregarContratos();
   }
 
@@ -297,6 +317,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
     this.clientesPageLocal = 0;
     this.enviosPageLocal = 0;
     this.carteiraPageLocal = 0;
+    this.kanbanPageLocal = 0;
     this.carregarContratos();
   }
 
@@ -321,15 +342,28 @@ export class ContratosComponent implements OnInit, OnDestroy {
     return pages;
   }
 
-  // Dashboard pagination (assinados)
-  get dashboardList(): ContratoDTO[] {
-    return this.contratosFiltrados;
+  rangeStart(page: number, size: number, total: number): number {
+    if (!total) return 0;
+    return page * size + 1;
   }
-  get dashboardPaginatedList(): ContratoDTO[] {
-    return this.paginate(this.dashboardList, this.dashboardPage, this.dashboardSize);
+
+  rangeEnd(page: number, size: number, total: number): number {
+    if (!total) return 0;
+    return Math.min((page + 1) * size, total);
+  }
+
+  // Dashboard comercial baseado em status de cobrança do Asaas.
+  get dashboardAssinadosLista(): ContratoDTO[] {
+    return this.contratosFiltrados.filter((c) => this.hasRecebimentoAsaas(c));
+  }
+  get dashboardAssinadosGrupos(): ContratoGrupoCliente[] {
+    return groupContratosByClienteId(this.dashboardAssinadosLista);
+  }
+  get dashboardPaginatedAssinadosGrupos(): ContratoGrupoCliente[] {
+    return this.paginate(this.dashboardAssinadosGrupos, this.dashboardPage, this.dashboardSize);
   }
   get dashboardTotalPages(): number {
-    return this.totalPagesLocal(this.dashboardList, this.dashboardSize);
+    return this.totalPagesLocal(this.dashboardAssinadosGrupos, this.dashboardSize);
   }
 
   dashboardIrParaPagina(p: number) {
@@ -341,12 +375,18 @@ export class ContratosComponent implements OnInit, OnDestroy {
     return this.paginasVisiveisLocal(this.dashboardPage, this.dashboardTotalPages);
   }
 
-  // Propostas pagination
-  get propostasPaginadas(): ContratoDTO[] {
-    return this.paginate(this.propostasLista, this.propostasPageLocal, this.propostasSizeLocal);
+  onDashboardSizeChange(): void {
+    this.dashboardPage = 0;
+  }
+
+  get propostasGrupos(): ContratoGrupoCliente[] {
+    return groupContratosByClienteId(this.propostasLista);
+  }
+  get propostasPaginatedGrupos(): ContratoGrupoCliente[] {
+    return this.paginate(this.propostasGrupos, this.propostasPageLocal, this.propostasSizeLocal);
   }
   get propostasTotalPagesLocal(): number {
-    return this.totalPagesLocal(this.propostasLista, this.propostasSizeLocal);
+    return this.totalPagesLocal(this.propostasGrupos, this.propostasSizeLocal);
   }
   propostasIrParaPagina(p: number) {
     if (p < 0 || p >= this.propostasTotalPagesLocal) return;
@@ -355,6 +395,10 @@ export class ContratosComponent implements OnInit, OnDestroy {
 
   get propostasPaginasVisiveisLocal(): number[] {
     return this.paginasVisiveisLocal(this.propostasPageLocal, this.propostasTotalPagesLocal);
+  }
+
+  onPropostasSizeChange(): void {
+    this.propostasPageLocal = 0;
   }
 
   // Clientes pagination
@@ -373,12 +417,18 @@ export class ContratosComponent implements OnInit, OnDestroy {
     return this.paginasVisiveisLocal(this.clientesPageLocal, this.clientesTotalPagesLocal);
   }
 
-  // Envios pagination
-  get enviosPaginatedLista(): ContratoDTO[] {
-    return this.paginate(this.enviosLista, this.enviosPageLocal, this.enviosSizeLocal);
+  onClientesSizeChange(): void {
+    this.clientesPageLocal = 0;
+  }
+
+  get enviosGrupos(): ContratoGrupoCliente[] {
+    return groupContratosByClienteId(this.enviosLista);
+  }
+  get enviosPaginatedGrupos(): ContratoGrupoCliente[] {
+    return this.paginate(this.enviosGrupos, this.enviosPageLocal, this.enviosSizeLocal);
   }
   get enviosTotalPagesLocal(): number {
-    return this.totalPagesLocal(this.enviosLista, this.enviosSizeLocal);
+    return this.totalPagesLocal(this.enviosGrupos, this.enviosSizeLocal);
   }
   enviosIrParaPagina(p: number) {
     if (p < 0 || p >= this.enviosTotalPagesLocal) return;
@@ -389,12 +439,70 @@ export class ContratosComponent implements OnInit, OnDestroy {
     return this.paginasVisiveisLocal(this.enviosPageLocal, this.enviosTotalPagesLocal);
   }
 
-  // Carteira pagination
-  get carteiraPaginatedCobrancas(): ContratoDTO[] {
-    return this.paginate(this.carteiraCobrancas, this.carteiraPageLocal, this.carteiraSizeLocal);
+  onEnviosSizeChange(): void {
+    this.enviosPageLocal = 0;
+  }
+
+  // Operação Kanban pagination (agrupada por cliente)
+  get kanbanGruposOperacao(): ContratoGrupoCliente[] {
+    return groupContratosByClienteId(this.contratosFiltrados);
+  }
+
+  get kanbanPaginatedGruposOperacao(): ContratoGrupoCliente[] {
+    return this.paginate(this.kanbanGruposOperacao, this.kanbanPageLocal, this.kanbanSizeLocal);
+  }
+
+  get contratosKanbanPagina(): ContratoDTO[] {
+    return this.kanbanPaginatedGruposOperacao.flatMap((g) => g.contratos);
+  }
+
+  get kanbanTotalPagesLocal(): number {
+    return this.totalPagesLocal(this.kanbanGruposOperacao, this.kanbanSizeLocal);
+  }
+
+  kanbanIrParaPagina(p: number): void {
+    if (p < 0 || p >= this.kanbanTotalPagesLocal) return;
+    this.kanbanPageLocal = p;
+  }
+
+  get kanbanPaginasVisiveisLocal(): number[] {
+    return this.paginasVisiveisLocal(this.kanbanPageLocal, this.kanbanTotalPagesLocal);
+  }
+
+  onKanbanSizeChange(): void {
+    this.kanbanPageLocal = 0;
+  }
+
+  // Carteira pagination (agrupada por cliente)
+  get carteiraGrupos(): ContratoGrupoCliente[] {
+    return groupContratosByClienteId(this.carteiraCobrancas);
+  }
+  get carteiraPaginatedGrupos(): ContratoGrupoCliente[] {
+    return this.paginate(this.carteiraGrupos, this.carteiraPageLocal, this.carteiraSizeLocal);
   }
   get carteiraTotalPagesLocal(): number {
-    return this.totalPagesLocal(this.carteiraCobrancas, this.carteiraSizeLocal);
+    return this.totalPagesLocal(this.carteiraGrupos, this.carteiraSizeLocal);
+  }
+  grupoContratoPrincipal = grupoContratoPrincipal;
+  grupoValorMensalTotal = grupoValorMensalTotal;
+  grupoFinancialWorst = grupoFinancialWorst;
+  grupoWorkflowRepresentativo = grupoWorkflowRepresentativo;
+
+  toggleExpandComercial(clienteId: number, ev?: Event): void {
+    ev?.stopPropagation();
+    this.expandedComercialPorCliente[clienteId] = !this.expandedComercialPorCliente[clienteId];
+  }
+
+  isExpandComercial(clienteId: number): boolean {
+    return !!this.expandedComercialPorCliente[clienteId];
+  }
+
+  isFluxoGrupoSelecionado(g: ContratoGrupoCliente): boolean {
+    const cur = this.fluxoContratoAtual;
+    if (!cur) {
+      return false;
+    }
+    return g.contratos.some((c) => c.id === cur.id);
   }
   carteiraIrParaPagina(p: number) {
     if (p < 0 || p >= this.carteiraTotalPagesLocal) return;
@@ -403,6 +511,10 @@ export class ContratosComponent implements OnInit, OnDestroy {
 
   get carteiraPaginasVisiveisLocal(): number[] {
     return this.paginasVisiveisLocal(this.carteiraPageLocal, this.carteiraTotalPagesLocal);
+  }
+
+  onCarteiraSizeChange(): void {
+    this.carteiraPageLocal = 0;
   }
 
   get moduleTitle(): string {
@@ -433,7 +545,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
       case 'dashboard':
         return 'Visão geral das propostas, contratos e receita.';
       case 'propostas':
-        return 'Envie proposta, acompanhe assinatura e avance para cobrança.';
+        return 'Envie proposta, acompanhe cobrança no Asaas e avance a operação.';
       case 'clientes':
         return 'Gerencie seus clientes e propostas enviadas.';
       case 'detalhe':
@@ -539,8 +651,33 @@ export class ContratosComponent implements OnInit, OnDestroy {
   }
 
   get fluxoContratoAtual(): ContratoDTO | null {
-    if (!this.fluxoContratoId) return this.propostasLista[0] || null;
-    return this.contratos.find(c => c.id === this.fluxoContratoId) || this.propostasLista[0] || null;
+    if (!this.fluxoContratoId) {
+      const g = this.propostasFluxoGrupos[0];
+      return g ? grupoContratoPrincipal(g) : null;
+    }
+    return this.contratos.find((c) => c.id === this.fluxoContratoId) || this.propostasLista[0] || null;
+  }
+
+  /** Valor total do cliente no fluxo quando há várias propostas/cobranças. */
+  get fluxoValorResumo(): number {
+    const c = this.fluxoContratoAtual;
+    if (!c?.cliente?.id) {
+      return Number(c?.valorRecorrencia || c?.valorContrato || 0);
+    }
+    const grupo = this.propostasFluxoGrupos.find((g) => g.clienteId === c.cliente.id);
+    if (grupo && grupo.contratos.length > 1) {
+      return grupoValorMensalTotal(grupo);
+    }
+    return Number(c.valorRecorrencia || c.valorContrato || 0);
+  }
+
+  get fluxoMostraSomaCliente(): boolean {
+    const c = this.fluxoContratoAtual;
+    if (!c?.cliente?.id) {
+      return false;
+    }
+    const g = this.propostasFluxoGrupos.find((x) => x.clienteId === c.cliente.id);
+    return !!g && g.contratos.length > 1;
   }
 
   selecionarFluxoContrato(id: number) {
@@ -610,6 +747,10 @@ export class ContratosComponent implements OnInit, OnDestroy {
     });
   }
 
+  get propostasFluxoGrupos(): ContratoGrupoCliente[] {
+    return groupContratosByClienteId(this.propostasFluxoLista);
+  }
+
   getCobrancaPrimaryActionLabel(contrato: ContratoDTO | null): string {
     return this.isCobrancaRefunded(contrato) ? 'Reemitir cobrança' : 'Gerar cobrança';
   }
@@ -655,56 +796,51 @@ export class ContratosComponent implements OnInit, OnDestroy {
   }
 
   get contratosAssinadosComercial(): number {
-    return this.contratosFiltrados.filter(c => c.statusAssinatura === 'ASSINADO').length;
+    return this.contratosFiltrados.filter((c) => this.hasRecebimentoAsaas(c)).length;
   }
 
   get propostasPendentesComercial(): number {
-    return this.propostasLista.filter(c => c.statusAssinatura !== 'ASSINADO').length;
+    return this.contratosFiltrados.filter((c) => this.hasPendenteAsaas(c)).length;
   }
 
   get receitaFechada(): number {
-    return this.contratosFiltrados
-      .filter(c => c.statusAssinatura === 'ASSINADO' || c.workflowStatus === 'ATIVO')
-      .reduce((sum, c) => sum + Number(c.valorRecorrencia || c.valorContrato || 0), 0);
+    return this.contratosFiltrados.reduce((sum, c) => {
+      const recebidas = (c.cobrancas || [])
+        .filter((cb) => cb.status === 'RECEIVED' || cb.status === 'DUNNING_RECEIVED')
+        .reduce((acc, cb) => acc + Number(cb.valor || 0), 0);
+      return sum + recebidas;
+    }, 0);
   }
 
   get receitaPotencial(): number {
-    return this.propostasLista.reduce((sum, c) => sum + Number(c.valorRecorrencia || c.valorContrato || 0), 0);
+    return this.contratosFiltrados.reduce((sum, c) => {
+      const abertas = (c.cobrancas || [])
+        .filter((cb) => cb.status === 'PENDING' || cb.status === 'OVERDUE' || cb.status === 'DUNNING_REQUESTED')
+        .reduce((acc, cb) => acc + Number(cb.valor || 0), 0);
+      return sum + abertas;
+    }, 0);
   }
 
   get clientesCards(): Array<{
+    clienteId: number;
     nome: string;
     email: string;
     telefone: string;
     propostas: number;
-    assinados: number;
-    pendentes: number;
+    recebidos: number;
+    emAberto: number;
     contratos: ContratoDTO[];
   }> {
-    const grouped = new Map<string, {
-      nome: string; email: string; telefone: string;
-      propostas: number; assinados: number; pendentes: number; contratos: ContratoDTO[];
-    }>();
-    for (const c of this.contratosFiltrados) {
-      const nome = c.cliente?.razaoSocial || c.cliente?.nomeFantasia || 'Sem cliente';
-      if (!grouped.has(nome)) {
-        grouped.set(nome, {
-          nome,
-          email: c.cliente?.emailFinanceiro || '-',
-          telefone: c.cliente?.celularFinanceiro || '-',
-          propostas: 0,
-          assinados: 0,
-          pendentes: 0,
-          contratos: []
-        });
-      }
-      const item = grouped.get(nome)!;
-      item.propostas += 1;
-      if (c.statusAssinatura === 'ASSINADO') item.assinados += 1;
-      else item.pendentes += 1;
-      item.contratos.push(c);
-    }
-    return Array.from(grouped.values());
+    return groupContratosByClienteId(this.contratosFiltrados).map((g) => ({
+      clienteId: g.clienteId,
+      nome: g.cliente.razaoSocial || g.cliente.nomeFantasia || 'Sem cliente',
+      email: g.cliente.emailFinanceiro || '-',
+      telefone: g.cliente.celularFinanceiro || '-',
+      propostas: g.contratos.length,
+      recebidos: g.contratos.filter((c) => this.hasRecebimentoAsaas(c)).length,
+      emAberto: g.contratos.filter((c) => this.hasPendenteAsaas(c)).length,
+      contratos: g.contratos
+    }));
   }
 
   abrirDetalheProposta(contrato: ContratoDTO) {
@@ -719,17 +855,31 @@ export class ContratosComponent implements OnInit, OnDestroy {
   get timelineDetalhe(): Array<{ label: string; done: boolean }> {
     const p = this.propostaSelecionada;
     if (!p) return [];
-    const assinado = p.statusAssinatura === 'ASSINADO';
-    const cobranca = !!this.getProximaCobrancaDetalhada(p);
+    const assinado = this.hasRecebimentoAsaas(p);
     const pago = this.getProximaCobrancaDetalhada(p)?.status === 'RECEIVED';
     return [
       { label: 'Proposta criada', done: true },
       { label: 'Enviada ao cliente', done: true },
       { label: 'Cliente preenchendo dados', done: (p.workflowStatus || 'NOVO') !== 'NOVO' },
-      { label: 'Proposta aceita', done: assinado },
+      { label: 'Recebimento Asaas confirmado', done: assinado },
       { label: 'Pagamento realizado', done: pago },
       { label: 'Onboarding', done: (p.workflowStatus || 'NOVO') === 'ATIVO' && pago }
     ];
+  }
+
+  statusPagamentoAsaas(contrato: ContratoDTO | null): string {
+    if (!contrato) return 'Sem cobrança';
+    const cobrancas = contrato.cobrancas || [];
+    if (cobrancas.some((cb) => cb.status === 'RECEIVED' || cb.status === 'DUNNING_RECEIVED')) {
+      return 'Recebido';
+    }
+    if (cobrancas.some((cb) => cb.status === 'OVERDUE' || cb.status === 'DUNNING_REQUESTED')) {
+      return 'Atrasado';
+    }
+    if (cobrancas.some((cb) => cb.status === 'PENDING')) {
+      return 'Pendente';
+    }
+    return 'Sem cobrança';
   }
 
   get enviosLista(): ContratoDTO[] {
@@ -769,6 +919,18 @@ export class ContratosComponent implements OnInit, OnDestroy {
     }
 
     return true;
+  }
+
+  private hasRecebimentoAsaas(contrato: ContratoDTO): boolean {
+    return (contrato.cobrancas || []).some(
+      (cb) => cb.status === 'RECEIVED' || cb.status === 'DUNNING_RECEIVED'
+    );
+  }
+
+  private hasPendenteAsaas(contrato: ContratoDTO): boolean {
+    return (contrato.cobrancas || []).some(
+      (cb) => cb.status === 'PENDING' || cb.status === 'OVERDUE' || cb.status === 'DUNNING_REQUESTED'
+    );
   }
 
   getProximaCobrancaDetalhada(contrato: ContratoDTO) {

@@ -1,0 +1,264 @@
+<ng-container *ngIf="!embedded">
+  <div class="min-h-full bg-[#f1f4f8]">
+    <div class="max-w-[1800px] mx-auto px-4 sm:px-6 py-6 space-y-5">
+      <section
+        class="bg-white border border-slate-200/70 rounded-2xl shadow-[0_2px_16px_-4px_rgba(15,23,42,0.08)] p-4 sm:p-6"
+      >
+        <ng-container *ngTemplateOutlet="corpoPlano"></ng-container>
+      </section>
+    </div>
+  </div>
+</ng-container>
+
+<div *ngIf="embedded" class="space-y-3">
+  <ng-container *ngTemplateOutlet="corpoPlano"></ng-container>
+</div>
+
+<ng-template #corpoPlano>
+  <div class="space-y-3">
+    <div *ngIf="!embedded" class="space-y-3">
+      <div>
+        <h1 class="text-2xl font-semibold text-slate-900 tracking-tight">
+          Cadastro de Plano de Contas Gerencial
+        </h1>
+        <p class="text-sm text-slate-500 mt-1">
+          Modelos de plano vinculados às suas empresas — cadastro interno Finnzia (sem API Bom Controle).
+        </p>
+      </div>
+    </div>
+
+    <div
+      class="flex flex-wrap items-end justify-between gap-3 rounded-lg border border-slate-200/70 bg-gradient-to-b from-slate-50/90 to-slate-50/40 px-3 py-3 sm:px-4"
+    >
+      <div class="flex flex-col gap-1 min-w-[200px] flex-1 max-w-md">
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Empresa</label>
+        <select
+          [(ngModel)]="filtroEmpresaId"
+          (ngModelChange)="carregar()"
+          class="h-9 w-full px-3 rounded-lg border border-slate-200/90 bg-white text-sm text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/25 focus:border-emerald-500"
+        >
+          <option [ngValue]="null">Todas</option>
+          <option *ngFor="let e of empresasDisponiveis" [ngValue]="e.idEmpresa">
+            {{ e.nomeEmpresa }}
+          </option>
+        </select>
+      </div>
+      <button
+        type="button"
+        (click)="abrirNovo()"
+        class="h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-semibold shadow-sm shadow-emerald-600/20 hover:bg-emerald-500 transition-colors shrink-0"
+      >
+        + Novo plano
+      </button>
+    </div>
+  </div>
+
+  <p
+    *ngIf="erro"
+    class="text-sm text-red-700 bg-red-50/90 border border-red-200/60 rounded-lg px-3 py-2.5 shadow-sm"
+  >
+    {{ erro }}
+  </p>
+
+  <div
+    class="rounded-lg border border-slate-200/80 bg-white shadow-sm overflow-hidden"
+    [class.mt-4]="!embedded"
+    [class.mt-3]="embedded"
+  >
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-[13px] text-slate-800">
+        <thead>
+          <tr class="bg-slate-100/80 text-left border-b border-slate-200/90">
+            <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 w-[32%]">
+              Plano
+            </th>
+            <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+              Empresas
+            </th>
+            <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-right w-36">
+              Ações
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <tr *ngIf="carregando && planos.length === 0">
+            <td colspan="3" class="py-8 text-center text-sm text-slate-500">Carregando…</td>
+          </tr>
+          <tr
+            *ngFor="let p of planos; let odd = odd"
+            class="transition-colors hover:bg-slate-50/90"
+            [ngClass]="{ 'bg-slate-50/40': odd }"
+          >
+            <td class="py-2.5 px-3 align-middle">
+              <span class="font-semibold text-slate-900">{{ p.nome }}</span>
+              <span
+                *ngIf="p.padrao"
+                class="ml-2 inline-flex align-middle text-[10px] font-semibold uppercase tracking-wide text-amber-800 bg-amber-100/80 border border-amber-200/70 rounded px-1.5 py-0.5"
+                >Padrão</span
+              >
+            </td>
+            <td class="py-2.5 px-3 align-middle">
+              <div *ngIf="!p.empresas?.length" class="text-slate-400 text-xs">—</div>
+              <div *ngIf="p.empresas?.length" class="flex flex-wrap gap-1.5">
+                <div
+                  *ngFor="let emp of p.empresas || []"
+                  class="inline-flex min-w-0 max-w-[min(100%,280px)] items-center rounded-md bg-white border border-slate-200/80 px-2 py-0.5 text-xs text-slate-800 shadow-sm"
+                  [title]="emp.nomeEmpresa"
+                >
+                  <span class="block truncate">{{ emp.nomeEmpresa }}</span>
+                </div>
+              </div>
+            </td>
+            <td class="py-2.5 px-3 text-right align-middle whitespace-nowrap">
+              <div
+                class="inline-flex rounded-lg border border-slate-200/80 bg-slate-50/90 p-0.5 gap-0.5 shadow-sm"
+                role="group"
+                aria-label="Ações do plano"
+              >
+                <button
+                  type="button"
+                  (click)="marcarPadrao(p)"
+                  class="inline-flex h-8 w-8 items-center justify-center rounded-md text-amber-600 hover:bg-white hover:shadow-sm transition-colors"
+                  title="Marcar como padrão"
+                >
+                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                    <path
+                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  (click)="abrirEditar(p)"
+                  class="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-white hover:shadow-sm transition-colors"
+                  title="Editar"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                    />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  (click)="excluir(p)"
+                  class="inline-flex h-8 w-8 items-center justify-center rounded-md text-red-600 hover:bg-white hover:shadow-sm transition-colors"
+                  title="Excluir"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="!carregando && planos.length === 0">
+            <td colspan="3" class="py-12 px-4 text-center">
+              <p class="text-sm text-slate-600">Nenhum plano cadastrado.</p>
+              <p class="text-xs text-slate-400 mt-1">Use <strong class="text-slate-600">+ Novo plano</strong> para começar.</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div
+      class="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 border-t border-slate-100 bg-slate-50/50 text-xs text-slate-600"
+    >
+      <span *ngIf="planos.length" class="font-medium tabular-nums">
+        1 a {{ planos.length }} de {{ planos.length }}
+      </span>
+      <label
+        class="inline-flex h-8 px-3 items-center rounded-md border border-slate-200/80 bg-white cursor-pointer hover:bg-slate-50 text-xs font-medium text-slate-700 shadow-sm transition-colors"
+        [class.ml-auto]="!planos.length"
+      >
+        <input type="file" accept=".json,application/json" class="hidden" (change)="onImportarArquivo($event)" />
+        Importar JSON
+      </label>
+    </div>
+  </div>
+</ng-template>
+
+<div
+  *ngIf="modalAberto"
+  class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-[6px]"
+  (click)="fecharModal()"
+>
+  <div
+    class="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(15,23,42,0.25)] border border-slate-200/80 max-w-lg w-full p-6 space-y-5"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <h2 class="text-lg font-semibold text-slate-900 tracking-tight">
+          {{ editandoId != null ? 'Editar plano' : 'Novo plano de contas' }}
+        </h2>
+        <p class="text-sm text-slate-500 mt-1">Defina o nome, empresas e se é o plano padrão.</p>
+      </div>
+      <button
+        type="button"
+        class="shrink-0 h-9 w-9 rounded-lg border border-slate-200/80 text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+        (click)="fecharModal()"
+        aria-label="Fechar"
+      >
+        ✕
+      </button>
+    </div>
+    <div class="space-y-4">
+      <div>
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Nome</label>
+        <input
+          [(ngModel)]="formNome"
+          class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          placeholder="Ex.: Padrão, Mais Saúde…"
+        />
+      </div>
+      <div class="flex items-center gap-2">
+        <input type="checkbox" id="padrao" [(ngModel)]="formPadrao" />
+        <label for="padrao" class="text-sm text-slate-700">Definir como plano padrão</label>
+      </div>
+      <div>
+        <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Empresas vinculadas</p>
+        <div class="max-h-48 overflow-y-auto rounded-xl border border-slate-200/80 divide-y divide-slate-100 bg-slate-50/30">
+              <label
+                *ngFor="let e of empresasDisponiveis"
+                class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm"
+              >
+            <input
+              type="checkbox"
+              *ngIf="e.idEmpresa"
+              [(ngModel)]="formEmpresaIds[e.idEmpresa!]"
+            />
+            <span>{{ e.nomeEmpresa }}</span>
+          </label>
+        </div>
+        <p *ngIf="!isAdmin" class="text-xs text-amber-700 mt-1">
+          Usuários não-admin precisam vincular ao menos uma empresa.
+        </p>
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 pt-1">
+      <button
+        type="button"
+        (click)="fecharModal()"
+        class="h-10 px-4 rounded-lg border border-slate-200/80 text-sm font-medium text-slate-700 hover:bg-slate-50"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        (click)="salvar()"
+        class="h-10 px-5 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 shadow-sm transition-colors"
+      >
+        Salvar
+      </button>
+    </div>
+  </div>
+</div>

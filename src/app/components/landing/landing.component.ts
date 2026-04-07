@@ -137,7 +137,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
       'prestadores': ['servicos', 'prestadores'],
       'agencias': ['agencias']
     };
-
+    
     const secoesPermitidas = mapeamento[this.segmentoAtual] || [];
     return secoesPermitidas.includes(secao);
   }
@@ -155,7 +155,7 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
         elementoId = 'agencias';
         break;
     }
-
+    
     if (elementoId) {
       const el = document.getElementById(elementoId);
       if (el) {
@@ -210,19 +210,19 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
       const previewVideo = document.querySelector(`video[data-video-id="${videoAtual.id}"]`) as HTMLVideoElement;
       const mainVideo = document.querySelector(`video[data-video-id="${videoAtual.id}-main"]`) as HTMLVideoElement;
       const poster = document.querySelector('.video-poster') as HTMLElement;
-
+      
       if (previewVideo) {
         previewVideo.classList.remove('hidden');
         previewVideo.currentTime = 0.1;
         previewVideo.pause();
       }
-
+      
       if (mainVideo) {
         mainVideo.classList.add('hidden');
         mainVideo.pause();
         mainVideo.currentTime = 0;
       }
-
+      
       if (poster) {
         poster.style.display = 'flex';
       }
@@ -256,23 +256,23 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     if (videoAtual) {
       const container = document.querySelector('.video-container-agencia') as HTMLElement;
       if (!container) return;
-
+      
       const previewVideo = container.querySelector(`video[data-video-id="${videoAtual.id}"]`) as HTMLVideoElement;
       const mainVideo = container.querySelector(`video[data-video-id="${videoAtual.id}-main"]`) as HTMLVideoElement;
       const poster = container.querySelector('.video-poster') as HTMLElement;
-
+      
       if (previewVideo) {
         previewVideo.classList.remove('hidden');
         previewVideo.currentTime = 0.1;
         previewVideo.pause();
       }
-
+      
       if (mainVideo) {
         mainVideo.classList.add('hidden');
         mainVideo.pause();
         mainVideo.currentTime = 0;
       }
-
+      
       if (poster) {
         poster.style.display = 'flex';
       }
@@ -299,10 +299,10 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onDepoimentoTouchMove(event: TouchEvent): void {
     if (!this.swipeStartX || !this.swipeStartY) return;
-
+    
     const deltaX = event.touches[0].clientX - this.swipeStartX;
     const deltaY = event.touches[0].clientY - this.swipeStartY;
-
+    
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
       this.isSwiping = true;
     }
@@ -340,10 +340,10 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
 
   onDepoimentoMouseMove(event: MouseEvent): void {
     if (!this.swipeStartX || !this.swipeStartY) return;
-
+    
     const deltaX = event.clientX - this.swipeStartX;
     const deltaY = event.clientY - this.swipeStartY;
-
+    
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
       this.isSwiping = true;
     }
@@ -376,12 +376,12 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.apenasDiagnostico) {
       return;
     }
-
+    
     if (!this.segmentoAtual) {
       this.router.navigate(['/diagnostico']);
       return;
     }
-
+    
     const el = document.getElementById('diagnostico');
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -463,14 +463,14 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     const videoIds = this.videos.map(v => v.id);
     const agenciaVideoIds = ['video-agencia1', 'video-agencia2', 'video-agencia3'];
     const allVideoIds = [...videoIds, ...agenciaVideoIds];
-
+    
     allVideoIds.forEach(videoId => {
       const previewVideo = document.querySelector(`video[data-video-id="${videoId}"]`) as HTMLVideoElement;
       if (!previewVideo) return;
 
       previewVideo.pause();
       previewVideo.currentTime = 0;
-
+      
       previewVideo.addEventListener('loadedmetadata', () => {
         previewVideo.currentTime = 0.1;
         previewVideo.pause();
@@ -498,24 +498,24 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!container) {
       container = document.querySelector('.video-container-agencia') as HTMLElement;
     }
-
+    
     if (!container) {
       console.error('Container de vídeo não encontrado');
       return;
     }
-
+    
     const previewVideo = container.querySelector(`video[data-video-id="${videoId}"]`) as HTMLVideoElement;
     const mainVideo = container.querySelector(`video[data-video-id="${videoId}-main"]`) as HTMLVideoElement;
     const poster = container.querySelector('.video-poster') as HTMLElement;
-
+    
     if (previewVideo) {
       previewVideo.classList.add('hidden');
     }
-
+    
     if (poster) {
       poster.style.display = 'none';
     }
-
+    
     if (mainVideo) {
       mainVideo.classList.remove('hidden');
       mainVideo.muted = false;
@@ -523,24 +523,24 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
         console.error('Erro ao reproduzir vídeo:', error);
       });
     }
-
+    
     this.playingVideos[videoId] = true;
   }
 
   pauseVideo(videoId: string, event: Event): void {
     const video = event.target as HTMLVideoElement;
-
+    
     let container = document.querySelector('.video-container') as HTMLElement;
     if (!container) {
       container = document.querySelector('.video-container-agencia') as HTMLElement;
     }
-
+    
     if (!container) return;
-
+    
     const previewVideo = container.querySelector(`video[data-video-id="${videoId}"]`) as HTMLVideoElement;
     const mainVideo = container.querySelector(`video[data-video-id="${videoId}-main"]`) as HTMLVideoElement;
     const poster = container.querySelector('.video-poster') as HTMLElement;
-
+    
     if (poster && video.paused) {
       if (previewVideo) {
         previewVideo.classList.remove('hidden');
@@ -550,10 +550,10 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
       }
       poster.style.display = 'flex';
     }
-
+    
     this.playingVideos[videoId] = false;
   }
-
+  
   onPosterClick(videoId: string): void {
     this.playVideo(videoId);
   }

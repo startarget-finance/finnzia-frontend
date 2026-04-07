@@ -3,53 +3,23 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
-import { BomControleService, DfcResponse, DfcIndicadores } from '../../services/bomcontrole.service';
-
-type TipoLinha = 'SECAO' | 'RECEITA' | 'DESPESA' | 'RESULTADO' | 'FATURAMENTO' | 'SUBTOTAL_RECEITA' | 'SUBTOTAL_DESPESA';
-
-interface LinhaTabela {
-  nome: string;
-  tipo: TipoLinha;
-  nivel: 0 | 1;
-  grupo?: string | null;
-  valores: (number | null)[];
-  total?: number;
-  media?: number;
-}
-
-type ResumoSecao = {
-  valores: number[];
-  total: number;
-  media: number;
-  estilo: 'receita' | 'despesa' | 'neutro';
-};
-
-interface DfcMetadados {
-  fonteDados: string;
-  fallbackAtivo: boolean;
-  tempoProcessamentoMs: number;
-  paginasProcessadas: number;
-  paginasEstimadas: number;
-  usandoCache: boolean;
-  atualizadoEm: string;
-}
+import { BomControleService, DfcResponse } from '../../services/bomcontrole.service';
+import { DfcPlanilhaComponent } from './dfc-planilha.component';
 
 @Component({
   selector: 'app-fluxo-caixa',
   standalone: true,
-  imports: [CommonModule, RouterModule, ReactiveFormsModule],
+  imports: [CommonModule, RouterModule, ReactiveFormsModule, DfcPlanilhaComponent],
   templateUrl: './fluxo-caixa.component.html',
 })
 export class FluxoCaixaComponent implements OnInit {
+  private readonly monthsPt = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  dfcResposta: DfcResponse | null = null;
+  mesesSelecionadosFiltro: string[] = [];
+
   filtrosForm: FormGroup;
-  meses: string[] = [];
-  dfcLinhas: LinhaTabela[] = [];
-  indicadores?: DfcIndicadores;
-  metadados?: DfcMetadados;
   carregando = false;
   erro?: string;
-  expandirReceitas = true;
-  expandirDespesas = true;
   mostrarRangePicker = false;
   visibleMonth: Date = new Date();
   calendarDays: Array<{ day: number; inCurrentMonth: boolean; dateStr: string }> = [];
@@ -80,6 +50,11 @@ export class FluxoCaixaComponent implements OnInit {
     this.carregarDfc();
   }
 
+  recarregarDfcDoBomControle(): void {
+    this.filtrosForm.patchValue({ forcarAtualizacao: true });
+    this.carregarDfc();
+  }
+
   carregarDfc(): void {
     if (this.filtrosForm.invalid) {
       return;
@@ -100,10 +75,20 @@ export class FluxoCaixaComponent implements OnInit {
         usarCache,
         forcarAtualizacao
       })
-      .pipe(finalize(() => (this.carregando = false)))
+      .pipe(
+        finalize(() => {
+          this.carregando = false;
+          if (forcarAtualizacao) {
+            this.filtrosForm.patchValue({ forcarAtualizacao: false });
+          }
+        })
+      )
       .subscribe({
-        next: (res) => this.processarResposta(res),
+        next: (res) => {
+          this.dfcResposta = res;
+        },
         error: (err) => {
+          this.dfcResposta = null;
           const mensagem = err?.error?.mensagem ?? 'Não foi possível carregar o demonstrativo.';
           this.erro = mensagem;
         }
@@ -125,155 +110,63 @@ export class FluxoCaixaComponent implements OnInit {
     });
     this.dataInicial = dataInicio;
     this.dataFinal = dataTermino;
+    this.mesesSelecionadosFiltro = [];
     this.carregarDfc();
   }
 
-  private processarResposta(resposta: DfcResponse): void {
-    this.meses = resposta.meses ?? [];
-    this.dfcLinhas = (resposta.linhas ?? []).map((linha) => ({
-      nome: linha.nome,
-      tipo: linha.tipo as TipoLinha,
-      nivel: (linha.nivel ?? 0) as 0 | 1,
-      grupo: linha.grupo,
-      valores: this.alinharValores(linha.valores, this.meses.length),
-      total: linha.total,
-      media: linha.media
-    }));
-    this.indicadores = resposta.indicadores;
-    this.metadados = {
-      fonteDados: resposta.fonteDados,
-      fallbackAtivo: resposta.fallbackAtivo,
-      tempoProcessamentoMs: resposta.tempoProcessamentoMs,
-      paginasProcessadas: resposta.paginasProcessadas,
-      paginasEstimadas: resposta.paginasEstimadas,
-      usandoCache: resposta.usandoCache,
-      atualizadoEm: resposta.atualizadoEm
-    };
-  }
-
-  exportarCsv(): void {
-    if (!this.dfcLinhas.length) {
+  filtrarPorMesAno(selecao: { month: string; year: string }): void {
+    const monthIndex = this.monthsPt.findIndex((m) => m.toLowerCase() === (selecao.month ?? '').toLowerCase());
+    if (monthIndex < 0) {
       return;
     }
-    const header = ['Descrição', ...this.meses, 'TOTAL', 'MÉDIA'];
-    const linhas = this.dfcLinhas.map((linha) => [
-      linha.nome,
-      ...linha.valores.map((v) => (v ?? 0).toString().replace('.', ',')),
-      (linha.total ?? 0).toString().replace('.', ','),
-      (linha.media ?? 0).toString().replace('.', ',')
-    ]);
-    const conteudo = [header, ...linhas].map((row) => row.join(';')).join('\n');
-    const blob = new Blob(['\ufeff' + conteudo], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const periodo = `${this.filtrosForm.value.dataInicio}_${this.filtrosForm.value.dataTermino}`;
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `DFC_${periodo}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
 
-  imprimir(): void {
-    window.print();
-  }
-
-  formatCurrency(value?: number | null): string {
-    const numero = value ?? 0;
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(numero);
-  }
-
-  formatCurrencySigned(value?: number | null): string {
-    const numero = value ?? 0;
-    if (numero < 0) {
-      return `(${this.formatCurrency(Math.abs(numero))})`;
-    }
-    return this.formatCurrency(numero);
-  }
-
-  isLinhaVisivel(linha: LinhaTabela): boolean {
-    if (linha.tipo === 'RECEITA' || linha.tipo === 'FATURAMENTO') {
-      return this.expandirReceitas;
-    }
-    if (linha.tipo === 'DESPESA') {
-      return this.expandirDespesas;
-    }
-    return true;
-  }
-
-  alternarReceitas(): void {
-    this.expandirReceitas = !this.expandirReceitas;
-  }
-
-  alternarDespesas(): void {
-    this.expandirDespesas = !this.expandirDespesas;
-  }
-
-  /**
-   * Retorna o resumo (soma) das linhas pertencentes a uma SECAO, para exibir totals
-   * mesmo quando a seção está recolhida.
-   */
-  getResumoSecao(secao: LinhaTabela): ResumoSecao | null {
-    if (secao.tipo !== 'SECAO' || !this.dfcLinhas?.length) {
-      return null;
+    const year = Number(selecao.year);
+    if (!Number.isFinite(year)) {
+      return;
     }
 
-    const idx = this.dfcLinhas.indexOf(secao);
-    if (idx < 0) {
-      return null;
+    const key = `${selecao.month}/${String(year).slice(-2)}`;
+    if (!this.mesesSelecionadosFiltro.includes(key)) {
+      this.mesesSelecionadosFiltro = [...this.mesesSelecionadosFiltro, key];
     }
 
-    const valores = Array.from({ length: this.meses.length }, () => 0);
-    let total = 0;
-    let count = 0;
-    let viuReceita = false;
-    let viuDespesa = false;
-
-    for (let i = idx + 1; i < this.dfcLinhas.length; i++) {
-      const linha = this.dfcLinhas[i];
-      if (linha.tipo === 'SECAO' || linha.tipo === 'RESULTADO') {
-        break;
-      }
-      if (linha.tipo === 'RECEITA' || linha.tipo === 'FATURAMENTO' || linha.tipo === 'DESPESA') {
-        if (linha.tipo === 'DESPESA') {
-          viuDespesa = true;
-        } else {
-          viuReceita = true;
+    const parsed = this.mesesSelecionadosFiltro
+      .map((k) => {
+        const [m, y] = k.split('/');
+        const idx = this.monthsPt.findIndex((mm) => mm.toLowerCase() === (m ?? '').toLowerCase());
+        if (idx < 0) {
+          return null;
         }
-
-        for (let c = 0; c < valores.length; c++) {
-          valores[c] += linha.valores?.[c] ?? 0;
+        const yy = Number(y?.length === 2 ? `20${y}` : y);
+        if (!Number.isFinite(yy)) {
+          return null;
         }
-        total += linha.total ?? 0;
-        count++;
-      }
+        return { year: yy, monthIndex: idx };
+      })
+      .filter((v): v is { year: number; monthIndex: number } => !!v);
+
+    if (!parsed.length) {
+      return;
     }
 
-    const media = this.meses.length ? total / this.meses.length : 0;
-    const estilo: ResumoSecao['estilo'] =
-      secao.nome.toUpperCase().includes('DESPESA') || (viuDespesa && !viuReceita)
-        ? 'despesa'
-        : (viuReceita && !viuDespesa)
-          ? 'receita'
-          : 'neutro';
+    parsed.sort((a, b) => (a.year - b.year) || (a.monthIndex - b.monthIndex));
+    const min = parsed[0];
+    const max = parsed[parsed.length - 1];
 
-    if (!count) {
-      return {
-        valores,
-        total,
-        media,
-        estilo
-      };
-    }
+    const inicio = new Date(min.year, min.monthIndex, 1);
+    const termino = new Date(max.year, max.monthIndex + 1, 0);
+    const dataInicio = this.formatarDataInput(inicio);
+    const dataTermino = this.formatarDataInput(termino);
 
-    return {
-      valores,
-      total,
-      media,
-      estilo
-    };
+    this.filtrosForm.patchValue({
+      dataInicio,
+      dataTermino
+    });
+    this.dataInicial = dataInicio;
+    this.dataFinal = dataTermino;
+    this.carregarDfc();
   }
 
-  /** Redefine o período para o mês atual e recarrega o DFC (equivalente a “resetar filtros”). */
   resetarPeriodo(): void {
     const periodo = this.definirPeriodoInicial();
     this.filtrosForm.patchValue({
@@ -282,44 +175,10 @@ export class FluxoCaixaComponent implements OnInit {
     });
     this.dataInicial = periodo.dataInicio;
     this.dataFinal = periodo.dataTermino;
+    this.mesesSelecionadosFiltro = [];
     this.visibleMonth = new Date(this.dataInicial);
     this.buildCalendar();
     this.carregarDfc();
-  }
-
-  mostrarModalDetalhesDfc = false;
-  tipoModalDetalhesDfc: 'receita' | 'despesa' = 'receita';
-
-  abrirModalDetalhesDfc(tipo: 'receita' | 'despesa'): void {
-    this.tipoModalDetalhesDfc = tipo;
-    this.mostrarModalDetalhesDfc = true;
-  }
-
-  fecharModalDetalhesDfc(): void {
-    this.mostrarModalDetalhesDfc = false;
-  }
-
-  /** Linhas do DFC que compõem receitas (RECEITA, FATURAMENTO) ou despesas (DESPESA). */
-  getLinhasDetalhesDfc(tipo: 'receita' | 'despesa'): LinhaTabela[] {
-    if (tipo === 'receita') {
-      return this.dfcLinhas.filter((l) => l.tipo === 'RECEITA' || l.tipo === 'FATURAMENTO');
-    }
-    return this.dfcLinhas.filter((l) => l.tipo === 'DESPESA');
-  }
-
-  get possuiDados(): boolean {
-    return this.dfcLinhas.length > 0 && this.meses.length > 0;
-  }
-
-  private alinharValores(valores: Array<number | null> | undefined, tamanho: number): (number | null)[] {
-    const base = valores ? [...valores] : [];
-    while (base.length < tamanho) {
-      base.push(null);
-    }
-    if (base.length > tamanho) {
-      base.length = tamanho;
-    }
-    return base;
   }
 
   private definirPeriodoInicial(): { dataInicio: string; dataTermino: string } {
@@ -339,19 +198,6 @@ export class FluxoCaixaComponent implements OnInit {
     return `${ano}-${mes}-${dia}`;
   }
 
-  private somar(valores: (number | null)[]): number {
-    return valores.reduce((acc: number, valor) => acc + (valor ?? 0), 0);
-  }
-
-  private media(valores: (number | null)[]): number {
-    const existentes = valores.filter((valor) => typeof valor === 'number') as number[];
-    if (!existentes.length) {
-      return 0;
-    }
-    return this.somar(existentes) / existentes.length;
-  }
-
-  // ===== Date Range Picker =====
   toggleRangePicker(): void {
     this.mostrarRangePicker = !this.mostrarRangePicker;
     if (this.mostrarRangePicker) {
@@ -490,5 +336,3 @@ export class FluxoCaixaComponent implements OnInit {
     return `${y}-${m}-${d}T00:00:00`;
   }
 }
-
-

@@ -109,7 +109,8 @@ export class LoginComponent implements OnInit, OnDestroy {
       } else if (result.timeout) {
         this.errorMessage = 'Não foi possível conectar no momento. Tente novamente em alguns segundos.';
       } else {
-        this.errorMessage = 'Email ou senha incorretos. Tente novamente.';
+        this.errorMessage =
+          result.backendMessage || 'Email ou senha incorretos. Tente novamente.';
       }
       
     } catch (error) {

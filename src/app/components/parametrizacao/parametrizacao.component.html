@@ -1,0 +1,198 @@
+<div class="min-h-full bg-[#f1f4f8]">
+  <div class="max-w-[1800px] mx-auto px-4 sm:px-5 lg:px-6 py-5 sm:py-6 space-y-4">
+    <!-- Cabeçalho + métricas + navegação -->
+    <section
+      class="rounded-2xl border border-slate-200/70 bg-white shadow-[0_2px_16px_-4px_rgba(15,23,42,0.1),0_0_1px_rgba(15,23,42,0.06)] overflow-hidden"
+    >
+      <div class="px-4 sm:px-6 pt-5 pb-5 sm:pt-6 sm:pb-5">
+        <div class="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-5">
+          <div class="min-w-0 shrink">
+            <p
+              class="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-700/90 mb-2"
+            >
+              Configurações
+            </p>
+            <h1
+              class="text-base sm:text-lg font-semibold text-slate-900 tracking-tight leading-snug whitespace-nowrap"
+            >
+              Parametrização da empresa
+            </h1>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 w-full xl:max-w-4xl xl:shrink-0">
+            <div
+              class="group rounded-xl border border-slate-200/60 bg-gradient-to-br from-white via-white to-slate-50/90 px-4 py-3.5 shadow-sm hover:shadow-md hover:border-slate-300/70 transition-all duration-200"
+            >
+              <p class="text-[11px] font-medium uppercase tracking-wide text-slate-400">Contas</p>
+              <p class="mt-1.5 text-xl font-semibold tabular-nums text-slate-900 tracking-tight">
+                {{ contasBancariasTotalResumo === null ? '—' : contasBancariasTotalResumo }}
+              </p>
+            </div>
+            <div
+              class="group rounded-xl border border-slate-200/60 bg-gradient-to-br from-white via-white to-slate-50/90 px-4 py-3.5 shadow-sm hover:shadow-md hover:border-slate-300/70 transition-all duration-200"
+            >
+              <p class="text-[11px] font-medium uppercase tracking-wide text-slate-400">Plano</p>
+              <p class="mt-1.5 text-sm font-semibold text-slate-800 leading-snug">Gerencial</p>
+            </div>
+            <div
+              class="group rounded-xl border border-slate-200/60 bg-gradient-to-br from-white via-white to-slate-50/90 px-4 py-3.5 shadow-sm hover:shadow-md hover:border-slate-300/70 transition-all duration-200"
+            >
+              <p class="text-[11px] font-medium uppercase tracking-wide text-slate-400">Fornecedores</p>
+              <p class="mt-1.5 text-xl font-semibold tabular-nums text-slate-900 tracking-tight">
+                {{ fornecedoresTotalResumo === null ? '—' : fornecedoresTotalResumo }}
+              </p>
+            </div>
+            <div
+              class="group rounded-xl border border-slate-200/60 bg-gradient-to-br from-white via-white to-slate-50/90 px-4 py-3.5 shadow-sm hover:shadow-md hover:border-slate-300/70 transition-all duration-200"
+            >
+              <p class="text-[11px] font-medium uppercase tracking-wide text-slate-400">Clientes</p>
+              <p class="mt-1.5 text-xl font-semibold tabular-nums text-slate-900 tracking-tight">
+                {{ clientesTotalResumo === null ? '—' : clientesTotalResumo }}
+              </p>
+            </div>
+            <div
+              class="group rounded-xl border border-slate-200/60 bg-gradient-to-br from-white via-white to-slate-50/90 px-4 py-3.5 shadow-sm hover:shadow-md hover:border-slate-300/70 transition-all duration-200 col-span-2 sm:col-span-1"
+            >
+              <p class="text-[11px] font-medium uppercase tracking-wide text-slate-400">Equipe</p>
+              <p class="mt-1.5 text-xl font-semibold tabular-nums text-slate-900 tracking-tight">
+                {{ funcionariosTotalResumo === null ? '—' : funcionariosTotalResumo }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <nav
+          class="mt-5 sm:mt-6 flex flex-wrap gap-1 p-1 rounded-xl bg-slate-100/70 border border-slate-200/50 shadow-[inset_0_1px_2px_rgba(255,255,255,0.7)]"
+          aria-label="Seções de parametrização"
+        >
+          <button
+            type="button"
+            (click)="setTab('plano-contas')"
+            [ngClass]="
+              activeTab === 'plano-contas'
+                ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200'
+                : 'text-slate-600'
+            "
+            class="px-3.5 sm:px-4 py-2 rounded-lg text-sm font-medium hover:text-slate-900 hover:bg-white/60 transition-all duration-200"
+          >
+            Plano de contas
+          </button>
+          <button
+            type="button"
+            (click)="setTab('contas-bancarias')"
+            [ngClass]="
+              activeTab === 'contas-bancarias'
+                ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200'
+                : 'text-slate-600'
+            "
+            class="px-3.5 sm:px-4 py-2 rounded-lg text-sm font-medium hover:text-slate-900 hover:bg-white/60 transition-all duration-200"
+          >
+            Contas bancárias
+          </button>
+          <button
+            type="button"
+            (click)="setTab('fornecedores')"
+            [ngClass]="
+              activeTab === 'fornecedores'
+                ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200'
+                : 'text-slate-600'
+            "
+            class="px-3.5 sm:px-4 py-2 rounded-lg text-sm font-medium hover:text-slate-900 hover:bg-white/60 transition-all duration-200"
+          >
+            Fornecedores
+          </button>
+          <button
+            type="button"
+            (click)="setTab('clientes')"
+            [ngClass]="
+              activeTab === 'clientes'
+                ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200'
+                : 'text-slate-600'
+            "
+            class="px-3.5 sm:px-4 py-2 rounded-lg text-sm font-medium hover:text-slate-900 hover:bg-white/60 transition-all duration-200"
+          >
+            Clientes
+          </button>
+          <button
+            type="button"
+            (click)="setTab('funcionarios')"
+            [ngClass]="
+              activeTab === 'funcionarios'
+                ? 'bg-white text-slate-900 shadow-sm ring-1 ring-slate-200'
+                : 'text-slate-600'
+            "
+            class="px-3.5 sm:px-4 py-2 rounded-lg text-sm font-medium hover:text-slate-900 hover:bg-white/60 transition-all duration-200"
+          >
+            Funcionários
+          </button>
+        </nav>
+      </div>
+    </section>
+
+    <!-- Conteúdo da aba -->
+    <section
+      *ngIf="activeTab === 'plano-contas'"
+      class="rounded-2xl border border-slate-200/70 bg-white shadow-[0_2px_16px_-4px_rgba(15,23,42,0.08)] overflow-hidden"
+    >
+      <div class="px-4 sm:px-5 py-3.5 border-b border-slate-100 bg-slate-50/40">
+        <h2 class="text-sm sm:text-[0.95rem] font-semibold text-slate-900 tracking-tight">Plano de contas</h2>
+        <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Modelos gerenciais por empresa — cadastro interno Finnzia.</p>
+      </div>
+      <div class="px-4 py-4 sm:px-5 sm:pb-5">
+        <app-plano-contas-gerencial [embedded]="true" />
+      </div>
+    </section>
+
+    <section
+      *ngIf="activeTab === 'contas-bancarias'"
+      class="rounded-2xl border border-slate-200/70 bg-white shadow-[0_2px_16px_-4px_rgba(15,23,42,0.08)] overflow-hidden"
+    >
+      <div class="px-4 sm:px-5 py-3.5 border-b border-slate-100 bg-slate-50/40">
+        <h2 class="text-sm sm:text-[0.95rem] font-semibold text-slate-900 tracking-tight">Contas bancárias</h2>
+        <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Instituições e caixas vinculados às empresas do grupo.</p>
+      </div>
+      <div class="px-4 py-4 sm:px-5 sm:pb-5">
+        <app-conta-bancaria-cadastro [embedded]="true" (resumoTotal)="contasBancariasTotalResumo = $event" />
+      </div>
+    </section>
+
+    <section
+      *ngIf="activeTab === 'fornecedores'"
+      class="rounded-2xl border border-slate-200/70 bg-white shadow-[0_2px_16px_-4px_rgba(15,23,42,0.08)] overflow-hidden"
+    >
+      <div class="px-4 sm:px-5 py-3.5 border-b border-slate-100 bg-slate-50/40">
+        <h2 class="text-sm sm:text-[0.95rem] font-semibold text-slate-900 tracking-tight">Fornecedores</h2>
+        <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Cadastro corporativo com vínculo por empresa e situação ativa.</p>
+      </div>
+      <div class="px-4 py-4 sm:px-5 sm:pb-5">
+        <app-fornecedor-cadastro [embedded]="true" (resumoTotal)="fornecedoresTotalResumo = $event" />
+      </div>
+    </section>
+
+    <section
+      *ngIf="activeTab === 'clientes'"
+      class="rounded-2xl border border-slate-200/70 bg-white shadow-[0_2px_16px_-4px_rgba(15,23,42,0.08)] overflow-hidden"
+    >
+      <div class="px-4 sm:px-5 py-3.5 border-b border-slate-100 bg-slate-50/40">
+        <h2 class="text-sm sm:text-[0.95rem] font-semibold text-slate-900 tracking-tight">Clientes</h2>
+        <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Base de clientes com classificação, filtros e exportação.</p>
+      </div>
+      <div class="px-4 py-4 sm:px-5 sm:pb-5">
+        <app-cliente-cadastro [embedded]="true" (resumoTotal)="clientesTotalResumo = $event" />
+      </div>
+    </section>
+
+    <section
+      *ngIf="activeTab === 'funcionarios'"
+      class="rounded-2xl border border-slate-200/70 bg-white shadow-[0_2px_16px_-4px_rgba(15,23,42,0.08)] overflow-hidden"
+    >
+      <div class="px-4 sm:px-5 py-3.5 border-b border-slate-100 bg-slate-50/40">
+        <h2 class="text-sm sm:text-[0.95rem] font-semibold text-slate-900 tracking-tight">Funcionários</h2>
+        <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Colaboradores, cargos e alocação por empresa.</p>
+      </div>
+      <div class="px-4 py-4 sm:px-5 sm:pb-5">
+        <app-funcionario-cadastro [embedded]="true" (resumoTotal)="funcionariosTotalResumo = $event" />
+      </div>
+    </section>
+  </div>
+</div>

@@ -1,0 +1,433 @@
+<div [class.space-y-5]="embedded" [class.space-y-6]="!embedded">
+  <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <div *ngIf="!embedded">
+      <h1 class="text-2xl font-semibold text-slate-900 tracking-tight">Cadastro de clientes</h1>
+      <p class="text-sm text-slate-500 mt-1">
+        Clientes vinculados às empresas — dados Finnzia (sem integração externa).
+      </p>
+    </div>
+  </div>
+
+  <div class="rounded-xl border border-slate-200/70 bg-slate-50/50 p-4 sm:p-5 space-y-4">
+    <div class="flex flex-wrap items-end gap-3">
+      <div class="flex flex-col gap-1.5 flex-1 min-w-[200px]">
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Pesquisa</label>
+        <input
+          [(ngModel)]="filtroQ"
+          (keyup.enter)="aplicarFiltros()"
+          class="h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm w-full bg-white text-slate-900 placeholder:text-slate-400 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          placeholder="Nome, fantasia, CPF/CNPJ…"
+        />
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Empresa</label>
+        <select
+          [(ngModel)]="filtroEmpresaId"
+          class="h-10 min-w-[180px] px-3.5 rounded-lg border border-slate-200/90 text-sm bg-white text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+        >
+          <option [ngValue]="null">Todas</option>
+          <option *ngFor="let e of empresasDisponiveis" [ngValue]="e.idEmpresa">
+            {{ e.nomeEmpresa }}
+          </option>
+        </select>
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Classificação</label>
+        <select
+          [(ngModel)]="filtroClassificacao"
+          class="h-10 min-w-[120px] px-3.5 rounded-lg border border-slate-200/90 text-sm bg-white text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+        >
+          <option [ngValue]="null">Todas</option>
+          <option *ngFor="let s of [1, 2, 3, 4, 5]" [ngValue]="s">{{ s }} estrela(s)</option>
+        </select>
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Tipo</label>
+        <select
+          [(ngModel)]="filtroTipoPessoa"
+          class="h-10 min-w-[120px] px-3.5 rounded-lg border border-slate-200/90 text-sm bg-white text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+        >
+          <option value="">Todos</option>
+          <option value="PJ">PJ</option>
+          <option value="PF">PF</option>
+        </select>
+      </div>
+      <button
+        type="button"
+        (click)="aplicarFiltros()"
+        class="h-10 px-4 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 shadow-sm transition-colors"
+      >
+        Aplicar
+      </button>
+      <button
+        type="button"
+        (click)="limparFiltros()"
+        title="Limpar filtros"
+        class="h-10 w-10 rounded-lg border border-slate-200/80 bg-white text-slate-600 hover:bg-slate-50 shadow-sm flex items-center justify-center"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+      <button
+        type="button"
+        (click)="carregar()"
+        title="Atualizar"
+        class="h-10 w-10 rounded-lg border border-slate-200/80 bg-white text-slate-600 hover:bg-slate-50 shadow-sm flex items-center justify-center"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          />
+        </svg>
+      </button>
+    </div>
+    <div class="flex flex-wrap items-center gap-2 justify-end pt-3 border-t border-slate-200/60">
+      <label
+        class="inline-flex h-10 px-4 items-center rounded-lg border border-slate-200/80 bg-white cursor-pointer hover:bg-slate-50 text-sm font-medium text-slate-700 shadow-sm transition-colors"
+      >
+        <input type="file" accept=".json,application/json" class="hidden" (change)="onImportarArquivo($event)" />
+        Importar JSON
+      </label>
+      <button
+        type="button"
+        (click)="exportarCsv()"
+        [disabled]="linhas.length === 0"
+        class="h-10 px-4 rounded-lg border border-emerald-600/80 text-emerald-700 text-sm font-semibold hover:bg-emerald-50 disabled:opacity-50 shadow-sm"
+      >
+        Exportar CSV
+      </button>
+      <button
+        type="button"
+        (click)="abrirNovo()"
+        class="h-10 px-5 rounded-lg bg-emerald-600 text-white text-sm font-semibold shadow-sm shadow-emerald-600/25 hover:bg-emerald-500 transition-all active:scale-[0.98]"
+      >
+        Cadastrar novo
+      </button>
+    </div>
+  </div>
+
+  <p *ngIf="erro" class="text-sm text-red-700 bg-red-50/90 border border-red-200/60 rounded-xl px-4 py-3 shadow-sm">
+    {{ erro }}
+  </p>
+
+  <div class="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
+    <table class="min-w-full text-sm">
+      <thead class="bg-slate-50/95 border-b border-slate-200/80">
+        <tr class="text-left">
+          <th class="py-3.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 w-28">
+            Classif.
+          </th>
+          <th class="py-3.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 min-w-[200px]">
+            Nome
+          </th>
+          <th class="py-3.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 min-w-[140px]">
+            Nome fantasia
+          </th>
+          <th class="py-3.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 min-w-[180px]">
+            Contato
+          </th>
+          <th class="py-3.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 min-w-[160px]">
+            Empresas
+          </th>
+          <th class="py-3.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 text-right w-44">
+            Ações
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="carregando && linhas.length === 0">
+          <td colspan="6" class="py-10 text-center text-gray-500">Carregando…</td>
+        </tr>
+        <tr *ngFor="let c of linhas" class="border-b border-slate-100/90 hover:bg-slate-50/70 align-top transition-colors">
+          <td class="py-3 px-3">
+            <span *ngFor="let ativa of linhasEstrelas(c.classificacao); let i = index" class="text-amber-400 text-base">
+              {{ ativa ? '★' : '☆' }}
+            </span>
+          </td>
+          <td class="py-3 px-3">
+            <div class="font-medium text-slate-900">{{ c.razaoSocial }}</div>
+            <div class="text-xs text-gray-500 mt-0.5">
+              <ng-container *ngIf="c.cpfCnpj; else semDoc">Documento: {{ c.cpfCnpj }}</ng-container>
+              <ng-template #semDoc>Sem documento</ng-template>
+            </div>
+            <div class="text-[11px] text-gray-400 mt-0.5">{{ c.tipoPessoa === 'PF' ? 'PF' : 'PJ' }}</div>
+          </td>
+          <td class="py-3 px-3 text-slate-800">{{ c.nomeFantasia || '—' }}</td>
+          <td class="py-3 px-3 text-gray-600 text-xs leading-snug">{{ textoContato(c) }}</td>
+          <td class="py-3 px-3">
+            <div *ngIf="!c.empresas?.length" class="text-gray-400 italic text-xs">—</div>
+            <div *ngIf="c.empresas?.length" class="flex flex-wrap gap-1.5">
+              <div
+                *ngFor="let emp of c.empresas || []; let i = index"
+                class="flex items-center gap-1 rounded-full bg-slate-100 pl-1 pr-2 py-0.5 text-[11px] text-slate-800"
+                [title]="emp.nomeEmpresa"
+              >
+                <span
+                  class="inline-flex h-6 w-6 items-center justify-center rounded-full text-white text-[10px] font-semibold"
+                  [ngClass]="corAvatar(i)"
+                >
+                  {{ inicial(emp.nomeEmpresa) }}
+                </span>
+              </div>
+            </div>
+          </td>
+          <td class="py-3 px-3 text-right whitespace-nowrap">
+            <button
+              type="button"
+              (click)="excluir(c)"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200/80 bg-white text-red-600 hover:bg-red-50 hover:border-red-200 mr-1 shadow-sm transition-all"
+              title="Excluir"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
+              </svg>
+            </button>
+            <button
+              type="button"
+              (click)="abrirEditar(c)"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200/80 bg-white text-slate-600 hover:bg-slate-50 mr-1 shadow-sm transition-all"
+              title="Editar"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                />
+              </svg>
+            </button>
+            <button
+              type="button"
+              (click)="alternarBloqueio(c)"
+              class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200/80 bg-white hover:bg-slate-50 shadow-sm transition-all"
+              [title]="c.bloqueado ? 'Desbloquear' : 'Bloquear'"
+              [class.text-emerald-600]="!c.bloqueado"
+              [class.text-amber-700]="c.bloqueado"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
+              </svg>
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="!carregando && linhas.length === 0">
+          <td colspan="6" class="py-10 text-center text-gray-500">
+            Nenhum cliente encontrado. Ajuste os filtros ou cadastre um novo.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div
+    class="flex flex-col sm:flex-row flex-wrap items-center justify-between gap-3 text-xs text-slate-600 pt-2"
+    *ngIf="totalElements > 0"
+  >
+    <span>
+      {{ rangeExibicao().from }} a {{ rangeExibicao().to }} de {{ totalElements }}
+    </span>
+    <div class="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        (click)="irPrimeira()"
+        [disabled]="pageIndex <= 0"
+        class="px-2.5 py-1.5 rounded-lg border border-slate-200/80 bg-white font-medium shadow-sm disabled:opacity-40 hover:bg-slate-50"
+      >
+        Primeiro
+      </button>
+      <button
+        type="button"
+        (click)="irAnterior()"
+        [disabled]="pageIndex <= 0"
+        class="px-2.5 py-1.5 rounded-lg border border-slate-200/80 bg-white font-medium shadow-sm disabled:opacity-40 hover:bg-slate-50"
+      >
+        Anterior
+      </button>
+      <span class="px-2"
+        >Página {{ totalPages === 0 ? 0 : pageIndex + 1 }} de {{ totalPages || 1 }}</span
+      >
+      <button
+        type="button"
+        (click)="irProxima()"
+        [disabled]="pageIndex >= totalPages - 1"
+        class="px-2.5 py-1.5 rounded-lg border border-slate-200/80 bg-white font-medium shadow-sm disabled:opacity-40 hover:bg-slate-50"
+      >
+        Próxima
+      </button>
+      <button
+        type="button"
+        (click)="irUltima()"
+        [disabled]="pageIndex >= totalPages - 1"
+        class="px-2.5 py-1.5 rounded-lg border border-slate-200/80 bg-white font-medium shadow-sm disabled:opacity-40 hover:bg-slate-50"
+      >
+        Último
+      </button>
+    </div>
+  </div>
+</div>
+
+<div
+  *ngIf="modalAberto"
+  class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-[6px]"
+  (click)="fecharModal()"
+>
+  <div
+    class="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(15,23,42,0.25)] border border-slate-200/80 max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 space-y-5"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-semibold text-slate-900 tracking-tight">
+          {{ editandoId != null ? 'Editar cliente' : 'Novo cliente' }}
+        </h2>
+        <p class="text-sm text-slate-500 mt-1">Dados cadastrais, contato financeiro e empresas.</p>
+      </div>
+      <button
+        type="button"
+        class="shrink-0 h-9 w-9 rounded-lg border border-slate-200/80 text-slate-400 hover:text-slate-700 hover:bg-slate-50"
+        (click)="fecharModal()"
+        aria-label="Fechar"
+      >
+        ✕
+      </button>
+    </div>
+    <div class="space-y-4">
+      <div>
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Razão social / nome *</label>
+        <input
+          [(ngModel)]="formRazaoSocial"
+          class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+        />
+      </div>
+      <div>
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Nome fantasia</label>
+        <input
+          [(ngModel)]="formNomeFantasia"
+          class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+        />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">CPF/CNPJ</label>
+          <input
+            [(ngModel)]="formCpfCnpj"
+            class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          />
+        </div>
+        <div>
+          <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Tipo</label>
+          <select
+            [(ngModel)]="formTipoPessoa"
+            class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm bg-white text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          >
+            <option value="PJ">PJ</option>
+            <option value="PF">PF</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Classificação (1–5)</label>
+        <select
+          [(ngModel)]="formClassificacao"
+          class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm bg-white text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+        >
+          <option *ngFor="let s of [1, 2, 3, 4, 5]" [ngValue]="s">{{ s }}</option>
+        </select>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">E-mail (financeiro)</label>
+          <input
+            [(ngModel)]="formEmail"
+            type="email"
+            class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          />
+        </div>
+        <div>
+          <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Celular</label>
+          <input
+            [(ngModel)]="formCelular"
+            class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          />
+        </div>
+      </div>
+      <div>
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Endereço</label>
+        <input
+          [(ngModel)]="formEndereco"
+          class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+        />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">CEP</label>
+          <input [(ngModel)]="formCep" class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" />
+        </div>
+        <div>
+          <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">CPF (contato)</label>
+          <input [(ngModel)]="formCpf" class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" />
+        </div>
+      </div>
+      <div>
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Responsável</label>
+        <input
+          [(ngModel)]="formResponsavel"
+          class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+        />
+      </div>
+      <div class="flex items-center gap-2">
+        <input type="checkbox" id="bloq" [(ngModel)]="formBloqueado" />
+        <label for="bloq" class="text-sm text-slate-700">Cliente bloqueado</label>
+      </div>
+      <div>
+        <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Empresas vinculadas</p>
+        <div class="max-h-40 overflow-y-auto rounded-xl border border-slate-200/80 divide-y divide-slate-100 bg-slate-50/30">
+          <label
+            *ngFor="let e of empresasDisponiveis"
+            class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm"
+          >
+            <input type="checkbox" *ngIf="e.idEmpresa" [(ngModel)]="formEmpresaIds[e.idEmpresa!]" />
+            <span>{{ e.nomeEmpresa }}</span>
+          </label>
+        </div>
+        <p *ngIf="!isAdmin" class="text-xs text-amber-700 mt-1">Selecione ao menos uma empresa.</p>
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 pt-1">
+      <button
+        type="button"
+        (click)="fecharModal()"
+        class="h-10 px-4 rounded-lg border border-slate-200/80 text-sm font-medium text-slate-700 hover:bg-slate-50"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        (click)="salvar()"
+        class="h-10 px-5 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 shadow-sm"
+      >
+        Salvar
+      </button>
+    </div>
+  </div>
+</div>

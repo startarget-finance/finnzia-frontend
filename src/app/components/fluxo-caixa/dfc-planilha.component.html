@@ -1,0 +1,422 @@
+<div class="space-y-3">
+  <div *ngIf="!temEmpresa" class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+    Selecione uma empresa no topo da página para carregar o DFC.
+  </div>
+
+  <div *ngIf="carregandoExterno" class="flex justify-center py-12">
+    <svg class="h-6 w-6 animate-spin text-purple-600" viewBox="0 0 24 24" fill="none">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+    </svg>
+  </div>
+
+  <ng-container *ngIf="!carregandoExterno && temEmpresa">
+    <!-- Toolbar (referência: DFC + Bom Controle) -->
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-4">
+      <p *ngIf="fonteBomControle" class="min-w-0 flex-1 text-xs text-gray-500">
+        Dados do período via Bom Controle — ajuste o intervalo no topo da página.
+      </p>
+      <div class="flex flex-wrap items-center justify-end gap-2" [class.w-full]="!fonteBomControle" [class.sm:w-auto]="fonteBomControle">
+        <button
+          type="button"
+          (click)="usarDfcPadrao.emit()"
+          class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-violet-200 bg-white px-3 text-xs font-semibold text-violet-800 shadow-sm transition hover:bg-violet-50"
+          title="Volta ao mês corrente e recarrega o demonstrativo"
+        >
+          <svg class="h-4 w-4 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Usar DFC Padrão
+        </button>
+        <button
+          type="button"
+          (click)="importarDoBomControle.emit()"
+          class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50"
+          title="Atualiza os dados do Bom Controle (ignora cache desta consulta)"
+        >
+          <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          Importar CSV (Bom Controle)
+        </button>
+        <button
+          type="button"
+          (click)="showMonthFilter = !showMonthFilter"
+          class="h-9 rounded-lg border px-3 text-xs font-medium transition"
+          [class.border-violet-400]="showMonthFilter || filtroMesesDestacado"
+          [class.bg-violet-50]="showMonthFilter || filtroMesesDestacado"
+          [class.text-violet-800]="showMonthFilter || filtroMesesDestacado"
+          [class.border-gray-200]="!showMonthFilter && !filtroMesesDestacado"
+          [class.text-gray-600]="!showMonthFilter && !filtroMesesDestacado"
+        >
+          Filtrar meses
+          <ng-container *ngIf="filtroMesesDestacado"> ({{ colunasVisiveis.length }})</ng-container>
+        </button>
+        <button
+          type="button"
+          (click)="!planilhaSomenteLeitura && (showAddMonth = !showAddMonth)"
+          [disabled]="planilhaSomenteLeitura"
+          [title]="planilhaSomenteLeitura ? 'Meses definidos pelo período no Bom Controle' : 'Adicionar coluna de mês'"
+          class="inline-flex h-9 items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <span class="text-base leading-none">+</span>
+          Mês
+        </button>
+        <button
+          type="button"
+          (click)="onClickSalvar()"
+          [disabled]="planilhaSomenteLeitura || !isAdmin"
+          [title]="planilhaSomenteLeitura ? 'Salvar não se aplica — dados do Bom Controle' : 'Salvar planilha'"
+          class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-violet-600 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+          </svg>
+          Salvar
+        </button>
+      </div>
+    </div>
+
+    <!-- Month filter (igual ao mock: barra lilás + chips roxos + ações à direita) -->
+    <div
+      *ngIf="showMonthFilter && months.length > 0"
+      class="rounded-xl border border-violet-200 bg-violet-50/70 px-4 py-3"
+    >
+      <div class="mb-2 flex items-center justify-between gap-4">
+        <span class="text-xs font-semibold text-violet-800">Filtrar meses exibidos:</span>
+        <div class="flex items-center gap-3">
+          <button type="button" (click)="filtroSelecionarTodos()" class="text-[11px] font-semibold text-violet-700 hover:underline">Todos</button>
+          <button type="button" (click)="filtroSelecionarNenhum()" class="text-[11px] font-semibold text-gray-500 hover:underline">Nenhum</button>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <button
+          *ngFor="let m of months"
+          type="button"
+          (click)="toggleFiltroMes(m)"
+          class="rounded-md border px-2.5 py-1 text-[11px] font-semibold transition"
+          [class.bg-violet-600]="chipMesSelecionado(m)"
+          [class.text-white]="chipMesSelecionado(m)"
+          [class.border-violet-600]="chipMesSelecionado(m)"
+          [class.shadow-sm]="chipMesSelecionado(m)"
+          [class.bg-white]="!chipMesSelecionado(m)"
+          [class.text-violet-700]="!chipMesSelecionado(m)"
+          [class.border-violet-200]="!chipMesSelecionado(m)"
+          [class.hover:bg-violet-50]="!chipMesSelecionado(m)"
+        >
+          {{ m }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Add month (igual ao mock: faixa azul com selects + Adicionar/Cancelar) -->
+    <div
+      *ngIf="!planilhaSomenteLeitura && showAddMonth"
+      class="flex flex-wrap items-center gap-2 rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-3"
+    >
+      <span class="text-xs font-semibold text-blue-800">Novo mês:</span>
+      <select [(ngModel)]="newMonth.month" class="h-9 rounded-md border border-gray-200 bg-white px-2 text-sm shadow-sm">
+        <option *ngFor="let mm of monthsPt" [value]="mm">{{ mm }}</option>
+      </select>
+      <select [(ngModel)]="newMonth.year" class="h-9 rounded-md border border-gray-200 bg-white px-2 text-sm shadow-sm">
+        <option *ngFor="let y of ['2024','2025','2026','2027','2028','2029','2030']" [value]="y">{{ y }}</option>
+      </select>
+      <button
+        type="button"
+        (click)="handleAddMonth()"
+        class="h-9 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+      >
+        Adicionar
+      </button>
+      <button
+        type="button"
+        (click)="showAddMonth = false"
+        class="h-9 rounded-md border border-gray-200 bg-white px-4 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+      >
+        Cancelar
+      </button>
+    </div>
+
+    <!-- Table (igual ao mock) -->
+    <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+      <table class="min-w-full border-collapse text-[12px]">
+        <thead>
+          <tr class="sticky top-0 z-20 border-b border-violet-100 bg-violet-50/70">
+            <th
+              class="sticky left-0 z-10 min-w-[320px] w-[420px] border-r border-violet-100 bg-violet-50/70 px-3 py-2.5 text-left text-[11px] font-bold uppercase tracking-wide text-gray-600"
+            >
+              CATEGORIA
+            </th>
+            <th
+              *ngFor="let m of mesesParaCabecalho"
+              class="group min-w-[120px] whitespace-nowrap border-r border-violet-100 bg-violet-50/70 px-3 py-2.5 text-center text-[11px] font-bold uppercase tracking-wide text-gray-600"
+            >
+              <span class="flex items-center justify-center gap-1">
+                {{ m }}
+                <button
+                  *ngIf="podeEditarPlanilha"
+                  type="button"
+                  (click)="removeMonth(m)"
+                  class="ml-1 text-sm leading-none text-red-400 opacity-0 transition group-hover:opacity-100 hover:text-red-600"
+                  title="Remover mês"
+                >
+                  ×
+                </button>
+              </span>
+            </th>
+            <th *ngIf="mesesParaCabecalho.length === 0" class="px-6 py-2.5 text-center font-normal italic text-gray-400">
+              Nenhum mês na coluna — use “+ Mês” ou ajuste o filtro
+            </th>
+          </tr>
+        </thead>
+        <tbody cdkDropList (cdkDropListDropped)="onDragEnd($event)">
+          <ng-container *ngFor="let row of visibleRows; let i = index; trackBy: trackByRowId">
+          <tr
+            cdkDrag
+            [cdkDragDisabled]="!podeEditarPlanilha"
+            class="border-t border-gray-100 transition-colors hover:bg-gray-50/50"
+            [class.bg-yellow-50]="row.type === 'result'"
+            [class.bg-gray-50]="row.type === 'title'"
+          >
+            <td
+              class="sticky left-0 z-10 border-r border-gray-200 px-2 py-1.5 group"
+              [class.bg-yellow-50]="row.type === 'result'"
+              [class.bg-gray-50]="row.type === 'title'"
+              [class.bg-white]="row.type !== 'title' && row.type !== 'result'"
+            >
+              <div class="flex items-center gap-1" [class.pl-6]="row.type === 'subitem'">
+                <!-- Grip (mock: pontinhos à esquerda) -->
+                <span class="mr-1 flex-shrink-0 text-gray-300" aria-hidden="true">
+                  <svg class="h-4 w-4" viewBox="0 0 16 16" fill="currentColor">
+                    <circle cx="5" cy="4" r="1"></circle>
+                    <circle cx="11" cy="4" r="1"></circle>
+                    <circle cx="5" cy="8" r="1"></circle>
+                    <circle cx="11" cy="8" r="1"></circle>
+                    <circle cx="5" cy="12" r="1"></circle>
+                    <circle cx="11" cy="12" r="1"></circle>
+                  </svg>
+                </span>
+                <button
+                  *ngIf="row.type === 'title'"
+                  type="button"
+                  (click)="toggleCollapse(row.id)"
+                  class="mr-0.5 flex-shrink-0 text-gray-400 hover:text-gray-700"
+                >
+                  <svg *ngIf="collapsedTitles.has(row.id)" class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                  <svg *ngIf="!collapsedTitles.has(row.id)" class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <button
+                  *ngIf="row.type === 'item' && itemsWithSubitems.has(row.id)"
+                  type="button"
+                  (click)="toggleCollapseItem(row.id)"
+                  class="mr-0.5 flex-shrink-0 text-gray-400 hover:text-gray-700"
+                >
+                  <svg *ngIf="collapsedItems.has(row.id)" class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                  <svg *ngIf="!collapsedItems.has(row.id)" class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                <button
+                  *ngIf="podeEditarPlanilha && row.type === 'result'"
+                  type="button"
+                  (click)="resultConfigId = resultConfigId === row.id ? null : row.id"
+                  class="rounded p-0.5 hover:bg-yellow-100"
+                  [class.text-yellow-700]="resultConfigId === row.id"
+                  [class.text-gray-400]="resultConfigId !== row.id"
+                  title="Selecionar títulos do resultado"
+                >
+                  <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
+
+                <ng-container *ngIf="podeEditarPlanilha && editingLabel === row.id; else labelView">
+                  <input
+                    class="min-w-0 flex-1 rounded border border-purple-300 bg-white px-1 py-0.5 text-xs outline-none"
+                    [value]="origRow(row.id)?.label"
+                    (input)="updateLabel(row.id, $any($event.target).value)"
+                    (blur)="editingLabel = null"
+                    (keydown.enter)="editingLabel = null"
+                  />
+                </ng-container>
+                <ng-template #labelView>
+                  <span
+                    class="flex-1 truncate"
+                    [class.font-bold]="row.type === 'result' || row.type === 'title' || row.type === 'item'"
+                    [class.text-yellow-800]="row.type === 'result'"
+                    [ngClass]="{
+                      'text-[11px]': row.type === 'title',
+                      'text-[12px]': row.type !== 'title',
+                      'hover:text-purple-600': podeEditarPlanilha
+                    }"
+                    [class.uppercase]="row.type === 'title'"
+                    [class.text-gray-800]="row.type === 'title'"
+                    [class.text-gray-700]="row.type === 'item'"
+                    [class.cursor-pointer]="podeEditarPlanilha"
+                    (click)="podeEditarPlanilha && (editingLabel = row.id)"
+                    [title]="row.label"
+                  >
+                    {{ row.label }}
+                  </span>
+                </ng-template>
+
+                <div *ngIf="podeEditarPlanilha" class="ml-1 flex flex-shrink-0 items-center gap-1 opacity-0 transition group-hover:opacity-100">
+                  <ng-container *ngIf="row.type !== 'result'">
+                    <button
+                      type="button"
+                      (click)="updateSign(row.id)"
+                      class="inline-flex h-6 w-6 items-center justify-center rounded-md border text-[12px] font-bold shadow-sm"
+                      [class.bg-red-50]="origRow(row.id)?.sign === '-'"
+                      [class.text-red-600]="origRow(row.id)?.sign === '-'"
+                      [class.border-red-200]="origRow(row.id)?.sign === '-'"
+                      [class.bg-emerald-50]="origRow(row.id)?.sign !== '-'"
+                      [class.text-emerald-600]="origRow(row.id)?.sign !== '-'"
+                      [class.border-emerald-200]="origRow(row.id)?.sign !== '-'"
+                      title="Sinal"
+                    >
+                      {{ origRow(row.id)?.sign === '-' ? '−' : '+' }}
+                    </button>
+                    <select
+                      [ngModel]="origRow(row.id)?.type"
+                      (ngModelChange)="updateType(row.id, $event)"
+                      class="h-6 min-w-[78px] rounded-md border border-gray-200 bg-white px-2 text-[11px] font-medium text-gray-700 shadow-sm"
+                    >
+                      <option value="title">Título</option>
+                      <option value="item">Item</option>
+                      <option value="subitem">Subitem</option>
+                    </select>
+                  </ng-container>
+                  <button type="button" (click)="removeRow(row.id)" class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-red-200 bg-red-50 text-red-600 shadow-sm hover:bg-red-100" title="Remover linha">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Result config -->
+              <div
+                *ngIf="podeEditarPlanilha && row.type === 'result' && resultConfigId === row.id"
+                class="mt-1 ml-1 w-[340px] max-w-[calc(100vw-80px)] rounded-lg border border-yellow-200 bg-yellow-50 p-2 shadow-sm"
+              >
+                <p class="mb-1.5 text-[10px] font-semibold text-yellow-800">Títulos no cálculo:</p>
+                <p *ngIf="titulosRows().length === 0" class="text-[10px] text-gray-400">Nenhum título encontrado</p>
+                <div *ngIf="titulosRows().length > 0" class="max-h-48 space-y-1 overflow-y-auto pr-1">
+                  <label *ngFor="let t of titulosRows()" class="flex cursor-pointer items-center gap-1.5 rounded px-1 py-0.5 hover:bg-yellow-100/70">
+                    <input
+                      type="checkbox"
+                      [checked]="(origRow(row.id)?.titleIds || []).includes(t.id)"
+                      (change)="toggleResultTitle(row.id, t.id)"
+                      class="h-3 w-3 accent-yellow-600"
+                    />
+                    <span
+                      class="text-[10px] leading-4"
+                      [class.font-medium]="(origRow(row.id)?.titleIds || []).includes(t.id)"
+                      [class.text-yellow-800]="(origRow(row.id)?.titleIds || []).includes(t.id)"
+                      [class.text-gray-700]="!(origRow(row.id)?.titleIds || []).includes(t.id)"
+                    >
+                      {{ t.label }}
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </td>
+
+            <td
+              *ngFor="let m of mesesParaCabecalho"
+              class="border-r border-gray-100 px-3 py-1.5 text-right tabular-nums"
+              [class.bg-yellow-50]="row.type === 'result'"
+              [class.bg-gray-50]="row.type === 'title'"
+            >
+              <ng-container *ngIf="origRow(row.id) as orig">
+                <ng-container *ngIf="editingCell?.rowId === row.id && editingCell?.month === m && podeEditarPlanilha && !isAutoCalc(row, orig); else cellShow">
+                  <input
+                    type="number"
+                    class="w-full rounded border border-purple-300 bg-white px-1.5 py-0.5 text-right text-xs outline-none"
+                    [value]="orig.values[m] ?? ''"
+                    (blur)="updateCell(row.id, m, $any($event.target).value); editingCell = null"
+                    (keydown.enter)="updateCell(row.id, m, $any($event.target).value); editingCell = null"
+                    (keydown.escape)="editingCell = null"
+                  />
+                </ng-container>
+                <ng-template #cellShow>
+                  <div
+                    class="flex items-center justify-end gap-2 rounded px-0 py-0.5 transition"
+                    [class.cursor-pointer]="!isAutoCalc(row, orig) && podeEditarPlanilha"
+                    [ngClass]="{ 'hover:bg-purple-50': !isAutoCalc(row, orig) && podeEditarPlanilha }"
+                    [class.font-bold]="row.type === 'result' || row.type === 'title' || row.type === 'item'"
+                    [class.text-red-600]="
+                      (row._val[m] != null && orig.sign === '-' && row.type !== 'result') ||
+                      (row.type === 'result' && row._val[m] != null && row._val[m] < 0)
+                    "
+                    [class.text-gray-800]="row._val[m] != null && !(orig.sign === '-' && row.type !== 'result')"
+                    [class.text-yellow-800]="row.type === 'result' && row._val[m] != null && row._val[m] >= 0"
+                    [class.text-gray-200]="row._val[m] == null"
+                    (click)="!isAutoCalc(row, orig) && podeEditarPlanilha && (editingCell = { rowId: row.id, month: m })"
+                  >
+                    <span
+                      class="whitespace-nowrap text-[10px] font-normal text-gray-600"
+                      [class.text-yellow-700]="row.type === 'result'"
+                      [title]="row.type === 'subitem' ? 'Percentual sobre o item pai' : (row.type === 'item' ? 'Percentual sobre o título pai' : 'Percentual sobre a base do DFC')"
+                    >
+                      {{ formatPctExibicao(row, m) }}
+                    </span>
+                    <span>{{ formatValorExibicao(row, orig, m) }}</span>
+                  </div>
+                </ng-template>
+              </ng-container>
+            </td>
+          </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Add rows (sempre visíveis; desabilitados com dados Bom Controle) -->
+    <div class="flex flex-wrap gap-2 pt-1">
+      <button
+        type="button"
+        (click)="!planilhaSomenteLeitura && addRow('title')"
+        [disabled]="planilhaSomenteLeitura"
+        class="inline-flex h-9 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <span class="text-lg leading-none text-violet-600">+</span>
+        Título
+      </button>
+      <button
+        type="button"
+        (click)="!planilhaSomenteLeitura && addRow('item')"
+        [disabled]="planilhaSomenteLeitura"
+        class="inline-flex h-9 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <span class="text-lg leading-none text-gray-500">+</span>
+        Item
+      </button>
+      <button
+        type="button"
+        (click)="!planilhaSomenteLeitura && addRow('subitem')"
+        [disabled]="planilhaSomenteLeitura"
+        class="inline-flex h-9 items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <span class="text-lg leading-none text-gray-500">+</span>
+        Subitem
+      </button>
+      <button
+        type="button"
+        (click)="!planilhaSomenteLeitura && addRow('result')"
+        [disabled]="planilhaSomenteLeitura"
+        class="inline-flex h-9 items-center gap-2 rounded-lg border border-yellow-300 bg-yellow-50 px-3 text-sm font-semibold text-yellow-800 shadow-sm hover:bg-yellow-100 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <span class="text-lg leading-none text-yellow-700">+</span>
+        Resultado
+      </button>
+    </div>
+  </ng-container>
+</div>

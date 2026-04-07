@@ -14,6 +14,7 @@
       <a *ngIf="!isSidebarCollapsed" routerLink="/dashboard" class="flex items-center hover:opacity-80 transition-opacity duration-200">
         <img src="assets/images/finnzialogo.png" alt="Finnzia" class="h-9 w-auto">
       </a>
+
       <button (click)="toggleSidebar()" 
               class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-all duration-200"
               [class.ml-auto]="!isSidebarCollapsed"
@@ -100,6 +101,24 @@
         <span *ngIf="!isSidebarCollapsed">DFC</span>
       </a>
 
+      <!-- Parametrização -->
+      <a *ngIf="canAccessParametrizacao()" routerLink="/parametrizacao"
+         routerLinkActive #rlaParam="routerLinkActive"
+         [class.bg-blue-600]="rlaParam.isActive"
+         [class.text-white]="rlaParam.isActive"
+         [class.font-semibold]="rlaParam.isActive"
+         [class.text-slate-400]="!rlaParam.isActive"
+         class="flex items-center gap-3 py-2.5 rounded-lg text-[13px] font-medium hover:bg-slate-800 hover:text-white transition-all duration-150"
+         [class.px-3]="!isSidebarCollapsed"
+         [class.px-0]="isSidebarCollapsed"
+         [class.justify-center]="isSidebarCollapsed"
+         [title]="isSidebarCollapsed ? 'Parametrização' : ''">
+        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3 7h18M6 3h12a1 1 0 011 1v4H5V4a1 1 0 011-1zm0 6h12a1 1 0 011 1v10a1 1 0 01-1 1H6a1 1 0 01-1-1V10a1 1 0 011-1zm3 4h6m-6 4h4"></path>
+        </svg>
+        <span *ngIf="!isSidebarCollapsed">Parametrização</span>
+      </a>
+
       <!-- Contratos -->
       <a *ngIf="canAccessContratos()" routerLink="/contratos" 
          routerLinkActive #rlaCon="routerLinkActive"
@@ -116,6 +135,24 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
         </svg>
         <span *ngIf="!isSidebarCollapsed">Contratos</span>
+      </a>
+
+      <!-- Frente de caixa comercial -->
+      <a *ngIf="canAccessFrenteCaixaComercial()" routerLink="/frente-caixa-comercial"
+         routerLinkActive #rlaFc="routerLinkActive"
+         [class.bg-blue-600]="rlaFc.isActive"
+         [class.text-white]="rlaFc.isActive"
+         [class.font-semibold]="rlaFc.isActive"
+         [class.text-slate-400]="!rlaFc.isActive"
+         class="flex items-center gap-3 py-2.5 rounded-lg text-[13px] font-medium hover:bg-slate-800 hover:text-white transition-all duration-150"
+         [class.px-3]="!isSidebarCollapsed"
+         [class.px-0]="isSidebarCollapsed"
+         [class.justify-center]="isSidebarCollapsed"
+         [title]="isSidebarCollapsed ? 'Frente comercial' : ''">
+        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v2a2 2 0 002 2z"></path>
+        </svg>
+        <span *ngIf="!isSidebarCollapsed">Frente comercial</span>
       </a>
 
       <!-- Chat IA -->
@@ -181,12 +218,26 @@
           <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
           DFC
         </a>
+        <a *ngIf="canAccessParametrizacao()" routerLink="/parametrizacao" (click)="closeMobileMenu()"
+           routerLinkActive #rlaParamM="routerLinkActive"
+           [class.bg-blue-600]="rlaParamM.isActive" [class.text-white]="rlaParamM.isActive" [class.font-semibold]="rlaParamM.isActive" [class.text-slate-400]="!rlaParamM.isActive"
+           class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium hover:bg-slate-800 hover:text-white transition-all duration-150">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3 7h18M6 3h12a1 1 0 011 1v4H5V4a1 1 0 011-1zm0 6h12a1 1 0 011 1v10a1 1 0 01-1 1H6a1 1 0 01-1-1V10a1 1 0 011-1zm3 4h6m-6 4h4"></path></svg>
+          Parametrização
+        </a>
         <a *ngIf="canAccessContratos()" routerLink="/contratos" (click)="closeMobileMenu()"
            routerLinkActive #rlaConM="routerLinkActive"
            [class.bg-blue-600]="rlaConM.isActive" [class.text-white]="rlaConM.isActive" [class.font-semibold]="rlaConM.isActive" [class.text-slate-400]="!rlaConM.isActive"
            class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium hover:bg-slate-800 hover:text-white transition-all duration-150">
           <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
           Contratos
+        </a>
+        <a *ngIf="canAccessFrenteCaixaComercial()" routerLink="/frente-caixa-comercial" (click)="closeMobileMenu()"
+           routerLinkActive #rlaFcM="routerLinkActive"
+           [class.bg-blue-600]="rlaFcM.isActive" [class.text-white]="rlaFcM.isActive" [class.font-semibold]="rlaFcM.isActive" [class.text-slate-400]="!rlaFcM.isActive"
+           class="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium hover:bg-slate-800 hover:text-white transition-all duration-150">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v2a2 2 0 002 2z"></path></svg>
+          Frente comercial
         </a>
         <a *ngIf="canAccessChat()" routerLink="/chat" (click)="closeMobileMenu()"
            routerLinkActive #rlaChatM="routerLinkActive"

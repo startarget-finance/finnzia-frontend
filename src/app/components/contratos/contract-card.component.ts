@@ -12,19 +12,25 @@ import { ContratoDTO } from '../../services/contrato.service';
       (click)="open.emit(contrato)"
     >
       <div class="min-w-0">
-        <p class="text-sm font-semibold text-slate-900 truncate">
-          {{ contrato.cliente.razaoSocial || contrato.cliente.nomeFantasia || 'Sem cliente' }}
-        </p>
+        <div class="flex items-center gap-2">
+          <p class="text-sm font-semibold text-slate-900 truncate flex-1">
+            {{ contrato.cliente.razaoSocial || contrato.cliente.nomeFantasia || 'Sem cliente' }}
+          </p>
+          <span *ngIf="agrupadoCount && agrupadoCount > 1"
+            class="shrink-0 px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-semibold">
+            {{ agrupadoCount }}
+          </span>
+        </div>
         <p class="text-xs text-gray-500 mt-1">
-          {{ formatCurrency(contrato.valorContrato || 0) }}
+          {{ formatCurrency(valorExibicao) }}
         </p>
       </div>
       <div class="flex items-center justify-between gap-2">
         <span class="text-xs text-gray-500 truncate">
-          {{ formatDate(getNextBillingDate(contrato)) }}
+          {{ formatDate(proximaCobrancaExibicao) }}
         </span>
-        <span [class]="getFinancialBadgeClass(contrato.financialStatus)" class="px-2 py-0.5 rounded-full text-[11px] font-medium">
-          {{ getFinancialLabel(contrato.financialStatus) }}
+        <span [class]="getFinancialBadgeClass(financeiroExibicao)" class="px-2 py-0.5 rounded-full text-[11px] font-medium">
+          {{ getFinancialLabel(financeiroExibicao) }}
         </span>
       </div>
     </article>
@@ -32,7 +38,31 @@ import { ContratoDTO } from '../../services/contrato.service';
 })
 export class ContractCardComponent {
   @Input({ required: true }) contrato!: ContratoDTO;
+  /** Quantidade de cobranças/contratos agrupados no mesmo cliente (só etiqueta). */
+  @Input() agrupadoCount?: number;
+  /** Valor a exibir (ex.: soma quando agrupado). */
+  @Input() valorResumo?: number;
+  @Input() financialResumo?: ContratoDTO['financialStatus'];
+  @Input() proximaCobrancaResumo?: string;
   @Output() open = new EventEmitter<ContratoDTO>();
+
+  get valorExibicao(): number {
+    if (this.valorResumo != null && Number.isFinite(this.valorResumo)) {
+      return this.valorResumo;
+    }
+    return Number(this.contrato.valorRecorrencia || this.contrato.valorContrato || 0);
+  }
+
+  get financeiroExibicao(): ContratoDTO['financialStatus'] | undefined {
+    return this.financialResumo ?? this.contrato.financialStatus;
+  }
+
+  get proximaCobrancaExibicao(): string | undefined {
+    if (this.proximaCobrancaResumo) {
+      return this.proximaCobrancaResumo;
+    }
+    return this.getNextBillingDate(this.contrato);
+  }
 
   formatCurrency(value: number): string {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -70,4 +100,3 @@ export class ContractCardComponent {
     }
   }
 }
-

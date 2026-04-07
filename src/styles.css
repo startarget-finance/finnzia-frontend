@@ -9,6 +9,17 @@
     -webkit-text-size-adjust: 100%; /* evita zoom/ajuste automático no iOS/Safari */
     text-size-adjust: 100%;
   }
+  /* Layout mais compacto em desktop/widescreen */
+  @media (min-width: 1280px) {
+    html, :root {
+      font-size: 15px !important;
+    }
+  }
+  @media (min-width: 1920px) {
+    html, :root {
+      font-size: 14px !important;
+    }
+  }
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;

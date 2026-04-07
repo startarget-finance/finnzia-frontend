@@ -2,6 +2,15 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ContratoDTO } from '../../services/contrato.service';
 import { ContractCardComponent } from './contract-card.component';
+import {
+  ContratoGrupoCliente,
+  groupContratosByClienteId,
+  grupoContratoPrincipal,
+  grupoFinancialWorst,
+  grupoProximaCobranca,
+  grupoValorMensalTotal,
+  grupoWorkflowAtencao
+} from './contratos-group.utils';
 
 @Component({
   selector: 'app-workflow-board',
@@ -14,16 +23,20 @@ import { ContractCardComponent } from './contract-card.component';
           <header class="flex items-center justify-between mb-3">
             <h3 class="text-sm font-semibold text-slate-900">{{ col.label }}</h3>
             <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
-              {{ getContracts(col.value).length }}
+              {{ gruposNaColuna(col.value).length }}
             </span>
           </header>
           <div class="space-y-2 min-h-[120px]">
             <app-contract-card
-              *ngFor="let contrato of getContracts(col.value)"
-              [contrato]="contrato"
-              (open)="open.emit($event)"
+              *ngFor="let g of gruposNaColuna(col.value)"
+              [contrato]="grupoContratoPrincipal(g)"
+              [agrupadoCount]="g.contratos.length"
+              [valorResumo]="grupoValorMensalTotal(g)"
+              [financialResumo]="grupoFinancialWorst(g)"
+              [proximaCobrancaResumo]="grupoProximaCobranca(g) || undefined"
+              (open)="open.emit(grupoContratoPrincipal(g))"
             />
-            <p *ngIf="getContracts(col.value).length === 0" class="text-xs text-gray-400 py-4 text-center">
+            <p *ngIf="gruposNaColuna(col.value).length === 0" class="text-xs text-gray-400 py-4 text-center">
               Sem contratos nesta etapa
             </p>
           </div>
@@ -43,8 +56,15 @@ export class WorkflowBoardComponent {
     { value: 'ATIVO', label: 'Ativo' }
   ];
 
-  getContracts(workflow: ContratoDTO['workflowStatus']): ContratoDTO[] {
-    return this.contratos.filter(c => (c.workflowStatus || 'NOVO') === workflow);
+  grupoContratoPrincipal = grupoContratoPrincipal;
+  grupoValorMensalTotal = grupoValorMensalTotal;
+  grupoFinancialWorst = grupoFinancialWorst;
+  grupoProximaCobranca = grupoProximaCobranca;
+
+  /** Um cartão por cliente; etapa = estágio mais avançado entre as cobranças do cliente. */
+  gruposNaColuna(workflow: ContratoDTO['workflowStatus']): ContratoGrupoCliente[] {
+    return groupContratosByClienteId(this.contratos).filter(
+      g => grupoWorkflowAtencao(g) === workflow
+    );
   }
 }
-

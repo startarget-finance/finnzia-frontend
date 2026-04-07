@@ -1,5 +1,5 @@
 <div class="min-h-full bg-[#F8FAFC]">
-  <div class="max-w-[1440px] mx-auto px-4 sm:px-6 py-6 space-y-5">
+  <div class="max-w-[1800px] mx-auto px-4 sm:px-6 py-6 space-y-5">
     <section class="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 sm:p-6 space-y-5">
       <div class="flex items-center justify-between gap-3 flex-wrap">
         <div class="inline-flex rounded-xl border border-gray-200 p-1 bg-gray-50">
@@ -10,7 +10,7 @@
             [class.text-white]="activeArea === 'comercial'"
             class="h-9 px-4 rounded-lg text-sm text-gray-600 transition">
             Comercial
-          </button>
+        </button>
           <button (click)="alterarArea('cobrancas')"
             [class.bg-gradient-to-r]="activeArea === 'cobrancas'"
             [class.from-violet-600]="activeArea === 'cobrancas'"
@@ -18,8 +18,8 @@
             [class.text-white]="activeArea === 'cobrancas'"
             class="h-9 px-4 rounded-lg text-sm text-gray-600 transition">
             Cobranças
-          </button>
-        </div>
+        </button>
+      </div>
         <div class="flex items-center gap-2">
           <button (click)="importarAsaas()" class="h-9 px-3 rounded-xl border border-gray-200 text-xs hover:bg-gray-50">Importar Asaas</button>
           <button (click)="sincronizarTudoAsaas()" class="h-9 px-3 rounded-xl border border-gray-200 text-xs hover:bg-gray-50">Sincronizar Asaas</button>
@@ -46,7 +46,7 @@
         <button (click)="alterarModulo('fluxo')" [class.bg-slate-900]="activeModule === 'fluxo'" [class.text-white]="activeModule === 'fluxo'" class="h-8 px-3 rounded-lg border border-gray-200 text-xs">Fluxo visual</button>
         <button (click)="alterarModulo('clientes')" [class.bg-slate-900]="activeModule === 'clientes'" [class.text-white]="activeModule === 'clientes'" class="h-8 px-3 rounded-lg border border-gray-200 text-xs">Clientes</button>
         <button (click)="alterarModulo('envios')" [class.bg-slate-900]="activeModule === 'envios'" [class.text-white]="activeModule === 'envios'" class="h-8 px-3 rounded-lg border border-gray-200 text-xs">Envios e links</button>
-      </div>
+        </div>
 
       <div class="flex items-center gap-2 overflow-x-auto pb-1" *ngIf="activeArea === 'cobrancas'">
         <button (click)="alterarModulo('operacao')" [class.bg-slate-900]="activeModule === 'operacao'" [class.text-white]="activeModule === 'operacao'" class="h-8 px-3 rounded-lg border border-gray-200 text-xs">Operação</button>
@@ -71,13 +71,13 @@
           <label class="text-xs text-gray-500">Etapa</label>
           <select [(ngModel)]="filtroWorkflow" (ngModelChange)="onFiltrosChange()"
             class="w-full mt-1 h-10 px-3 rounded-xl border border-gray-200 bg-white text-sm">
-            <option value="todos">Todos</option>
+              <option value="todos">Todos</option>
             <option value="NOVO">Novo</option>
             <option value="ASSINATURA">Assinatura</option>
             <option value="COBRANCA">Cobrança</option>
             <option value="ATIVO">Ativo</option>
-          </select>
-        </div>
+            </select>
+          </div>
         <div>
           <label class="text-xs text-gray-500">Financeiro</label>
           <select [(ngModel)]="filtroFinanceiro" (ngModelChange)="onFiltrosChange()"
@@ -86,14 +86,14 @@
             <option value="EM_DIA">Em dia</option>
             <option value="ATRASADO">Atrasado</option>
             <option value="INADIMPLENTE">Inadimplente</option>
-          </select>
-        </div>
+            </select>
+          </div>
         <div>
           <label class="text-xs text-gray-500">Próxima cobrança</label>
           <input type="date" [(ngModel)]="filtroDataCobranca" (ngModelChange)="onFiltrosChange()"
             class="w-full mt-1 h-10 px-3 rounded-xl border border-gray-200 bg-white text-sm" />
         </div>
-      </div>
+          </div>
     </section>
 
     <div *ngIf="successMessage" class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{{ successMessage }}</div>
@@ -103,94 +103,161 @@
       <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 sm:p-5">
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
           <div class="rounded-xl border border-gray-200 p-3"><p class="text-xs text-gray-500">Total Propostas</p><p class="text-2xl font-semibold text-slate-900 mt-1">{{ totalPropostas }}</p></div>
-          <div class="rounded-xl border border-gray-200 p-3"><p class="text-xs text-gray-500">Contratos Assinados</p><p class="text-2xl font-semibold text-slate-900 mt-1">{{ contratosAssinadosComercial }}</p></div>
-          <div class="rounded-xl border border-gray-200 p-3"><p class="text-xs text-gray-500">Pendentes</p><p class="text-2xl font-semibold text-slate-900 mt-1">{{ propostasPendentesComercial }}</p></div>
+          <div class="rounded-xl border border-gray-200 p-3"><p class="text-xs text-gray-500">Contratos Recebidos</p><p class="text-2xl font-semibold text-slate-900 mt-1">{{ contratosAssinadosComercial }}</p></div>
+          <div class="rounded-xl border border-gray-200 p-3"><p class="text-xs text-gray-500">Em Aberto</p><p class="text-2xl font-semibold text-slate-900 mt-1">{{ propostasPendentesComercial }}</p></div>
           <div class="rounded-xl border border-gray-200 p-3"><p class="text-xs text-gray-500">Receita Fechada</p><p class="text-2xl font-semibold text-slate-900 mt-1">{{ formatCurrency(receitaFechada) }}</p></div>
           <div class="rounded-xl border border-gray-200 p-3"><p class="text-xs text-gray-500">Receita Potencial</p><p class="text-2xl font-semibold text-slate-900 mt-1">{{ formatCurrency(receitaPotencial) }}</p></div>
         </div>
       </div>
       <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 sm:p-5">
-        <p class="text-sm font-semibold text-emerald-700 mb-3">Assinados</p>
+        <p class="text-sm font-semibold text-emerald-700 mb-3">Recebidos (Asaas)</p>
         <div class="space-y-2">
-          <article *ngFor="let contrato of dashboardPaginatedList" class="rounded-xl border border-gray-200 px-4 py-3 hover:bg-gray-50/70 transition">
-            <div class="flex items-center justify-between gap-3">
-              <div>
-                <p class="text-sm font-semibold text-slate-900">{{ contrato.cliente.razaoSocial || contrato.cliente.nomeFantasia }}</p>
-                <p class="text-xs text-gray-500">{{ contrato.servico || contrato.titulo }}</p>
+          <article *ngFor="let g of dashboardPaginatedAssinadosGrupos" class="rounded-xl border border-gray-200 px-4 py-3 hover:bg-gray-50/70 transition">
+            <div class="flex items-start gap-2">
+              <button *ngIf="g.contratos.length > 1" type="button" (click)="toggleExpandComercial(g.clienteId, $event)"
+                class="mt-0.5 h-8 w-8 shrink-0 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-100"
+                [attr.aria-expanded]="isExpandComercial(g.clienteId)">
+                {{ isExpandComercial(g.clienteId) ? '▼' : '▶' }}
+              </button>
+        <div class="flex flex-1 items-center justify-between gap-3 min-w-0">
+              <div class="min-w-0">
+                <p class="text-sm font-semibold text-slate-900 truncate">{{ g.cliente.razaoSocial || g.cliente.nomeFantasia }}</p>
+                <p class="text-xs text-gray-500" *ngIf="g.contratos.length === 1">{{ g.contratos[0].servico || g.contratos[0].titulo }}</p>
+                <p class="text-xs text-gray-500" *ngIf="g.contratos.length > 1">{{ g.contratos.length }} contratos recebidos neste cliente</p>
+    </div>
+              <div class="text-right shrink-0">
+                <p class="text-sm font-semibold text-slate-900">{{ formatCurrency(grupoValorMensalTotal(g)) }}</p>
+                <button type="button" (click)="abrirDetalheProposta(grupoContratoPrincipal(g))" class="text-xs text-violet-700 hover:underline">Ver detalhe</button>
+      </div>
+    </div>
+            </div>
+            <div *ngFor="let contrato of g.contratos" [hidden]="g.contratos.length <= 1 || !isExpandComercial(g.clienteId)"
+              class="mt-2 ml-10 pl-3 border-l-2 border-gray-200 space-y-1">
+              <div class="flex justify-between gap-2 text-xs">
+                <span class="text-gray-600 truncate">{{ contrato.servico || contrato.titulo }}</span>
+                <span class="text-slate-800 tabular-nums shrink-0">{{ formatCurrency(contrato.valorRecorrencia || contrato.valorContrato || 0) }}</span>
               </div>
-              <div class="text-right">
-                <p class="text-sm font-semibold text-slate-900">{{ formatCurrency(contrato.valorRecorrencia || contrato.valorContrato || 0) }}</p>
-                <button (click)="abrirDetalheProposta(contrato)" class="text-xs text-violet-700 hover:underline">Ver detalhe</button>
-              </div>
+              <button type="button" (click)="abrirDetalheProposta(contrato)" class="text-[11px] text-violet-600 hover:underline">Abrir este contrato</button>
             </div>
           </article>
+          <p *ngIf="dashboardAssinadosGrupos.length === 0" class="py-6 text-center text-sm text-gray-500">Nenhum contrato recebido no filtro atual.</p>
         </div>
 
-        <div *ngIf="dashboardTotalPages > 1" class="pt-3 flex items-center justify-end gap-2">
-          <button
-            (click)="dashboardIrParaPagina(dashboardPage - 1)"
-            [disabled]="dashboardPage === 0"
-            class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-            Anterior
-          </button>
-          <button
-            *ngFor="let p of dashboardPaginasVisiveis"
-            (click)="dashboardIrParaPagina(p)"
-            [class.bg-slate-900]="p === dashboardPage"
-            [class.text-white]="p === dashboardPage"
-            class="h-8 min-w-[32px] px-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50">
-            {{ p + 1 }}
-          </button>
-          <button
-            (click)="dashboardIrParaPagina(dashboardPage + 1)"
-            [disabled]="dashboardPage >= dashboardTotalPages - 1"
-            class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-            Próxima
-          </button>
+        <div *ngIf="dashboardAssinadosGrupos.length > 0" class="pt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div class="text-xs text-gray-500 flex items-center gap-2">
+            <span>Mostrando <span class="font-medium text-slate-700">{{ rangeStart(dashboardPage, dashboardSize, dashboardAssinadosGrupos.length) }}</span> a <span class="font-medium text-slate-700">{{ rangeEnd(dashboardPage, dashboardSize, dashboardAssinadosGrupos.length) }}</span> de <span class="font-medium text-slate-700">{{ dashboardAssinadosGrupos.length }}</span></span>
+            <select [(ngModel)]="dashboardSize" (ngModelChange)="onDashboardSizeChange()" class="h-8 px-2 rounded-lg border border-gray-200 text-xs text-gray-600 bg-white">
+              <option *ngFor="let opt of pageSizeOptionsLocal" [ngValue]="opt">{{ opt }} / pág</option>
+            </select>
+          </div>
+          <div class="flex items-center justify-end gap-2">
+            <button
+              (click)="dashboardIrParaPagina(dashboardPage - 1)"
+              [disabled]="dashboardPage === 0"
+              class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+              Anterior
+            </button>
+            <button
+              *ngFor="let p of dashboardPaginasVisiveis"
+              (click)="dashboardIrParaPagina(p)"
+              [class.bg-slate-900]="p === dashboardPage"
+              [class.text-white]="p === dashboardPage"
+              class="h-8 min-w-[32px] px-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50">
+              {{ p + 1 }}
+            </button>
+            <button
+              (click)="dashboardIrParaPagina(dashboardPage + 1)"
+              [disabled]="dashboardPage >= dashboardTotalPages - 1"
+              class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+              Próxima
+            </button>
+          </div>
         </div>
       </div>
     </section>
 
     <section *ngIf="activeArea === 'comercial' && activeModule === 'propostas'" class="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 sm:p-5 space-y-2">
-      <article *ngFor="let contrato of propostasPaginadas" class="rounded-xl border border-gray-200 px-4 py-3 hover:bg-gray-50/70 transition">
-        <div class="flex items-start justify-between gap-3">
+      <article *ngFor="let g of propostasPaginatedGrupos" class="rounded-xl border border-gray-200 px-4 py-3 hover:bg-gray-50/70 transition">
+        <div class="flex items-start gap-2">
+          <button *ngIf="g.contratos.length > 1" type="button" (click)="toggleExpandComercial(g.clienteId, $event)"
+            class="mt-1 h-8 w-8 shrink-0 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-100">
+            {{ isExpandComercial(g.clienteId) ? '▼' : '▶' }}
+          </button>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-start justify-between gap-3">
           <div>
-            <p class="text-base font-semibold text-slate-900">{{ contrato.cliente.razaoSocial || contrato.cliente.nomeFantasia }}</p>
-            <p class="text-sm text-gray-500 mt-0.5">{{ contrato.servico || contrato.titulo }} • {{ formatCurrency(contrato.valorRecorrencia || contrato.valorContrato || 0) }}</p>
+            <p class="text-base font-semibold text-slate-900">{{ g.cliente.razaoSocial || g.cliente.nomeFantasia }}</p>
+            <p class="text-sm text-gray-500 mt-0.5" *ngIf="g.contratos.length === 1">
+              {{ g.contratos[0].servico || g.contratos[0].titulo }} • {{ formatCurrency(g.contratos[0].valorRecorrencia || g.contratos[0].valorContrato || 0) }}
+            </p>
+            <p class="text-sm text-gray-500 mt-0.5" *ngIf="g.contratos.length > 1">
+              {{ g.contratos.length }} propostas/cobranças • Total {{ formatCurrency(grupoValorMensalTotal(g)) }}
+            </p>
           </div>
-          <span class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-100/70 text-blue-700">{{ contrato.workflowStatus || 'NOVO' }}</span>
-        </div>
+          <span class="inline-flex shrink-0 px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-100/70 text-blue-700">{{ grupoWorkflowRepresentativo(g) }}</span>
+                </div>
         <div class="mt-3 flex justify-end gap-1 flex-wrap">
-          <button *ngIf="(contrato.workflowStatus || 'NOVO') === 'NOVO'" (click)="avancarParaAssinatura(contrato)" class="h-7 px-2.5 text-[11px] rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Enviar assinatura</button>
-          <button *ngIf="contrato.workflowStatus === 'ASSINATURA'" (click)="marcarAssinado(contrato)" class="h-7 px-2.5 text-[11px] rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Marcar assinado</button>
-          <button *ngIf="contrato.workflowStatus === 'COBRANCA'" (click)="gerarCobranca(contrato)" class="h-7 px-2.5 text-[11px] rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Gerar cobrança</button>
-          <button *ngIf="contrato.workflowStatus === 'COBRANCA'" (click)="ativarContrato(contrato)" class="h-7 px-2.5 text-[11px] rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Ativar</button>
-          <button (click)="abrirDetalheProposta(contrato)" class="h-7 px-2.5 text-[11px] rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Detalhes</button>
+          <ng-container *ngIf="g.contratos.length === 1">
+          <button *ngIf="(g.contratos[0].workflowStatus || 'NOVO') === 'NOVO'" (click)="avancarParaAssinatura(g.contratos[0])" class="h-7 px-2.5 text-[11px] rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Enviar proposta</button>
+          <button *ngIf="g.contratos[0].workflowStatus === 'ASSINATURA'" (click)="marcarAssinado(g.contratos[0])" class="h-7 px-2.5 text-[11px] rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Confirmar no Asaas</button>
+          <button *ngIf="g.contratos[0].workflowStatus === 'COBRANCA'" (click)="gerarCobranca(g.contratos[0])" class="h-7 px-2.5 text-[11px] rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Gerar cobrança</button>
+          <button *ngIf="g.contratos[0].workflowStatus === 'COBRANCA'" (click)="ativarContrato(g.contratos[0])" class="h-7 px-2.5 text-[11px] rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Ativar</button>
+          <button (click)="abrirDetalheProposta(g.contratos[0])" class="h-7 px-2.5 text-[11px] rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Detalhes</button>
+          </ng-container>
+          <ng-container *ngIf="g.contratos.length > 1">
+          <button *ngIf="(grupoWorkflowRepresentativo(g) || 'NOVO') === 'NOVO'" (click)="avancarParaAssinatura(grupoContratoPrincipal(g))" class="h-7 px-2.5 text-[11px] rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Enviar proposta (principal)</button>
+          <button *ngIf="grupoWorkflowRepresentativo(g) === 'ASSINATURA'" (click)="marcarAssinado(grupoContratoPrincipal(g))" class="h-7 px-2.5 text-[11px] rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Confirmar no Asaas (principal)</button>
+          <button *ngIf="grupoWorkflowRepresentativo(g) === 'COBRANCA'" (click)="gerarCobranca(grupoContratoPrincipal(g))" class="h-7 px-2.5 text-[11px] rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Gerar cobrança (principal)</button>
+          <button *ngIf="grupoWorkflowRepresentativo(g) === 'COBRANCA'" (click)="ativarContrato(grupoContratoPrincipal(g))" class="h-7 px-2.5 text-[11px] rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Ativar (principal)</button>
+          <button (click)="abrirDetalheProposta(grupoContratoPrincipal(g))" class="h-7 px-2.5 text-[11px] rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Detalhes</button>
+          </ng-container>
+              </div>
+          </div>
         </div>
+            <div *ngFor="let contrato of g.contratos" [hidden]="g.contratos.length <= 1 || !isExpandComercial(g.clienteId)"
+              class="mt-3 ml-10 pl-3 border-l-2 border-violet-200/80 space-y-2">
+              <p class="text-xs text-slate-700 font-medium truncate">{{ contrato.servico || contrato.titulo }}</p>
+              <p class="text-xs text-gray-500">{{ formatCurrency(contrato.valorRecorrencia || contrato.valorContrato || 0) }} · {{ contrato.workflowStatus || 'NOVO' }}</p>
+              <div class="flex flex-wrap gap-1">
+                <button *ngIf="(contrato.workflowStatus || 'NOVO') === 'NOVO'" (click)="avancarParaAssinatura(contrato)" class="h-6 px-2 text-[10px] rounded border border-gray-200 text-gray-600 hover:bg-gray-50">Enviar proposta</button>
+                <button *ngIf="contrato.workflowStatus === 'ASSINATURA'" (click)="marcarAssinado(contrato)" class="h-6 px-2 text-[10px] rounded border border-gray-200 text-gray-600 hover:bg-gray-50">Confirmar no Asaas</button>
+                <button *ngIf="contrato.workflowStatus === 'COBRANCA'" (click)="gerarCobranca(contrato)" class="h-6 px-2 text-[10px] rounded border border-gray-200 text-gray-600 hover:bg-gray-50">Gerar cobrança</button>
+                <button *ngIf="contrato.workflowStatus === 'COBRANCA'" (click)="ativarContrato(contrato)" class="h-6 px-2 text-[10px] rounded border border-gray-200 text-gray-600 hover:bg-gray-50">Ativar</button>
+                <button (click)="abrirDetalheProposta(contrato)" class="h-6 px-2 text-[10px] rounded border border-gray-200 text-gray-600 hover:bg-gray-50">Detalhes</button>
+              </div>
+            </div>
       </article>
-      <div *ngIf="propostasLista.length === 0" class="py-8 text-center text-sm text-gray-500">Nenhuma proposta disponível no momento.</div>
+      <div *ngIf="propostasGrupos.length === 0" class="py-8 text-center text-sm text-gray-500">Nenhuma proposta disponível no momento.</div>
 
-      <div *ngIf="propostasTotalPagesLocal > 1" class="pt-2 flex items-center justify-end gap-2">
-        <button
-          (click)="propostasIrParaPagina(propostasPageLocal - 1)"
-          [disabled]="propostasPageLocal === 0"
-          class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-          Anterior
-        </button>
-        <button
-          *ngFor="let p of propostasPaginasVisiveisLocal"
-          (click)="propostasIrParaPagina(p)"
-          [class.bg-slate-900]="p === propostasPageLocal"
-          [class.text-white]="p === propostasPageLocal"
-          class="h-8 min-w-[32px] px-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50">
-          {{ p + 1 }}
-        </button>
-        <button
-          (click)="propostasIrParaPagina(propostasPageLocal + 1)"
-          [disabled]="propostasPageLocal >= propostasTotalPagesLocal - 1"
-          class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-          Próxima
-        </button>
+      <div *ngIf="propostasGrupos.length > 0" class="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="text-xs text-gray-500 flex items-center gap-2">
+          <span>Mostrando <span class="font-medium text-slate-700">{{ rangeStart(propostasPageLocal, propostasSizeLocal, propostasGrupos.length) }}</span> a <span class="font-medium text-slate-700">{{ rangeEnd(propostasPageLocal, propostasSizeLocal, propostasGrupos.length) }}</span> de <span class="font-medium text-slate-700">{{ propostasGrupos.length }}</span></span>
+          <select [(ngModel)]="propostasSizeLocal" (ngModelChange)="onPropostasSizeChange()" class="h-8 px-2 rounded-lg border border-gray-200 text-xs text-gray-600 bg-white">
+            <option *ngFor="let opt of pageSizeOptionsLocal" [ngValue]="opt">{{ opt }} / pág</option>
+          </select>
+        </div>
+        <div class="flex items-center justify-end gap-2">
+          <button
+            (click)="propostasIrParaPagina(propostasPageLocal - 1)"
+            [disabled]="propostasPageLocal === 0"
+            class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+            Anterior
+          </button>
+          <button
+            *ngFor="let p of propostasPaginasVisiveisLocal"
+            (click)="propostasIrParaPagina(p)"
+            [class.bg-slate-900]="p === propostasPageLocal"
+            [class.text-white]="p === propostasPageLocal"
+            class="h-8 min-w-[32px] px-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50">
+            {{ p + 1 }}
+          </button>
+          <button
+            (click)="propostasIrParaPagina(propostasPageLocal + 1)"
+            [disabled]="propostasPageLocal >= propostasTotalPagesLocal - 1"
+            class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+            Próxima
+          </button>
+        </div>
       </div>
     </section>
 
@@ -200,17 +267,21 @@
         <input [(ngModel)]="fluxoBuscaContrato" class="w-full mt-1 h-9 px-3 rounded-lg border border-gray-200 text-sm" placeholder="Cliente ou contrato..." />
       </div>
       <div class="flex flex-wrap items-center gap-2">
-        <span class="text-xs text-gray-500">Contrato no fluxo:</span>
+        <span class="text-xs text-gray-500">Cliente no fluxo:</span>
         <button
-          *ngFor="let c of propostasFluxoLista.slice(0, 12)"
-          (click)="selecionarFluxoContrato(c.id)"
-          [class.bg-slate-900]="fluxoContratoAtual?.id === c.id"
-          [class.text-white]="fluxoContratoAtual?.id === c.id"
-          class="h-8 px-3 rounded-lg border border-gray-200 text-xs hover:bg-gray-50"
+          *ngFor="let g of propostasFluxoGrupos.slice(0, 24)"
+          type="button"
+          (click)="selecionarFluxoContrato(grupoContratoPrincipal(g).id)"
+          [class.bg-slate-900]="isFluxoGrupoSelecionado(g)"
+          [class.text-white]="isFluxoGrupoSelecionado(g)"
+          class="h-8 px-3 rounded-lg border border-gray-200 text-xs hover:bg-gray-50 inline-flex items-center gap-1.5 max-w-[280px]"
         >
-          {{ c.cliente.razaoSocial || c.cliente.nomeFantasia }}
+          <span class="truncate">{{ g.cliente.razaoSocial || g.cliente.nomeFantasia }}</span>
+          <span *ngIf="g.contratos.length > 1"
+            class="shrink-0 rounded px-1 py-0 text-[10px] font-semibold"
+            [ngClass]="isFluxoGrupoSelecionado(g) ? 'bg-white/25 text-white' : 'bg-slate-200/80 text-slate-800'">{{ g.contratos.length }}</span>
         </button>
-      </div>
+            </div>
 
       <div class="rounded-xl border border-gray-200 bg-slate-50/50 p-4">
         <p class="text-sm font-semibold text-slate-900 mb-3">Etapas do processo</p>
@@ -223,40 +294,41 @@
               [ngClass]="etapa.status === 'done' ? 'text-emerald-700' : (etapa.status === 'current' ? 'text-violet-700' : 'text-gray-400')">
               {{ etapa.status === 'done' ? 'Concluída' : (etapa.status === 'current' ? 'Em andamento' : 'Pendente') }}
             </p>
-          </div>
         </div>
       </div>
+    </div>
 
       <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="rounded-xl border p-3 bg-white border-gray-200">
           <p class="text-xs text-gray-500">Cliente</p>
           <p class="text-sm font-semibold text-slate-900">{{ fluxoContratoAtual?.cliente?.razaoSocial || fluxoContratoAtual?.cliente?.nomeFantasia || '-' }}</p>
-        </div>
+              </div>
         <div class="rounded-xl border p-3 bg-white border-gray-200">
           <p class="text-xs text-gray-500">Valor</p>
-          <p class="text-sm font-semibold text-slate-900">{{ formatCurrency(fluxoContratoAtual?.valorRecorrencia || fluxoContratoAtual?.valorContrato || 0) }}</p>
-        </div>
+          <p class="text-sm font-semibold text-slate-900">{{ formatCurrency(fluxoValorResumo) }}</p>
+          <p *ngIf="fluxoMostraSomaCliente" class="text-[10px] text-gray-500 mt-0.5">Soma no cliente</p>
+              </div>
         <div class="rounded-xl border p-3 bg-white border-gray-200">
           <p class="text-xs text-gray-500">Financeiro</p>
           <p class="text-sm font-semibold text-slate-900">{{ fluxoStatusFinanceiroLabel }}</p>
-        </div>
-      </div>
+              </div>
+            </div>
 
       <div class="mt-4 flex flex-wrap gap-2">
         <button *ngIf="fluxoContratoAtual && (fluxoContratoAtual.workflowStatus || 'NOVO') === 'NOVO'" (click)="avancarParaAssinatura(fluxoContratoAtual)" [disabled]="isActionLoading(fluxoContratoAtual, 'ENVIAR_PARA_ASSINATURA')" class="h-8 px-3 rounded-lg border border-gray-200 text-xs hover:bg-gray-50 disabled:opacity-60">
-          {{ isActionLoading(fluxoContratoAtual, 'ENVIAR_PARA_ASSINATURA') ? 'Enviando...' : 'Enviar para assinatura' }}
-        </button>
+          {{ isActionLoading(fluxoContratoAtual, 'ENVIAR_PARA_ASSINATURA') ? 'Enviando...' : 'Enviar proposta' }}
+              </button>
         <button *ngIf="fluxoContratoAtual?.workflowStatus === 'ASSINATURA'" (click)="marcarAssinado(fluxoContratoAtual)" [disabled]="isActionLoading(fluxoContratoAtual, 'MARCAR_COMO_ASSINADO')" class="h-8 px-3 rounded-lg border border-gray-200 text-xs hover:bg-gray-50 disabled:opacity-60">
-          {{ isActionLoading(fluxoContratoAtual, 'MARCAR_COMO_ASSINADO') ? 'Atualizando...' : 'Marcar assinado' }}
-        </button>
+          {{ isActionLoading(fluxoContratoAtual, 'MARCAR_COMO_ASSINADO') ? 'Atualizando...' : 'Confirmar no Asaas' }}
+              </button>
         <button *ngIf="fluxoContratoAtual?.workflowStatus === 'COBRANCA'" (click)="executarCobrancaPrimaria(fluxoContratoAtual)" [disabled]="isActionLoading(fluxoContratoAtual, 'GERAR_COBRANCA')" class="h-8 px-3 rounded-lg border border-gray-200 text-xs hover:bg-gray-50 disabled:opacity-60">
           {{ isActionLoading(fluxoContratoAtual, 'GERAR_COBRANCA') ? 'Processando...' : getCobrancaPrimaryActionLabel(fluxoContratoAtual) }}
-        </button>
+              </button>
         <button *ngIf="fluxoContratoAtual?.workflowStatus === 'COBRANCA'" (click)="abrirLinkPagamento(fluxoContratoAtual)" class="h-8 px-3 rounded-lg border border-gray-200 text-xs hover:bg-gray-50">Abrir link pagamento</button>
         <button *ngIf="fluxoContratoAtual?.workflowStatus === 'COBRANCA' && podeAtivarContrato(fluxoContratoAtual)" (click)="ativarContrato(fluxoContratoAtual)" [disabled]="isActionLoading(fluxoContratoAtual, 'ATIVAR_CONTRATO')" class="h-8 px-3 rounded-lg border border-gray-200 text-xs hover:bg-gray-50 disabled:opacity-60">
           {{ isActionLoading(fluxoContratoAtual, 'ATIVAR_CONTRATO') ? 'Ativando...' : 'Finalizar e ativar' }}
-        </button>
-      </div>
+              </button>
+            </div>
     </section>
 
     <section *ngIf="activeArea === 'comercial' && activeModule === 'clientes'" class="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 sm:p-5">
@@ -269,46 +341,61 @@
           <p class="text-xs text-gray-500">{{ cliente.telefone }}</p>
           <div class="grid grid-cols-3 gap-2 mt-3">
             <div class="rounded-lg bg-slate-50 p-2 text-center"><p class="text-[10px] text-gray-500">Propostas</p><p class="text-sm font-semibold">{{ cliente.propostas }}</p></div>
-            <div class="rounded-lg bg-emerald-50 p-2 text-center"><p class="text-[10px] text-gray-500">Assinados</p><p class="text-sm font-semibold text-emerald-700">{{ cliente.assinados }}</p></div>
-            <div class="rounded-lg bg-amber-50 p-2 text-center"><p class="text-[10px] text-gray-500">Pendentes</p><p class="text-sm font-semibold text-amber-700">{{ cliente.pendentes }}</p></div>
+            <div class="rounded-lg bg-emerald-50 p-2 text-center"><p class="text-[10px] text-gray-500">Recebidos</p><p class="text-sm font-semibold text-emerald-700">{{ cliente.recebidos }}</p></div>
+            <div class="rounded-lg bg-amber-50 p-2 text-center"><p class="text-[10px] text-gray-500">Em aberto</p><p class="text-sm font-semibold text-amber-700">{{ cliente.emAberto }}</p></div>
           </div>
           <div class="mt-3 space-y-1">
-            <div *ngFor="let ct of cliente.contratos.slice(0, 2)" class="text-xs text-gray-600">
+            <div *ngFor="let ct of (isExpandComercial(cliente.clienteId) ? cliente.contratos : cliente.contratos.slice(0, 4))" class="text-xs text-gray-600">
               {{ ct.servico || ct.titulo }} - {{ formatCurrency(ct.valorRecorrencia || ct.valorContrato || 0) }}
-            </div>
+        </div>
+            <button *ngIf="cliente.contratos.length > 4" type="button" (click)="toggleExpandComercial(cliente.clienteId)"
+              class="text-[11px] text-violet-600 hover:underline mt-1">
+              {{ isExpandComercial(cliente.clienteId) ? 'Mostrar menos' : 'Ver todas (' + cliente.contratos.length + ')' }}
+            </button>
           </div>
         </article>
       </div>
 
-      <div *ngIf="clientesTotalPagesLocal > 1" class="pt-3 flex items-center justify-end gap-2">
-        <button
-          (click)="clientesIrParaPagina(clientesPageLocal - 1)"
-          [disabled]="clientesPageLocal === 0"
-          class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-          Anterior
-        </button>
-        <button
-          *ngFor="let p of clientesPaginasVisiveisLocal"
-          (click)="clientesIrParaPagina(p)"
-          [class.bg-slate-900]="p === clientesPageLocal"
-          [class.text-white]="p === clientesPageLocal"
-          class="h-8 min-w-[32px] px-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50">
-          {{ p + 1 }}
-        </button>
-        <button
-          (click)="clientesIrParaPagina(clientesPageLocal + 1)"
-          [disabled]="clientesPageLocal >= clientesTotalPagesLocal - 1"
-          class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-          Próxima
-        </button>
+      <div *ngIf="clientesCards.length > 0" class="pt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="text-xs text-gray-500 flex items-center gap-2">
+          <span>Mostrando <span class="font-medium text-slate-700">{{ rangeStart(clientesPageLocal, clientesSizeLocal, clientesCards.length) }}</span> a <span class="font-medium text-slate-700">{{ rangeEnd(clientesPageLocal, clientesSizeLocal, clientesCards.length) }}</span> de <span class="font-medium text-slate-700">{{ clientesCards.length }}</span></span>
+          <select [(ngModel)]="clientesSizeLocal" (ngModelChange)="onClientesSizeChange()" class="h-8 px-2 rounded-lg border border-gray-200 text-xs text-gray-600 bg-white">
+            <option *ngFor="let opt of pageSizeOptionsLocal" [ngValue]="opt">{{ opt }} / pág</option>
+          </select>
+        </div>
+        <div class="flex items-center justify-end gap-2">
+          <button
+            (click)="clientesIrParaPagina(clientesPageLocal - 1)"
+            [disabled]="clientesPageLocal === 0"
+            class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+            Anterior
+          </button>
+          <button
+            *ngFor="let p of clientesPaginasVisiveisLocal"
+            (click)="clientesIrParaPagina(p)"
+            [class.bg-slate-900]="p === clientesPageLocal"
+            [class.text-white]="p === clientesPageLocal"
+            class="h-8 min-w-[32px] px-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50">
+            {{ p + 1 }}
+          </button>
+          <button
+            (click)="clientesIrParaPagina(clientesPageLocal + 1)"
+            [disabled]="clientesPageLocal >= clientesTotalPagesLocal - 1"
+            class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+            Próxima
+          </button>
+        </div>
       </div>
     </section>
 
     <section *ngIf="activeArea === 'comercial' && activeModule === 'detalhe'" class="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 sm:p-5 space-y-4">
       <div class="flex items-center justify-between">
         <button (click)="voltarParaPropostas()" class="h-8 px-3 rounded-lg border border-gray-200 text-xs hover:bg-gray-50">← Voltar</button>
-        <span class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-100/70 text-emerald-700">
-          {{ propostaSelecionada?.statusAssinatura || 'PENDENTE' }}
+        <span
+          class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium"
+          [ngClass]="statusPagamentoAsaas(propostaSelecionada) === 'Recebido' ? 'bg-emerald-100/70 text-emerald-700' : (statusPagamentoAsaas(propostaSelecionada) === 'Atrasado' ? 'bg-red-100/70 text-red-700' : 'bg-amber-100/70 text-amber-700')"
+        >
+          {{ statusPagamentoAsaas(propostaSelecionada) }}
         </span>
       </div>
       <h3 class="text-xl font-semibold text-slate-900">Detalhes da Proposta</h3>
@@ -333,7 +420,7 @@
               <button (click)="abrirLinkPagamento(propostaSelecionada)" class="w-full h-9 rounded-lg border border-gray-200 text-sm hover:bg-gray-50">Copiar Link</button>
               <button (click)="abrirLinkPagamento(propostaSelecionada)" class="w-full h-9 rounded-lg bg-emerald-500 text-white text-sm hover:bg-emerald-600">Enviar WhatsApp</button>
             </div>
-          </div>
+            </div>
           <div class="rounded-xl border border-gray-200 p-4">
             <p class="text-sm font-semibold text-slate-900 mb-2">Timeline</p>
             <div class="space-y-2">
@@ -344,62 +431,71 @@
             </div>
           </div>
         </div>
-      </div>
+          </div>
     </section>
 
     <section *ngIf="activeArea === 'comercial' && activeModule === 'envios'" class="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 sm:p-5">
       <div class="flex items-center justify-between gap-3 flex-wrap mb-3">
-        <div>
+            <div>
           <p class="text-sm font-semibold text-slate-900">Envios e links</p>
           <p class="text-xs text-gray-500">Acompanhe links de pagamento e sincronização por contrato.</p>
         </div>
         <div class="text-xs text-gray-500">
-          Exibindo <span class="font-medium text-slate-700">{{ enviosPaginatedLista.length }}</span> de
-          <span class="font-medium text-slate-700">{{ enviosLista.length }}</span>
+          Exibindo <span class="font-medium text-slate-700">{{ enviosPaginatedGrupos.length }}</span> cliente(s) de
+          <span class="font-medium text-slate-700">{{ enviosGrupos.length }}</span> ·
+          <span class="font-medium text-slate-700">{{ enviosLista.length }}</span> envio(s)
         </div>
-      </div>
+          </div>
 
       <div class="rounded-xl border border-gray-200 overflow-hidden">
         <table class="w-full text-sm table-fixed">
           <thead class="bg-slate-50/80 border-b border-gray-200 sticky top-0 z-10">
             <tr class="text-left text-[11px] font-medium tracking-wide text-gray-500">
-              <th class="py-3 px-4 w-[36%]">Cliente</th>
-              <th class="py-3 px-4 w-[40%]">Contrato</th>
+              <th class="py-3 px-2 w-8"></th>
+              <th class="py-3 px-4 w-[32%]">Cliente</th>
+              <th class="py-3 px-4 w-[38%]">Contrato</th>
               <th class="py-3 px-4 w-[10%]">Canal</th>
               <th class="py-3 px-4 w-[8%]">Status</th>
               <th class="py-3 px-4 w-[6%] text-right">Ações</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
-            <tr *ngFor="let contrato of enviosPaginatedLista; let i = index"
-              class="hover:bg-gray-50/70 transition"
-              [ngClass]="i % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'">
-              <td class="py-3.5 px-4 align-top">
-                <div class="min-w-0">
-                  <p class="font-semibold text-slate-900 truncate" [title]="contrato.cliente.razaoSocial || contrato.cliente.nomeFantasia">
-                    {{ contrato.cliente.razaoSocial || contrato.cliente.nomeFantasia }}
-                  </p>
-                  <p class="text-xs text-gray-500 truncate" [title]="contrato.cliente.emailFinanceiro || contrato.cliente.celularFinanceiro || ''">
-                    {{ contrato.cliente.emailFinanceiro || contrato.cliente.celularFinanceiro || '' }}
-                  </p>
-                </div>
+            <ng-container *ngFor="let g of enviosPaginatedGrupos; let gi = index">
+            <tr class="hover:bg-gray-50/70 transition"
+              [ngClass]="gi % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'">
+              <td class="py-3.5 px-2 align-top text-center">
+                <button *ngIf="g.contratos.length > 1" type="button" (click)="toggleExpandComercial(g.clienteId, $event)"
+                  class="h-8 w-8 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-100">
+                  {{ isExpandComercial(g.clienteId) ? '▼' : '▶' }}
+                </button>
               </td>
               <td class="py-3.5 px-4 align-top">
                 <div class="min-w-0">
-                  <p class="text-sm text-slate-700 truncate" [title]="contrato.titulo">{{ contrato.titulo }}</p>
-                  <p class="text-xs text-gray-500 truncate" [title]="contrato.servico || ''">{{ contrato.servico || '' }}</p>
-                </div>
+                  <p class="font-semibold text-slate-900 truncate" [title]="g.cliente.razaoSocial || g.cliente.nomeFantasia">
+                    {{ g.cliente.razaoSocial || g.cliente.nomeFantasia }}
+                  </p>
+                  <p class="text-xs text-gray-500 truncate" [title]="g.cliente.emailFinanceiro || g.cliente.celularFinanceiro || ''">
+                    {{ g.cliente.emailFinanceiro || g.cliente.celularFinanceiro || '' }}
+                  </p>
+                  <p *ngIf="g.contratos.length > 1" class="text-[11px] text-gray-500 mt-1">{{ g.contratos.length }} envios</p>
+            </div>
+              </td>
+              <td class="py-3.5 px-4 align-top">
+                <div class="min-w-0">
+                  <p class="text-sm text-slate-700 truncate" [title]="grupoContratoPrincipal(g).titulo">{{ grupoContratoPrincipal(g).titulo }}</p>
+                  <p class="text-xs text-gray-500 truncate" [title]="grupoContratoPrincipal(g).servico || ''">{{ grupoContratoPrincipal(g).servico || '' }}</p>
+            </div>
               </td>
               <td class="py-3.5 px-4 text-gray-600 align-top">
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border"
-                  [ngClass]="contrato.whatsapp ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80' : 'bg-sky-50 text-sky-700 border-sky-200/80'">
+                  [ngClass]="grupoContratoPrincipal(g).whatsapp ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80' : 'bg-sky-50 text-sky-700 border-sky-200/80'">
                   <span class="h-1.5 w-1.5 rounded-full"
-                    [ngClass]="contrato.whatsapp ? 'bg-emerald-500' : 'bg-sky-500'"></span>
-                  {{ contrato.whatsapp ? 'WhatsApp' : 'E-mail' }}
+                    [ngClass]="grupoContratoPrincipal(g).whatsapp ? 'bg-emerald-500' : 'bg-sky-500'"></span>
+                  {{ grupoContratoPrincipal(g).whatsapp ? 'WhatsApp' : 'E-mail' }}
                 </span>
               </td>
               <td class="py-3.5 px-4 align-top">
-                <ng-container *ngIf="getProximaCobrancaDetalhada(contrato) as cobranca">
+                <ng-container *ngIf="getProximaCobrancaDetalhada(grupoContratoPrincipal(g)) as cobranca">
                   <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium"
                     [ngClass]="cobranca.status === 'RECEIVED' ? 'bg-emerald-100/70 text-emerald-700' : 'bg-amber-100/70 text-amber-700'">
                     {{ cobranca.status === 'RECEIVED' ? 'Pago' : 'Pendente' }}
@@ -411,39 +507,75 @@
               </td>
               <td class="py-3.5 px-4 text-right align-top">
                 <div class="flex items-start justify-end">
-                  <button (click)="abrirLinkPagamento(contrato)"
+                  <button type="button" (click)="abrirLinkPagamento(grupoContratoPrincipal(g))"
                     class="h-8 px-2.5 text-[11px] rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition shadow-sm inline-flex items-center gap-1">
                       <span aria-hidden="true">↗</span>
                       <span class="hidden md:inline">Abrir link</span>
                   </button>
-                </div>
+            </div>
               </td>
             </tr>
+            <tr *ngFor="let contrato of g.contratos" [hidden]="g.contratos.length <= 1 || !isExpandComercial(g.clienteId)"
+              class="bg-slate-50/90 hover:bg-slate-100/80">
+              <td class="py-2 px-2"></td>
+              <td class="py-2 px-4"></td>
+              <td class="py-2 px-4 align-top">
+                <p class="text-xs text-slate-700 truncate">{{ contrato.titulo }}</p>
+                <p class="text-[11px] text-gray-500 truncate">{{ contrato.servico || '' }}</p>
+              </td>
+              <td class="py-2 px-4">
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border"
+                  [ngClass]="contrato.whatsapp ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80' : 'bg-sky-50 text-sky-700 border-sky-200/80'">
+                  {{ contrato.whatsapp ? 'WhatsApp' : 'E-mail' }}
+                </span>
+              </td>
+              <td class="py-2 px-4 align-top">
+                <ng-container *ngIf="getProximaCobrancaDetalhada(contrato) as cob2">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium"
+                    [ngClass]="cob2.status === 'RECEIVED' ? 'bg-emerald-100/70 text-emerald-700' : 'bg-amber-100/70 text-amber-700'">
+                    {{ cob2.status === 'RECEIVED' ? 'Pago' : 'Pendente' }}
+                  </span>
+                </ng-container>
+              </td>
+              <td class="py-2 px-4 text-right">
+                <button type="button" (click)="abrirLinkPagamento(contrato)"
+                  class="h-7 px-2 text-[10px] rounded-lg bg-slate-800 text-white hover:bg-slate-700">Abrir link</button>
+              </td>
+            </tr>
+            </ng-container>
           </tbody>
         </table>
-      </div>
+            </div>
 
-      <div *ngIf="enviosTotalPagesLocal > 1" class="pt-3 flex items-center justify-end gap-2">
-        <button
-          (click)="enviosIrParaPagina(enviosPageLocal - 1)"
-          [disabled]="enviosPageLocal === 0"
-          class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-          Anterior
-        </button>
-        <button
-          *ngFor="let p of enviosPaginasVisiveisLocal"
-          (click)="enviosIrParaPagina(p)"
-          [class.bg-slate-900]="p === enviosPageLocal"
-          [class.text-white]="p === enviosPageLocal"
-          class="h-8 min-w-[32px] px-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50">
-          {{ p + 1 }}
-        </button>
-        <button
-          (click)="enviosIrParaPagina(enviosPageLocal + 1)"
-          [disabled]="enviosPageLocal >= enviosTotalPagesLocal - 1"
-          class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-          Próxima
-        </button>
+      <div *ngIf="enviosGrupos.length > 0" class="pt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="text-xs text-gray-500 flex items-center gap-2">
+          <span>Mostrando <span class="font-medium text-slate-700">{{ rangeStart(enviosPageLocal, enviosSizeLocal, enviosGrupos.length) }}</span> a <span class="font-medium text-slate-700">{{ rangeEnd(enviosPageLocal, enviosSizeLocal, enviosGrupos.length) }}</span> de <span class="font-medium text-slate-700">{{ enviosGrupos.length }}</span></span>
+          <select [(ngModel)]="enviosSizeLocal" (ngModelChange)="onEnviosSizeChange()" class="h-8 px-2 rounded-lg border border-gray-200 text-xs text-gray-600 bg-white">
+            <option *ngFor="let opt of pageSizeOptionsLocal" [ngValue]="opt">{{ opt }} / pág</option>
+          </select>
+        </div>
+        <div class="flex items-center justify-end gap-2">
+          <button
+            (click)="enviosIrParaPagina(enviosPageLocal - 1)"
+            [disabled]="enviosPageLocal === 0"
+            class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+            Anterior
+          </button>
+          <button
+            *ngFor="let p of enviosPaginasVisiveisLocal"
+            (click)="enviosIrParaPagina(p)"
+            [class.bg-slate-900]="p === enviosPageLocal"
+            [class.text-white]="p === enviosPageLocal"
+            class="h-8 min-w-[32px] px-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50">
+            {{ p + 1 }}
+          </button>
+          <button
+            (click)="enviosIrParaPagina(enviosPageLocal + 1)"
+            [disabled]="enviosPageLocal >= enviosTotalPagesLocal - 1"
+            class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+            Próxima
+          </button>
+        </div>
       </div>
     </section>
 
@@ -454,8 +586,39 @@
           <button (click)="alterarTab('pipeline')" [class.bg-slate-900]="activeTab === 'pipeline'" [class.text-white]="activeTab === 'pipeline'" class="px-3 py-1.5 rounded-lg text-sm border border-gray-200">Kanban</button>
         </div>
 
-        <app-contract-table *ngIf="activeTab === 'tabela'" [contratos]="contratosFiltrados" [loading]="loading" (open)="abrirDrawer($event)" (requestAction)="executarWorkflowAction($event)" />
-        <app-workflow-board *ngIf="activeTab === 'pipeline'" [contratos]="contratosFiltrados" (open)="abrirDrawer($event)" />
+        <app-contract-table *ngIf="activeTab === 'tabela'" [contratos]="contratosFiltrados" [groupByCliente]="true" [loading]="loading" (open)="abrirDrawer($event)" (requestAction)="executarWorkflowAction($event)" />
+        <app-workflow-board *ngIf="activeTab === 'pipeline'" [contratos]="contratosKanbanPagina" (open)="abrirDrawer($event)" />
+
+        <div *ngIf="activeTab === 'pipeline' && kanbanGruposOperacao.length > 0" class="mt-4 pt-3 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div class="text-xs text-gray-500 flex items-center gap-2">
+            <span>Mostrando <span class="font-medium text-slate-700">{{ rangeStart(kanbanPageLocal, kanbanSizeLocal, kanbanGruposOperacao.length) }}</span> a <span class="font-medium text-slate-700">{{ rangeEnd(kanbanPageLocal, kanbanSizeLocal, kanbanGruposOperacao.length) }}</span> de <span class="font-medium text-slate-700">{{ kanbanGruposOperacao.length }}</span> clientes no Kanban</span>
+            <select [(ngModel)]="kanbanSizeLocal" (ngModelChange)="onKanbanSizeChange()" class="h-8 px-2 rounded-lg border border-gray-200 text-xs text-gray-600 bg-white">
+              <option *ngFor="let opt of pageSizeOptionsLocal" [ngValue]="opt">{{ opt }} / pág</option>
+            </select>
+          </div>
+          <div class="flex items-center justify-end gap-2">
+            <button
+              (click)="kanbanIrParaPagina(kanbanPageLocal - 1)"
+              [disabled]="kanbanPageLocal === 0"
+              class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+              Anterior
+            </button>
+            <button
+              *ngFor="let p of kanbanPaginasVisiveisLocal"
+              (click)="kanbanIrParaPagina(p)"
+              [class.bg-slate-900]="p === kanbanPageLocal"
+              [class.text-white]="p === kanbanPageLocal"
+              class="h-8 min-w-[32px] px-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50">
+              {{ p + 1 }}
+            </button>
+            <button
+              (click)="kanbanIrParaPagina(kanbanPageLocal + 1)"
+              [disabled]="kanbanPageLocal >= kanbanTotalPagesLocal - 1"
+              class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+              Próxima
+            </button>
+          </div>
+        </div>
       </div>
 
       <div *ngIf="activeModule === 'carteira'" class="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 sm:p-5">
@@ -467,19 +630,22 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let contrato of carteiraPaginatedCobrancas" class="border-b border-gray-100">
-                <td class="py-3 px-4 font-medium text-slate-900">{{ contrato.cliente.razaoSocial || contrato.cliente.nomeFantasia }}</td>
-                <td class="py-3 px-4 text-gray-700 font-semibold">{{ formatCurrency(contrato.valorRecorrencia || contrato.valorContrato || 0) }}</td>
-                <td class="py-3 px-4 text-gray-500">{{ getProximaCobranca(contrato) || '-' }}</td>
+              <tr *ngFor="let g of carteiraPaginatedGrupos" class="border-b border-gray-100">
+                <td class="py-3 px-4 font-medium text-slate-900">
+                  {{ g.cliente.razaoSocial || g.cliente.nomeFantasia }}
+                  <span *ngIf="g.contratos.length > 1" class="block text-[11px] font-normal text-gray-500">{{ g.contratos.length }} cobranças</span>
+                </td>
+                <td class="py-3 px-4 text-gray-700 font-semibold">{{ formatCurrency(grupoValorMensalTotal(g)) }}</td>
+                <td class="py-3 px-4 text-gray-500">{{ getProximaCobranca(grupoContratoPrincipal(g)) || '-' }}</td>
                 <td class="py-3 px-4">
-                  <span class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium" [ngClass]="contrato.financialStatus === 'INADIMPLENTE' ? 'bg-red-100/70 text-red-700' : 'bg-amber-100/70 text-amber-700'">
-                    {{ contrato.financialStatus === 'INADIMPLENTE' ? 'Inadimplente' : 'Atrasado' }}
+                  <span class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-medium" [ngClass]="grupoFinancialWorst(g) === 'INADIMPLENTE' ? 'bg-red-100/70 text-red-700' : 'bg-amber-100/70 text-amber-700'">
+                    {{ grupoFinancialWorst(g) === 'INADIMPLENTE' ? 'Inadimplente' : 'Atrasado' }}
                   </span>
                 </td>
                 <td class="py-3 px-4 text-right">
                   <div class="flex justify-end gap-1">
-                    <button (click)="abrirLinkPagamento(contrato)" class="h-7 px-2.5 text-[11px] rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Cobrar</button>
-                    <button (click)="sincronizarContrato(contrato)" class="h-7 px-2.5 text-[11px] rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Atualizar</button>
+                    <button (click)="abrirLinkPagamento(grupoContratoPrincipal(g))" class="h-7 px-2.5 text-[11px] rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Cobrar</button>
+                    <button (click)="sincronizarContrato(grupoContratoPrincipal(g))" class="h-7 px-2.5 text-[11px] rounded-md border border-gray-200 text-gray-600 hover:bg-gray-50">Atualizar</button>
                   </div>
                 </td>
               </tr>
@@ -487,27 +653,35 @@
           </table>
         </div>
 
-        <div *ngIf="carteiraTotalPagesLocal > 1" class="pt-3 flex items-center justify-end gap-2">
-          <button
-            (click)="carteiraIrParaPagina(carteiraPageLocal - 1)"
-            [disabled]="carteiraPageLocal === 0"
-            class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-            Anterior
-          </button>
-          <button
-            *ngFor="let p of carteiraPaginasVisiveisLocal"
-            (click)="carteiraIrParaPagina(p)"
-            [class.bg-slate-900]="p === carteiraPageLocal"
-            [class.text-white]="p === carteiraPageLocal"
-            class="h-8 min-w-[32px] px-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50">
-            {{ p + 1 }}
-          </button>
-          <button
-            (click)="carteiraIrParaPagina(carteiraPageLocal + 1)"
-            [disabled]="carteiraPageLocal >= carteiraTotalPagesLocal - 1"
-            class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
-            Próxima
-          </button>
+        <div *ngIf="carteiraGrupos.length > 0" class="pt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div class="text-xs text-gray-500 flex items-center gap-2">
+            <span>Mostrando <span class="font-medium text-slate-700">{{ rangeStart(carteiraPageLocal, carteiraSizeLocal, carteiraGrupos.length) }}</span> a <span class="font-medium text-slate-700">{{ rangeEnd(carteiraPageLocal, carteiraSizeLocal, carteiraGrupos.length) }}</span> de <span class="font-medium text-slate-700">{{ carteiraGrupos.length }}</span></span>
+            <select [(ngModel)]="carteiraSizeLocal" (ngModelChange)="onCarteiraSizeChange()" class="h-8 px-2 rounded-lg border border-gray-200 text-xs text-gray-600 bg-white">
+              <option *ngFor="let opt of pageSizeOptionsLocal" [ngValue]="opt">{{ opt }} / pág</option>
+            </select>
+          </div>
+          <div class="flex items-center justify-end gap-2">
+            <button
+              (click)="carteiraIrParaPagina(carteiraPageLocal - 1)"
+              [disabled]="carteiraPageLocal === 0"
+              class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+              Anterior
+            </button>
+            <button
+              *ngFor="let p of carteiraPaginasVisiveisLocal"
+              (click)="carteiraIrParaPagina(p)"
+              [class.bg-slate-900]="p === carteiraPageLocal"
+              [class.text-white]="p === carteiraPageLocal"
+              class="h-8 min-w-[32px] px-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50">
+              {{ p + 1 }}
+            </button>
+            <button
+              (click)="carteiraIrParaPagina(carteiraPageLocal + 1)"
+              [disabled]="carteiraPageLocal >= carteiraTotalPagesLocal - 1"
+              class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">
+              Próxima
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -521,7 +695,7 @@
       </div>
       <div class="flex items-center gap-2 flex-wrap">
         <select [(ngModel)]="size" (ngModelChange)="alterarTamanhoPagina()" class="h-8 px-2 rounded-lg border border-gray-200 text-xs text-gray-600 bg-white">
-          <option [ngValue]="12">12 / pág</option><option [ngValue]="24">24 / pág</option><option [ngValue]="48">48 / pág</option>
+          <option *ngFor="let opt of pageSizeOptionsOperacao" [ngValue]="opt">{{ opt }} / pág</option>
         </select>
         <button (click)="paginaAnterior()" [disabled]="page === 0" class="h-8 px-2.5 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40">Anterior</button>
         <button *ngFor="let p of paginasVisiveis" (click)="irParaPagina(p)" [class.bg-slate-900]="(p - 1) === page" [class.text-white]="(p - 1) === page" class="h-8 min-w-[32px] px-2 rounded-lg border border-gray-200 text-xs text-gray-600 hover:bg-gray-50">{{ p }}</button>
