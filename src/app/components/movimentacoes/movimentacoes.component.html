@@ -168,7 +168,7 @@
       </div>
 
       <!-- Filtros Section -->
-      <div class="mb-8 rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm shadow-slate-900/5 backdrop-blur-sm sm:p-6">
+      <div class="relative z-[120] mb-8 rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm shadow-slate-900/5 backdrop-blur-sm sm:p-6">
         <div class="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <h3 class="flex items-center gap-2 text-sm font-semibold text-slate-900">
             <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 ring-1 ring-slate-200/80">
@@ -191,7 +191,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           
           <!-- Período -->
-          <div class="relative">
+          <div class="relative z-[130]">
             <label class="mb-1.5 block text-xs font-medium text-slate-500">Período</label>
             <button type="button"
                     (click)="toggleRangePicker()"
@@ -211,7 +211,7 @@
             </button>
 
             <!-- Popover Calendário -->
-            <div *ngIf="mostrarRangePicker" class="absolute left-0 z-50 mt-2 max-h-[400px] w-[340px] overflow-y-auto rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-xl shadow-slate-900/10 backdrop-blur-sm">
+            <div *ngIf="mostrarRangePicker" class="fixed left-1/2 top-[5.5rem] sm:top-24 z-[9999] w-[340px] max-w-[min(340px,calc(100vw-2rem))] -translate-x-1/2 max-h-[min(400px,calc(100vh-8rem))] overflow-y-auto rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-xl shadow-slate-900/10 backdrop-blur-sm">
               <div class="mb-4 flex items-center justify-between">
                 <button type="button" (click)="prevMonth()" class="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100">
                   <i class="fi fi-rr-angle-small-left h-5 w-5 flex items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
@@ -333,7 +333,7 @@
       </div>
 
       <!-- Tabela de Movimentações -->
-      <div class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.32)] ring-1 ring-slate-200/70 backdrop-blur-sm">
+      <div class="relative z-10 overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.32)] ring-1 ring-slate-200/70 backdrop-blur-sm">
         <div class="w-full overflow-x-auto">
           <table class="w-full min-w-[920px] table-auto divide-y divide-slate-100">
             <thead class="bg-slate-50/95">

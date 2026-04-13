@@ -1,6 +1,6 @@
 <div class="min-h-screen bg-[#F8FAFC] pb-12 font-sans flex flex-col">
   <!-- Cabeçalho + período compacto -->
-  <div class="relative z-20 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-5">
+  <div class="relative z-[300] bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-5">
     <div class="mx-auto w-full max-w-[1800px] flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div class="flex items-start gap-4 min-w-0">
         <div class="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm ring-1 ring-black/5">
@@ -24,7 +24,7 @@
         <button type="button" class="px-3 py-2 text-xs font-semibold border border-gray-200 rounded-xl hover:border-violet-400 hover:text-violet-800 transition-colors bg-white text-gray-700 shadow-sm" (click)="ajustarPeriodo(3)">3M</button>
         <button type="button" class="px-3 py-2 text-xs font-semibold border border-gray-200 rounded-xl hover:border-violet-400 hover:text-violet-800 transition-colors bg-white text-gray-700 shadow-sm" (click)="ajustarPeriodo(6)">6M</button>
         <button type="button" class="px-3 py-2 text-xs font-semibold border border-gray-200 rounded-xl hover:border-violet-400 hover:text-violet-800 transition-colors bg-white text-gray-700 shadow-sm" (click)="ajustarPeriodo(12)">12M</button>
-        <div class="relative z-[999]">
+        <div class="relative z-[9999]">
           <button
             type="button"
             (click)="toggleRangePicker()"
@@ -43,8 +43,7 @@
           </button>
 
           <div *ngIf="mostrarRangePicker"
-               class="absolute mt-2 right-0 lg:left-0 lg:right-auto bg-white border border-gray-200 rounded-2xl shadow-2xl shadow-slate-900/20 p-4 w-[340px] max-h-[400px] overflow-y-auto ring-1 ring-black/5"
-               style="z-index: 9999;">
+               class="fixed left-1/2 top-[5.5rem] sm:top-24 z-[99999] w-[340px] max-w-[min(340px,calc(100vw-2rem))] -translate-x-1/2 bg-white border border-gray-200 rounded-2xl shadow-2xl shadow-slate-900/20 p-4 max-h-[min(400px,calc(100vh-8rem))] overflow-y-auto ring-1 ring-black/5">
             <div class="flex items-center justify-between mb-4">
               <button type="button" (click)="prevMonth()" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
                 <i class="fi fi-rr-angle-small-left w-5 h-5 flex items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
@@ -106,7 +105,7 @@
       </div>
     </div>
 
-    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden p-4 sm:p-5">
+    <div class="relative z-10 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden p-4 sm:p-5">
       <app-dfc-planilha
         [bomControleDfc]="dfcResposta"
         [carregandoExterno]="carregando"
