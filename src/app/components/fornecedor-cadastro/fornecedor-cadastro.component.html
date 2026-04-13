@@ -6,14 +6,14 @@
     </div>
   </div>
 
-  <div class="rounded-xl border border-slate-200/70 bg-slate-50/50 p-4 sm:p-5 space-y-4">
+  <div class="space-y-4 rounded-2xl border border-slate-200/80 bg-gradient-to-r from-slate-50/95 via-white to-violet-50/30 p-4 shadow-sm sm:p-5">
     <div class="grid grid-cols-1 xl:grid-cols-12 gap-3 xl:gap-4">
       <div class="xl:col-span-4 min-w-0">
         <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Pesquisa</label>
         <input
           [(ngModel)]="filtroQ"
           (keyup.enter)="aplicarFiltros()"
-          class="mt-1.5 h-10 w-full px-3.5 rounded-lg border border-slate-200/90 text-sm bg-white text-slate-900 placeholder:text-slate-400 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          class="mt-1.5 h-10 w-full rounded-xl border border-slate-200/90 bg-white px-3.5 text-sm text-slate-900 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] transition-colors placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
           placeholder="Razão social, fantasia, CPF/CNPJ, e-mail…"
         />
       </div>
@@ -22,7 +22,7 @@
           <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Empresa</label>
           <select
             [(ngModel)]="filtroEmpresaId"
-            class="mt-1.5 h-10 w-full px-3.5 rounded-lg border border-slate-200/90 text-sm bg-white text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            class="mt-1.5 h-10 w-full rounded-xl border border-slate-200/90 bg-white px-3.5 text-sm text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] transition-colors focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
           >
             <option [ngValue]="null">Todas</option>
             <option *ngFor="let e of empresasDisponiveis" [ngValue]="e.idEmpresa">{{ e.nomeEmpresa }}</option>
@@ -32,7 +32,7 @@
           <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Tipo</label>
           <select
             [(ngModel)]="filtroTipoPessoa"
-            class="mt-1.5 h-10 w-full px-3.5 rounded-lg border border-slate-200/90 text-sm bg-white text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            class="mt-1.5 h-10 w-full rounded-xl border border-slate-200/90 bg-white px-3.5 text-sm text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] transition-colors focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
           >
             <option value="">Todos</option>
             <option value="PJ">PJ</option>
@@ -43,7 +43,7 @@
           <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Situação</label>
           <select
             [(ngModel)]="filtroAtivo"
-            class="mt-1.5 h-10 w-full px-3.5 rounded-lg border border-slate-200/90 text-sm bg-white text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            class="mt-1.5 h-10 w-full rounded-xl border border-slate-200/90 bg-white px-3.5 text-sm text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] transition-colors focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
           >
             <option value="todos">Todos</option>
             <option value="sim">Ativo</option>
@@ -53,7 +53,7 @@
         <button
           type="button"
           (click)="aplicarFiltros()"
-          class="h-10 px-4 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 shadow-sm transition-colors w-full"
+          class="h-10 w-full rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-800"
         >
           Aplicar
         </button>
@@ -62,7 +62,7 @@
             type="button"
             (click)="limparFiltros()"
             title="Limpar filtros"
-            class="h-10 flex-1 xl:flex-none xl:w-10 rounded-lg border border-slate-200/80 bg-white text-slate-600 hover:bg-slate-50 shadow-sm flex items-center justify-center"
+            class="flex h-10 flex-1 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50 xl:w-10 xl:flex-none"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -72,7 +72,7 @@
             type="button"
             (click)="carregar()"
             title="Atualizar"
-            class="h-10 flex-1 xl:flex-none xl:w-10 rounded-lg border border-slate-200/80 bg-white text-slate-600 hover:bg-slate-50 shadow-sm flex items-center justify-center"
+            class="flex h-10 flex-1 items-center justify-center rounded-xl border border-slate-200/80 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50 xl:w-10 xl:flex-none"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -90,7 +90,7 @@
       <button
         type="button"
         (click)="abrirNovo()"
-        class="h-10 px-5 rounded-lg bg-emerald-600 text-white text-sm font-semibold shadow-sm shadow-emerald-600/25 hover:bg-emerald-500 hover:shadow-md transition-all active:scale-[0.98]"
+        class="h-10 rounded-xl bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 px-5 text-sm font-semibold text-white shadow-[0_12px_25px_-12px_rgba(124,58,237,0.55)] transition-all hover:brightness-105 active:scale-[0.98]"
       >
         Cadastrar novo
       </button>
@@ -99,21 +99,21 @@
 
   <p *ngIf="erro" class="text-sm text-red-700 bg-red-50/90 border border-red-200/60 rounded-xl px-4 py-3 shadow-sm">{{ erro }}</p>
 
-  <div class="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
+  <div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_18px_40px_-24px_rgba(15,23,42,0.22)] ring-1 ring-slate-200/60">
     <table class="min-w-full text-sm">
       <thead>
-        <tr class="bg-slate-50/95 border-b border-slate-200/80 text-left">
-          <th class="py-3.5 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Fornecedor</th>
-          <th class="py-3.5 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Documento</th>
-          <th class="py-3.5 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-500 min-w-[200px]">Contato</th>
-          <th class="py-3.5 px-4 text-[11px] font-semibold uppercase tracking-wider text-slate-500 text-right w-44">Ações</th>
+        <tr class="border-b border-slate-200/80 bg-slate-50/95 text-left">
+          <th class="px-4 py-3.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Fornecedor</th>
+          <th class="px-4 py-3.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Documento</th>
+          <th class="min-w-[200px] px-4 py-3.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Contato</th>
+          <th class="w-44 px-4 py-3.5 text-right text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Ações</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngIf="carregando && linhas.length === 0">
           <td colspan="4" class="py-12 text-center text-slate-500">Carregando…</td>
         </tr>
-        <tr *ngFor="let f of linhas; let i = index" class="border-b border-slate-100/90 hover:bg-slate-50/70 align-top transition-colors">
+        <tr *ngFor="let f of linhas; let i = index" class="border-b border-slate-100/90 align-top transition-colors hover:bg-violet-50/35">
           <td class="py-3 px-4">
             <div class="font-semibold text-slate-900">{{ indiceGlobal(i) }}. {{ f.razaoSocial }}</div>
             <div class="text-xs text-slate-500 mt-1">{{ subtitulo(f) }}</div>
@@ -138,7 +138,7 @@
               <button
                 type="button"
                 (click)="excluir(f)"
-                class="inline-flex h-9 w-9 items-center justify-center rounded-md text-red-600 hover:bg-red-50 border border-transparent hover:border-red-100"
+                class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-transparent text-rose-600 transition-colors hover:border-rose-100 hover:bg-rose-50"
                 title="Excluir"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,7 +153,7 @@
               <button
                 type="button"
                 (click)="abrirEditar(f)"
-                class="inline-flex h-9 w-9 items-center justify-center rounded-md text-slate-600 hover:bg-slate-100 border border-transparent hover:border-gray-200"
+                class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-transparent text-slate-600 transition-colors hover:border-slate-200 hover:bg-slate-100"
                 title="Editar"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -168,7 +168,7 @@
               <button
                 type="button"
                 (click)="alternarAtivo(f)"
-                class="inline-flex h-9 w-9 items-center justify-center rounded-md border border-transparent hover:border-slate-200"
+                class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-transparent transition-colors hover:border-slate-200 hover:bg-slate-100"
                 [class.text-emerald-600]="f.ativo !== false"
                 [class.text-slate-400]="f.ativo === false"
                 [title]="f.ativo !== false ? 'Ativo (clique para inativar)' : 'Inativo (clique para ativar)'"

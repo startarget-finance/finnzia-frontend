@@ -1,83 +1,85 @@
-<div class="min-h-screen bg-[#F8FAFC] pb-12 font-sans">
-  <!-- Top Navigation / Header Area -->
-  <div class="bg-white border-b border-gray-200 px-6 py-5 sm:px-8 lg:px-10">
-    <div class="max-w-[1800px] mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div class="flex items-center gap-4">
-        <div>
-          <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Movimentações Financeiras</h1>
-          <p class="text-sm text-gray-500 mt-0.5">Acompanhe e gerencie o fluxo de caixa da sua empresa</p>
+<div class="min-h-full bg-gradient-to-b from-slate-50 via-white to-slate-100/70 pb-12 font-sans">
+  <div class="mx-auto max-w-[1800px] px-4 pt-6 sm:px-6 lg:px-8">
+    <!-- Hero -->
+    <div class="relative mb-8 overflow-hidden rounded-3xl border border-slate-200/70 bg-white/85 p-6 shadow-sm shadow-slate-900/5 backdrop-blur-sm sm:p-7">
+      <div aria-hidden="true" class="pointer-events-none absolute inset-0 bg-[radial-gradient(900px_circle_at_8%_-10%,rgba(139,92,246,0.07),transparent_55%),radial-gradient(800px_circle_at_100%_0%,rgba(20,184,166,0.06),transparent_50%)]"></div>
+      <div class="relative z-[1] flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-start gap-4">
+          <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-teal-500 shadow-lg shadow-violet-500/25 ring-2 ring-white/90">
+            <i class="fi fi-rr-exchange text-[1.35rem] leading-none text-white" aria-hidden="true"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Movimentações financeiras</h1>
+            <p class="mt-0.5 text-sm text-slate-500">Acompanhe e gerencie o fluxo de caixa da sua empresa</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200/80 bg-slate-50/90 py-1.5 pl-3 pr-1.5 shadow-sm ring-1 ring-slate-200/60">
+          <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Fonte</span>
+          <select id="fonteDados"
+                  [(ngModel)]="fonteDados"
+                  (change)="onFonteDadosChange()"
+                  [disabled]="loading"
+                  class="cursor-pointer rounded-xl border border-slate-200 bg-white py-2 pl-3 pr-8 text-sm font-medium text-slate-700 shadow-sm transition-colors focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/25 hover:bg-slate-50/80 disabled:cursor-not-allowed disabled:opacity-50">
+            <option value="omie">OMIE</option>
+            <option value="bomcontrole">Bom Controle</option>
+          </select>
         </div>
       </div>
-      
-      <!-- Fonte de Dados -->
-      <div class="flex items-center bg-gray-50 p-1 rounded-lg border border-gray-200 shadow-sm">
-        <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3">Fonte</span>
-        <select id="fonteDados" 
-                [(ngModel)]="fonteDados"
-                (change)="onFonteDadosChange()"
-                [disabled]="loading"
-                class="bg-white border border-gray-200 text-sm font-medium text-gray-700 rounded-md py-1.5 pl-3 pr-8 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer hover:bg-gray-50/50 transition-colors disabled:opacity-50 shadow-sm">
-          <option value="omie">OMIE</option>
-          <option value="bomcontrole">Bom Controle</option>
-        </select>
-      </div>
     </div>
-  </div>
 
-  <div class="max-w-[1800px] mx-auto px-6 sm:px-8 lg:px-10 mt-8">
+    <div>
     
     <!-- Loading State (Skeleton-like) -->
     <div *ngIf="loading" class="space-y-6 animate-pulse">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div *ngFor="let i of [1,2,3,4]" class="bg-white h-32 rounded-2xl border border-gray-200 shadow-sm"></div>
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
+        <div *ngFor="let i of [1,2,3,4]" class="h-32 rounded-2xl border border-slate-200/80 bg-white shadow-sm"></div>
       </div>
-      <div class="bg-white h-24 rounded-2xl border border-gray-200 shadow-sm"></div>
-      <div class="bg-white h-96 rounded-2xl border border-gray-200 shadow-sm"></div>
+      <div class="h-24 rounded-2xl border border-slate-200/80 bg-white shadow-sm"></div>
+      <div class="h-96 rounded-2xl border border-slate-200/80 bg-white shadow-sm"></div>
     </div>
 
     <!-- Error State -->
-    <div *ngIf="error && !loading" class="mb-8 bg-rose-50 border border-rose-200 rounded-2xl p-5 flex items-start gap-4">
-      <div class="bg-rose-100 p-2 rounded-full shrink-0 mt-0.5">
-        <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div *ngIf="error && !loading" class="mb-8 flex items-start gap-4 rounded-2xl border border-rose-200/80 bg-rose-50/90 p-5 shadow-sm">
+      <div class="mt-0.5 shrink-0 rounded-full bg-rose-100 p-2">
+        <svg class="h-5 w-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
       </div>
       <div>
-        <h3 class="text-sm font-semibold text-rose-800">Não foi possível carregar os dados</h3>
-        <p class="text-sm text-rose-600 mt-1">{{ error }}</p>
+        <h3 class="text-sm font-semibold text-rose-900">Não foi possível carregar os dados</h3>
+        <p class="mt-1 text-sm text-rose-700">{{ error }}</p>
       </div>
     </div>
 
     <ng-container *ngIf="!loading">
       <!-- Summary Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
         
         <!-- Receitas -->
-        <div class="relative text-left bg-white rounded-xl border border-[#E5E7EB] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)] flex flex-col justify-between group"
+        <div class="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 text-left shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-lg"
              [class.ring-2]="filtrosUI.tipo === 'receita'"
              [class.ring-emerald-400]="filtrosUI.tipo === 'receita'">
+          <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-emerald-500 to-teal-400"></div>
           <button type="button"
                   (click)="aplicarFiltroTipo('receita')"
-                  class="absolute inset-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  class="absolute inset-0 z-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-400/80"
                   aria-label="Filtrar por receitas"></button>
-          <div class="flex items-center justify-between mb-4 relative z-10">
-            <p class="text-sm font-medium text-emerald-700">Receitas</p>
-            <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform duration-200">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-              </svg>
+          <div class="relative z-10 mb-4 flex items-center justify-between">
+            <p class="text-sm font-semibold text-emerald-800">Receitas</p>
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/15 transition-transform duration-200 group-hover:scale-105">
+              <i class="fi fi-rr-plus text-[0.95rem] leading-none" aria-hidden="true"></i>
             </div>
           </div>
-          <div class="min-w-0 relative z-10">
-            <p class="text-2xl font-bold text-emerald-950 tracking-tight truncate text-center min-h-[2.25rem] flex items-center justify-center w-full">{{ formatarMoeda(totalReceitasGeral) }}</p>
-            <div class="mt-2 min-h-[2.25rem] flex flex-col justify-end">
-              <p class="text-xs text-emerald-600/80 font-medium truncate">
+          <div class="relative z-10 min-w-0">
+            <p class="flex min-h-[2.25rem] w-full items-center justify-center truncate text-center text-2xl font-semibold tabular-nums tracking-tight text-emerald-950">{{ formatarMoeda(totalReceitasGeral) }}</p>
+            <div class="mt-2 flex min-h-[2.25rem] flex-col justify-end">
+              <p class="truncate text-xs font-medium text-emerald-700/90">
                 No período selecionado
-                <span *ngIf="filtrosUI.tipo === 'receita'" class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/70 text-[10px] font-semibold uppercase tracking-wide border border-emerald-200">Filtro ativo</span>
+                <span *ngIf="filtrosUI.tipo === 'receita'" class="ml-1 inline-flex items-center rounded-full border border-emerald-200/80 bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-800">Filtro ativo</span>
               </p>
               <button type="button"
                       (click)="abrirModalDetalhes('receita'); $event.stopPropagation()"
-                      class="mt-2 text-xs font-medium text-emerald-600 hover:text-emerald-800 underline focus:outline-none relative z-20">
+                      class="relative z-20 mt-2 text-xs font-semibold text-emerald-700 underline decoration-emerald-300 underline-offset-2 transition-colors hover:text-emerald-900 focus:outline-none">
                 Ver detalhes
               </button>
             </div>
@@ -85,31 +87,30 @@
         </div>
 
         <!-- Despesas -->
-        <div class="relative text-left bg-white rounded-xl border border-[#E5E7EB] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)] flex flex-col justify-between group"
+        <div class="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 text-left shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-lg"
              [class.ring-2]="filtrosUI.tipo === 'despesa'"
              [class.ring-rose-400]="filtrosUI.tipo === 'despesa'">
+          <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-rose-500 to-red-500"></div>
           <button type="button"
                   (click)="aplicarFiltroTipo('despesa')"
-                  class="absolute inset-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-rose-400"
+                  class="absolute inset-0 z-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-rose-400/80"
                   aria-label="Filtrar por despesas"></button>
-          <div class="flex items-center justify-between mb-4 relative z-10">
-            <p class="text-sm font-medium text-rose-700">Despesas</p>
-            <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-600 group-hover:scale-110 transition-transform duration-200">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
-              </svg>
+          <div class="relative z-10 mb-4 flex items-center justify-between">
+            <p class="text-sm font-semibold text-rose-800">Despesas</p>
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600 ring-1 ring-rose-500/15 transition-transform duration-200 group-hover:scale-105">
+              <i class="fi fi-rr-minus text-[0.95rem] leading-none" aria-hidden="true"></i>
             </div>
           </div>
-          <div class="min-w-0 relative z-10">
-            <p class="text-2xl font-bold text-rose-950 tracking-tight truncate text-center min-h-[2.25rem] flex items-center justify-center w-full">{{ formatarMoeda(totalDespesasGeral) }}</p>
-            <div class="mt-2 min-h-[2.25rem] flex flex-col justify-end">
-              <p class="text-xs text-rose-600/80 font-medium truncate">
+          <div class="relative z-10 min-w-0">
+            <p class="flex min-h-[2.25rem] w-full items-center justify-center truncate text-center text-2xl font-semibold tabular-nums tracking-tight text-rose-950">{{ formatarMoeda(totalDespesasGeral) }}</p>
+            <div class="mt-2 flex min-h-[2.25rem] flex-col justify-end">
+              <p class="truncate text-xs font-medium text-rose-700/90">
                 No período selecionado
-                <span *ngIf="filtrosUI.tipo === 'despesa'" class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full bg-white/70 text-[10px] font-semibold uppercase tracking-wide border border-rose-200">Filtro ativo</span>
+                <span *ngIf="filtrosUI.tipo === 'despesa'" class="ml-1 inline-flex items-center rounded-full border border-rose-200/80 bg-white/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-800">Filtro ativo</span>
               </p>
               <button type="button"
                       (click)="abrirModalDetalhes('despesa'); $event.stopPropagation()"
-                      class="mt-2 text-xs font-medium text-rose-600 hover:text-rose-800 underline focus:outline-none relative z-20">
+                      class="relative z-20 mt-2 text-xs font-semibold text-rose-700 underline decoration-rose-300 underline-offset-2 transition-colors hover:text-rose-900 focus:outline-none">
                 Ver detalhes
               </button>
             </div>
@@ -119,88 +120,84 @@
         <!-- Saldo Líquido (clicável = limpar filtros) -->
         <button type="button"
                 (click)="limparFiltros()"
-                class="text-left rounded-2xl border p-4 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between group focus:outline-none focus:ring-2 focus:ring-gray-400"
-                [class.bg-emerald-50]="saldoLiquidoGeral >= 0"
-                [class.border-emerald-100]="saldoLiquidoGeral >= 0"
-                [class.bg-rose-50]="saldoLiquidoGeral < 0"
-                [class.border-rose-100]="saldoLiquidoGeral < 0"
+                [ngClass]="saldoLiquidoGeral >= 0
+                  ? 'group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-left shadow-sm shadow-slate-900/5 transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-violet-400'
+                  : 'group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-rose-200 bg-rose-50 p-5 text-left shadow-sm shadow-slate-900/5 transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-violet-400'"
                 title="Clique para limpar filtros">
-          <div class="flex items-center justify-between mb-4">
-            <p class="text-sm font-medium"
-               [class.text-emerald-700]="saldoLiquidoGeral >= 0"
-               [class.text-rose-700]="saldoLiquidoGeral < 0">Saldo Líquido</p>
-            <div class="w-10 h-10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-200"
-                 [class.bg-emerald-100]="saldoLiquidoGeral >= 0" [class.text-emerald-600]="saldoLiquidoGeral >= 0"
-                 [class.bg-rose-100]="saldoLiquidoGeral < 0" [class.text-rose-600]="saldoLiquidoGeral < 0">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
+          <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-violet-500 to-teal-500 opacity-80"></div>
+          <div class="relative mb-4 flex items-center justify-between">
+            <p class="text-sm font-semibold"
+               [class.text-emerald-800]="saldoLiquidoGeral >= 0"
+               [class.text-rose-800]="saldoLiquidoGeral < 0">Saldo líquido</p>
+            <div [ngClass]="saldoLiquidoGeral >= 0
+              ? 'flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 ring-1 ring-emerald-200 transition-transform duration-200 group-hover:scale-105'
+              : 'flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-rose-600 ring-1 ring-rose-200 transition-transform duration-200 group-hover:scale-105'">
+              <i class="fi fi-rr-chart-line-up text-[0.95rem] leading-none" aria-hidden="true"></i>
             </div>
           </div>
-          <div class="min-w-0">
-            <p class="text-2xl font-bold tracking-tight truncate"
+          <div class="relative min-w-0">
+            <p class="truncate text-2xl font-semibold tabular-nums tracking-tight"
                [class.text-emerald-950]="saldoLiquidoGeral >= 0"
                [class.text-rose-950]="saldoLiquidoGeral < 0">
               {{ formatarMoeda(saldoLiquidoGeral) }}
             </p>
-            <div class="mt-2 min-h-[2.25rem] flex flex-col justify-end">
-              <p class="text-xs font-medium truncate"
-                 [class.text-emerald-600]="saldoLiquidoGeral >= 0"
-                 [class.text-rose-600]="saldoLiquidoGeral < 0">Receitas - Despesas · Clique para limpar filtros</p>
+            <div class="mt-2 flex min-h-[2.25rem] flex-col justify-end">
+              <p class="truncate text-xs font-medium"
+                 [class.text-emerald-700]="saldoLiquidoGeral >= 0"
+                 [class.text-rose-700]="saldoLiquidoGeral < 0">Receitas − despesas · clique para limpar filtros</p>
             </div>
           </div>
         </button>
 
         <!-- Movimentações -->
-        <div class="bg-white rounded-xl border border-[#E5E7EB] p-5 shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)] flex flex-col justify-between group">
-          <div class="flex items-center justify-between mb-4">
-            <p class="text-sm font-medium text-blue-700">Movimentações</p>
-            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform duration-200">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-              </svg>
+        <div class="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-lg">
+          <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-sky-500 to-violet-500"></div>
+          <div class="relative mb-4 flex items-center justify-between">
+            <p class="text-sm font-semibold text-slate-800">Movimentações</p>
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 ring-1 ring-violet-500/15 transition-transform duration-200 group-hover:scale-105">
+              <i class="fi fi-rr-receipt text-[0.95rem] leading-none" aria-hidden="true"></i>
             </div>
           </div>
-          <div class="min-w-0">
-            <p class="text-2xl font-bold text-blue-950 tracking-tight truncate text-center min-h-[2.25rem] flex items-center justify-center w-full">{{ totalItens }}</p>
-            <div class="mt-2 min-h-[2.25rem] flex flex-col justify-end">
-              <p class="text-xs text-blue-600/80 font-medium truncate">Registros no período</p>
+          <div class="relative min-w-0">
+            <p class="flex min-h-[2.25rem] w-full items-center justify-center truncate text-center text-2xl font-semibold tabular-nums tracking-tight text-slate-900">{{ totalItens }}</p>
+            <div class="mt-2 flex min-h-[2.25rem] flex-col justify-end">
+              <p class="truncate text-xs font-medium text-slate-500">Registros no período</p>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Filtros Section -->
-      <div class="bg-white rounded-2xl border border-gray-200 p-5 sm:p-6 mb-8 shadow-sm">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-4">
-          <h3 class="text-sm font-semibold text-gray-900 flex items-center gap-2">
-            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-            </svg>
-            Filtros de Busca
+      <div class="mb-8 rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm shadow-slate-900/5 backdrop-blur-sm sm:p-6">
+        <div class="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h3 class="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 ring-1 ring-slate-200/80">
+              <i class="fi fi-rr-filter text-[0.85rem] leading-none" aria-hidden="true"></i>
+            </span>
+            Filtros de busca
           </h3>
-          <div *ngIf="getTotalFiltrosAtivos() > 0" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium border border-blue-100">
-            <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-            {{ getTotalFiltrosAtivos() }} filtro{{ getTotalFiltrosAtivos() > 1 ? 's' : '' }} ativo{{ getTotalFiltrosAtivos() > 1 ? 's' : '' }}
+          <div class="flex flex-wrap items-center gap-3">
+            <div *ngIf="getTotalFiltrosAtivos() > 0" class="inline-flex items-center gap-1.5 rounded-full border border-violet-200/80 bg-violet-50/90 px-3 py-1 text-xs font-medium text-violet-800">
+              <span class="h-1.5 w-1.5 rounded-full bg-violet-500"></span>
+              {{ getTotalFiltrosAtivos() }} filtro{{ getTotalFiltrosAtivos() > 1 ? 's' : '' }} ativo{{ getTotalFiltrosAtivos() > 1 ? 's' : '' }}
+            </div>
+            <button type="button" (click)="limparFiltros()" class="flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900">
+              <i class="fi fi-rr-cross-small h-4 w-4 flex items-center justify-center text-[0.85rem] leading-none" aria-hidden="true"></i>
+              Limpar filtros
+            </button>
           </div>
-          <button type="button" (click)="limparFiltros()" class="text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors flex items-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            Limpar filtros
-          </button>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           
           <!-- Período -->
           <div class="relative">
-            <label class="block text-xs font-medium text-gray-500 mb-1.5">Período</label>
+            <label class="mb-1.5 block text-xs font-medium text-slate-500">Período</label>
             <button type="button"
                     (click)="toggleRangePicker()"
-                    class="w-full flex items-center justify-between bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm">
+                    class="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/25">
               <div class="flex items-center gap-2.5 truncate">
-                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
+                <i class="fi fi-rr-calendar h-4 w-4 shrink-0 text-slate-400 flex items-center justify-center text-[0.85rem] leading-none" aria-hidden="true"></i>
                 <span class="truncate font-medium">
                   <ng-container *ngIf="dataInicial && dataFinal; else placeholderPeriodo">
                     {{ dataInicial === dataFinal 
@@ -210,22 +207,22 @@
                   <ng-template #placeholderPeriodo>Selecionar período</ng-template>
                 </span>
               </div>
-              <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              <i class="fi fi-rr-angle-small-down h-4 w-4 shrink-0 text-slate-400 flex items-center justify-center text-[0.85rem] leading-none" aria-hidden="true"></i>
             </button>
 
             <!-- Popover Calendário -->
-            <div *ngIf="mostrarRangePicker" class="absolute z-50 mt-2 left-0 bg-white border border-gray-200 rounded-2xl shadow-xl p-4 w-[340px] max-h-[400px] overflow-y-auto">
-              <div class="flex items-center justify-between mb-4">
-                <button type="button" (click)="prevMonth()" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            <div *ngIf="mostrarRangePicker" class="absolute left-0 z-50 mt-2 max-h-[400px] w-[340px] overflow-y-auto rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-xl shadow-slate-900/10 backdrop-blur-sm">
+              <div class="mb-4 flex items-center justify-between">
+                <button type="button" (click)="prevMonth()" class="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100">
+                  <i class="fi fi-rr-angle-small-left h-5 w-5 flex items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
                 </button>
-                <div class="text-sm font-bold text-gray-900 capitalize">{{ getMonthYearLabel() }}</div>
-                <button type="button" (click)="nextMonth()" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                <div class="text-sm font-semibold capitalize text-slate-900">{{ getMonthYearLabel() }}</div>
+                <button type="button" (click)="nextMonth()" class="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100">
+                  <i class="fi fi-rr-angle-small-right h-5 w-5 flex items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
                 </button>
               </div>
 
-              <div class="grid grid-cols-7 text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
+              <div class="mb-2 grid grid-cols-7 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
                 <div class="text-center">dom</div><div class="text-center">seg</div><div class="text-center">ter</div>
                 <div class="text-center">qua</div><div class="text-center">qui</div><div class="text-center">sex</div><div class="text-center">sáb</div>
               </div>
@@ -238,22 +235,25 @@
                           (mouseenter)="onHoverDate(d.dateStr)"
                           (mouseleave)="onHoverDate(null)"
                           [class.opacity-30]="!d.inCurrentMonth"
-                          [class.bg-blue-600]="isStart(d.dateStr) || isEnd(d.dateStr)"
+                          [class.bg-gradient-to-br]="isStart(d.dateStr) || isEnd(d.dateStr)"
+                          [class.from-violet-600]="isStart(d.dateStr) || isEnd(d.dateStr)"
+                          [class.to-teal-500]="isStart(d.dateStr) || isEnd(d.dateStr)"
                           [class.text-white]="isStart(d.dateStr) || isEnd(d.dateStr)"
                           [class.font-semibold]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                          [class.bg-blue-50]="isBetween(d.dateStr)"
-                          [class.text-blue-700]="isBetween(d.dateStr)"
-                          class="text-sm text-gray-700 rounded-lg py-2 hover:bg-gray-100 transition-colors disabled:cursor-not-allowed">
+                          [class.shadow-sm]="isStart(d.dateStr) || isEnd(d.dateStr)"
+                          [class.bg-violet-100]="isBetween(d.dateStr)"
+                          [class.text-violet-800]="isBetween(d.dateStr)"
+                          class="rounded-lg py-2 text-sm text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed">
                     {{ d.day }}
                   </button>
                 </ng-container>
               </div>
 
-              <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                <button type="button" (click)="clearRange()" class="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors">Limpar</button>
+              <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
+                <button type="button" (click)="clearRange()" class="text-xs font-medium text-slate-500 transition-colors hover:text-slate-900">Limpar</button>
                 <div class="flex gap-2">
-                  <button type="button" (click)="cancelRangePicker()" class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">Cancelar</button>
-                  <button type="button" (click)="applyRangePicker()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-gray-800 shadow-sm transition-colors">Aplicar</button>
+                  <button type="button" (click)="cancelRangePicker()" class="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50">Cancelar</button>
+                  <button type="button" (click)="applyRangePicker()" class="rounded-xl bg-gradient-to-r from-violet-600 to-teal-500 px-3 py-1.5 text-xs font-medium text-white shadow-md shadow-violet-500/30 transition-all hover:brightness-105">Aplicar</button>
                 </div>
               </div>
             </div>
@@ -261,55 +261,55 @@
 
           <!-- Tipo -->
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1.5">Tipo</label>
+            <label class="mb-1.5 block text-xs font-medium text-slate-500">Tipo</label>
             <div class="relative">
               <select [(ngModel)]="filtrosUI.tipo" 
                       (ngModelChange)="onFiltroChange()"
-                      class="w-full appearance-none bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm text-gray-700 font-medium hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer shadow-sm">
+                      class="w-full cursor-pointer appearance-none rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/25">
                 <option *ngFor="let tipo of tipos" [value]="tipo.value">{{ tipo.label }}</option>
               </select>
-              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-gray-400">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400">
+                <i class="fi fi-rr-angle-small-down h-4 w-4 flex items-center justify-center text-[0.85rem] leading-none" aria-hidden="true"></i>
               </div>
             </div>
           </div>
 
           <!-- Categoria -->
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1.5">Categoria</label>
+            <label class="mb-1.5 block text-xs font-medium text-slate-500">Categoria</label>
             <div class="relative">
               <select [(ngModel)]="filtrosUI.categoria" 
                       (ngModelChange)="onFiltroChange()"
-                      class="w-full appearance-none bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm text-gray-700 font-medium hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer shadow-sm">
+                      class="w-full cursor-pointer appearance-none rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/25">
                 <option *ngFor="let categoria of categorias" [value]="categoria.value">{{ categoria.label }}</option>
               </select>
-              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-gray-400">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400">
+                <i class="fi fi-rr-angle-small-down h-4 w-4 flex items-center justify-center text-[0.85rem] leading-none" aria-hidden="true"></i>
               </div>
             </div>
           </div>
 
           <!-- Status (Pendente / Quitado) -->
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1.5">Status</label>
+            <label class="mb-1.5 block text-xs font-medium text-slate-500">Status</label>
             <div class="relative">
               <select [(ngModel)]="filtrosUI.status" 
                       (ngModelChange)="onFiltroChange()"
-                      class="w-full appearance-none bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm text-gray-700 font-medium hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer shadow-sm">
+                      class="w-full cursor-pointer appearance-none rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/25">
                 <option *ngFor="let opt of statusOpcoes" [value]="opt.value">{{ opt.label }}</option>
               </select>
-              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-gray-400">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400">
+                <i class="fi fi-rr-angle-small-down h-4 w-4 flex items-center justify-center text-[0.85rem] leading-none" aria-hidden="true"></i>
               </div>
             </div>
           </div>
 
           <!-- Pesquisa -->
           <div>
-            <label class="block text-xs font-medium text-gray-500 mb-1.5">Pesquisar</label>
+            <label class="mb-1.5 block text-xs font-medium text-slate-500">Pesquisar</label>
             <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
+                <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
               </div>
@@ -317,7 +317,7 @@
                      [(ngModel)]="filtrosUI.textoPesquisa"
                      (ngModelChange)="onTextoPesquisaChange($event)"
                      placeholder="Nome, cliente..."
-                     class="w-full pl-10 pr-3.5 py-2.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 font-medium placeholder-gray-400 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm">
+                     class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3.5 text-sm font-medium text-slate-900 shadow-sm placeholder:text-slate-400 transition-all hover:border-slate-300 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/25">
             </div>
           </div>
 
@@ -325,7 +325,7 @@
       </div>
 
       <!-- Validation Error (ex.: intervalo de datas inválido) -->
-      <div *ngIf="validationError && !loading" class="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-start gap-2">
+      <div *ngIf="validationError && !loading" class="mt-3 flex items-start gap-2 rounded-xl border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-sm text-amber-900 shadow-sm">
         <svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M12 5a7 7 0 11-4.95 2.05A7 7 0 0112 5z"/>
         </svg>
@@ -333,33 +333,33 @@
       </div>
 
       <!-- Tabela de Movimentações -->
-      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <div class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.32)] ring-1 ring-slate-200/70 backdrop-blur-sm">
         <div class="w-full overflow-x-auto">
-          <table class="min-w-[920px] w-full divide-y divide-gray-200 table-fixed">
-            <thead class="bg-gray-50/50">
+          <table class="w-full min-w-[920px] table-auto divide-y divide-slate-100">
+            <thead class="bg-slate-50/95">
               <tr>
-                <th scope="col" (click)="toggleSort('tipo')" class="px-3 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-24 cursor-pointer select-none hover:bg-gray-100 rounded-tl-lg align-middle">
+                <th scope="col" (click)="toggleSort('tipo')" class="w-24 cursor-pointer select-none rounded-tl-xl px-3 py-3.5 text-left align-middle text-xs font-semibold uppercase tracking-wider text-slate-600 transition-colors hover:bg-slate-100/80">
                   <span class="inline-flex items-center gap-1">Tipo<span *ngIf="sortBy === 'tipo'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span></span>
                 </th>
-                <th scope="col" (click)="toggleSort('data')" class="px-3 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28 cursor-pointer select-none hover:bg-gray-100 align-middle">
+                <th scope="col" (click)="toggleSort('data')" class="w-28 cursor-pointer select-none px-3 py-3.5 text-left align-middle text-xs font-semibold uppercase tracking-wider text-slate-600 transition-colors hover:bg-slate-100/80">
                   <span class="inline-flex items-center gap-1">Data Venc.<span *ngIf="sortBy === 'data'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span></span>
                 </th>
-                <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider align-middle">Descrição</th>
-                <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-40 align-middle">Cliente/Forn.</th>
-                <th scope="col" class="px-3 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32 align-middle">Categoria</th>
-                <th scope="col" (click)="toggleSort('valor')" class="px-3 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-28 cursor-pointer select-none hover:bg-gray-100 align-middle">
+                <th scope="col" class="w-[32%] px-3 py-3.5 text-left align-middle text-xs font-semibold uppercase tracking-wider text-slate-600">Descrição</th>
+                <th scope="col" class="w-[24%] px-3 py-3.5 text-left align-middle text-xs font-semibold uppercase tracking-wider text-slate-600">Cliente/Forn.</th>
+                <th scope="col" class="w-32 px-3 py-3.5 text-left align-middle text-xs font-semibold uppercase tracking-wider text-slate-600">Categoria</th>
+                <th scope="col" (click)="toggleSort('valor')" class="w-28 cursor-pointer select-none px-3 py-3.5 text-right align-middle text-xs font-semibold uppercase tracking-wider text-slate-600 transition-colors hover:bg-slate-100/80">
                   <span class="inline-flex items-center gap-1">Valor<span *ngIf="sortBy === 'valor'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span></span>
                 </th>
-                <th scope="col" (click)="toggleSort('status')" class="px-3 py-3.5 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider w-32 cursor-pointer select-none hover:bg-gray-100 rounded-tr-lg align-middle">
+                <th scope="col" (click)="toggleSort('status')" class="w-32 cursor-pointer select-none rounded-tr-xl px-3 py-3.5 text-center align-middle text-xs font-semibold uppercase tracking-wider text-slate-600 transition-colors hover:bg-slate-100/80">
                   <span class="inline-flex items-center gap-1">Status<span *ngIf="sortBy === 'status'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span></span>
                 </th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100 bg-white">
-              <tr *ngFor="let mov of movimentacoesParaExibir" class="hover:bg-gray-50/80 transition-colors duration-150 group cursor-pointer">
+            <tbody class="divide-y divide-slate-100 bg-white">
+              <tr *ngFor="let mov of movimentacoesParaExibir" class="group cursor-pointer transition-colors duration-150 hover:bg-violet-50/35">
                 
                 <!-- Tipo -->
-                <td class="px-3 py-5 whitespace-nowrap align-top">
+                <td class="px-3 py-3.5 whitespace-nowrap align-middle">
                   <div class="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium border"
                        [class.bg-emerald-50]="!mov.Debito" [class.text-emerald-700]="!mov.Debito" [class.border-emerald-200]="!mov.Debito"
                        [class.bg-rose-50]="mov.Debito" [class.text-rose-700]="mov.Debito" [class.border-rose-200]="mov.Debito">
@@ -369,41 +369,38 @@
                 </td>
                 
                 <!-- Data Vencimento -->
-                <td class="px-3 py-5 text-sm text-gray-600 font-medium align-top">
+                <td class="px-3 py-3.5 align-middle text-sm font-medium text-slate-600">
                   {{ formatDate(mov.DataVencimento) }}
                 </td>
                 
                 <!-- Descrição -->
-                <td class="px-3 py-5 text-sm text-gray-900 font-medium align-top">
-                  <div class="break-words line-clamp-2" [title]="mov.Nome">{{ mov.Nome }}</div>
+                <td class="w-[32%] px-3 py-3.5 align-middle text-sm font-medium text-slate-900">
+                  <div class="line-clamp-1 break-words" [title]="formatarDescricaoResumida(mov.Nome)">{{ formatarDescricaoResumida(mov.Nome) }}</div>
                 </td>
                 
                 <!-- Cliente/Fornecedor -->
-                <td class="px-3 py-5 text-sm align-top">
-                  <div class="text-gray-900 font-medium break-words line-clamp-2" [title]="mov.NomeClienteFornecedor || mov.NomeFantasiaClienteFornecedor || '-'">
-                    {{ mov.NomeClienteFornecedor || mov.NomeFantasiaClienteFornecedor || '-' }}
-                  </div>
-                  <div class="text-xs text-gray-500 mt-1 truncate">
-                    {{ mov.NomeTipoMovimentacao || '' }}
+                <td class="w-[24%] px-3 py-3.5 align-middle text-sm">
+                  <div class="line-clamp-2 break-words font-medium leading-tight text-slate-900" [title]="formatarClienteFornecedorResumido(mov.NomeClienteFornecedor || mov.NomeFantasiaClienteFornecedor || '-')">
+                    {{ formatarClienteFornecedorResumido(mov.NomeClienteFornecedor || mov.NomeFantasiaClienteFornecedor || '-') }}
                   </div>
                 </td>
                 
                 <!-- Categoria -->
-                <td class="px-3 py-5 text-sm align-top">
-                  <div class="inline-flex items-center px-2.5 py-1 rounded-md bg-gray-100 text-gray-600 text-xs font-medium border border-gray-200 break-words line-clamp-1" [title]="mov.NomeCategoriaFinanceira">
+                <td class="px-3 py-3.5 align-middle text-sm">
+                  <div class="inline-flex max-w-full items-center rounded-lg border border-slate-200/90 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 truncate" [title]="mov.NomeCategoriaFinanceira">
                     {{ mov.NomeCategoriaFinanceira || '-' }}
                   </div>
                 </td>
                 
                 <!-- Valor -->
-                <td class="px-3 py-5 whitespace-nowrap text-sm text-right font-semibold tracking-tight align-top"
+                <td class="whitespace-nowrap px-3 py-3.5 align-middle text-right text-sm font-semibold tracking-tight tabular-nums"
                     [class.text-rose-600]="mov.Debito"
-                    [class.text-gray-900]="!mov.Debito">
+                    [class.text-emerald-700]="!mov.Debito">
                   {{ formatExtrato(mov.Valor || 0, mov.Debito) }}
                 </td>
                 
                 <!-- Status -->
-                <td class="px-3 py-5 whitespace-nowrap text-center align-top">
+                <td class="px-3 py-3.5 whitespace-nowrap text-center align-middle">
                   <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border"
                        [class.bg-emerald-50]="mov.DataQuitacao" [class.text-emerald-700]="mov.DataQuitacao" [class.border-emerald-200]="mov.DataQuitacao"
                        [class.bg-amber-50]="!mov.DataQuitacao" [class.text-amber-700]="!mov.DataQuitacao" [class.border-amber-200]="!mov.DataQuitacao">
@@ -418,15 +415,15 @@
               <tr *ngIf="movimentacoesParaExibir.length === 0">
                 <td colspan="7" class="px-6 py-20 text-center">
                   <div class="flex flex-col items-center justify-center">
-                    <div class="w-12 h-12 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-center mb-4">
-                      <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200/80 bg-slate-50">
+                      <svg class="h-6 w-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                       </svg>
                     </div>
-                    <p class="text-sm font-semibold text-gray-900">Nenhuma movimentação encontrada</p>
-                    <p class="text-sm text-gray-500 mt-1">Tente ajustar seus filtros ou período de busca.</p>
-                    <button type="button" (click)="limparFiltros()" class="mt-5 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm">
-                      Limpar Filtros
+                    <p class="text-sm font-semibold text-slate-900">Nenhuma movimentação encontrada</p>
+                    <p class="mt-1 text-sm text-slate-500">Tente ajustar seus filtros ou período de busca.</p>
+                    <button type="button" (click)="limparFiltros()" class="mt-5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900">
+                      Limpar filtros
                     </button>
                   </div>
                 </td>
@@ -437,35 +434,35 @@
       </div>
 
       <!-- Modal Detalhes por Categoria / Cliente -->
-      <div *ngIf="mostrarModalDetalhes" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" (click)="fecharModalDetalhes()">
-        <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col" (click)="$event.stopPropagation()">
-          <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-gray-900">
+      <div *ngIf="mostrarModalDetalhes" class="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" (click)="fecharModalDetalhes()">
+        <div class="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl shadow-slate-900/15" (click)="$event.stopPropagation()">
+          <div class="flex items-center justify-between border-b border-slate-200/80 bg-gradient-to-r from-slate-50/95 to-violet-50/30 px-6 py-4">
+            <h3 class="text-lg font-semibold text-slate-900">
               Detalhes {{ tipoModalDetalhes === 'receita' ? 'Receitas' : 'Despesas' }} — por categoria e cliente
             </h3>
-            <button type="button" (click)="fecharModalDetalhes()" class="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            <button type="button" (click)="fecharModalDetalhes()" class="rounded-xl p-2 text-slate-500 transition-colors hover:bg-slate-200/80 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/40">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
-          <div class="px-6 py-4 overflow-y-auto flex-1 space-y-6">
+          <div class="flex-1 space-y-6 overflow-y-auto px-6 py-4">
             <div>
-              <h4 class="text-sm font-semibold text-gray-700 mb-2">Por categoria</h4>
+              <h4 class="mb-2 text-sm font-semibold text-slate-800">Por categoria</h4>
               <ul class="space-y-1.5 text-sm">
-                <li *ngFor="let item of getDetalhesPorCategoria(tipoModalDetalhes)" class="flex justify-between items-center py-1.5 border-b border-gray-50">
-                  <span class="text-gray-900 font-medium truncate mr-2">{{ item.nome }}</span>
-                  <span class="shrink-0" [class.text-rose-600]="tipoModalDetalhes === 'despesa'" [class.text-emerald-600]="tipoModalDetalhes === 'receita'">{{ formatarMoeda(item.total) }} ({{ item.quantidade }})</span>
+                <li *ngFor="let item of getDetalhesPorCategoria(tipoModalDetalhes)" class="flex items-center justify-between border-b border-slate-100 py-1.5">
+                  <span class="mr-2 truncate font-medium text-slate-900">{{ item.nome }}</span>
+                  <span class="shrink-0 tabular-nums" [class.text-rose-600]="tipoModalDetalhes === 'despesa'" [class.text-emerald-600]="tipoModalDetalhes === 'receita'">{{ formatarMoeda(item.total) }} ({{ item.quantidade }})</span>
                 </li>
-                <li *ngIf="getDetalhesPorCategoria(tipoModalDetalhes).length === 0" class="text-gray-500 py-2">Nenhum dado no período.</li>
+                <li *ngIf="getDetalhesPorCategoria(tipoModalDetalhes).length === 0" class="py-2 text-slate-500">Nenhum dado no período.</li>
               </ul>
             </div>
             <div>
-              <h4 class="text-sm font-semibold text-gray-700 mb-2">Por cliente / fornecedor</h4>
+              <h4 class="mb-2 text-sm font-semibold text-slate-800">Por cliente / fornecedor</h4>
               <ul class="space-y-1.5 text-sm">
-                <li *ngFor="let item of getDetalhesPorCliente(tipoModalDetalhes)" class="flex justify-between items-center py-1.5 border-b border-gray-50">
-                  <span class="text-gray-900 font-medium truncate mr-2">{{ item.nome }}</span>
-                  <span class="shrink-0" [class.text-rose-600]="tipoModalDetalhes === 'despesa'" [class.text-emerald-600]="tipoModalDetalhes === 'receita'">{{ formatarMoeda(item.total) }} ({{ item.quantidade }})</span>
+                <li *ngFor="let item of getDetalhesPorCliente(tipoModalDetalhes)" class="flex items-center justify-between border-b border-slate-100 py-1.5">
+                  <span class="mr-2 truncate font-medium text-slate-900">{{ item.nome }}</span>
+                  <span class="shrink-0 tabular-nums" [class.text-rose-600]="tipoModalDetalhes === 'despesa'" [class.text-emerald-600]="tipoModalDetalhes === 'receita'">{{ formatarMoeda(item.total) }} ({{ item.quantidade }})</span>
                 </li>
-                <li *ngIf="getDetalhesPorCliente(tipoModalDetalhes).length === 0" class="text-gray-500 py-2">Nenhum dado no período.</li>
+                <li *ngIf="getDetalhesPorCliente(tipoModalDetalhes).length === 0" class="py-2 text-slate-500">Nenhum dado no período.</li>
               </ul>
             </div>
           </div>
@@ -473,18 +470,18 @@
       </div>
 
       <!-- Paginação -->
-      <div *ngIf="totalItens > itensPorPagina" class="mt-6 flex flex-col sm:flex-row items-center justify-between px-6 py-4 bg-white rounded-2xl border border-gray-200 shadow-sm gap-4">
-        <div class="text-sm text-gray-500">
-          Mostrando <span class="font-medium text-gray-900">{{ (paginaAtual - 1) * itensPorPagina + 1 }}</span> 
-          a <span class="font-medium text-gray-900">{{ Math.min(paginaAtual * itensPorPagina, totalItens) }}</span> 
-          de <span class="font-medium text-gray-900">{{ totalItens }}</span> registros
+      <div *ngIf="totalItens > itensPorPagina" class="mt-6 flex flex-col items-center justify-between gap-4 rounded-2xl border border-slate-200/70 bg-white px-6 py-4 shadow-sm shadow-slate-900/5 sm:flex-row">
+        <div class="text-sm text-slate-500">
+          Mostrando <span class="font-medium text-slate-900">{{ (paginaAtual - 1) * itensPorPagina + 1 }}</span> 
+          a <span class="font-medium text-slate-900">{{ Math.min(paginaAtual * itensPorPagina, totalItens) }}</span> 
+          de <span class="font-medium text-slate-900">{{ totalItens }}</span> registros
         </div>
         <div class="flex items-center gap-1.5">
           <button type="button"
                   (click)="paginaAnterior()"
                   [disabled]="paginaAtual === 1"
-                  class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                  class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50">
+            <i class="fi fi-rr-angle-small-left h-4 w-4 flex items-center justify-center text-[0.9rem] leading-none" aria-hidden="true"></i>
           </button>
           
           <div class="flex items-center gap-1">
@@ -492,13 +489,9 @@
                     type="button"
                     (click)="irParaPagina(page)"
                     [disabled]="page === paginaAtual"
-                    [class.bg-gray-900]="page === paginaAtual"
-                    [class.text-white]="page === paginaAtual"
-                    [class.border-gray-900]="page === paginaAtual"
-                    [class.text-gray-600]="page !== paginaAtual"
-                    [class.border-gray-200]="page !== paginaAtual"
-                    [class.hover:bg-gray-50]="page !== paginaAtual"
-                    class="w-9 h-9 text-sm font-medium border rounded-lg transition-colors flex items-center justify-center">
+                    [ngClass]="page === paginaAtual
+                      ? 'flex h-9 w-9 items-center justify-center rounded-xl border border-transparent bg-gradient-to-r from-violet-600 to-teal-500 text-sm font-semibold text-white shadow-md shadow-violet-500/25'
+                      : 'flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-default'">
               {{ page }}
             </button>
           </div>
@@ -506,12 +499,13 @@
           <button type="button"
                   (click)="proximaPagina()"
                   [disabled]="paginaAtual === totalPaginas"
-                  class="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                  class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50">
+            <i class="fi fi-rr-angle-small-right h-4 w-4 flex items-center justify-center text-[0.9rem] leading-none" aria-hidden="true"></i>
           </button>
         </div>
       </div>
     </ng-container>
 
+    </div>
   </div>
 </div>

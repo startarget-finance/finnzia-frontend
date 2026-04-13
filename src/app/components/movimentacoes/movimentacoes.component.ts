@@ -84,7 +84,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   ];
 
   // Ordenação da tabela
-  sortBy: '' | 'tipo' | 'data' | 'valor' | 'status' = '';
+  sortBy: '' | 'tipo' | 'data' | 'valor' | 'status' = 'data';
   sortOrder: 'asc' | 'desc' = 'asc';
 
   // Modal de detalhes (por categoria/cliente)
@@ -1075,6 +1075,33 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     return isDebito ? `-${formatted}` : `+${formatted}`;
   }
 
+  formatarDescricaoResumida(texto: string | null | undefined): string {
+    if (!texto) return '-';
+    const descricaoLimpa = texto
+      .replace(/\s*\(?\s*PARCELA\s+FIXA\s+TODO\s+DIA\s*\d+\s*\)?/gi, '')
+      .replace(/\s*\(?\s*PARCELA\s+FIXA\s*\)?/gi, '')
+      .replace(/\s*\(?\s*PARCELAMENTO\s+MENSAL\s+EM\s*\d+\s*\)?/gi, '')
+      .replace(/\s*\(?\s*PARCELAMENTO\s+MENSAL\s*\)?/gi, '')
+      .replace(/\s*no\s+valor\s*r\$\s*.*$/gi, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+
+    if (!descricaoLimpa) return '-';
+
+    const maxChars = 52;
+    return descricaoLimpa.length > maxChars
+      ? `${descricaoLimpa.slice(0, maxChars).trimEnd()}...`
+      : descricaoLimpa;
+  }
+
+  formatarClienteFornecedorResumido(texto: string | null | undefined): string {
+    if (!texto) return '-';
+    return texto
+      .replace(/\s*em\s+cliente\/fornecedor/gi, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  }
+
   getParcelaLabel(mov: MovimentacaoFinanceira): string {
     if (mov.NumeroParcela && mov.QuantidadeParcela) {
       return `${mov.NumeroParcela}/${mov.QuantidadeParcela}`;
@@ -1108,11 +1135,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     return total;
   }
 
-  /** Lista completa ordenada (todos os itens quando há lista completa; senão só da página atual). Bom Controle: servidor já retorna ordenado. */
+  /** Lista completa ordenada (todos os itens quando há lista completa; senão só da página atual). */
   get movimentacoesOrdenadas(): MovimentacaoFinanceira[] {
-    if (this.fonteDados === 'bomcontrole') {
-      return [...this.movimentacoesFiltradas];
-    }
     const list = this.movimentacoesFiltradasCompleta.length > 0
       ? [...this.movimentacoesFiltradasCompleta]
       : [...this.movimentacoesFiltradas];
@@ -1126,8 +1150,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
           vb = b.Debito ? 'despesa' : 'receita';
           break;
         case 'data':
-          va = a.DataVencimento || '';
-          vb = b.DataVencimento || '';
+          va = this.toTimestamp(a.DataVencimento);
+          vb = this.toTimestamp(b.DataVencimento);
           break;
         case 'valor':
           va = a.Valor ?? 0;
@@ -1144,6 +1168,33 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       return order * ((va as number) - (vb as number));
     });
     return list;
+  }
+
+  /**
+   * Converte diferentes formatos de data para timestamp comparável.
+   * Suporta YYYY-MM-DD*, DD/MM/YYYY e fallback para Date nativo.
+   */
+  private toTimestamp(dateStr: string | null | undefined): number {
+    if (!dateStr) return 0;
+
+    const isoMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+      const y = Number(isoMatch[1]);
+      const m = Number(isoMatch[2]);
+      const d = Number(isoMatch[3]);
+      return new Date(y, m - 1, d).getTime();
+    }
+
+    const brMatch = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (brMatch) {
+      const d = Number(brMatch[1]);
+      const m = Number(brMatch[2]);
+      const y = Number(brMatch[3]);
+      return new Date(y, m - 1, d).getTime();
+    }
+
+    const parsed = new Date(dateStr).getTime();
+    return Number.isNaN(parsed) ? 0 : parsed;
   }
 
   /** Fatia da lista ordenada para a página atual (ordena sobre todos os dados quando há lista completa). */

@@ -19,7 +19,8 @@ export class AppComponent implements OnInit {
   isMobileMenuOpen = false;
   isUserMenuOpen = false;
   isCompanyMenuOpen = false;
-  isSidebarCollapsed = false;
+  /** Desktop: sidebar estreita por padrão; expande ao passar o mouse e recolhe ao sair. */
+  isSidebarCollapsed = true;
   currentYear: number = new Date().getFullYear();
   
   // Gerenciamento de empresas
@@ -188,6 +189,10 @@ export class AppComponent implements OnInit {
     return this.hasPermission('movimentacoes');
   }
 
+  canAccessFaturaCartao(): boolean {
+    return this.hasPermission('movimentacoes');
+  }
+
   canAccessFluxoCaixa(): boolean {
     return this.hasPermission('fluxo-caixa');
   }
@@ -218,8 +223,12 @@ export class AppComponent implements OnInit {
     return this.hasPermission('gerenciar-acessos');
   }
 
-  toggleSidebar() {
-    this.isSidebarCollapsed = !this.isSidebarCollapsed;
+  onSidebarMouseEnter(): void {
+    this.isSidebarCollapsed = false;
+  }
+
+  onSidebarMouseLeave(): void {
+    this.isSidebarCollapsed = true;
   }
 
   toggleMobileMenu() {

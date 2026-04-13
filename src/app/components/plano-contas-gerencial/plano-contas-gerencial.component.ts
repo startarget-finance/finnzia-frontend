@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CompaniaInfo, CompanySelectorService } from '../../services/company-selector.service';
 import {
@@ -18,6 +18,7 @@ import { AuthService } from '../../services/auth.service';
 export class PlanoContasGerencialComponent implements OnInit {
   /** Quando true, usado dentro da Parametrização — sem moldura de página inteira. */
   @Input() embedded = false;
+  @Output() resumoTotal = new EventEmitter<number>();
 
   carregando = false;
   erro: string | null = null;
@@ -54,11 +55,13 @@ export class PlanoContasGerencialComponent implements OnInit {
     this.api.listar(fid).subscribe({
       next: (data) => {
         this.planos = data || [];
+        this.resumoTotal.emit(this.planos.length);
         this.carregando = false;
       },
       error: (e) => {
         this.carregando = false;
         this.erro = e.error?.mensagem || 'Não foi possível carregar os planos.';
+        this.resumoTotal.emit(0);
       }
     });
   }

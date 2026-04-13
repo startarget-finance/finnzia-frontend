@@ -39,7 +39,8 @@ export interface FuncionarioCadastroPayload {
   email?: string;
   telefone?: string;
   ativo?: boolean;
-  idEmpresas: number[];
+  /** Opcional: o backend usa X-Empresa-Id quando omitido. */
+  idEmpresas?: number[];
 }
 
 export interface FuncionarioListParams {

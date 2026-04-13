@@ -13,6 +13,72 @@
 }
 
 @layer components {
+  /* Marca finzzia — gradiente suave + pontos em triângulo (referência: carvão → violeta → azul → teal) */
+  .finzzia-wordmark {
+    display: inline-flex;
+    align-items: baseline;
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: -0.06em;
+    line-height: 1.05;
+    text-transform: lowercase;
+    background-image: linear-gradient(
+      93deg,
+      #3f3d4d 0%,
+      #5b21b6 22%,
+      #6d28d9 36%,
+      #4f46e5 50%,
+      #2563eb 64%,
+      #0891b2 78%,
+      #14b8a6 92%,
+      #2dd4bf 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .finzzia-wordmark--lg {
+    font-size: 1.1875rem;
+    letter-spacing: -0.065em;
+    font-weight: 800;
+  }
+
+  .finzzia-wordmark--sm {
+    font-size: 0.9375rem;
+    letter-spacing: -0.058em;
+  }
+
+  .finzzia-wordmark--micro {
+    font-size: 0.875rem;
+    font-weight: 800;
+    letter-spacing: -0.06em;
+  }
+
+  .finzzia-wordmark .finzzia-i {
+    position: relative;
+    display: inline-block;
+  }
+
+  .finzzia-wordmark .finzzia-i-tri {
+    position: absolute;
+    top: 0.02em;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 0.21em solid transparent;
+    border-right: 0.21em solid transparent;
+    border-top: 0.34em solid #3f3d4d;
+    pointer-events: none;
+  }
+
+  .finzzia-wordmark .finzzia-i--2 .finzzia-i-tri {
+    border-top-color: #2dd4bf;
+  }
+
   /* Status classes for contracts */
   .status-pendente {
     @apply bg-warning-100 text-warning-800;

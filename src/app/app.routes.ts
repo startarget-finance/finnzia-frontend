@@ -91,6 +91,11 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'fatura-cartao',
+    loadComponent: () => import('./components/fatura-cartao/fatura-cartao.component').then(m => m.FaturaCartaoComponent),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'contas-a-pagar',
     loadComponent: () => import('./components/contas-a-pagar/contas-a-pagar.component').then(m => m.ContasAPagarComponent),
     canActivate: [AuthGuard]

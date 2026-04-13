@@ -1,16 +1,17 @@
-<div class="min-h-screen bg-[#F8FAFC] p-4 sm:p-6 lg:p-8">
-  <div class="max-w-[1800px] mx-auto space-y-8">
+<div class="min-h-full bg-gradient-to-b from-slate-50 via-white to-slate-100/70 p-4 sm:p-6 lg:p-8">
+  <div class="max-w-[1800px] mx-auto space-y-6 sm:space-y-8">
     <!-- Top Header & Filters -->
     <div
-      class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-6"
+      class="relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white/85 p-6 shadow-sm shadow-slate-900/5 backdrop-blur-sm sm:p-7 flex flex-col gap-6"
     >
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div class="flex items-center gap-5">
+      <div aria-hidden="true" class="pointer-events-none absolute inset-0 bg-[radial-gradient(900px_circle_at_10%_-10%,rgba(139,92,246,0.07),transparent_55%),radial-gradient(800px_circle_at_100%_0%,rgba(20,184,166,0.06),transparent_50%)]"></div>
+      <div class="relative z-[1] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-4 sm:gap-5">
           <div
-            class="w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-inner shadow-blue-500/20"
+            class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-teal-500 shadow-lg shadow-violet-500/25 ring-2 ring-white/90"
           >
             <svg
-              class="w-7 h-7 text-white"
+              class="h-7 w-7 text-white"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -24,97 +25,94 @@
             </svg>
           </div>
           <div>
-            <h1 class="text-2xl font-bold text-gray-900 tracking-tight">
+            <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight text-slate-900">
               Dashboard Financeiro
             </h1>
             <p
-              class="text-gray-500 text-sm mt-1"
+              class="mt-1 text-sm text-slate-500"
               *ngIf="getPeriodoAtualLabel() !== 'Invalid Date'"
             >
               Relatório consolidado —
-              <span class="font-semibold text-gray-700">{{
+              <span class="font-medium text-slate-700">{{
                 getPeriodoAtualLabel()
               }}</span>
             </p>
           </div>
         </div>
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-gray-50 border-gray-100">
-          <span class="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse"></span>
-          <span class="text-xs font-bold text-green-700 uppercase tracking-wider">{{ getStatusFiltro() }}</span>
+        <div class="relative flex items-center gap-2 rounded-full border border-emerald-200/80 bg-emerald-50/90 px-3.5 py-1.5 shadow-sm">
+          <span class="relative flex h-2.5 w-2.5">
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-40"></span>
+            <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+          </span>
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-emerald-800">{{ getStatusFiltro() }}</span>
         </div>
       </div>
 
       <!-- Barra de Filtros -->
-      <div class="border-t border-gray-100 pt-5">
-        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Filtros de período</p>
+      <div class="relative z-[1] border-t border-slate-100 pt-5">
+        <p class="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          <span class="h-px w-7 rounded-full bg-gradient-to-r from-violet-500 to-teal-500"></span>
+          Filtros de período
+        </p>
         <div class="flex flex-wrap items-center gap-3">
-          <div class="flex items-center gap-2 flex-wrap">
-            <span class="text-sm text-gray-600">Visão:</span>
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-sm text-slate-600">Visão</span>
             <select
               [ngModel]="tipoFiltro"
               (ngModelChange)="tipoFiltro = $event; onTipoFiltroAlterado()"
-              class="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 cursor-pointer focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+              class="cursor-pointer rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/25"
             >
               <option value="mes">Mensal</option>
               <option value="trimestre">Trimestral</option>
               <option value="ano">Anual</option>
             </select>
           </div>
-          <div class="flex items-center gap-2 flex-wrap">
+          <div class="flex flex-wrap items-center gap-2 rounded-2xl bg-slate-50/90 p-1 ring-1 ring-slate-200/60">
             <button
               type="button"
               (click)="aplicarAtalhoPeriodo('mes')"
-              class="px-3 py-2 text-sm font-medium rounded-lg border transition-colors"
-              [class.bg-blue-600]="isAtalhoAtivo('mes')"
-              [class.text-white]="isAtalhoAtivo('mes')"
-              [class.border-blue-600]="isAtalhoAtivo('mes')"
-              [class.bg-white]="!isAtalhoAtivo('mes')"
-              [class.text-gray-700]="!isAtalhoAtivo('mes')"
-              [class.border-gray-200]="!isAtalhoAtivo('mes')"
-              [class.hover:bg-gray-50]="!isAtalhoAtivo('mes')"
+              [ngClass]="
+                isAtalhoAtivo('mes')
+                  ? 'rounded-xl px-3.5 py-2 text-sm font-medium transition-all duration-200 bg-gradient-to-r from-violet-600 to-teal-500 text-white shadow-md shadow-violet-500/25'
+                  : 'rounded-xl px-3.5 py-2 text-sm font-medium transition-all duration-200 bg-transparent text-slate-700 hover:bg-slate-100'
+              "
             >
               Este mês
             </button>
             <button
               type="button"
               (click)="aplicarAtalhoPeriodo('trimestre')"
-              class="px-3 py-2 text-sm font-medium rounded-lg border transition-colors"
-              [class.bg-blue-600]="isAtalhoAtivo('trimestre')"
-              [class.text-white]="isAtalhoAtivo('trimestre')"
-              [class.border-blue-600]="isAtalhoAtivo('trimestre')"
-              [class.bg-white]="!isAtalhoAtivo('trimestre')"
-              [class.text-gray-700]="!isAtalhoAtivo('trimestre')"
-              [class.border-gray-200]="!isAtalhoAtivo('trimestre')"
-              [class.hover:bg-gray-50]="!isAtalhoAtivo('trimestre')"
+              [ngClass]="
+                isAtalhoAtivo('trimestre')
+                  ? 'rounded-xl px-3.5 py-2 text-sm font-medium transition-all duration-200 bg-gradient-to-r from-violet-600 to-teal-500 text-white shadow-md shadow-violet-500/25'
+                  : 'rounded-xl px-3.5 py-2 text-sm font-medium transition-all duration-200 bg-transparent text-slate-700 hover:bg-slate-100'
+              "
             >
               Último trimestre
             </button>
             <button
               type="button"
               (click)="aplicarAtalhoPeriodo('ano')"
-              class="px-3 py-2 text-sm font-medium rounded-lg border transition-colors"
-              [class.bg-blue-600]="isAtalhoAtivo('ano')"
-              [class.text-white]="isAtalhoAtivo('ano')"
-              [class.border-blue-600]="isAtalhoAtivo('ano')"
-              [class.bg-white]="!isAtalhoAtivo('ano')"
-              [class.text-gray-700]="!isAtalhoAtivo('ano')"
-              [class.border-gray-200]="!isAtalhoAtivo('ano')"
-              [class.hover:bg-gray-50]="!isAtalhoAtivo('ano')"
+              [ngClass]="
+                isAtalhoAtivo('ano')
+                  ? 'rounded-xl px-3.5 py-2 text-sm font-medium transition-all duration-200 bg-gradient-to-r from-violet-600 to-teal-500 text-white shadow-md shadow-violet-500/25'
+                  : 'rounded-xl px-3.5 py-2 text-sm font-medium transition-all duration-200 bg-transparent text-slate-700 hover:bg-slate-100'
+              "
             >
               Este ano
             </button>
           </div>
-          <span class="text-gray-400 text-sm">ou</span>
+          <span class="text-sm text-slate-400">ou</span>
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 flex-wrap">
 
         <div *ngIf="tipoFiltro === 'mes'" class="relative w-full sm:w-auto">
           <button
             type="button"
             (click)="toggleRangePicker()"
-            class="w-full sm:w-auto inline-flex items-center justify-between sm:justify-center gap-3 bg-white border border-gray-200 shadow-sm rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:border-blue-300 transition-colors"
+            class="inline-flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-violet-300/70 hover:shadow-md sm:w-auto sm:justify-center"
           >
             <svg
-              class="w-4 h-4 text-gray-400"
+              class="h-4 w-4 text-slate-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -138,13 +136,13 @@
           <!-- Popover Calendário -->
           <div
             *ngIf="mostrarRangePicker"
-            class="absolute z-50 mt-2 right-0 bg-white border border-gray-100 rounded-2xl shadow-2xl p-4 w-[320px] max-h-[400px] overflow-y-auto"
+            class="absolute right-0 z-50 mt-2 w-[320px] max-h-[400px] overflow-y-auto rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-xl shadow-slate-900/10 backdrop-blur-sm"
           >
-            <div class="flex items-center justify-between mb-4">
+            <div class="mb-4 flex items-center justify-between">
               <button
                 type="button"
                 (click)="prevMonth()"
-                class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
+                class="rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-slate-100"
               >
                 <svg
                   class="w-5 h-5"
@@ -160,13 +158,13 @@
                   ></path>
                 </svg>
               </button>
-              <div class="text-sm font-bold text-gray-800 tracking-wide">
+              <div class="text-sm font-semibold tracking-wide text-slate-800">
                 {{ getMonthYearLabel() }}
               </div>
               <button
                 type="button"
                 (click)="nextMonth()"
-                class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors"
+                class="rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-slate-100"
               >
                 <svg
                   class="w-5 h-5"
@@ -185,7 +183,7 @@
             </div>
 
             <div
-              class="grid grid-cols-7 text-[11px] font-semibold tracking-wider text-gray-400 mb-2 uppercase"
+              class="mb-2 grid grid-cols-7 text-[11px] font-semibold uppercase tracking-wider text-slate-400"
             >
               <div class="text-center">dom</div>
               <div class="text-center">seg</div>
@@ -205,11 +203,13 @@
                   (mouseenter)="onHoverDate(d.dateStr)"
                   (mouseleave)="onHoverDate(null)"
                   [class.opacity-30]="!d.inCurrentMonth"
-                  [class.bg-blue-600]="isStart(d.dateStr) || isEnd(d.dateStr)"
+                  [class.bg-gradient-to-br]="isStart(d.dateStr) || isEnd(d.dateStr)"
+                  [class.from-violet-600]="isStart(d.dateStr) || isEnd(d.dateStr)"
+                  [class.to-teal-500]="isStart(d.dateStr) || isEnd(d.dateStr)"
                   [class.shadow-md]="isStart(d.dateStr) || isEnd(d.dateStr)"
                   [class.text-white]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                  [class.bg-blue-50]="isBetween(d.dateStr)"
-                  class="text-sm text-gray-700 rounded-lg py-1.5 hover:bg-gray-100 transition-colors disabled:cursor-not-allowed font-medium"
+                  [class.bg-violet-50]="isBetween(d.dateStr)"
+                  class="rounded-lg py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed"
                 >
                   {{ d.day }}
                 </button>
@@ -217,12 +217,12 @@
             </div>
 
             <div
-              class="flex items-center justify-between mt-5 pt-4 border-t border-gray-100"
+              class="mt-5 flex items-center justify-between border-t border-slate-100 pt-4"
             >
               <button
                 type="button"
                 (click)="clearRange()"
-                class="text-xs font-semibold text-gray-500 hover:text-gray-800 transition-colors"
+                class="text-xs font-semibold text-slate-500 transition-colors hover:text-slate-800"
               >
                 Limpar
               </button>
@@ -230,14 +230,14 @@
                 <button
                   type="button"
                   (click)="cancelRangePicker()"
-                  class="px-4 py-2 text-xs font-semibold rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+                  class="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100"
                 >
                   Cancelar
                 </button>
                 <button
                   type="button"
                   (click)="applyRangePicker()"
-                  class="px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 transition-all"
+                  class="rounded-xl bg-gradient-to-r from-violet-600 to-teal-500 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-violet-500/30 transition-all hover:brightness-105"
                 >
                   Aplicar
                 </button>
@@ -250,7 +250,7 @@
           *ngIf="tipoFiltro === 'trimestre'"
           [ngModel]="getTrimestreSelecionado()"
           (ngModelChange)="selecionarTrimestre($event)"
-          class="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 cursor-pointer focus:ring-2 focus:ring-blue-500 shadow-sm"
+          class="cursor-pointer rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/25"
         >
           <option
             *ngFor="let trimestre of trimestresDisponiveis"
@@ -264,7 +264,7 @@
           *ngIf="tipoFiltro === 'ano'"
           [ngModel]="getAnoSelecionado()"
           (ngModelChange)="selecionarAno($event)"
-          class="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 cursor-pointer focus:ring-2 focus:ring-blue-500 shadow-sm"
+          class="cursor-pointer rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-violet-500/25"
         >
           <option *ngFor="let ano of anosDisponiveis" [value]="ano.value">
             {{ ano.label }}
@@ -278,34 +278,38 @@
     <!-- Relatório Mensal -->
     <div>
       <h2
-        class="text-sm font-bold tracking-widest text-gray-400 uppercase mb-4 px-1 flex items-center gap-2"
+        class="mb-4 flex items-center gap-2 px-1 text-sm font-semibold uppercase tracking-[0.14em] text-slate-500"
       >
-        <svg
-          class="w-4 h-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-          ></path>
-        </svg>
-        Relatório Mensal
+        <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100/90 text-slate-600 ring-1 ring-slate-200/80">
+          <svg
+            class="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+            ></path>
+          </svg>
+        </span>
+        Relatório mensal
       </h2>
 
       <div
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 lg:gap-6"
+        class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-5 xl:grid-cols-5"
       >
         <!-- Receitas -->
         <div
-          class="bg-white rounded-xl border border-[#E5E7EB] shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-l-4 border-l-[#22C55E] p-5 relative overflow-hidden group h-full flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)]"
+          class="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-lg hover:shadow-slate-900/8"
         >
-          <div class="flex items-center gap-2 mb-3">
+          <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-90"></div>
+          <div class="relative mb-3 flex items-center gap-3">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/15">
             <svg
-              class="w-5 h-5 text-green-600"
+              class="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -314,34 +318,37 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 1v22" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 5H9.5a3.5 3.5 0 000 7H14a3.5 3.5 0 010 7H6" />
             </svg>
+            </div>
             <h3
-              class="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+              class="text-[11px] font-semibold uppercase tracking-wider text-slate-500"
             >
               Receitas
             </h3>
           </div>
-          <div class="min-h-[2.5rem] flex items-end">
-            <div class="text-2xl font-black font-mono text-gray-900 tracking-tight tabular-nums">
+          <div class="relative flex min-h-[2.5rem] items-end">
+            <div class="text-2xl font-semibold tracking-tight text-slate-900 tabular-nums">
               {{ formatCurrency(dadosFiltrados.receitas || 0) }}
             </div>
           </div>
-          <div class="mt-4 flex items-center gap-2 min-h-[36px]">
+          <div class="relative mt-4 flex min-h-[36px] items-center gap-2">
             <span
-              class="inline-flex items-center gap-1 text-xs font-bold text-green-700 bg-green-50 px-2 py-1 rounded-md tabular-nums"
+              class="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-800 tabular-nums ring-1 ring-emerald-500/15"
             >
               +{{ dadosFiltrados.indicadores.crescimentoReceita || 0 }}%
             </span>
-            <span class="text-xs text-gray-500">Últimos 3 meses</span>
+            <span class="text-xs text-slate-500">Últimos 3 meses</span>
           </div>
         </div>
 
         <!-- Despesas -->
         <div
-          class="bg-white rounded-xl border border-[#E5E7EB] shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-l-4 border-l-[#EF4444] p-5 relative overflow-hidden group h-full flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)]"
+          class="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-lg hover:shadow-slate-900/8"
         >
-          <div class="flex items-center gap-2 mb-3 text-red-600">
+          <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-rose-500 to-red-500 opacity-90"></div>
+          <div class="relative mb-3 flex items-center gap-3">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600 ring-1 ring-rose-500/15">
             <svg
-              class="w-5 h-5"
+              class="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -360,24 +367,25 @@
                 d="M17 17h4v-4"
               />
             </svg>
+            </div>
             <h3
-              class="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+              class="text-[11px] font-semibold uppercase tracking-wider text-slate-500"
             >
               Despesas
             </h3>
           </div>
-          <div class="min-h-[2.5rem] flex items-end">
-            <div class="text-2xl font-black font-mono text-gray-900 tracking-tight tabular-nums">
+          <div class="relative flex min-h-[2.5rem] items-end">
+            <div class="text-2xl font-semibold tracking-tight text-slate-900 tabular-nums">
               {{ formatCurrency(dadosFiltrados.despesas || 0) }}
             </div>
           </div>
-          <div class="mt-4 flex flex-col gap-1 min-h-[36px]">
+          <div class="relative mt-4 flex min-h-[36px] flex-col gap-1">
             <span
-              class="text-xs font-medium text-gray-600 bg-gray-50 px-2 py-1 rounded-md w-fit tabular-nums"
+              class="w-fit rounded-lg bg-slate-50 px-2 py-1 text-xs font-medium text-slate-600 tabular-nums ring-1 ring-slate-200/80"
             >
               {{ getMargemDespesas() }}
             </span>
-            <span class="text-[10px] text-gray-400 uppercase"
+            <span class="text-[10px] uppercase text-slate-400"
               >Últimos 3 meses</span
             >
           </div>
@@ -385,11 +393,13 @@
 
         <!-- Margem de Lucro -->
         <div
-          class="bg-white rounded-xl border border-[#E5E7EB] shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-l-4 border-l-indigo-400 p-5 relative overflow-hidden group h-full flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)]"
+          class="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-lg hover:shadow-slate-900/8"
         >
-          <div class="flex items-center gap-2 mb-3">
+          <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-violet-500 to-indigo-500 opacity-90"></div>
+          <div class="relative mb-3 flex items-center gap-3">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 ring-1 ring-violet-500/15">
             <svg
-              class="w-5 h-5 text-indigo-600"
+              class="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -398,32 +408,35 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 17l6-6 4 4 8-8" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 7h7v7" />
             </svg>
+            </div>
             <h3
-              class="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+              class="text-[11px] font-semibold uppercase tracking-wider text-slate-500"
             >
               Margem de Lucro
             </h3>
           </div>
-          <div class="min-h-[2.5rem] flex items-end">
-            <div class="text-2xl font-black font-mono text-gray-900 tracking-tight tabular-nums">
+          <div class="relative flex min-h-[2.5rem] items-end">
+            <div class="text-2xl font-semibold tracking-tight text-slate-900 tabular-nums">
               {{ getMargemLucro() }}
             </div>
           </div>
-          <div class="mt-4 flex flex-col gap-1 min-h-[36px]">
+          <div class="relative mt-4 flex min-h-[36px] flex-col gap-1">
             <span
-              class="text-xs font-bold font-mono text-gray-700 bg-gray-100 px-2 py-1 rounded-md w-fit tabular-nums"
+              class="w-fit rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 tabular-nums ring-1 ring-slate-200/80"
             >
               {{ formatCurrency(dadosFiltrados.lucro || 0) }}
             </span>
-            <span class="text-[10px] text-gray-400 uppercase">Últimos 3 meses</span>
+            <span class="text-[10px] uppercase text-slate-400">Últimos 3 meses</span>
           </div>
         </div>
 
         <!-- Novos Contratos (R$) -->
-        <div class="bg-white rounded-xl border border-[#E5E7EB] shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-l-4 border-l-blue-400 p-5 relative overflow-hidden group h-full flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)]">
-          <div class="flex items-center gap-2 mb-3">
+        <div class="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-lg hover:shadow-slate-900/8">
+          <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-500 to-blue-600 opacity-90"></div>
+          <div class="relative mb-3 flex items-center gap-3">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 text-sky-700 ring-1 ring-sky-500/15">
             <svg
-              class="w-5 h-5 text-blue-600"
+              class="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -432,29 +445,32 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 8h6M9 12h6M9 16h4" />
             </svg>
+            </div>
             <h3
-              class="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+              class="text-[11px] font-semibold uppercase tracking-wider text-slate-500"
             >
               Novos Contratos (R$)
             </h3>
           </div>
-          <div class="min-h-[2.5rem] flex items-end">
-            <div class="text-2xl font-black font-mono text-gray-900 tracking-tight tabular-nums">
+          <div class="relative flex min-h-[2.5rem] items-end">
+            <div class="text-2xl font-semibold tracking-tight text-slate-900 tabular-nums">
               {{ formatCurrency(mediaNovosContratosReais3m) }}
             </div>
           </div>
           <div
-            class="mt-4 opacity-0 pointer-events-none select-none min-h-[36px] flex items-center"
+            class="pointer-events-none relative mt-4 flex min-h-[36px] select-none items-center opacity-0"
           >
-            <span class="text-xs px-2 py-1 inline-block">&nbsp;</span>
+            <span class="inline-block px-2 py-1 text-xs">&nbsp;</span>
           </div>
         </div>
 
         <!-- Novos Contratos (Unid) -->
-        <div class="bg-white rounded-xl border border-[#E5E7EB] shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-l-4 border-l-cyan-400 p-5 relative overflow-hidden group h-full flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)]">
-          <div class="flex items-center gap-2 mb-3">
+        <div class="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-lg hover:shadow-slate-900/8">
+          <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-cyan-500 to-teal-500 opacity-90"></div>
+          <div class="relative mb-3 flex items-center gap-3">
+            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-700 ring-1 ring-cyan-500/15">
             <svg
-              class="w-5 h-5 text-cyan-600"
+              class="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -463,14 +479,15 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8M8 11h8M8 15h6" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 3h10l2 2v16a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2z" />
             </svg>
+            </div>
             <h3
-              class="text-xs font-semibold text-gray-500 uppercase tracking-wider"
+              class="text-[11px] font-semibold uppercase tracking-wider text-slate-500"
             >
               Novos Contratos (Unid)
             </h3>
           </div>
-          <div class="min-h-[2.5rem] flex items-end">
-            <div class="text-2xl font-black font-mono text-gray-900 tracking-tight tabular-nums">
+          <div class="relative flex min-h-[2.5rem] items-end">
+            <div class="text-2xl font-semibold tracking-tight text-slate-900 tabular-nums">
               {{
                 mediaNovosContratosUnidades3m != null
                   ? (mediaNovosContratosUnidades3m | number : "1.0-1")
@@ -479,65 +496,71 @@
             </div>
           </div>
           <div
-            class="mt-4 opacity-0 pointer-events-none select-none min-h-[36px] flex items-center"
+            class="pointer-events-none relative mt-4 flex min-h-[36px] select-none items-center opacity-0"
           >
-            <span class="text-xs px-2 py-1 inline-block">&nbsp;</span>
+            <span class="inline-block px-2 py-1 text-xs">&nbsp;</span>
           </div>
         </div>
       </div>
     </div>
 
-      <p class="mt-3 text-[11px] text-gray-500 flex flex-wrap items-center gap-2">
-        <span *ngIf="resumoCarregando" class="text-blue-500">
+      <p class="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-slate-500">
+        <span *ngIf="resumoCarregando" class="inline-flex items-center gap-1.5 font-medium text-violet-600">
+          <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-violet-500"></span>
           Atualizando dados reais...
         </span>
       </p>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-4">
+    <div class="grid grid-cols-1 gap-6 pt-2 lg:grid-cols-2 lg:gap-8 lg:pt-4">
       <!-- Coluna: Dashboard Financeiro -->
       <div>
         <h3
-          class="text-sm font-bold tracking-widest text-gray-400 uppercase mb-4 px-1 flex items-center gap-2"
+          class="mb-4 flex items-center gap-2 px-1 text-sm font-semibold uppercase tracking-[0.14em] text-slate-500"
         >
-          <svg
-            class="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            ></path>
-          </svg>
-          Dashboard Financeiro
-        </h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <!-- Receitas -->
-          <div
-            class="bg-white rounded-xl border border-[#E5E7EB] shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-l-4 border-l-[#22C55E] p-5 h-full min-h-[110px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)]"
-          >
-            <div class="flex items-center gap-3">
+          <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100/90 text-slate-600 ring-1 ring-slate-200/80">
             <svg
-              class="w-6 h-6 text-green-600"
+              class="h-4 w-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              aria-hidden="true"
             >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 1v22" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 5H9.5a3.5 3.5 0 000 7H14a3.5 3.5 0 010 7H6" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
             </svg>
+          </span>
+          Dashboard financeiro
+        </h3>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <!-- Receitas -->
+          <div
+            class="relative h-full min-h-[110px] overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-md"
+          >
+            <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-emerald-500 to-teal-400"></div>
+            <div class="relative flex items-center gap-3">
+              <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/15">
+                <svg
+                  class="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 1v22" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 5H9.5a3.5 3.5 0 000 7H14a3.5 3.5 0 010 7H6" />
+                </svg>
+              </div>
               <div>
-              <div class="text-lg font-bold font-mono text-gray-900 tabular-nums">
+                <div class="text-lg font-semibold tabular-nums tracking-tight text-slate-900">
                   {{ formatCurrency(dadosFiltrados.receitas || 0) }}
                 </div>
-                <div class="text-xs text-gray-600 font-medium">
-                  Média Receitas
+                <div class="text-xs font-medium text-slate-600">
+                  Média receitas
                 </div>
-                <div class="text-[10px] text-gray-400 uppercase">
+                <div class="text-[10px] uppercase text-slate-400">
                   Últimos 3 meses
                 </div>
               </div>
@@ -546,12 +569,13 @@
 
           <!-- Despesas -->
           <div
-            class="bg-white rounded-xl border border-[#E5E7EB] shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-l-4 border-l-[#EF4444] p-5 h-full min-h-[110px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)]"
+            class="relative h-full min-h-[110px] overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-md"
           >
-            <div class="flex items-center gap-3">
-              <div class="text-red-600">
+            <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-rose-500 to-red-500"></div>
+            <div class="relative flex items-center gap-3">
+              <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600 ring-1 ring-rose-500/15">
                 <svg
-                  class="w-6 h-6"
+                  class="h-6 w-6"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -572,13 +596,13 @@
                 </svg>
               </div>
               <div>
-                <div class="text-lg font-bold font-mono tabular-nums text-gray-900">
+                <div class="text-lg font-semibold tabular-nums tracking-tight text-slate-900">
                   {{ formatCurrency(dadosFiltrados.despesas || 0) }}
                 </div>
-                <div class="text-xs text-gray-600 font-medium">
-                  Média Despesas
+                <div class="text-xs font-medium text-slate-600">
+                  Média despesas
                 </div>
-                <div class="text-[10px] text-gray-400 uppercase">
+                <div class="text-[10px] uppercase text-slate-400">
                   Últimos 3 meses
                 </div>
               </div>
@@ -586,105 +610,113 @@
           </div>
 
           <!-- Custo Fixo -->
-          <div class="bg-white rounded-xl border border-[#E5E7EB] shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-l-4 border-l-orange-400 p-5 h-full min-h-[110px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)]">
-            <div class="flex items-center gap-3">
-            <svg
-              class="w-6 h-6 text-orange-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9l9-6 9 6v10a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 22V12h6v10" />
-            </svg>
+          <div class="relative h-full min-h-[110px] overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-md">
+            <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-orange-500 to-amber-500"></div>
+            <div class="relative flex items-center gap-3">
+              <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-500/10 text-orange-600 ring-1 ring-orange-500/15">
+                <svg
+                  class="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9l9-6 9 6v10a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 22V12h6v10" />
+                </svg>
+              </div>
               <div>
-              <div class="text-lg font-bold font-mono text-gray-900 tabular-nums">
+                <div class="text-lg font-semibold tabular-nums tracking-tight text-slate-900">
                   {{ formatCurrency(mediaCustoFixo) }}
                 </div>
-                <div class="text-xs text-gray-600 font-medium">
-                  Média Custo Fixo (R$)
+                <div class="text-xs font-medium text-slate-600">
+                  Média custo fixo (R$)
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Custo Variável -->
-          <div class="bg-white rounded-xl border border-[#E5E7EB] shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-l-4 border-l-[#EF4444] p-5 h-full min-h-[110px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)]">
-            <div class="flex items-center gap-3">
-            <svg
-              class="w-6 h-6 text-red-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 19V5" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 19h16" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 15l3-3 3 2 5-7" />
-            </svg>
+          <div class="relative h-full min-h-[110px] overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-md">
+            <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-red-500 to-rose-500"></div>
+            <div class="relative flex items-center gap-3">
+              <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-500/10 text-red-600 ring-1 ring-red-500/15">
+                <svg
+                  class="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 19V5" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 19h16" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 15l3-3 3 2 5-7" />
+                </svg>
+              </div>
               <div>
-              <div class="text-lg font-bold font-mono text-gray-900 tabular-nums">
+                <div class="text-lg font-semibold tabular-nums tracking-tight text-slate-900">
                   {{ formatCurrency(mediaCustoVariavel) }}
                 </div>
-                <div class="text-xs text-gray-600 font-medium">
-                  Média Custo Variável (R$)
+                <div class="text-xs font-medium text-slate-600">
+                  Média custo variável (R$)
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Custo Estratégico -->
-          <div class="bg-white rounded-xl border border-[#E5E7EB] shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-l-4 border-l-teal-400 p-5 h-full min-h-[110px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)]">
-            <div class="flex items-center gap-3">
-            <svg
-              class="w-6 h-6 text-teal-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <circle cx="12" cy="12" r="9" stroke-width="2" />
-              <circle cx="12" cy="12" r="5" stroke-width="2" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 7v5l3 2" />
-            </svg>
+          <div class="relative h-full min-h-[110px] overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-md">
+            <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-teal-500 to-cyan-500"></div>
+            <div class="relative flex items-center gap-3">
+              <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-500/10 text-teal-600 ring-1 ring-teal-500/15">
+                <svg
+                  class="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="9" stroke-width="2" />
+                  <circle cx="12" cy="12" r="5" stroke-width="2" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 7v5l3 2" />
+                </svg>
+              </div>
               <div>
-              <div class="text-lg font-bold font-mono text-gray-900 tabular-nums">
+                <div class="text-lg font-semibold tabular-nums tracking-tight text-slate-900">
                   {{ formatCurrency(mediaCustoEstrategico) }}
                 </div>
-                <div class="text-xs text-gray-600 font-medium">
-                  Média Custo Estratégico (R$)
+                <div class="text-xs font-medium text-slate-600">
+                  Média custo estratégico (R$)
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Custo Financeiro/Investimento -->
-          <div class="bg-white rounded-xl border border-[#E5E7EB] shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-l-4 border-l-sky-400 p-5 h-full min-h-[110px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)]">
-            <div class="flex items-center gap-3">
-              <div
-                class="text-sky-600 bg-sky-50 p-2 rounded-full w-10 h-10 flex items-center justify-center text-lg"
-              >
-              <svg
-                class="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10V20h14V10" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20V10" />
-              </svg>
+          <div class="relative h-full min-h-[110px] overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-md">
+            <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-sky-500 to-blue-600"></div>
+            <div class="relative flex items-center gap-3">
+              <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 text-sky-700 ring-1 ring-sky-500/15">
+                <svg
+                  class="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10V20h14V10" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20V10" />
+                </svg>
               </div>
               <div>
-              <div class="text-lg font-bold font-mono text-gray-900 tabular-nums">
+                <div class="text-lg font-semibold tabular-nums tracking-tight text-slate-900">
                   {{ formatCurrency(custoFinanceiroInvestimento) }}
                 </div>
-                <div class="text-xs text-gray-600 font-medium">
-                  Custo Financeiro/Invest.
+                <div class="text-xs font-medium text-slate-600">
+                  Custo financeiro/invest.
                 </div>
-                <div class="text-[10px] text-gray-400 uppercase">
+                <div class="text-[10px] uppercase text-slate-400">
                   Consolidado
                 </div>
               </div>
@@ -696,42 +728,47 @@
       <!-- Coluna: Dashboard Clientes -->
       <div>
         <h3
-          class="text-sm font-bold tracking-widest text-gray-400 uppercase mb-4 px-1 flex items-center gap-2"
+          class="mb-4 flex items-center gap-2 px-1 text-sm font-semibold uppercase tracking-[0.14em] text-slate-500"
         >
-          <svg
-            class="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-            ></path>
-          </svg>
-          Dashboard Clientes
+          <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100/90 text-slate-600 ring-1 ring-slate-200/80">
+            <svg
+              class="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+              ></path>
+            </svg>
+          </span>
+          Dashboard clientes
         </h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <!-- Inadimplência (R$) -->
-          <div class="bg-white rounded-xl border border-[#E5E7EB] shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-l-4 border-l-fuchsia-400 p-5 h-full min-h-[110px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)]">
-            <div class="flex items-center gap-3">
-              <svg
-                class="w-6 h-6 text-fuchsia-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="12" r="9" stroke-width="2" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7l10 10" />
-              </svg>
+          <div class="relative h-full min-h-[110px] overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-md">
+            <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-fuchsia-500 to-pink-500"></div>
+            <div class="relative flex items-center gap-3">
+              <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-fuchsia-500/10 text-fuchsia-700 ring-1 ring-fuchsia-500/15">
+                <svg
+                  class="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="9" stroke-width="2" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7l10 10" />
+                </svg>
+              </div>
               <div>
-                <div class="text-lg font-bold font-mono tabular-nums text-gray-900">
+                <div class="text-lg font-semibold tabular-nums tracking-tight text-slate-900">
                   {{ formatCurrency(inadimplenciaValor) }}
                 </div>
-                <div class="text-xs text-gray-600 font-medium">
+                <div class="text-xs font-medium text-slate-600">
                   Inadimplência (R$)
                 </div>
               </div>
@@ -739,11 +776,12 @@
           </div>
 
           <!-- Taxa de Inadimplência (%) -->
-          <div class="bg-white rounded-xl border border-[#E5E7EB] shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-l-4 border-l-pink-400 p-5 h-full min-h-[110px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)]">
-            <div class="flex items-center gap-3">
-              <div class="text-pink-600">
+          <div class="relative h-full min-h-[110px] overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-md">
+            <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-pink-500 to-rose-500"></div>
+            <div class="relative flex items-center gap-3">
+              <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-pink-500/10 text-pink-600 ring-1 ring-pink-500/15">
                 <svg
-                  class="w-6 h-6"
+                  class="h-6 w-6"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -764,97 +802,106 @@
                 </svg>
               </div>
               <div>
-                <div class="text-lg font-bold font-mono tabular-nums text-gray-900">
+                <div class="text-lg font-semibold tabular-nums tracking-tight text-slate-900">
                   {{
                     inadimplenciaTaxa != null
                       ? ((inadimplenciaTaxa | number : "1.1-1") + '%')
                       : '—'
                   }}
                 </div>
-                <div class="text-xs text-gray-600 font-medium">
-                  Taxa de Inadimplência
+                <div class="text-xs font-medium text-slate-600">
+                  Taxa de inadimplência
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Total Clientes Ativos (Unid) -->
-          <div class="bg-white rounded-xl border border-[#E5E7EB] shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-l-4 border-l-blue-400 p-5 h-full min-h-[110px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)]">
-            <div class="flex items-center gap-3">
-              <svg
-                class="w-6 h-6 text-blue-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
-                <circle cx="8.5" cy="7" r="3" stroke-width="2" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 8v6" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M23 11h-6" />
-              </svg>
+          <div class="relative h-full min-h-[110px] overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-md">
+            <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+            <div class="relative flex items-center gap-3">
+              <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-700 ring-1 ring-blue-500/15">
+                <svg
+                  class="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                  <circle cx="8.5" cy="7" r="3" stroke-width="2" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 8v6" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M23 11h-6" />
+                </svg>
+              </div>
               <div>
-                <div class="text-lg font-bold font-mono tabular-nums text-gray-900">
+                <div class="text-lg font-semibold tabular-nums tracking-tight text-slate-900">
                   {{
                     totalClientesAtivos != null
                       ? (totalClientesAtivos | number : "1.0-0")
                       : '—'
                   }}
                 </div>
-                <div class="text-xs text-gray-600 font-medium">
-                  Total Clientes Ativos (Unid)
+                <div class="text-xs font-medium text-slate-600">
+                  Total clientes ativos (unid)
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Churn -->
-          <div class="bg-white rounded-xl border border-[#E5E7EB] shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-l-4 border-l-rose-400 p-5 h-full min-h-[110px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)]">
-            <div class="flex items-center gap-3">
-              <svg
-                class="w-6 h-6 text-rose-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 17l6-6 4 4 8-10" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5h7v7" />
-              </svg>
+          <div class="relative h-full min-h-[110px] overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-md">
+            <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-rose-500 to-red-600"></div>
+            <div class="relative flex items-center gap-3">
+              <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600 ring-1 ring-rose-500/15">
+                <svg
+                  class="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 17l6-6 4 4 8-10" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5h7v7" />
+                </svg>
+              </div>
               <div>
-                <div class="text-lg font-bold font-mono tabular-nums text-gray-900">
+                <div class="text-lg font-semibold tabular-nums tracking-tight text-slate-900">
                   {{
                     churnPercent != null
                       ? ((churnPercent | number : "1.1-1") + '%')
                       : '—'
                   }}
                 </div>
-                <div class="text-xs text-gray-600 font-medium">Churn</div>
+                <div class="text-xs font-medium text-slate-600">Churn</div>
               </div>
             </div>
           </div>
 
           <!-- LTV (Meses) -->
-          <div class="bg-white rounded-xl border border-[#E5E7EB] shadow-[0_4px_12px_rgba(0,0,0,0.05)] border-l-4 border-l-amber-400 p-5 h-full min-h-[110px] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)] sm:col-span-2">
-            <div class="flex items-center gap-3">
-              <svg
-                class="w-6 h-6 text-amber-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3" />
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18" />
-              </svg>
+          <div class="relative h-full min-h-[110px] overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-md sm:col-span-2">
+            <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-amber-500 to-orange-500"></div>
+            <div class="relative flex items-center gap-3">
+              <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700 ring-1 ring-amber-500/15">
+                <svg
+                  class="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3" />
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" stroke-width="2" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18" />
+                </svg>
+              </div>
               <div>
-                <div class="text-lg font-bold font-mono tabular-nums text-gray-900">
+                <div class="text-lg font-semibold tabular-nums tracking-tight text-slate-900">
                   {{
                     ltvMeses != null ? ((ltvMeses | number : "1.0-0") + ' meses') : '—'
                   }}
                 </div>
-                <div class="text-xs text-gray-600 font-medium">LTV (Meses)</div>
+                <div class="text-xs font-medium text-slate-600">LTV (meses)</div>
               </div>
             </div>
           </div>

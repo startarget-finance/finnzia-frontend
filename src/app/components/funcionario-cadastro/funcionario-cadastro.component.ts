@@ -1,8 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AuthService } from '../../services/auth.service';
-import { CompaniaInfo, CompanySelectorService } from '../../services/company-selector.service';
+import { CompanySelectorService } from '../../services/company-selector.service';
 import {
   FuncionarioCadastro,
   FuncionarioCadastroPayload,
@@ -24,16 +23,12 @@ export class FuncionarioCadastroComponent implements OnInit {
   linhas: FuncionarioCadastro[] = [];
 
   filtroQ = '';
-  filtroEmpresaId: number | null = null;
   filtroAtivo: 'todos' | 'sim' | 'nao' = 'todos';
 
   pageIndex = 0;
   pageSize = 20;
   totalElements = 0;
   totalPages = 0;
-
-  empresasDisponiveis: CompaniaInfo[] = [];
-  isAdmin = false;
 
   modalAberto = false;
   editandoId: number | null = null;
@@ -44,27 +39,36 @@ export class FuncionarioCadastroComponent implements OnInit {
   formEmail = '';
   formTelefone = '';
   formAtivo = true;
-  formEmpresaIds: Record<number, boolean> = {};
 
   constructor(
     private readonly api: FuncionarioCadastroService,
-    private readonly companySelector: CompanySelectorService,
-    private readonly auth: AuthService
+    private readonly companySelector: CompanySelectorService
   ) {}
 
   ngOnInit(): void {
-    this.isAdmin = this.auth.getCurrentUser()?.role === 'admin';
-    this.companySelector.empresasPermitidas$.subscribe((list) => {
-      this.empresasDisponiveis = (list || []).filter((e) => e.ativo && e.idEmpresa);
+    this.companySelector.empresaSelecionada$.subscribe(() => {
       this.carregar();
     });
   }
 
+  private idEmpresaAtual(): number | null {
+    return this.companySelector.obterIdEmpresaSelecionada();
+  }
+
   carregar(): void {
     this.erro = null;
+    const idEmp = this.idEmpresaAtual();
+    if (idEmp == null || idEmp <= 0) {
+      this.carregando = false;
+      this.linhas = [];
+      this.totalElements = 0;
+      this.totalPages = 0;
+      this.resumoTotal.emit(0);
+      this.erro = 'Selecione uma empresa no cabeçalho para ver e cadastrar funcionários.';
+      return;
+    }
+
     this.carregando = true;
-    const idEmp =
-      this.filtroEmpresaId != null && this.filtroEmpresaId > 0 ? this.filtroEmpresaId : undefined;
     let ativo: boolean | undefined;
     if (this.filtroAtivo === 'sim') {
       ativo = true;
@@ -104,7 +108,6 @@ export class FuncionarioCadastroComponent implements OnInit {
 
   limparFiltros(): void {
     this.filtroQ = '';
-    this.filtroEmpresaId = null;
     this.filtroAtivo = 'todos';
     this.pageIndex = 0;
     this.carregar();
@@ -136,11 +139,6 @@ export class FuncionarioCadastroComponent implements OnInit {
     return `${this.textoCargoDept(f)} · ${this.textoContato(f)}`;
   }
 
-  subtituloEmpresas(f: FuncionarioCadastro): string {
-    const nomes = (f.empresas || []).map((e) => e.nomeEmpresa).filter(Boolean);
-    return nomes.length ? nomes.join(' · ') : 'Sem empresa vinculada';
-  }
-
   /** CPF retornado pela API costuma vir só com dígitos. */
   cpfExibicao(cpf: string | null | undefined): string {
     const d = String(cpf || '').replace(/\D/g, '');
@@ -159,12 +157,6 @@ export class FuncionarioCadastroComponent implements OnInit {
     this.formEmail = '';
     this.formTelefone = '';
     this.formAtivo = true;
-    this.formEmpresaIds = {};
-    for (const e of this.empresasDisponiveis) {
-      if (e.idEmpresa) {
-        this.formEmpresaIds[e.idEmpresa] = false;
-      }
-    }
     this.modalAberto = true;
   }
 
@@ -177,13 +169,6 @@ export class FuncionarioCadastroComponent implements OnInit {
     this.formEmail = f.email || '';
     this.formTelefone = f.telefone || '';
     this.formAtivo = f.ativo !== false;
-    this.formEmpresaIds = {};
-    const ids = new Set(f.idEmpresas || []);
-    for (const e of this.empresasDisponiveis) {
-      if (e.idEmpresa) {
-        this.formEmpresaIds[e.idEmpresa] = ids.has(e.idEmpresa);
-      }
-    }
     this.modalAberto = true;
   }
 
@@ -191,23 +176,21 @@ export class FuncionarioCadastroComponent implements OnInit {
     this.modalAberto = false;
   }
 
-  coletarEmpresas(): number[] {
-    return Object.entries(this.formEmpresaIds)
-      .filter(([, v]) => v)
-      .map(([k]) => Number(k));
-  }
-
   montarPayload(): FuncionarioCadastroPayload {
-    return {
+    const idEmp = this.idEmpresaAtual();
+    const body: FuncionarioCadastroPayload = {
       nomeCompleto: this.formNomeCompleto.trim(),
       cpf: this.formCpf.trim() || undefined,
       cargo: this.formCargo.trim() || undefined,
       departamento: this.formDepartamento.trim() || undefined,
       email: this.formEmail.trim() || undefined,
       telefone: this.formTelefone.trim() || undefined,
-      ativo: this.formAtivo,
-      idEmpresas: this.coletarEmpresas()
+      ativo: this.formAtivo
     };
+    if (idEmp != null && idEmp > 0) {
+      body.idEmpresas = [idEmp];
+    }
+    return body;
   }
 
   salvar(): void {
@@ -216,9 +199,9 @@ export class FuncionarioCadastroComponent implements OnInit {
       this.erro = 'Informe o nome completo.';
       return;
     }
-    const idEmpresas = this.coletarEmpresas();
-    if (!this.isAdmin && idEmpresas.length === 0) {
-      this.erro = 'Selecione pelo menos uma empresa.';
+    const idEmp = this.idEmpresaAtual();
+    if (idEmp == null || idEmp <= 0) {
+      this.erro = 'Selecione uma empresa no cabeçalho.';
       return;
     }
     const body = this.montarPayload();

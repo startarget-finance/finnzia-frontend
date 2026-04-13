@@ -1,0 +1,201 @@
+<div class="min-h-full bg-gradient-to-b from-slate-50 via-white to-slate-100/70 pb-10 font-sans">
+  <div class="mx-auto max-w-[1800px] px-4 pt-6 sm:px-6 lg:px-8">
+    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">Fatura cartao de credito</h1>
+    </div>
+
+    <section class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_18px_45px_-28px_rgba(15,23,42,0.22)]">
+      <div class="grid min-h-[560px] grid-cols-1 lg:grid-cols-[340px_1fr]">
+        <aside class="border-b border-slate-200/80 bg-slate-50/60 p-4 lg:border-b-0 lg:border-r">
+          <h2 class="mb-3 text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Cartoes de credito</h2>
+
+          <div *ngIf="carregandoCartoes" class="mb-3 rounded-lg bg-white px-3 py-2 text-xs text-slate-600">
+            Carregando cartoes...
+          </div>
+          <div *ngIf="erroTela" class="mb-3 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">
+            {{ erroTela }}
+          </div>
+
+          <div class="space-y-3">
+            <button
+              *ngFor="let c of cartoesFiltrados"
+              type="button"
+              (click)="selecionarCartao(c.id)"
+              [ngClass]="cartaoSelecionadoId === c.id
+                ? 'border-violet-300 bg-white shadow-md ring-2 ring-violet-200/70'
+                : 'border-slate-200/80 bg-white hover:border-slate-300'"
+              class="w-full rounded-xl border p-3 text-left transition-all"
+            >
+              <p class="truncate text-sm font-semibold text-slate-900">{{ c.nome }}</p>
+              <p class="mt-0.5 truncate text-xs text-slate-500">{{ c.empresa }}</p>
+
+              <div class="mt-3 h-3 overflow-hidden rounded-full bg-slate-200/80">
+                <div class="h-full rounded-full bg-gradient-to-r from-violet-500 to-teal-400" [style.width.%]="percentualUso(c)"></div>
+              </div>
+
+              <p class="mt-2 text-right text-xs font-medium"
+                 [class.text-emerald-700]="c.disponivel >= 0"
+                 [class.text-rose-700]="c.disponivel < 0">
+                Disponivel {{ formatarMoeda(c.disponivel) }}
+              </p>
+            </button>
+          </div>
+        </aside>
+
+        <main class="p-5 sm:p-6">
+          <div class="rounded-2xl border border-slate-200/80 bg-gradient-to-r from-white via-violet-50/35 to-teal-50/30 p-4 shadow-sm">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 class="text-lg font-semibold text-slate-800 sm:text-xl">Relatorio de gastos com {{ cartaoSelecionado.nome }}</h3>
+                <p class="mt-1 text-sm text-slate-600">Importe a fatura (CSV) para reconhecer lancamentos e gerar contas a pagar automaticamente.</p>
+              </div>
+              <label class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
+                <i class="fi fi-rr-upload text-[0.9rem]"></i>
+                Importar CSV
+                <input type="file" class="hidden" accept=".csv,text/csv" (change)="onImportarFatura($event)" />
+              </label>
+            </div>
+
+            <div *ngIf="nomeArquivoImportado" class="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
+              Arquivo: <span class="font-semibold text-slate-800">{{ nomeArquivoImportado }}</span>
+            </div>
+            <div *ngIf="importando" class="mt-2 text-sm text-violet-700">Processando importacao...</div>
+            <div *ngIf="mensagemImportacao" class="mt-2 text-sm text-emerald-700">{{ mensagemImportacao }}</div>
+          </div>
+
+          <div class="mt-6">
+            <div class="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-[0_20px_45px_-28px_rgba(15,23,42,0.28)]">
+              <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div class="rounded-xl border border-slate-200/70 bg-slate-50/60 px-3 py-2">
+                  <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Cartao</p>
+                  <p class="mt-1 truncate text-sm font-semibold text-slate-800">{{ cartaoSelecionado.nome }}</p>
+                </div>
+                <div class="rounded-xl border border-slate-200/70 bg-slate-50/60 px-3 py-2">
+                  <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Maior fatura</p>
+                  <p class="mt-1 text-sm font-semibold text-slate-800">{{ formatarMoeda(valorMaximo) }}</p>
+                </div>
+                <div class="rounded-xl border border-slate-200/70 bg-slate-50/60 px-3 py-2">
+                  <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Disponivel</p>
+                  <p class="mt-1 text-sm font-semibold" [class.text-emerald-700]="cartaoSelecionado.disponivel >= 0" [class.text-rose-700]="cartaoSelecionado.disponivel < 0">
+                    {{ formatarMoeda(cartaoSelecionado.disponivel) }}
+                  </p>
+                </div>
+              </div>
+
+              <div class="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50/40 p-4">
+                <div class="grid grid-cols-[64px_1fr] gap-3">
+                  <div class="flex h-[280px] flex-col justify-between pr-1 text-right text-[11px] font-medium text-slate-500">
+                    <span *ngFor="let tick of yAxisTicks">{{ formatarMoeda(tick) }}</span>
+                  </div>
+
+                  <div class="relative h-[280px]">
+                    <div class="absolute inset-0 flex flex-col justify-between">
+                      <div *ngFor="let _ of yAxisTicks" class="h-px w-full border-t border-dashed border-slate-200"></div>
+                    </div>
+
+                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 h-full w-full">
+                      <defs>
+                        <linearGradient id="faturaAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.28"></stop>
+                          <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.02"></stop>
+                        </linearGradient>
+                      </defs>
+                      <polyline [attr.points]="areaPolylinePoints" fill="url(#faturaAreaGradient)" stroke="none"></polyline>
+                      <polyline [attr.points]="polylinePoints" fill="none" stroke="#6366f1" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                    </svg>
+
+                    <div
+                      *ngFor="let p of cartaoSelecionado.pontos; let i = index"
+                      class="absolute -translate-x-1/2 -translate-y-1/2"
+                      [style.left.%]="getPointX(i)"
+                      [style.top.%]="getPointY(p.valor)"
+                    >
+                      <div
+                        [ngClass]="p.status === 'paga'
+                          ? 'flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm'
+                          : 'flex h-6 w-6 items-center justify-center rounded-full border border-sky-300 bg-sky-100 text-sky-600 shadow-sm'"
+                      >
+                        <i [ngClass]="p.status === 'paga' ? 'fi fi-rr-check text-[0.68rem]' : 'fi fi-rr-calendar text-[0.68rem]'"></i>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="mt-3 grid grid-cols-7 text-center text-xs font-medium text-slate-500">
+                  <div *ngFor="let p of cartaoSelecionado.pontos">{{ p.mes }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="lancamentosImportados.length" class="mt-4 rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+            <div class="flex items-center justify-between border-b border-slate-200/70 px-4 py-3">
+              <h4 class="text-sm font-semibold text-slate-800">Lancamentos reconhecidos</h4>
+              <button
+                type="button"
+                (click)="gerarContasPagarPrototipo()"
+                class="rounded-xl bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 px-3 py-2 text-xs font-semibold text-white shadow-[0_10px_22px_-12px_rgba(124,58,237,0.55)] hover:brightness-105"
+              >
+                Gerar contas a pagar (fatura)
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-sm">
+                <thead class="bg-slate-50/90 text-left">
+                  <tr>
+                    <th class="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Data</th>
+                    <th class="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Descricao</th>
+                    <th class="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Categoria</th>
+                    <th class="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Confianca</th>
+                    <th class="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Valor</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr *ngFor="let l of lancamentosImportados">
+                    <td class="px-4 py-2.5 text-slate-600">{{ l.data }}</td>
+                    <td class="px-4 py-2.5 text-slate-800">{{ l.descricao }}</td>
+                    <td class="px-4 py-2.5 text-slate-700">{{ l.categoria }}</td>
+                    <td class="px-4 py-2.5">
+                      <span [ngClass]="l.confianca === 'alta' ? 'bg-emerald-100 text-emerald-700' : l.confianca === 'media' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'" class="rounded-full px-2 py-1 text-[11px] font-semibold uppercase">
+                        {{ l.confianca }}
+                      </span>
+                    </td>
+                    <td class="px-4 py-2.5 text-right font-semibold text-slate-800">{{ formatarMoeda(l.valor) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div *ngIf="contasPagarGeradas.length" class="mt-4 rounded-2xl border border-violet-200/80 bg-violet-50/40 shadow-sm">
+            <div class="border-b border-violet-200/70 px-4 py-3">
+              <h4 class="text-sm font-semibold text-violet-800">Contas a pagar geradas (prototipo)</h4>
+              <p class="mt-1 text-xs text-violet-700">{{ mensagemGeracao }}</p>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full text-sm">
+                <thead class="bg-violet-100/60 text-left">
+                  <tr>
+                    <th class="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-700">Competencia</th>
+                    <th class="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-700">Vencimento</th>
+                    <th class="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-700">Descricao</th>
+                    <th class="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-700">Valor</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-violet-100/80">
+                  <tr *ngFor="let cp of contasPagarGeradas">
+                    <td class="px-4 py-2.5 text-violet-800">{{ cp.competencia }}</td>
+                    <td class="px-4 py-2.5 text-violet-700">{{ cp.vencimento }}</td>
+                    <td class="px-4 py-2.5 text-violet-800">{{ cp.descricao }}</td>
+                    <td class="px-4 py-2.5 text-right font-semibold text-violet-900">{{ formatarMoeda(cp.valor) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </main>
+      </div>
+    </section>
+  </div>
+</div>
+

@@ -28,14 +28,14 @@
     </div>
 
     <div
-      class="flex flex-wrap items-end justify-between gap-3 rounded-lg border border-slate-200/70 bg-gradient-to-b from-slate-50/90 to-slate-50/40 px-3 py-3 sm:px-4"
+      class="flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-slate-200/80 bg-gradient-to-r from-slate-50/95 via-white to-violet-50/35 px-3.5 py-3.5 shadow-sm sm:px-4"
     >
       <div class="flex flex-col gap-1 min-w-[200px] flex-1 max-w-md">
-        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Empresa</label>
+        <label class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Empresa</label>
         <select
           [(ngModel)]="filtroEmpresaId"
           (ngModelChange)="carregar()"
-          class="h-9 w-full px-3 rounded-lg border border-slate-200/90 bg-white text-sm text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/25 focus:border-emerald-500"
+          class="h-10 w-full rounded-xl border border-slate-200/90 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm transition-colors focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/25"
         >
           <option [ngValue]="null">Todas</option>
           <option *ngFor="let e of empresasDisponiveis" [ngValue]="e.idEmpresa">
@@ -46,7 +46,7 @@
       <button
         type="button"
         (click)="abrirNovo()"
-        class="h-9 px-4 rounded-lg bg-emerald-600 text-white text-sm font-semibold shadow-sm shadow-emerald-600/20 hover:bg-emerald-500 transition-colors shrink-0"
+        class="h-10 shrink-0 rounded-xl bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 px-4 text-sm font-semibold text-white shadow-[0_12px_25px_-12px_rgba(124,58,237,0.55)] transition-all hover:brightness-105"
       >
         + Novo plano
       </button>
@@ -61,21 +61,21 @@
   </p>
 
   <div
-    class="rounded-lg border border-slate-200/80 bg-white shadow-sm overflow-hidden"
+    class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_18px_40px_-24px_rgba(15,23,42,0.22)] ring-1 ring-slate-200/60"
     [class.mt-4]="!embedded"
     [class.mt-3]="embedded"
   >
     <div class="overflow-x-auto">
       <table class="min-w-full text-[13px] text-slate-800">
         <thead>
-          <tr class="bg-slate-100/80 text-left border-b border-slate-200/90">
-            <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 w-[32%]">
+          <tr class="border-b border-slate-200/90 bg-slate-50/90 text-left">
+            <th class="w-[30%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
               Plano
             </th>
-            <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+            <th class="px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
               Empresas
             </th>
-            <th class="py-2.5 px-3 text-[10px] font-bold uppercase tracking-widest text-slate-500 text-right w-36">
+            <th class="w-36 px-3 py-3 text-right text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
               Ações
             </th>
           </tr>
@@ -86,39 +86,39 @@
           </tr>
           <tr
             *ngFor="let p of planos; let odd = odd"
-            class="transition-colors hover:bg-slate-50/90"
+            class="transition-colors hover:bg-violet-50/35"
             [ngClass]="{ 'bg-slate-50/40': odd }"
           >
-            <td class="py-2.5 px-3 align-middle">
+            <td class="px-3 py-3 align-middle">
               <span class="font-semibold text-slate-900">{{ p.nome }}</span>
               <span
                 *ngIf="p.padrao"
-                class="ml-2 inline-flex align-middle text-[10px] font-semibold uppercase tracking-wide text-amber-800 bg-amber-100/80 border border-amber-200/70 rounded px-1.5 py-0.5"
+                class="ml-2 inline-flex items-center rounded-md border border-amber-200/80 bg-amber-50 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-amber-800"
                 >Padrão</span
               >
             </td>
-            <td class="py-2.5 px-3 align-middle">
+            <td class="px-3 py-3 align-middle">
               <div *ngIf="!p.empresas?.length" class="text-slate-400 text-xs">—</div>
               <div *ngIf="p.empresas?.length" class="flex flex-wrap gap-1.5">
                 <div
                   *ngFor="let emp of p.empresas || []"
-                  class="inline-flex min-w-0 max-w-[min(100%,280px)] items-center rounded-md bg-white border border-slate-200/80 px-2 py-0.5 text-xs text-slate-800 shadow-sm"
+                  class="inline-flex min-w-0 max-w-[min(100%,280px)] items-center rounded-lg border border-slate-200/80 bg-slate-50 px-2 py-0.5 text-xs text-slate-800"
                   [title]="emp.nomeEmpresa"
                 >
                   <span class="block truncate">{{ emp.nomeEmpresa }}</span>
                 </div>
               </div>
             </td>
-            <td class="py-2.5 px-3 text-right align-middle whitespace-nowrap">
+            <td class="px-3 py-3 text-right align-middle whitespace-nowrap">
               <div
-                class="inline-flex rounded-lg border border-slate-200/80 bg-slate-50/90 p-0.5 gap-0.5 shadow-sm"
+                class="inline-flex gap-0.5 rounded-xl border border-slate-200/80 bg-white p-0.5 shadow-sm"
                 role="group"
                 aria-label="Ações do plano"
               >
                 <button
                   type="button"
                   (click)="marcarPadrao(p)"
-                  class="inline-flex h-8 w-8 items-center justify-center rounded-md text-amber-600 hover:bg-white hover:shadow-sm transition-colors"
+                  class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-amber-600 transition-colors hover:bg-amber-50"
                   title="Marcar como padrão"
                 >
                   <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
@@ -130,7 +130,7 @@
                 <button
                   type="button"
                   (click)="abrirEditar(p)"
-                  class="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 hover:bg-white hover:shadow-sm transition-colors"
+                  class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100"
                   title="Editar"
                 >
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,7 +145,7 @@
                 <button
                   type="button"
                   (click)="excluir(p)"
-                  class="inline-flex h-8 w-8 items-center justify-center rounded-md text-red-600 hover:bg-white hover:shadow-sm transition-colors"
+                  class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-rose-600 transition-colors hover:bg-rose-50"
                   title="Excluir"
                 >
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,13 +170,13 @@
       </table>
     </div>
     <div
-      class="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 border-t border-slate-100 bg-slate-50/50 text-xs text-slate-600"
+      class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/70 px-3 py-2.5 text-xs text-slate-600"
     >
       <span *ngIf="planos.length" class="font-medium tabular-nums">
         1 a {{ planos.length }} de {{ planos.length }}
       </span>
       <label
-        class="inline-flex h-8 px-3 items-center rounded-md border border-slate-200/80 bg-white cursor-pointer hover:bg-slate-50 text-xs font-medium text-slate-700 shadow-sm transition-colors"
+        class="inline-flex h-8 cursor-pointer items-center rounded-lg border border-slate-200/80 bg-white px-3 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
         [class.ml-auto]="!planos.length"
       >
         <input type="file" accept=".json,application/json" class="hidden" (change)="onImportarArquivo($event)" />

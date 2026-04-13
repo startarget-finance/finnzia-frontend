@@ -25,7 +25,6 @@ export class ClienteCadastroComponent implements OnInit {
   linhas: ClienteCadastro[] = [];
 
   filtroQ = '';
-  filtroEmpresaId: number | null = null;
   filtroClassificacao: number | null = null;
   filtroTipoPessoa: '' | 'PF' | 'PJ' = '';
 
@@ -73,15 +72,30 @@ export class ClienteCadastroComponent implements OnInit {
     this.isAdmin = this.auth.getCurrentUser()?.role === 'admin';
     this.companySelector.empresasPermitidas$.subscribe((list) => {
       this.empresasDisponiveis = (list || []).filter((e) => e.ativo && e.idEmpresa);
+    });
+    this.companySelector.empresaSelecionada$.subscribe(() => {
       this.carregar();
     });
   }
 
+  private idEmpresaAtual(): number | null {
+    return this.companySelector.obterIdEmpresaSelecionada();
+  }
+
   carregar(): void {
     this.erro = null;
+    const idEmp = this.idEmpresaAtual();
+    if (idEmp == null || idEmp <= 0) {
+      this.carregando = false;
+      this.linhas = [];
+      this.totalElements = 0;
+      this.totalPages = 0;
+      this.resumoTotal.emit(0);
+      this.erro = 'Selecione uma empresa no cabeçalho para ver e cadastrar clientes.';
+      return;
+    }
+
     this.carregando = true;
-    const idEmp =
-      this.filtroEmpresaId != null && this.filtroEmpresaId > 0 ? this.filtroEmpresaId : undefined;
     const cls =
       this.filtroClassificacao != null && this.filtroClassificacao >= 1 && this.filtroClassificacao <= 5
         ? this.filtroClassificacao
@@ -121,7 +135,6 @@ export class ClienteCadastroComponent implements OnInit {
 
   limparFiltros(): void {
     this.filtroQ = '';
-    this.filtroEmpresaId = null;
     this.filtroClassificacao = null;
     this.filtroTipoPessoa = '';
     this.pageIndex = 0;
@@ -142,10 +155,11 @@ export class ClienteCadastroComponent implements OnInit {
     this.formResponsavel = '';
     this.formCpf = '';
     this.formBloqueado = false;
+    const idCtx = this.idEmpresaAtual();
     this.formEmpresaIds = {};
     for (const e of this.empresasDisponiveis) {
       if (e.idEmpresa) {
-        this.formEmpresaIds[e.idEmpresa] = false;
+        this.formEmpresaIds[e.idEmpresa] = idCtx != null && idCtx > 0 && e.idEmpresa === idCtx;
       }
     }
     this.modalAberto = true;
@@ -208,6 +222,11 @@ export class ClienteCadastroComponent implements OnInit {
     const razao = this.formRazaoSocial.trim();
     if (!razao) {
       this.erro = 'Informe a razão social ou nome.';
+      return;
+    }
+    const idCtx = this.idEmpresaAtual();
+    if (idCtx == null || idCtx <= 0) {
+      this.erro = 'Selecione uma empresa no cabeçalho.';
       return;
     }
     const idEmpresas = this.coletarEmpresasSelecionadas();
