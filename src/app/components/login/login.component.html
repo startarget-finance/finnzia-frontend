@@ -1,23 +1,25 @@
-<div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-md w-full space-y-10">
+<div class="min-h-screen bg-[#020617] bg-[radial-gradient(circle_at_top,_#1e293b_0,_transparent_55%),radial-gradient(circle_at_bottom,_#020617_0,_#020617_55%)] flex items-center justify-center py-10 px-4 sm:px-6 lg:px-8">
+  <div class="w-full max-w-md space-y-8">
     <!-- Logo -->
-    <div class="text-center">
-      <div class="mx-auto flex items-center justify-center">
-        <img src="assets/images/finnzialogo.png" alt="Finnzia" class="h-16 w-auto shadow-2xl">
-      </div>
+    <div class="text-center mb-8 sm:mb-10">
+      <img
+        src="assets/images/finzzialogo.png"
+        alt="Finzzia"
+        class="mx-auto h-24 sm:h-28 w-auto max-w-[520px] sm:max-w-[640px] object-contain transform scale-[1.9] sm:scale-[2.6]"
+      >
     </div>
 
     <!-- Formulário de Login -->
-    <div class="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
+    <div class="rounded-3xl border border-slate-800/60 bg-slate-900/70 p-7 shadow-[0_22px_60px_-32px_rgba(15,23,42,0.95)] backdrop-blur">
       <form class="space-y-6" (ngSubmit)="onSubmit()" #formTemplate="ngForm">
         <!-- Email -->
         <div>
-          <label for="email" class="block text-sm font-semibold text-gray-900 mb-2.5">
+          <label for="email" class="block text-sm font-semibold text-slate-100 mb-2.5">
             Email
           </label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
               </svg>
             </div>
@@ -30,19 +32,19 @@
               [(ngModel)]="loginForm.email"
               (ngModelChange)="validateForm()"
               (focus)="clearError()"
-              class="block w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 focus:bg-white transition-all duration-200 text-gray-900 placeholder-gray-500 text-sm font-medium"
+              class="block w-full pl-11 pr-4 py-3.5 rounded-xl border border-slate-700/70 bg-slate-900/80 text-slate-50 placeholder-slate-500 text-sm font-medium shadow-inner focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-500/40 transition-all duration-200"
               placeholder="Digite seu email">
           </div>
         </div>
 
         <!-- Senha -->
         <div>
-          <label for="password" class="block text-sm font-semibold text-gray-900 mb-2.5">
+          <label for="password" class="block text-sm font-semibold text-slate-100 mb-2.5">
             Senha
           </label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
               </svg>
             </div>
@@ -55,12 +57,12 @@
               [(ngModel)]="loginForm.password"
               (ngModelChange)="validateForm()"
               (focus)="clearError()"
-              class="block w-full pl-11 pr-12 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 focus:bg-white transition-all duration-200 text-gray-900 placeholder-gray-500 text-sm font-medium"
+              class="block w-full pl-11 pr-12 py-3.5 rounded-xl border border-slate-700/70 bg-slate-900/80 text-slate-50 placeholder-slate-500 text-sm font-medium shadow-inner focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-500/40 transition-all duration-200"
               placeholder="Digite sua senha">
             <button 
               type="button"
               (click)="togglePasswordVisibility()"
-              class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors">
+              class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-200 transition-colors">
               <svg *ngIf="!showPassword" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -80,8 +82,8 @@
               name="remember-me"
               type="checkbox"
               [(ngModel)]="rememberMe"
-              class="h-4 w-4 text-gray-900 focus:ring-gray-900 border-gray-300 rounded cursor-pointer">
-            <label for="remember-me" class="ml-2.5 block text-sm text-gray-700 font-medium cursor-pointer">
+              class="h-4 w-4 text-violet-500 focus:ring-violet-500/60 border-slate-600 bg-slate-900 rounded cursor-pointer">
+            <label for="remember-me" class="ml-2.5 block text-sm text-slate-200 font-medium cursor-pointer">
               Lembrar-me
             </label>
           </div>
@@ -89,14 +91,14 @@
             <button 
               type="button"
               (click)="onForgotPassword()"
-              class="font-semibold text-gray-900 hover:text-black transition-colors">
+              class="font-semibold text-violet-300 hover:text-violet-100 transition-colors">
               Esqueci minha senha
             </button>
           </div>
         </div>
 
         <!-- Mensagem de erro -->
-        <div *ngIf="errorMessage" class="bg-red-50 border-l-4 border-red-500 rounded-lg p-4">
+        <div *ngIf="errorMessage" class="bg-rose-950/60 border-l-4 border-rose-500 rounded-lg p-4 text-rose-100">
           <div class="flex">
             <div class="flex-shrink-0">
               <svg class="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,17 +106,17 @@
               </svg>
             </div>
             <div class="ml-3">
-              <p class="text-sm font-medium text-red-800">{{ errorMessage }}</p>
+              <p class="text-sm font-medium">{{ errorMessage }}</p>
             </div>
           </div>
         </div>
 
         <!-- Botão de Login -->
-        <div class="pt-2">
+        <div class="pt-3">
           <button 
             type="submit"
             [disabled]="!isFormValid || isLoading"
-            class="group relative w-full flex justify-center py-4 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gray-900 hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+            class="group relative w-full flex justify-center py-3.5 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-violet-600 to-teal-500 hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-violet-500/70 focus:ring-offset-slate-950 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-[0_18px_40px_-22px_rgba(56,189,248,0.9)] hover:-translate-y-0.5">
             <span *ngIf="!isLoading" class="flex items-center">
               <svg class="w-5 h-5 mr-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>

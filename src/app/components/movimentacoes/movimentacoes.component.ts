@@ -1,11 +1,17 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
-import { BomControleService, MovimentacaoFinanceira, FiltrosMovimentacoes } from '../../services/bomcontrole.service';
+import { ErpFinanceiroService, MovimentacaoFinanceira, FiltrosMovimentacoes } from '../../services/erp-financeiro.service';
 import { OmieService, MovimentacaoOmie, MovimentacoesOmieResponse, FiltrosMovimentacoesOmie } from '../../services/omie.service';
 import { CompanySelectorService } from '../../services/company-selector.service';
+import {
+  MovimentacoesAnexosService,
+  TipoAnexoMovimentacao,
+  AnexoMovimentacaoMetadado,
+} from '../../services/movimentacoes-anexos.service';
 
 @Component({
   selector: 'app-movimentacoes',
@@ -60,10 +66,87 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   // Filtros de UI (categoria, tipo, status, etc.)
   filtrosUI = {
     categoria: '',
+    conta: '',
     tipo: '' as 'receita' | 'despesa' | '',
     status: '' as 'pendente' | 'quitado' | '',
     textoPesquisa: ''
   };
+  origemNavegacao: string | null = null;
+
+  /** Painel de anexos por lançamento (metadados persistidos localmente até API de upload). */
+  painelAnexoMovId: string | null = null;
+  tipoAnexoAlvo: TipoAnexoMovimentacao = 'comprovante';
+  anexoDragDepth = 0;
+  anexoDragOver = false;
+
+  readonly tiposAnexoLista: Array<{
+    id: TipoAnexoMovimentacao;
+    labelCurto: string;
+    labelCompleto: string;
+    /** Classe Flaticon UIcons (rounded), sem o prefixo `fi` — ex.: `fi-rr-file-invoice`. */
+    iconSlug: string;
+    btnFilled: string;
+    btnEmpty: string;
+    pillSelected: string;
+    pillIdle: string;
+  }> = [
+    {
+      id: 'fatura',
+      labelCurto: 'Fat.',
+      labelCompleto: 'Fatura',
+      iconSlug: 'fi-rr-file-invoice',
+      btnFilled:
+        'border-violet-400 bg-violet-50 text-violet-700 shadow-sm ring-2 ring-violet-300/50',
+      btnEmpty:
+        'border-slate-300/90 bg-white text-slate-600 hover:border-violet-300 hover:bg-violet-50/50 hover:text-violet-700',
+      pillSelected:
+        'border-violet-400 bg-violet-50 text-violet-900 ring-2 ring-violet-300/40 shadow-sm',
+      pillIdle:
+        'border-slate-200/90 bg-white text-slate-600 hover:border-violet-200 hover:bg-violet-50/40 hover:text-violet-800',
+    },
+    {
+      id: 'boleto',
+      labelCurto: 'Bol.',
+      labelCompleto: 'Boleto',
+      iconSlug: 'fi-rr-barcode-read',
+      btnFilled:
+        'border-sky-500 bg-sky-50 text-sky-800 shadow-sm ring-2 ring-sky-300/50',
+      btnEmpty:
+        'border-slate-300/90 bg-white text-slate-600 hover:border-sky-300 hover:bg-sky-50/50 hover:text-sky-800',
+      pillSelected:
+        'border-sky-400 bg-sky-50 text-sky-900 ring-2 ring-sky-300/40 shadow-sm',
+      pillIdle:
+        'border-slate-200/90 bg-white text-slate-600 hover:border-sky-200 hover:bg-sky-50/40 hover:text-sky-900',
+    },
+    {
+      id: 'nota_fiscal',
+      labelCurto: 'NF',
+      labelCompleto: 'Nota fiscal',
+      iconSlug: 'fi-rr-document',
+      btnFilled:
+        'border-emerald-500 bg-emerald-50 text-emerald-800 shadow-sm ring-2 ring-emerald-300/50',
+      btnEmpty:
+        'border-slate-300/90 bg-white text-slate-600 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-800',
+      pillSelected:
+        'border-emerald-400 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-300/40 shadow-sm',
+      pillIdle:
+        'border-slate-200/90 bg-white text-slate-600 hover:border-emerald-200 hover:bg-emerald-50/40 hover:text-emerald-900',
+    },
+    {
+      id: 'comprovante',
+      labelCurto: 'Comp.',
+      labelCompleto: 'Comprovante',
+      iconSlug: 'fi-rr-receipt',
+      btnFilled:
+        'border-amber-500 bg-amber-50 text-amber-900 shadow-sm ring-2 ring-amber-300/50',
+      btnEmpty:
+        'border-slate-300/90 bg-white text-slate-600 hover:border-amber-300 hover:bg-amber-50/60 hover:text-amber-900',
+      pillSelected:
+        'border-amber-400 bg-amber-50 text-amber-950 ring-2 ring-amber-300/40 shadow-sm',
+      pillIdle:
+        'border-slate-200/90 bg-white text-slate-600 hover:border-amber-200 hover:bg-amber-50/50 hover:text-amber-950',
+    },
+  ];
 
   /**
    * Mensagem de erro de validação (ex.: intervalo de datas inválido).
@@ -95,17 +178,22 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   categorias: Array<{ value: string, label: string }> = [
     { value: '', label: 'Todas as Categorias' }
   ];
+  contasBancarias: Array<{ value: string, label: string }> = [
+    { value: '', label: 'Todas as contas' }
+  ];
 
-  // Fonte de dados
-  fonteDados: 'bomcontrole' | 'omie' = 'bomcontrole'; // Padrão: Bom Controle
+  // Fonte de dados fixa: ERP (backend próprio)
+  readonly fonteDados: 'erp' = 'erp';
 
   private destroy$ = new Subject<void>();
   private textoPesquisaSubject = new Subject<string>();
 
   constructor(
-    private bomControleService: BomControleService,
+    private erpFinanceiroService: ErpFinanceiroService,
     private omieService: OmieService,
-    private companySelectorService: CompanySelectorService
+    private companySelectorService: CompanySelectorService,
+    private movimentacoesAnexosService: MovimentacoesAnexosService,
+    private route: ActivatedRoute
   ) {
     this.visibleMonth = new Date();
     this.buildCalendar();
@@ -123,8 +211,11 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Pré-preencher com mês atual automaticamente
-    this.preencherMesAtual();
+    const possuiFiltrosNavegacao = this.aplicarFiltrosDeNavegacao();
+    if (!possuiFiltrosNavegacao) {
+      // Pré-preencher com mês atual automaticamente
+      this.preencherMesAtual();
+    }
     
     // Verificar se usuário possui alguma empresa configurada
     const empresaSelecionada = this.companySelectorService.obterEmpresaSelecionada();
@@ -152,6 +243,14 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     // Carrega automaticamente com filtro de data do mês atual
     // A empresa é obtida via CompanySelectorService (X-Empresa-Id header)
     this.carregarMovimentacoes();
+
+    this.companySelectorService.empresaSelecionada$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.painelAnexoMovId = null;
+        this.anexoDragOver = false;
+        this.anexoDragDepth = 0;
+      });
   }
 
   ngOnDestroy(): void {
@@ -182,6 +281,68 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     console.log(`📅 Mês atual pré-preenchido: ${this.dataInicial} até ${this.dataFinal}`);
   }
 
+  /**
+   * Lê filtros vindos da URL (ex.: navegação da fatura para movimentações).
+   */
+  private aplicarFiltrosDeNavegacao(): boolean {
+    const qp = this.route.snapshot.queryParamMap;
+    const origem = qp.get('origem');
+    const dataInicial = qp.get('dataInicial');
+    const dataFinal = qp.get('dataFinal');
+    const tipo = qp.get('tipo');
+    const status = qp.get('status');
+    const categoria = qp.get('categoria');
+    const conta = qp.get('conta');
+    const textoPesquisa = qp.get('textoPesquisa');
+
+    const temFiltro =
+      !!dataInicial ||
+      !!dataFinal ||
+      !!tipo ||
+      !!status ||
+      !!categoria ||
+      !!conta ||
+      !!textoPesquisa;
+
+    if (!temFiltro) {
+      this.origemNavegacao = origem;
+      return false;
+    }
+
+    this.origemNavegacao = origem;
+
+    if (dataInicial) this.dataInicial = dataInicial;
+    if (dataFinal) this.dataFinal = dataFinal;
+
+    if (tipo === 'receita' || tipo === 'despesa') {
+      this.filtrosUI.tipo = tipo;
+    }
+    if (status === 'pendente' || status === 'quitado') {
+      this.filtrosUI.status = status;
+    }
+    if (categoria) {
+      this.filtrosUI.categoria = categoria;
+    }
+    if (conta) {
+      this.filtrosUI.conta = conta;
+    }
+    if (textoPesquisa) {
+      this.filtrosUI.textoPesquisa = textoPesquisa;
+    }
+
+    console.log('🔗 Filtros aplicados via navegação:', {
+      dataInicial: this.dataInicial,
+      dataFinal: this.dataFinal,
+      tipo: this.filtrosUI.tipo,
+      status: this.filtrosUI.status,
+      categoria: this.filtrosUI.categoria,
+      conta: this.filtrosUI.conta,
+      textoPesquisa: this.filtrosUI.textoPesquisa,
+    });
+
+    return true;
+  }
+
   // ===== Carregamento de Dados =====
   carregarMovimentacoes(): void {
     // Validação básica de intervalo de datas quando ambos estiverem preenchidos
@@ -199,14 +360,10 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     this.error = null;
     this.validationError = null;
 
-    if (this.fonteDados === 'omie') {
-      this.carregarMovimentacoesOmie();
-    } else {
-      this.carregarMovimentacoesBomControle();
-    }
+    this.carregarMovimentacoesErp();
   }
 
-  private carregarMovimentacoesBomControle(): void {
+  private carregarMovimentacoesErp(): void {
     // Garante que temos datas preenchidas (mês atual como padrão)
     if (!this.dataInicial || !this.dataFinal) {
       this.preencherMesAtual();
@@ -229,16 +386,16 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       itensPorPagina: this.itensPorPagina
     };
 
-    console.log('🔍 Carregando movimentações do Bom Controle com filtros:', filtros);
+    console.log('🔍 Carregando movimentações do ERP com filtros:', filtros);
     
-    this.bomControleService.buscarMovimentacoes(filtros)
+    this.erpFinanceiroService.buscarMovimentacoes(filtros)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
-          this.processarRespostaBomControle(response);
+          this.processarRespostaErp(response);
         },
         error: (err: any) => {
-          console.error('Erro ao carregar movimentações do Bom Controle:', err);
+          console.error('Erro ao carregar movimentações do ERP:', err);
           this.error = err.error?.mensagem || 'Erro ao carregar movimentações';
           this.loading = false;
         }
@@ -423,8 +580,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       });
   }
 
-  private processarRespostaBomControle(response: any): void {
-    console.log('✅ Resposta completa do Bom Controle:', JSON.stringify(response, null, 2));
+  private processarRespostaErp(response: any): void {
+    console.log('✅ Resposta completa do ERP:', JSON.stringify(response, null, 2));
     this.movimentacoesFiltradasCompleta = [];
     this.movimentacoes = response.movimentacoes || [];
     console.log(`📦 Itens recebidos: ${this.movimentacoes.length}`);
@@ -454,6 +611,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     
     // Extrai categorias únicas
     this.extrairCategorias();
+    this.extrairContasBancarias();
     
     // Garante que filtros locais (tipo/categoria/pesquisa) também sejam aplicados
     this.aplicarFiltrosUI();
@@ -520,6 +678,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     
     // Extrai categorias únicas (de todos os dados, não apenas da página)
     this.extrairCategorias();
+    this.extrairContasBancarias();
     
     // Reaplica filtros locais para garantir consistência visual
     this.aplicarFiltrosUI();
@@ -696,6 +855,16 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       });
     }
 
+    // Filtro por conta bancária
+    if (this.filtrosUI.conta) {
+      const contaSelecionada = this.filtrosUI.conta.toLowerCase();
+      filtradas = filtradas.filter(mov => {
+        const idConta = String((mov as any).IdContaFinanceira ?? '').toLowerCase();
+        const nomeConta = String((mov as any).NomeContaFinanceira ?? '').toLowerCase();
+        return idConta === contaSelecionada || nomeConta === contaSelecionada;
+      });
+    }
+
     // Filtro por status (pendente / quitado)
     if (this.filtrosUI.status) {
       filtradas = filtradas.filter(mov => {
@@ -715,11 +884,6 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     }
 
     this.movimentacoesFiltradas = filtradas;
-  }
-
-  onFonteDadosChange(): void {
-    this.paginaAtual = 1;
-    this.carregarMovimentacoes();
   }
 
   // ===== Filtros =====
@@ -752,16 +916,144 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   limparFiltros(): void {
     this.filtrosUI = {
       categoria: '',
+      conta: '',
       tipo: '',
       status: '',
       textoPesquisa: ''
     };
+    this.origemNavegacao = null;
     this.dataInicial = '';
     this.dataFinal = '';
     this.paginaAtual = 1;
     this.validationError = null;
+    this.painelAnexoMovId = null;
+    this.anexoDragOver = false;
+    this.anexoDragDepth = 0;
     this.aplicarFiltrosUI();
     this.carregarMovimentacoes();
+  }
+
+  idMovimentacao(mov: MovimentacaoFinanceira): string {
+    const raw = (mov as any).IdMovimentacaoFinanceiraParcela;
+    if (raw !== undefined && raw !== null && String(raw).trim() !== '') {
+      return String(raw);
+    }
+    const nome = (mov.Nome || '').slice(0, 48);
+    return `local_${mov.DataVencimento}_${mov.Debito ? 'D' : 'R'}_${mov.Valor}_${nome}`;
+  }
+
+  empresaIdAtual(): number | null {
+    return this.companySelectorService.obterEmpresaSelecionada()?.idEmpresa ?? null;
+  }
+
+  anexosDoMovimento(mov: MovimentacaoFinanceira) {
+    return this.movimentacoesAnexosService.obterAnexos(this.empresaIdAtual(), this.idMovimentacao(mov));
+  }
+
+  temAnexo(mov: MovimentacaoFinanceira, tipo: TipoAnexoMovimentacao): boolean {
+    return !!this.anexosDoMovimento(mov)[tipo];
+  }
+
+  obterAnexo(mov: MovimentacaoFinanceira, tipo: TipoAnexoMovimentacao): AnexoMovimentacaoMetadado | undefined {
+    return this.anexosDoMovimento(mov)[tipo];
+  }
+
+  painelAnexoAbertoPara(mov: MovimentacaoFinanceira): boolean {
+    return this.painelAnexoMovId === this.idMovimentacao(mov);
+  }
+
+  alternarPainelAnexo(mov: MovimentacaoFinanceira, tipo: TipoAnexoMovimentacao, event?: Event): void {
+    event?.stopPropagation();
+    const id = this.idMovimentacao(mov);
+    if (this.painelAnexoMovId === id) {
+      this.tipoAnexoAlvo = tipo;
+      return;
+    }
+    this.painelAnexoMovId = id;
+    this.tipoAnexoAlvo = tipo;
+  }
+
+  fecharPainelAnexo(): void {
+    this.painelAnexoMovId = null;
+    this.anexoDragOver = false;
+    this.anexoDragDepth = 0;
+  }
+
+  selecionarTipoAnexoAlvo(tipo: TipoAnexoMovimentacao): void {
+    this.tipoAnexoAlvo = tipo;
+  }
+
+  labelTipoAnexoAlvo(): string {
+    return this.tiposAnexoLista.find(t => t.id === this.tipoAnexoAlvo)?.labelCompleto ?? 'Anexo';
+  }
+
+  onDragEnterPainel(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.anexoDragDepth++;
+    this.anexoDragOver = true;
+  }
+
+  onDragLeavePainel(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.anexoDragDepth = Math.max(0, this.anexoDragDepth - 1);
+    if (this.anexoDragDepth === 0) {
+      this.anexoDragOver = false;
+    }
+  }
+
+  onDragOverPainel(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  onDropPainel(event: DragEvent, mov: MovimentacaoFinanceira): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.anexoDragDepth = 0;
+    this.anexoDragOver = false;
+    const files = event.dataTransfer?.files;
+    if (!files?.length) {
+      return;
+    }
+    this.movimentacoesAnexosService.salvarAnexo(
+      this.empresaIdAtual(),
+      this.idMovimentacao(mov),
+      this.tipoAnexoAlvo,
+      files[0]
+    );
+  }
+
+  aoSelecionarArquivoPainel(event: Event, mov: MovimentacaoFinanceira): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) {
+      this.movimentacoesAnexosService.salvarAnexo(
+        this.empresaIdAtual(),
+        this.idMovimentacao(mov),
+        this.tipoAnexoAlvo,
+        file
+      );
+    }
+    input.value = '';
+  }
+
+  removerAnexoMov(mov: MovimentacaoFinanceira, tipo: TipoAnexoMovimentacao): void {
+    this.movimentacoesAnexosService.removerAnexo(this.empresaIdAtual(), this.idMovimentacao(mov), tipo);
+  }
+
+  formatarTamanhoArquivo(bytes: number): string {
+    if (!Number.isFinite(bytes) || bytes < 0) {
+      return '—';
+    }
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    }
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1)} KB`;
+    }
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
   extrairCategorias(): void {
@@ -784,6 +1076,33 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
         .filter(c => c !== '')
         .sort()
         .map(c => ({ value: c, label: c }))
+    ];
+  }
+
+  extrairContasBancarias(): void {
+    const contas = new Map<string, string>();
+    const dadosParaExtrair = this.obterCache()?.data || this.movimentacoes;
+
+    dadosParaExtrair.forEach((mov: any) => {
+      const idConta = mov?.IdContaFinanceira;
+      const nomeConta = (mov?.NomeContaFinanceira || '').trim();
+      if (!nomeConta && (idConta == null || String(idConta).trim() === '')) {
+        return;
+      }
+      const value = idConta != null && String(idConta).trim() !== ''
+        ? String(idConta)
+        : nomeConta.toLowerCase();
+      const label = nomeConta || `Conta ${value}`;
+      if (!contas.has(value)) {
+        contas.set(value, label);
+      }
+    });
+
+    this.contasBancarias = [
+      { value: '', label: 'Todas as contas' },
+      ...Array.from(contas.entries())
+        .sort((a, b) => a[1].localeCompare(b[1], 'pt-BR'))
+        .map(([value, label]) => ({ value, label }))
     ];
   }
 
@@ -1128,11 +1447,22 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     let total = 0;
     if (this.filtrosUI.tipo) total++;
     if (this.filtrosUI.categoria) total++;
+    if (this.filtrosUI.conta) total++;
     if (this.filtrosUI.status) total++;
     if (this.filtrosUI.textoPesquisa) total++;
     if (this.dataInicial) total++;
     if (this.dataFinal) total++;
     return total;
+  }
+
+  get origemNavegacaoLabel(): string {
+    if (!this.origemNavegacao) {
+      return '';
+    }
+    if (this.origemNavegacao === 'fatura') {
+      return 'Fatura';
+    }
+    return this.origemNavegacao;
   }
 
   /** Lista completa ordenada (todos os itens quando há lista completa; senão só da página atual). */
@@ -1215,14 +1545,13 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       this.sortBy = col;
       this.sortOrder = 'asc';
     }
-    if (this.fonteDados === 'bomcontrole') {
-      this.paginaAtual = 1;
-      this.carregarMovimentacoes();
-    }
+    this.paginaAtual = 1;
+    this.carregarMovimentacoes();
   }
 
   abrirModalDetalhes(tipo: 'receita' | 'despesa'): void {
     this.tipoModalDetalhes = tipo;
+    this.mostrarRangePicker = false;
     this.mostrarModalDetalhes = true;
   }
 

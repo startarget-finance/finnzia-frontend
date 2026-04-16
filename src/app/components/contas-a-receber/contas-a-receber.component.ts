@@ -3,7 +3,7 @@ import { CommonModule, Location } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
-import { BomControleService, MovimentacaoFinanceira, FiltrosMovimentacoes } from '../../services/bomcontrole.service';
+import { ErpFinanceiroService, MovimentacaoFinanceira, FiltrosMovimentacoes } from '../../services/erp-financeiro.service';
 
 @Component({
   selector: 'app-contas-a-receber',
@@ -59,7 +59,7 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
   private textoPesquisaSubject = new Subject<string>();
 
   constructor(
-    private bomControleService: BomControleService,
+    private erpFinanceiroService: ErpFinanceiroService,
     public location: Location
   ) {
     this.visibleMonth = new Date();
@@ -110,7 +110,7 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
 
     console.log('🔍 Carregando contas a receber (Bom Controle) com filtros:', filtros);
     
-    this.bomControleService.buscarMovimentacoes(filtros)
+    this.erpFinanceiroService.buscarMovimentacoes(filtros)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
@@ -125,7 +125,7 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
   }
 
   private processarResposta(response: any): void {
-    // A resposta do BomControleService.buscarMovimentacoes retorna { movimentacoes, total, ... }
+    // A resposta do ERP retorna { movimentacoes, total, ... }
     const movimentacoes: MovimentacaoFinanceira[] = response.movimentacoes || [];
     this.contas = movimentacoes.filter(mov => this.isContaReceber(mov));
 

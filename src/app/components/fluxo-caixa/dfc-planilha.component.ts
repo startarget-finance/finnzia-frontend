@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { AuthService } from '../../services/auth.service';
 import { CompanySelectorService } from '../../services/company-selector.service';
-import { DfcResponse } from '../../services/bomcontrole.service';
+import { DfcResponse } from '../../services/erp-financeiro.service';
 import { mapBomControleDfcToPlanilha } from './dfc-bomcontrole-mapper';
 import {
   DfcLinhaComputada,

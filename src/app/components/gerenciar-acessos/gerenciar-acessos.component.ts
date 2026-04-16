@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UsuarioService, Usuario, CriarUsuarioRequest, AtualizarUsuarioRequest, AtualizarPermissoesRequest, PageResponse } from '../../services/usuario.service';
-import { BomControleService } from '../../services/bomcontrole.service';
+import { ErpFinanceiroService } from '../../services/erp-financeiro.service';
 import { CompanySelectorService, CompaniaInfo } from '../../services/company-selector.service';
 import { EmpresaConfigService } from '../../services/empresa-config.service';
 
@@ -57,6 +57,7 @@ export class GerenciarAcessosComponent implements OnInit {
   empresasDisponiveis: any[] = [];
   empresasUsuario: { [key: number]: boolean } = {};
   empresaPadraoSelecionada: number | null = null;
+  empresaUnicaSelecionada: number | null = null;
   carregandoEmpresas: boolean = false;
   
   // Expor Object para o template
@@ -72,7 +73,7 @@ export class GerenciarAcessosComponent implements OnInit {
 
   constructor(
     private usuarioService: UsuarioService,
-    private bomControleService: BomControleService,
+    private erpFinanceiroService: ErpFinanceiroService,
     private companySelectorService: CompanySelectorService,
     private empresaConfigService: EmpresaConfigService
   ) {}
@@ -125,10 +126,10 @@ export class GerenciarAcessosComponent implements OnInit {
    */
   carregarEmpresas() {
     this.carregandoEmpresas = true;
-    this.bomControleService.listarEmpresas().subscribe({
+    this.erpFinanceiroService.listarEmpresas().subscribe({
       next: (response: any) => {
         this.empresasDisponiveis = response.empresas || [];
-        console.log(`📦 ${this.empresasDisponiveis.length} empresas carregadas da API BOMControle`);
+        console.log(`📦 ${this.empresasDisponiveis.length} empresas carregadas do ERP`);
         this.carregandoEmpresas = false;
       },
       error: (error: any) => {
@@ -308,6 +309,7 @@ export class GerenciarAcessosComponent implements OnInit {
       next: (empresas: any[]) => {
         this.empresasUsuario = {};
         this.empresaPadraoSelecionada = null;
+        this.empresaUnicaSelecionada = null;
         
         empresas.forEach(empresa => {
           this.empresasUsuario[empresa.idEmpresa] = empresa.ativo;
@@ -316,12 +318,21 @@ export class GerenciarAcessosComponent implements OnInit {
           }
         });
         
+        // Novo modelo: 1 empresa por usuário.
+        if (this.empresaPadraoSelecionada) {
+          this.empresaUnicaSelecionada = this.empresaPadraoSelecionada;
+        } else {
+          const primeiraAtiva = empresas.find(e => !!e.ativo);
+          this.empresaUnicaSelecionada = primeiraAtiva?.idEmpresa ?? null;
+        }
+
         console.log(`✅ Carregadas ${Object.keys(this.empresasUsuario).length} empresas do usuário`);
         this.carregandoEmpresas = false;
       },
       error: (error) => {
         console.error('Erro ao carregar empresas do usuário:', error);
         this.empresasUsuario = {};
+        this.empresaUnicaSelecionada = null;
         this.carregandoEmpresas = false;
       }
     });
@@ -331,6 +342,7 @@ export class GerenciarAcessosComponent implements OnInit {
     this.isPermissoesAberto = false;
     this.usuarioPermissoes = null;
     this.permissoesEditando = {};
+    this.empresaUnicaSelecionada = null;
   }
 
   /**
@@ -345,9 +357,10 @@ export class GerenciarAcessosComponent implements OnInit {
     };
 
     this.usuarioService.atualizarPermissoes(this.usuarioPermissoes.id, request).subscribe({
-      next: (usuarioAtualizado) => {
-        // Salvar empresas do usuário
-        this.salvarEmpresasUsuario(this.usuarioPermissoes!.id);
+      next: () => {
+        // Agora este modal cuida apenas de permissões.
+        this.carregarUsuarios();
+        this.fecharModalPermissoes();
       },
       error: (error) => {
         this.erro = 'Erro ao atualizar permissões. Tente novamente.';
@@ -362,13 +375,12 @@ export class GerenciarAcessosComponent implements OnInit {
    * PUT /api/usuarios/{id}/empresas
    */
   salvarEmpresasUsuario(usuarioId: number) {
-    const empresasSelecionadas = Object.keys(this.empresasUsuario)
-      .filter(id => this.empresasUsuario[parseInt(id)])
-      .map(id => parseInt(id));
+    const empresaId = this.empresaUnicaSelecionada;
+    const empresasSelecionadas = empresaId ? [empresaId] : [];
 
     const payload = {
       empresaIds: empresasSelecionadas,
-      idEmpresaPadrao: this.empresaPadraoSelecionada
+      idEmpresaPadrao: empresaId
     };
 
     this.usuarioService.atualizarEmpresasUsuario(usuarioId, payload).subscribe({
@@ -396,6 +408,18 @@ export class GerenciarAcessosComponent implements OnInit {
       role: 'CLIENTE'
     };
     this.isModalNovoAberto = true;
+
+    // Para single-tenant: usar automaticamente a primeira empresa disponível
+    // apenas para vincular a chave Asaas (sem exibir na UI).
+    if (this.empresasDisponiveis.length > 0) {
+      this.empresaSelecionadaParaConfig = this.empresasDisponiveis[0].Id;
+      this.onEmpresaConfigChange();
+    } else {
+      this.empresaSelecionadaParaConfig = null;
+      this.asaasConfiguradoParaEmpresa = false;
+      this.asaasApiKeyInput = '';
+      this.asaasBaseUrlInput = '';
+    }
   }
 
   fecharModalNovo() {
@@ -481,7 +505,8 @@ export class GerenciarAcessosComponent implements OnInit {
    * Classes CSS para badges de status
    */
   getStatusBadgeClass(status: string): string {
-    return status === 'ativo' 
+    const normalizado = (status || '').toLowerCase();
+    return normalizado === 'ativo'
       ? 'bg-green-100 text-green-800' 
       : 'bg-red-100 text-red-800';
   }
@@ -490,9 +515,37 @@ export class GerenciarAcessosComponent implements OnInit {
    * Classes CSS para badges de role
    */
   getRoleBadgeClass(role: string): string {
-    return role === 'admin' 
+    const normalizado = (role || '').toLowerCase();
+    return normalizado === 'admin'
       ? 'bg-purple-100 text-purple-800' 
       : 'bg-blue-100 text-blue-800';
+  }
+
+  getRoleLabel(role: string): string {
+    return (role || '').toLowerCase() === 'admin' ? 'Administrador' : 'Cliente';
+  }
+
+  getStatusLabel(status: string): string {
+    return (status || '').toLowerCase() === 'ativo' ? 'Ativo' : 'Inativo';
+  }
+
+  getIniciais(nome: string): string {
+    const valor = (nome || '').trim();
+    if (!valor) return 'US';
+    const partes = valor.split(/\s+/).filter(Boolean);
+    if (partes.length === 1) return partes[0].slice(0, 2).toUpperCase();
+    return `${partes[0][0]}${partes[partes.length - 1][0]}`.toUpperCase();
+  }
+
+  temFiltrosAtivos(): boolean {
+    return !!(this.filtroTexto || this.filtroRole !== 'todos' || this.filtroStatus !== 'todos');
+  }
+
+  limparFiltros(): void {
+    this.filtroTexto = '';
+    this.filtroRole = 'todos';
+    this.filtroStatus = 'todos';
+    this.onFiltroChange();
   }
 
   /**
@@ -520,8 +573,9 @@ export class GerenciarAcessosComponent implements OnInit {
    * Retorna o nome da empresa padrão selecionada
    */
   getEmpresaPadraoNome(): string | undefined {
-    if (!this.empresaPadraoSelecionada) return undefined;
-    const empresa = this.empresasDisponiveis.find(e => e.Id === this.empresaPadraoSelecionada);
+    const id = this.empresaUnicaSelecionada || this.empresaPadraoSelecionada;
+    if (!id) return undefined;
+    const empresa = this.empresasDisponiveis.find(e => e.Id === id);
     return empresa?.Nome;
   }
 

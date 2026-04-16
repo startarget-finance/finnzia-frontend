@@ -61,6 +61,14 @@
             </div>
             <div *ngIf="importando" class="mt-2 text-sm text-violet-700">Processando importacao...</div>
             <div *ngIf="mensagemImportacao" class="mt-2 text-sm text-emerald-700">{{ mensagemImportacao }}</div>
+            <button
+              type="button"
+              (click)="abrirLancamentosDaFatura()"
+              class="mt-3 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+            >
+              <i class="fi fi-rr-exchange text-[0.8rem]"></i>
+              Ver lancamentos em Movimentacoes
+            </button>
           </div>
 
           <div class="mt-6">
@@ -106,9 +114,11 @@
 
                     <div
                       *ngFor="let p of cartaoSelecionado.pontos; let i = index"
-                      class="absolute -translate-x-1/2 -translate-y-1/2"
+                      class="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer"
                       [style.left.%]="getPointX(i)"
                       [style.top.%]="getPointY(p.valor)"
+                      (click)="abrirLancamentosDoMes(p, i)"
+                      [title]="'Abrir lançamentos de ' + p.mes"
                     >
                       <div
                         [ngClass]="p.status === 'paga'
@@ -122,7 +132,15 @@
                 </div>
 
                 <div class="mt-3 grid grid-cols-7 text-center text-xs font-medium text-slate-500">
-                  <div *ngFor="let p of cartaoSelecionado.pontos">{{ p.mes }}</div>
+                  <button
+                    *ngFor="let p of cartaoSelecionado.pontos; let i = index"
+                    type="button"
+                    (click)="abrirLancamentosDoMes(p, i)"
+                    class="rounded px-1 py-1 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                    [title]="'Filtrar movimentações de ' + p.mes"
+                  >
+                    {{ p.mes }}
+                  </button>
                 </div>
               </div>
             </div>
@@ -151,7 +169,9 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                  <tr *ngFor="let l of lancamentosImportados">
+                  <tr *ngFor="let l of lancamentosImportados"
+                      (click)="abrirLancamentoImportado(l)"
+                      class="cursor-pointer hover:bg-slate-50/70">
                     <td class="px-4 py-2.5 text-slate-600">{{ l.data }}</td>
                     <td class="px-4 py-2.5 text-slate-800">{{ l.descricao }}</td>
                     <td class="px-4 py-2.5 text-slate-700">{{ l.categoria }}</td>

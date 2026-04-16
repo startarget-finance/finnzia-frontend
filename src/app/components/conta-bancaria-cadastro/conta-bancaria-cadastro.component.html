@@ -3,7 +3,7 @@
     <h3 class="text-lg font-semibold text-slate-900 tracking-tight">Cadastro de Conta Bancária</h3>
   </div>
 
-  <div class="space-y-4 rounded-2xl border border-slate-200/80 bg-gradient-to-r from-slate-50/95 via-white to-violet-50/30 p-4 shadow-sm sm:p-5">
+  <div class="space-y-4 rounded-2xl border border-slate-200/80 bg-gradient-to-r from-slate-50/95 via-white to-violet-50/25 p-4 shadow-sm sm:p-5">
     <div class="flex flex-col xl:flex-row xl:items-end gap-4">
       <div class="flex-1 min-w-[220px]">
         <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Pesquisa</label>
@@ -15,16 +15,6 @@
         />
       </div>
       <div class="flex flex-wrap items-end gap-3">
-        <div>
-          <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Empresa</label>
-          <select
-            [(ngModel)]="filtroEmpresaId"
-            class="mt-1.5 h-10 min-w-[200px] rounded-xl border border-slate-200/90 bg-white px-3.5 text-sm text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] transition-colors focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
-          >
-            <option [ngValue]="null">Todas</option>
-            <option *ngFor="let e of empresasDisponiveis" [ngValue]="e.idEmpresa">{{ e.nomeEmpresa }}</option>
-          </select>
-        </div>
         <div>
           <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Situação</label>
           <select
@@ -74,7 +64,7 @@
       <button
         type="button"
         (click)="abrirNovo()"
-        class="h-10 rounded-xl bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 px-5 text-sm font-semibold text-white shadow-[0_12px_25px_-12px_rgba(124,58,237,0.55)] transition-all hover:brightness-105 active:scale-[0.98]"
+        class="h-10 rounded-xl bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 px-5 text-sm font-semibold text-white shadow-[0_12px_25px_-12px_rgba(124,58,237,0.55)] transition-all hover:brightness-105 hover:shadow-[0_16px_28px_-12px_rgba(124,58,237,0.6)] active:scale-[0.98]"
       >
         Cadastrar novo
       </button>
@@ -103,40 +93,34 @@
         <tr *ngIf="carregando && linhas.length === 0">
           <td colspan="4" class="py-12 text-center text-slate-500">Carregando…</td>
         </tr>
-        <tr *ngFor="let c of linhas; let i = index" class="border-b border-slate-100/90 align-top transition-colors hover:bg-violet-50/35">
-          <td class="py-3 px-4">
-            <div class="font-semibold text-slate-900">
+        <tr *ngFor="let c of linhas; let i = index" class="border-b border-slate-100/90 align-top transition-colors hover:bg-violet-50/30">
+          <td class="py-3.5 px-4">
+            <div class="font-semibold text-slate-900 tracking-tight">
               {{ indiceGlobal(i) }}. {{ tituloConta(c) }}
             </div>
-            <div class="text-xs text-slate-500 mt-1 leading-snug">{{ subtituloEmpresas(c) }}</div>
-            <div *ngIf="c.empresas?.length" class="flex flex-wrap gap-1 mt-2">
-              <span
-                *ngFor="let emp of c.empresas || []; let j = index"
-                class="inline-flex h-7 w-7 items-center justify-center rounded-full text-white text-[10px] font-bold"
-                [ngClass]="corAvatar(j)"
-                [title]="emp.nomeEmpresa"
-                >{{ inicial(emp.nomeEmpresa) }}</span
-              >
+            <div class="mt-1 text-xs text-slate-500 leading-snug">{{ subtituloEmpresas(c) }}</div>
+            <div class="mt-2 inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+              {{ c.empresas?.length || 0 }} empresa{{ (c.empresas?.length || 0) === 1 ? '' : 's' }}
             </div>
           </td>
-          <td class="py-3 px-4">
+          <td class="py-3.5 px-4">
             <div class="font-medium text-slate-800">{{ labelCategoria(c) }}</div>
             <div class="text-xs text-slate-500 mt-1">{{ linhaInstituicao(c) }}</div>
             <div class="text-[11px] text-slate-400 mt-1">{{ detalheTipoConta(c) }}</div>
           </td>
-          <td class="py-3 px-4 text-xs text-slate-600 leading-relaxed">
+          <td class="py-3.5 px-4 text-xs text-slate-600 leading-relaxed">
             <div><span class="text-slate-400">Agência:</span> {{ c.agencia }}</div>
             <div><span class="text-slate-400">Conta:</span> {{ c.conta }}</div>
             <div class="mt-1 font-medium" [class.text-slate-800]="textoSaldo(c).startsWith('R$')" [class.text-amber-700]="!textoSaldo(c).startsWith('R$')">
               {{ textoSaldo(c) }}
             </div>
           </td>
-          <td class="py-3 px-4 text-right whitespace-nowrap">
-            <div class="inline-flex items-center gap-0.5 justify-end">
+          <td class="py-3.5 px-4 text-right whitespace-nowrap">
+            <div class="inline-flex items-center justify-end gap-1 rounded-xl border border-slate-200/70 bg-slate-50/60 p-1">
               <button
                 type="button"
                 (click)="excluir(c)"
-                class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-transparent text-rose-600 transition-colors hover:border-rose-100 hover:bg-rose-50"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-rose-600 transition-colors hover:border-rose-100 hover:bg-rose-50"
                 title="Excluir"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,7 +130,7 @@
               <button
                 type="button"
                 (click)="abrirEditar(c)"
-                class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-transparent text-slate-600 transition-colors hover:border-slate-200 hover:bg-slate-100"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-transparent text-slate-600 transition-colors hover:border-slate-200 hover:bg-slate-100"
                 title="Editar"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,7 +140,7 @@
               <button
                 type="button"
                 (click)="alternarAtivo(c)"
-                class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-transparent transition-colors hover:border-slate-200 hover:bg-slate-100"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-transparent transition-colors hover:border-slate-200 hover:bg-slate-100"
                 [class.text-emerald-600]="c.ativo !== false"
                 [class.text-slate-400]="c.ativo === false"
                 [title]="c.ativo !== false ? 'Ativa (clique para inativar)' : 'Inativa (clique para ativar)'"
@@ -234,7 +218,7 @@
         <h2 class="text-lg font-semibold text-slate-900 tracking-tight">
           {{ editandoId != null ? 'Editar conta' : 'Nova conta bancária' }}
         </h2>
-        <p class="text-sm text-slate-500 mt-1">Dados da instituição e vínculos por empresa.</p>
+        <p class="text-sm text-slate-500 mt-1">Dados da instituição; vínculo usa a empresa do cabeçalho.</p>
       </div>
       <button
         type="button"
@@ -323,19 +307,9 @@
         <input type="checkbox" id="cb-ativo" [(ngModel)]="formAtivo" />
         <label for="cb-ativo" class="text-sm text-slate-700">Conta ativa</label>
       </div>
-      <div>
-        <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Empresas vinculadas</p>
-        <div class="max-h-40 overflow-y-auto rounded-xl border border-slate-200/80 divide-y divide-slate-100 bg-slate-50/30">
-          <label
-            *ngFor="let e of empresasDisponiveis"
-            class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm"
-          >
-            <input type="checkbox" *ngIf="e.idEmpresa" [(ngModel)]="formEmpresaIds[e.idEmpresa!]" />
-            <span>{{ e.nomeEmpresa }}</span>
-          </label>
-        </div>
-        <p *ngIf="!isAdmin" class="text-xs text-amber-700 mt-1">Selecione ao menos uma empresa.</p>
-      </div>
+      <p class="text-xs text-slate-500">
+        Esta conta será salva automaticamente na empresa selecionada no cabeçalho.
+      </p>
     </div>
     <div class="flex justify-end gap-2 pt-1">
       <button

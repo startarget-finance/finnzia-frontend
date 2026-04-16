@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
-import { BomControleService, DfcResponse } from '../../services/bomcontrole.service';
+import { ErpFinanceiroService, DfcResponse } from '../../services/erp-financeiro.service';
 import { DfcPlanilhaComponent } from './dfc-planilha.component';
 
 @Component({
@@ -31,7 +31,7 @@ export class FluxoCaixaComponent implements OnInit {
 
   constructor(
     private readonly fb: FormBuilder,
-    private readonly bomControleService: BomControleService
+    private readonly erpFinanceiroService: ErpFinanceiroService
   ) {
     const periodo = this.definirPeriodoInicial();
     this.dataInicial = periodo.dataInicio;
@@ -68,7 +68,7 @@ export class FluxoCaixaComponent implements OnInit {
     this.carregando = true;
     this.erro = undefined;
 
-    this.bomControleService
+    this.erpFinanceiroService
       .gerarDFC({
         dataInicio,
         dataTermino,
@@ -84,10 +84,10 @@ export class FluxoCaixaComponent implements OnInit {
         })
       )
       .subscribe({
-        next: (res) => {
+        next: (res: DfcResponse) => {
           this.dfcResposta = res;
         },
-        error: (err) => {
+        error: (err: any) => {
           this.dfcResposta = null;
           const mensagem = err?.error?.mensagem ?? 'Não foi possível carregar o demonstrativo.';
           this.erro = mensagem;

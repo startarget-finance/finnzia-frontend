@@ -1,156 +1,184 @@
-<div class="min-h-screen bg-gray-50 p-4 lg:p-6">
-  <div class="max-w-7xl mx-auto">
-    <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900">Gerenciar Acessos</h1>
-      <p class="mt-2 text-gray-600">Gerencie usuários, permissões e acessos ao sistema</p>
+<div class="min-h-full bg-gradient-to-b from-slate-50 via-white to-slate-100/70 p-4 lg:p-6">
+  <div class="mx-auto max-w-7xl">
+    <section class="relative mb-6 overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm shadow-slate-900/5 backdrop-blur-sm sm:p-7">
+      <div aria-hidden="true" class="pointer-events-none absolute inset-0 bg-[radial-gradient(900px_circle_at_8%_-10%,rgba(139,92,246,0.08),transparent_55%),radial-gradient(750px_circle_at_100%_0%,rgba(20,184,166,0.07),transparent_45%)]"></div>
+      <div class="relative z-[1] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 class="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Gerenciar Acessos</h1>
+          <p class="mt-1 text-sm text-slate-500">Gerencie usuários, permissões e acessos ao sistema</p>
+        </div>
+        <button
+          type="button"
+          (click)="abrirModalNovo()"
+          class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-violet-500/25 transition-all hover:brightness-105"
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Novo Usuário
+        </button>
+      </div>
+    </section>
+
+    <div *ngIf="erro" class="mb-4 flex items-start justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800">
+      <span>{{ erro }}</span>
+      <button type="button" (click)="erro = null" class="inline-flex h-6 w-6 items-center justify-center rounded-md text-rose-500 transition-colors hover:bg-rose-100 hover:text-rose-700">×</button>
     </div>
 
-    <!-- Mensagem de Erro -->
-    <div *ngIf="erro" class="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
-      {{ erro }}
-      <button (click)="erro = null" class="float-right text-red-600 hover:text-red-800">×</button>
-    </div>
-
-    <!-- Loading -->
-    <div *ngIf="carregando" class="mb-4 bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg">
+    <div *ngIf="carregando" class="mb-4 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm font-medium text-sky-800">
       Carregando...
     </div>
 
-    <!-- Filtros e Ações -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-        <!-- Busca -->
+    <section class="mb-6 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-900/5 sm:p-6">
+      <div class="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h2 class="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Filtros de busca</h2>
+        <div class="flex flex-wrap items-center gap-2">
+          <div *ngIf="temFiltrosAtivos()" class="inline-flex items-center gap-1.5 rounded-full border border-violet-200/80 bg-violet-50 px-3 py-1 text-xs font-medium text-violet-700">
+            <span class="h-1.5 w-1.5 rounded-full bg-violet-500"></span>
+            Filtros ativos
+          </div>
+          <button type="button" (click)="limparFiltros()" class="text-sm font-medium text-slate-500 transition-colors hover:text-slate-900">
+            Limpar filtros
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
-          <input 
-            type="text" 
+          <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Buscar</label>
+          <input
+            type="text"
             [(ngModel)]="filtroTexto"
             (ngModelChange)="onFiltroChange()"
             placeholder="Nome ou email..."
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 shadow-sm outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20"
+          />
         </div>
 
-        <!-- Filtro por Role -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
-          <select 
+          <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Tipo</label>
+          <select
             [(ngModel)]="filtroRole"
             (ngModelChange)="onFiltroChange()"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 shadow-sm outline-none transition-colors hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20"
+          >
             <option value="todos">Todos</option>
             <option value="admin">Administrador</option>
             <option value="cliente">Cliente</option>
           </select>
         </div>
 
-        <!-- Filtro por Status -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-          <select 
+          <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Status</label>
+          <select
             [(ngModel)]="filtroStatus"
             (ngModelChange)="onFiltroChange()"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 shadow-sm outline-none transition-colors hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20"
+          >
             <option value="todos">Todos</option>
             <option value="ativo">Ativo</option>
             <option value="inativo">Inativo</option>
           </select>
         </div>
 
-        <!-- Botão Novo Usuário -->
-        <div class="flex items-end">
-          <button 
-            (click)="abrirModalNovo()"
-            class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 h-10">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-            Novo Usuário
-          </button>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="rounded-2xl border border-slate-200/80 bg-slate-50/80 px-3 py-3">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Na página</p>
+            <p class="mt-1 text-xl font-semibold tracking-tight text-slate-900">{{ usuariosFiltrados.length }}</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200/80 bg-slate-50/80 px-3 py-3">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Total</p>
+            <p class="mt-1 text-xl font-semibold tracking-tight text-slate-900">{{ totalElementos }}</p>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Tabela de Usuários -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <section class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_16px_45px_-30px_rgba(15,23,42,0.32)]">
       <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
+        <table class="min-w-full divide-y divide-slate-100 text-sm">
+          <thead class="bg-slate-50/90">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuário</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Último Acesso</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permissões</th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+              <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Usuário</th>
+              <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Email</th>
+              <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Tipo</th>
+              <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Status</th>
+              <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Último Acesso</th>
+              <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Permissões</th>
+              <th class="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Ações</th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
+          <tbody class="divide-y divide-slate-100 bg-white">
             <tr *ngIf="usuariosFiltrados.length === 0 && !carregando">
-              <td colspan="7" class="px-6 py-8 text-center text-gray-500">
-                Nenhum usuário encontrado.
-              </td>
+              <td colspan="7" class="px-6 py-12 text-center text-sm text-slate-500">Nenhum usuário encontrado.</td>
             </tr>
-            <tr *ngFor="let usuario of usuariosFiltrados" class="hover:bg-gray-50">
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                  <div class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                    <span class="text-sm font-medium text-gray-700">
-                      {{ usuario.name.charAt(0).toUpperCase() }}
-                    </span>
+            <tr *ngFor="let usuario of usuariosFiltrados" class="transition-colors hover:bg-slate-50/75">
+              <td class="px-4 py-3.5">
+                <div class="flex items-center gap-3">
+                  <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-teal-500 text-xs font-bold tracking-wide text-white shadow-[0_10px_24px_-16px_rgba(124,58,237,0.85)]">
+                    {{ getIniciais(usuario.name) }}
                   </div>
-                  <div class="ml-4">
-                    <div class="text-sm font-medium text-gray-900">{{ usuario.name }}</div>
+                  <div class="min-w-0">
+                    <p class="truncate font-semibold text-slate-900">{{ usuario.name }}</p>
                   </div>
                 </div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ usuario.email }}</td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                      [class]="getRoleBadgeClass(usuario.role)">
-                  {{ usuario.role === 'admin' ? 'Administrador' : 'Cliente' }}
+              <td class="px-4 py-3.5 text-slate-700">{{ usuario.email }}</td>
+              <td class="px-4 py-3.5">
+                <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold" [class]="getRoleBadgeClass(usuario.role)">
+                  {{ getRoleLabel(usuario.role) }}
                 </span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                      [class]="getStatusBadgeClass(usuario.status)">
-                  {{ usuario.status === 'ativo' ? 'Ativo' : 'Inativo' }}
+              <td class="px-4 py-3.5">
+                <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold" [class]="getStatusBadgeClass(usuario.status)">
+                  {{ getStatusLabel(usuario.status) }}
                 </span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {{ formatarData(usuario.loginTime) }}
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <button (click)="abrirModalPermissoes(usuario)" class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-800 text-xs font-semibold">
+              <td class="px-4 py-3.5 text-slate-500">{{ formatarData(usuario.loginTime) }}</td>
+              <td class="px-4 py-3.5">
+                <button
+                  type="button"
+                  (click)="abrirModalPermissoes(usuario)"
+                  class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                >
+                  <i class="fi fi-rr-key flex h-3.5 w-3.5 items-center justify-center text-[0.7rem] leading-none" aria-hidden="true"></i>
                   Gerenciar permissões
                 </button>
               </td>
 
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <div class="flex items-center gap-2">
-                  <button 
+              <td class="px-4 py-3.5">
+                <div class="flex items-center gap-1.5">
+                  <button
+                    type="button"
                     (click)="abrirModalEdicao(usuario)"
-                    class="text-blue-600 hover:text-blue-900 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-sky-200 text-sky-600 transition-colors hover:bg-sky-50"
+                    title="Editar usuário"
+                  >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                     </svg>
                   </button>
-                  <button 
+                  <button
+                    type="button"
                     (click)="alternarStatus(usuario)"
-                    [class]="usuario.status === 'ativo' ? 'text-orange-600 hover:text-orange-900' : 'text-green-600 hover:text-green-900'"
-                    class="transition-colors">
-                    <svg *ngIf="usuario.status === 'ativo'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    [ngClass]="(usuario.status || '').toLowerCase() === 'ativo' ? 'border-amber-200 text-amber-600 hover:bg-amber-50' : 'border-emerald-200 text-emerald-600 hover:bg-emerald-50'"
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border transition-colors"
+                    [title]="(usuario.status || '').toLowerCase() === 'ativo' ? 'Inativar usuário' : 'Ativar usuário'"
+                  >
+                    <svg *ngIf="(usuario.status || '').toLowerCase() === 'ativo'" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <svg *ngIf="usuario.status === 'inativo'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg *ngIf="(usuario.status || '').toLowerCase() !== 'ativo'" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                   </button>
-                  <button 
+                  <button
+                    type="button"
                     (click)="excluirUsuario(usuario)"
-                    class="text-red-600 hover:text-red-900 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 text-rose-600 transition-colors hover:bg-rose-50"
+                    title="Excluir usuário"
+                  >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                     </svg>
                   </button>
@@ -160,37 +188,42 @@
           </tbody>
         </table>
       </div>
-      
-      <!-- Paginação -->
-      <div *ngIf="totalPaginas > 1" class="bg-white px-4 py-3 border-t border-gray-200 flex items-center justify-between">
-        <div class="text-sm text-gray-700">
-          Mostrando {{ (paginaAtual * tamanhoPagina) + 1 }} a {{ Math.min((paginaAtual + 1) * tamanhoPagina, totalElementos) }} de {{ totalElementos }} usuários
+
+      <div *ngIf="totalPaginas > 1" class="flex flex-col gap-3 border-t border-slate-100 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="text-sm text-slate-500">
+          Mostrando <span class="font-medium text-slate-900">{{ (paginaAtual * tamanhoPagina) + 1 }}</span>
+          a <span class="font-medium text-slate-900">{{ Math.min((paginaAtual + 1) * tamanhoPagina, totalElementos) }}</span>
+          de <span class="font-medium text-slate-900">{{ totalElementos }}</span> usuários
         </div>
-        <div class="flex gap-2">
-          <button 
+        <div class="flex items-center gap-1.5">
+          <button
+            type="button"
             (click)="irParaPagina(paginaAtual - 1)"
             [disabled]="paginaAtual === 0"
-            class="px-3 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">
+            class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
             Anterior
           </button>
-          <button 
+          <button
             *ngFor="let pagina of getPaginas()"
+            type="button"
             (click)="irParaPagina(pagina)"
-            [class.bg-blue-600]="pagina === paginaAtual"
-            [class.text-white]="pagina === paginaAtual"
-            [class.text-gray-700]="pagina !== paginaAtual"
-            class="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+            [ngClass]="pagina === paginaAtual ? 'border-transparent bg-gradient-to-r from-violet-600 to-teal-500 text-white shadow-md shadow-violet-500/20' : 'border-slate-200 text-slate-700 hover:bg-slate-50'"
+            class="rounded-xl border px-3 py-2 text-sm font-semibold transition-colors"
+          >
             {{ pagina + 1 }}
           </button>
-          <button 
+          <button
+            type="button"
             (click)="irParaPagina(paginaAtual + 1)"
             [disabled]="paginaAtual >= totalPaginas - 1"
-            class="px-3 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50">
+            class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
             Próxima
           </button>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- Modal de Edição -->
     <div *ngIf="isModalAberto" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -293,21 +326,13 @@
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
             </div>
 
-            <!-- Chave API Asaas por empresa (opcional) -->
+            <!-- Chave API Asaas (global para a conta) -->
             <div class="border-t border-gray-200 pt-4 mt-4">
-              <h4 class="text-sm font-semibold text-gray-700 mb-2">🔑 Chave API Asaas por empresa (opcional)</h4>
-              <p class="text-xs text-gray-600 mb-2">Selecione a empresa, cole a chave e clique em <strong>Salvar chave</strong>.</p>
-              <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                <div class="sm:col-span-4">
-                  <label class="block text-xs font-medium text-gray-700 mb-1">Empresa</label>
-                  <select
-                    [(ngModel)]="empresaSelecionadaParaConfig"
-                    (ngModelChange)="onEmpresaConfigChange()"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
-                    <option [ngValue]="null">Selecione uma empresa</option>
-                    <option *ngFor="let e of empresasDisponiveis" [ngValue]="e.Id">{{ e.Nome }} (ID {{ e.Id }})</option>
-                  </select>
-                </div>
+              <h4 class="text-sm font-semibold text-gray-700 mb-1">🔑 Chave API Asaas (opcional)</h4>
+              <p class="text-xs text-gray-600 mb-3">
+                Informe a chave da sua conta Asaas. Usaremos automaticamente a empresa padrão desta conta (não é necessário escolher empresa aqui).
+              </p>
+              <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 items-end">
                 <div class="sm:col-span-3">
                   <label class="block text-xs font-medium text-gray-700 mb-1">Chave API Asaas</label>
                   <input
@@ -316,7 +341,7 @@
                     [placeholder]="asaasConfiguradoParaEmpresa ? '•••••••• (deixe para manter)' : 'Cole a chave'"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
                 </div>
-                <div class="sm:col-span-3">
+                <div class="sm:col-span-2">
                   <label class="block text-xs font-medium text-gray-700 mb-1">URL base (opcional)</label>
                   <input
                     type="text"
@@ -324,21 +349,24 @@
                     placeholder="https://sandbox.asaas.com"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
                 </div>
-                <div class="sm:col-span-2">
-                  <button
-                    type="button"
-                    (click)="salvarConfigAsaas()"
-                    [disabled]="configAsaasStatus === 'loading' || !empresaSelecionadaParaConfig"
-                    class="w-full px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm">
-                    {{ configAsaasStatus === 'loading' ? 'Salvando...' : 'Salvar chave' }}
-                  </button>
-                </div>
+              </div>
+              <div class="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  (click)="salvarConfigAsaas()"
+                  [disabled]="configAsaasStatus === 'loading' || !empresaSelecionadaParaConfig"
+                  class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {{ configAsaasStatus === 'loading' ? 'Salvando...' : 'Salvar chave' }}
+                </button>
               </div>
               <div *ngIf="configAsaasStatus === 'saved'" class="mt-3 text-sm font-medium text-green-800 bg-green-100 border border-green-300 rounded-lg px-3 py-2 flex items-center gap-2">
                 <span aria-hidden="true">✓</span> {{ configAsaasMessage }}
               </div>
-              <div *ngIf="configAsaasStatus === 'error' && configAsaasMessage" class="mt-3 text-sm font-medium text-red-800 bg-red-100 border border-red-300 rounded-lg px-3 py-2">{{ configAsaasMessage }}</div>
+              <div *ngIf="configAsaasStatus === 'error' && configAsaasMessage" class="mt-3 text-sm font-medium text-red-800 bg-red-100 border border-red-300 rounded-lg px-3 py-2">
+                {{ configAsaasMessage }}
+              </div>
             </div>
+
           </div>
           
           <div class="flex justify-end gap-3 mt-6">
@@ -359,158 +387,96 @@
   </div>
 
   <!-- Modal de Permissões -->
-  <div *ngIf="isPermissoesAberto" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
-    <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full mx-4 my-8">
-      <div class="p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-6">Gerenciar Acessos - {{ usuarioPermissoes?.name }}</h3>
+  <div *ngIf="isPermissoesAberto" class="fixed inset-0 z-[10060] bg-black/45 flex items-center justify-center p-4 overflow-y-auto">
+    <div class="relative w-full max-w-3xl overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 shadow-[0_30px_80px_-50px_rgba(15,23,42,0.45)] backdrop-blur">
+      <div class="p-6 sm:p-7">
+        <div class="mb-6 flex items-start justify-between gap-4">
+          <div class="min-w-0">
+            <h3 class="truncate text-lg font-semibold tracking-tight text-slate-900">
+              Gerenciar Acessos - {{ usuarioPermissoes?.name }}
+            </h3>
+            <p class="mt-1 text-sm text-slate-500">Ajuste permissões e empresas com acesso ao sistema.</p>
+          </div>
+          <button
+            type="button"
+            (click)="fecharModalPermissoes()"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+            aria-label="Fechar"
+            title="Fechar"
+          >
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
 
         <!-- Seção 1: Permissões -->
         <div class="mb-8">
-          <h4 class="text-sm font-semibold text-gray-700 mb-4">📋 Permissões de Acesso</h4>
+          <h4 class="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 mb-4">
+            📋 Permissões de Acesso
+          </h4>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <label class="inline-flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-              <input type="checkbox" [(ngModel)]="permissoesEditando['dashboard']" class="rounded">
-              <span class="text-sm font-medium">Dashboard</span>
+            <label class="group inline-flex items-center gap-2 rounded-2xl border border-slate-200/70 bg-white px-3 py-2.5 cursor-pointer transition-colors hover:bg-slate-50">
+              <input type="checkbox" [(ngModel)]="permissoesEditando['dashboard']"
+                     class="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500/25" />
+              <span class="text-sm font-semibold text-slate-700 group-hover:text-slate-900">Dashboard</span>
             </label>
-            <label class="inline-flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-              <input type="checkbox" [(ngModel)]="permissoesEditando['contratos']" class="rounded">
-              <span class="text-sm font-medium">Contratos</span>
+            <label class="group inline-flex items-center gap-2 rounded-2xl border border-slate-200/70 bg-white px-3 py-2.5 cursor-pointer transition-colors hover:bg-slate-50">
+              <input type="checkbox" [(ngModel)]="permissoesEditando['contratos']"
+                     class="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500/25" />
+              <span class="text-sm font-semibold text-slate-700 group-hover:text-slate-900">Contratos</span>
             </label>
-            <label class="inline-flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-              <input type="checkbox" [(ngModel)]="permissoesEditando['relatorio']" class="rounded">
-              <span class="text-sm font-medium">Relatório</span>
+            <label class="group inline-flex items-center gap-2 rounded-2xl border border-slate-200/70 bg-white px-3 py-2.5 cursor-pointer transition-colors hover:bg-slate-50">
+              <input type="checkbox" [(ngModel)]="permissoesEditando['relatorio']"
+                     class="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500/25" />
+              <span class="text-sm font-semibold text-slate-700 group-hover:text-slate-900">Relatório</span>
             </label>
-            <label class="inline-flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-              <input type="checkbox" [(ngModel)]="permissoesEditando['movimentacoes']" class="rounded">
-              <span class="text-sm font-medium">Movimentações</span>
+            <label class="group inline-flex items-center gap-2 rounded-2xl border border-slate-200/70 bg-white px-3 py-2.5 cursor-pointer transition-colors hover:bg-slate-50">
+              <input type="checkbox" [(ngModel)]="permissoesEditando['movimentacoes']"
+                     class="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500/25" />
+              <span class="text-sm font-semibold text-slate-700 group-hover:text-slate-900">Movimentações</span>
             </label>
-            <label class="inline-flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-              <input type="checkbox" [(ngModel)]="permissoesEditando['fluxoCaixa']" class="rounded">
-              <span class="text-sm font-medium">DFC</span>
+            <label class="group inline-flex items-center gap-2 rounded-2xl border border-slate-200/70 bg-white px-3 py-2.5 cursor-pointer transition-colors hover:bg-slate-50">
+              <input type="checkbox" [(ngModel)]="permissoesEditando['fluxoCaixa']"
+                     class="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500/25" />
+              <span class="text-sm font-semibold text-slate-700 group-hover:text-slate-900">DFC</span>
             </label>
-            <label class="inline-flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-              <input type="checkbox" [(ngModel)]="permissoesEditando['chat']" class="rounded">
-              <span class="text-sm font-medium">Chat</span>
+            <label class="group inline-flex items-center gap-2 rounded-2xl border border-slate-200/70 bg-white px-3 py-2.5 cursor-pointer transition-colors hover:bg-slate-50">
+              <input type="checkbox" [(ngModel)]="permissoesEditando['chat']"
+                     class="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500/25" />
+              <span class="text-sm font-semibold text-slate-700 group-hover:text-slate-900">Chat</span>
             </label>
-            <label class="inline-flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-              <input type="checkbox" [(ngModel)]="permissoesEditando['assinatura']" class="rounded">
-              <span class="text-sm font-medium">Assinatura</span>
+            <label class="group inline-flex items-center gap-2 rounded-2xl border border-slate-200/70 bg-white px-3 py-2.5 cursor-pointer transition-colors hover:bg-slate-50">
+              <input type="checkbox" [(ngModel)]="permissoesEditando['assinatura']"
+                     class="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500/25" />
+              <span class="text-sm font-semibold text-slate-700 group-hover:text-slate-900">Assinatura</span>
             </label>
-            <label class="inline-flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-              <input type="checkbox" [(ngModel)]="permissoesEditando['gerenciarAcessos']" class="rounded">
-              <span class="text-sm font-medium">Gerenciar Acessos</span>
+            <label class="group inline-flex items-center gap-2 rounded-2xl border border-slate-200/70 bg-white px-3 py-2.5 cursor-pointer transition-colors hover:bg-slate-50">
+              <input type="checkbox" [(ngModel)]="permissoesEditando['gerenciarAcessos']"
+                     class="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500/25" />
+              <span class="text-sm font-semibold text-slate-700 group-hover:text-slate-900">Gerenciar Acessos</span>
             </label>
           </div>
-        </div>
-
-        <!-- Separador -->
-        <div class="border-t border-gray-200 my-6"></div>
-
-        <!-- Seção 2: Empresas BOMControle -->
-        <div class="mb-8">
-          <div class="flex items-center justify-between mb-4">
-            <h4 class="text-sm font-semibold text-gray-700">🏢 Empresas BOMControle</h4>
-            <span *ngIf="carregandoEmpresas" class="text-xs text-gray-500 animate-pulse">Carregando empresas...</span>
-          </div>
-
-          <div *ngIf="empresasDisponiveis.length === 0 && !carregandoEmpresas" class="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg text-sm">
-            ⚠️ Nenhuma empresa disponível. Verifique a conexão com o BOMControle.
-          </div>
-
-          <div *ngIf="empresasDisponiveis.length > 0" class="space-y-2 max-h-64 overflow-y-auto">
-            <div *ngFor="let empresa of empresasDisponiveis" class="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
-              <!-- Checkbox -->
-              <input 
-                type="checkbox" 
-                [id]="'empresa-' + empresa.Id"
-                [(ngModel)]="empresasUsuario[empresa.Id]"
-                class="rounded w-4 h-4 text-blue-600">
-              
-              <!-- Empresa Info -->
-              <label [for]="'empresa-' + empresa.Id" class="flex-1 cursor-pointer">
-                <div class="text-sm font-medium text-gray-900">{{ empresa.Nome }}</div>
-                <div class="text-xs text-gray-500">ID: {{ empresa.Id }}</div>
-              </label>
-
-              <!-- Botão Padrão -->
-              <button 
-                *ngIf="empresasUsuario[empresa.Id]"
-                (click)="empresaPadraoSelecionada = empresaPadraoSelecionada === empresa.Id ? null : empresa.Id"
-                [class.ring-2]="empresaPadraoSelecionada === empresa.Id"
-                [class.ring-blue-500]="empresaPadraoSelecionada === empresa.Id"
-                [class.ring-offset-2]="empresaPadraoSelecionada === empresa.Id"
-                class="px-3 py-1 text-xs font-semibold rounded transition-all whitespace-nowrap"
-                [class]="empresaPadraoSelecionada === empresa.Id 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'">
-                {{ empresaPadraoSelecionada === empresa.Id ? '⭐ Padrão' : 'Definir como padrão' }}
-              </button>
-            </div>
-          </div>
-
-          <div *ngIf="Object.keys(empresasUsuario).length > 0" class="mt-3 text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <strong>✓ Selecionadas:</strong> {{ getContagemEmpresasSelecionadas() }} empresa(s)
-            <span *ngIf="getEmpresaPadraoNome()"> | <strong>Padrão:</strong> {{ getEmpresaPadraoNome() }}</span>
-          </div>
-        </div>
-
-        <!-- Separador -->
-        <div class="border-t border-gray-200 my-6"></div>
-
-        <!-- Seção 3: Chave API Asaas por empresa -->
-        <div class="mb-8">
-          <h4 class="text-sm font-semibold text-gray-700 mb-2">🔑 Chave API Asaas por empresa</h4>
-          <p class="text-xs text-gray-600 mb-1">Cada empresa pode usar uma conta Asaas diferente.</p>
-          <p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 mb-3">Passo a passo: 1) Selecione a empresa no dropdown  2) Cole a chave no campo  3) Clique em <strong>Salvar chave</strong> (o botão azul ao lado da URL). Só depois use &quot;Salvar Alterações&quot; se quiser.</p>
-          <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-            <div class="sm:col-span-4">
-              <label class="block text-xs font-medium text-gray-700 mb-1">Empresa</label>
-              <select
-                [(ngModel)]="empresaSelecionadaParaConfig"
-                (ngModelChange)="onEmpresaConfigChange()"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
-                <option [ngValue]="null">Selecione uma empresa</option>
-                <option *ngFor="let e of empresasDisponiveis" [ngValue]="e.Id">{{ e.Nome }} (ID {{ e.Id }})</option>
-              </select>
-            </div>
-            <div class="sm:col-span-3">
-              <label class="block text-xs font-medium text-gray-700 mb-1">Chave API Asaas</label>
-              <input
-                type="password"
-                [(ngModel)]="asaasApiKeyInput"
-                [placeholder]="asaasConfiguradoParaEmpresa ? '•••••••• (deixe para manter)' : 'Cole a chave'"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
-            </div>
-            <div class="sm:col-span-3">
-              <label class="block text-xs font-medium text-gray-700 mb-1">URL base (opcional)</label>
-              <input
-                type="text"
-                [(ngModel)]="asaasBaseUrlInput"
-                placeholder="https://sandbox.asaas.com"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
-            </div>
-            <div class="sm:col-span-2">
-              <button
-                type="button"
-                (click)="salvarConfigAsaas()"
-                [disabled]="configAsaasStatus === 'loading' || !empresaSelecionadaParaConfig"
-                class="w-full px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm">
-                {{ configAsaasStatus === 'loading' ? 'Salvando...' : 'Salvar chave' }}
-              </button>
-            </div>
-          </div>
-          <div *ngIf="configAsaasStatus === 'saved'" class="mt-3 text-sm font-medium text-green-800 bg-green-100 border border-green-300 rounded-lg px-3 py-2 flex items-center gap-2">
-            <span aria-hidden="true">✓</span> {{ configAsaasMessage }}
-          </div>
-          <div *ngIf="configAsaasStatus === 'error' && configAsaasMessage" class="mt-3 text-sm font-medium text-red-800 bg-red-100 border border-red-300 rounded-lg px-3 py-2">{{ configAsaasMessage }}</div>
+          <p class="mt-3 text-xs text-slate-500">
+            Dica: telas como <strong>Rotina</strong>, <strong>Conciliação OFX</strong> e <strong>Fatura Cartão</strong> usam a permissão de <strong>Movimentações</strong>.
+          </p>
         </div>
 
         <!-- Botões de Ação -->
-        <div class="flex justify-end gap-3">
-          <button (click)="fecharModalPermissoes()" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">
+        <div class="flex justify-end gap-2.5">
+          <button
+            type="button"
+            (click)="fecharModalPermissoes()"
+            class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+          >
             Cancelar
           </button>
-          <button (click)="salvarPermissoes()" [disabled]="carregando" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
+          <button
+            type="button"
+            (click)="salvarPermissoes()"
+            [disabled]="carregando"
+            class="rounded-xl bg-gradient-to-r from-violet-600 to-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-violet-500/20 transition-all hover:brightness-105 disabled:opacity-60 disabled:cursor-not-allowed"
+          >
             {{ carregando ? 'Salvando...' : 'Salvar Alterações' }}
           </button>
         </div>

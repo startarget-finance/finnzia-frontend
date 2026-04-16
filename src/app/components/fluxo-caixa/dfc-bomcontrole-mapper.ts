@@ -1,4 +1,4 @@
-import { DfcLinha, DfcResponse } from '../../services/bomcontrole.service';
+import { DfcLinha, DfcResponse } from '../../services/erp-financeiro.service';
 import { DfcPlanilhaLinha, sortDfcMonths } from './dfc-sheet.utils';
 
 function mapLinhaBc(linha: DfcLinha): { type: DfcPlanilhaLinha['type']; sign: '+' | '-' } {
@@ -41,7 +41,7 @@ function mapLinhaBc(linha: DfcLinha): { type: DfcPlanilhaLinha['type']; sign: '+
 export function mapBomControleDfcToPlanilha(res: DfcResponse): { months: string[]; rows: DfcPlanilhaLinha[] } {
   const months = sortDfcMonths([...(res.meses ?? [])]);
   const linhas = res.linhas ?? [];
-  const rows: DfcPlanilhaLinha[] = linhas.map((linha, idx) => {
+  const rows: DfcPlanilhaLinha[] = linhas.map((linha: DfcLinha, idx: number) => {
     const values: Record<string, number | null> = {};
     months.forEach((m, i) => {
       values[m] = linha.valores?.[i] ?? null;

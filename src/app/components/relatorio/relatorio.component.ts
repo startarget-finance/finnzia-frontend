@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Chart, registerables } from 'chart.js';
 import { Subject, takeUntil } from 'rxjs';
-import { BomControleService, FiltrosMovimentacoes, ResumoFinanceiroResponse, MovimentacaoFinanceira } from '../../services/bomcontrole.service';
+import { ErpFinanceiroService, FiltrosMovimentacoes, ResumoFinanceiroResponse, MovimentacaoFinanceira } from '../../services/erp-financeiro.service';
 
 Chart.register(...registerables);
 
@@ -141,7 +141,7 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
     { value: 'Outros', label: 'Outros' }
   ];
 
-  constructor(private bomControleService: BomControleService) {}
+  constructor(private erpFinanceiroService: ErpFinanceiroService) {}
 
   ngOnInit() {
     this.visibleMonth = new Date();
@@ -182,12 +182,12 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
       dataTermino: dataFim
     };
 
-    this.bomControleService.obterResumoFinanceiro(filtros)
+    this.erpFinanceiroService.obterResumoFinanceiro(filtros)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: resumo => this.processarResumoFinanceiro(resumo),
-        error: err => {
-          console.error('Erro ao carregar resumo financeiro do Bom Controle:', err);
+        next: (resumo: ResumoFinanceiroResponse) => this.processarResumoFinanceiro(resumo),
+        error: (err: any) => {
+          console.error('Erro ao carregar resumo financeiro do ERP:', err);
           this.loadingContas = false;
         }
       });
@@ -261,10 +261,10 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
         itensPorPagina: PAGE_SIZE,
         numeroDaPagina: page
       };
-      this.bomControleService.buscarMovimentacoes(filtros)
+      this.erpFinanceiroService.buscarMovimentacoes(filtros)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
-          next: (res) => {
+          next: (res: any) => {
             const list = res.movimentacoes || [];
             allMovs.push(...list);
             const total = res.paginacao?.totalItens ?? res.total ?? list.length;
@@ -276,7 +276,7 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
               this.loadingGrafico = false;
             }
           },
-          error: (err) => {
+          error: (err: any) => {
             this.errorGrafico = err?.error?.mensagem || 'Erro ao carregar dados do gráfico';
             this.loadingGrafico = false;
             this.preencherChartDataVazio();

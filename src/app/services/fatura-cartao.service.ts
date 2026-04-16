@@ -21,6 +21,8 @@ export interface CartaoResumo {
   disponivel: number;
   limite: number;
   pontos: PontoFatura[];
+  contaBancariaId?: string | number;
+  contaBancariaNome?: string;
 }
 
 export interface LancamentoImportado {
@@ -31,6 +33,8 @@ export interface LancamentoImportado {
   tipo: TipoTransacao;
   categoria: string;
   confianca: NivelConfianca;
+  contaBancariaId?: string | number;
+  contaBancariaNome?: string;
 }
 
 export interface ContaPagarGerada {

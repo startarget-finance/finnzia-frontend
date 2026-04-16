@@ -50,6 +50,11 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'rotina',
+    loadComponent: () => import('./components/rotina/rotina.component').then(m => m.RotinaComponent),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'relatorio',
     loadComponent: () => import('./components/relatorio/relatorio.component').then(m => m.RelatorioComponent),
     canActivate: [AuthGuard]
@@ -88,6 +93,11 @@ export const routes: Routes = [
   {
     path: 'movimentacoes',
     loadComponent: () => import('./components/movimentacoes/movimentacoes.component').then(m => m.MovimentacoesComponent),
+    canActivate: [AuthGuard]
+  },
+  {
+    path: 'conciliacao-ofx',
+    loadComponent: () => import('./components/conciliacao-ofx/conciliacao-ofx.component').then(m => m.ConciliacaoOfxComponent),
     canActivate: [AuthGuard]
   },
   {

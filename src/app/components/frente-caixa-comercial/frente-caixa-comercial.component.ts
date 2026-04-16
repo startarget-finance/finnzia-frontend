@@ -55,6 +55,8 @@ export class FrenteCaixaComercialComponent implements OnInit, OnDestroy {
 
   hojeIso = isoDiaLocal(new Date());
   filtroFila: FiltroFila = 'criticos';
+  paginaAtualFila = 1;
+  readonly itensPorPaginaFila = 12;
 
   private destroy$ = new Subject<void>();
 
@@ -187,6 +189,8 @@ export class FrenteCaixaComercialComponent implements OnInit, OnDestroy {
       )
       .slice(0, 15);
 
+    this.ajustarPaginaFila();
+
   }
 
   formatCurrency(v: number): string {
@@ -238,11 +242,12 @@ export class FrenteCaixaComercialComponent implements OnInit, OnDestroy {
 
   setFiltroFila(filtro: FiltroFila): void {
     this.filtroFila = filtro;
+    this.paginaAtualFila = 1;
   }
 
-  get filaFiltrada(): LinhaCobrancaFrente[] {
+  get filaFiltradaBase(): LinhaCobrancaFrente[] {
     const hojeDate = parseIsoToDate(this.hojeIso) || new Date();
-    const lista = this.filaPrioritaria.filter((row) => {
+    return this.filaPrioritaria.filter((row) => {
       const vencDate = parseIsoToDate(row.cobranca.dataVencimento);
       if (!vencDate) {
         return this.filtroFila === 'todos';
@@ -259,7 +264,56 @@ export class FrenteCaixaComercialComponent implements OnInit, OnDestroy {
       }
       return diff > 0 && diff <= 7;
     });
-    return lista.slice(0, 40);
+  }
+
+  get filaFiltrada(): LinhaCobrancaFrente[] {
+    const ini = (this.paginaAtualFila - 1) * this.itensPorPaginaFila;
+    const fim = ini + this.itensPorPaginaFila;
+    return this.filaFiltradaBase.slice(ini, fim);
+  }
+
+  get totalPaginasFila(): number {
+    const total = this.filaFiltradaBase.length;
+    return Math.max(1, Math.ceil(total / this.itensPorPaginaFila));
+  }
+
+  get inicioPaginaFila(): number {
+    if (this.filaFiltradaBase.length === 0) {
+      return 0;
+    }
+    return (this.paginaAtualFila - 1) * this.itensPorPaginaFila + 1;
+  }
+
+  get fimPaginaFila(): number {
+    if (this.filaFiltradaBase.length === 0) {
+      return 0;
+    }
+    return Math.min(this.paginaAtualFila * this.itensPorPaginaFila, this.filaFiltradaBase.length);
+  }
+
+  irPrimeiraPaginaFila(): void {
+    this.paginaAtualFila = 1;
+  }
+
+  irPaginaAnteriorFila(): void {
+    this.paginaAtualFila = Math.max(1, this.paginaAtualFila - 1);
+  }
+
+  irProximaPaginaFila(): void {
+    this.paginaAtualFila = Math.min(this.totalPaginasFila, this.paginaAtualFila + 1);
+  }
+
+  irUltimaPaginaFila(): void {
+    this.paginaAtualFila = this.totalPaginasFila;
+  }
+
+  private ajustarPaginaFila(): void {
+    if (this.paginaAtualFila > this.totalPaginasFila) {
+      this.paginaAtualFila = this.totalPaginasFila;
+    }
+    if (this.paginaAtualFila < 1) {
+      this.paginaAtualFila = 1;
+    }
   }
 
   get totalCriticos(): number {

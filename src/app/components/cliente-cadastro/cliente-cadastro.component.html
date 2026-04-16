@@ -288,7 +288,7 @@
         <h2 class="text-lg font-semibold text-slate-900 tracking-tight">
           {{ editandoId != null ? 'Editar cliente' : 'Novo cliente' }}
         </h2>
-        <p class="text-sm text-slate-500 mt-1">Dados cadastrais, contato financeiro e empresas.</p>
+        <p class="text-sm text-slate-500 mt-1">Dados cadastrais e contato financeiro da empresa selecionada.</p>
       </div>
       <button
         type="button"
@@ -387,19 +387,9 @@
         <input type="checkbox" id="bloq" [(ngModel)]="formBloqueado" />
         <label for="bloq" class="text-sm text-slate-700">Cliente bloqueado</label>
       </div>
-      <div>
-        <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Empresas vinculadas</p>
-        <div class="max-h-40 overflow-y-auto rounded-xl border border-slate-200/80 divide-y divide-slate-100 bg-slate-50/30">
-          <label
-            *ngFor="let e of empresasDisponiveis"
-            class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm"
-          >
-            <input type="checkbox" *ngIf="e.idEmpresa" [(ngModel)]="formEmpresaIds[e.idEmpresa!]" />
-            <span>{{ e.nomeEmpresa }}</span>
-          </label>
-        </div>
-        <p *ngIf="!isAdmin" class="text-xs text-amber-700 mt-1">Selecione ao menos uma empresa.</p>
-      </div>
+      <p class="text-xs text-slate-500">
+        Este cliente será salvo automaticamente na empresa selecionada no cabeçalho.
+      </p>
     </div>
     <div class="flex justify-end gap-2 pt-1">
       <button

@@ -22,7 +22,7 @@
           Cadastro de Plano de Contas Gerencial
         </h1>
         <p class="text-sm text-slate-500 mt-1">
-          Modelos de plano vinculados às suas empresas — cadastro interno Finnzia (sem API Bom Controle).
+          Modelos de plano no contexto da empresa selecionada — cadastro interno Finnzia.
         </p>
       </div>
     </div>
@@ -30,18 +30,8 @@
     <div
       class="flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-slate-200/80 bg-gradient-to-r from-slate-50/95 via-white to-violet-50/35 px-3.5 py-3.5 shadow-sm sm:px-4"
     >
-      <div class="flex flex-col gap-1 min-w-[200px] flex-1 max-w-md">
-        <label class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Empresa</label>
-        <select
-          [(ngModel)]="filtroEmpresaId"
-          (ngModelChange)="carregar()"
-          class="h-10 w-full rounded-xl border border-slate-200/90 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm transition-colors focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/25"
-        >
-          <option [ngValue]="null">Todas</option>
-          <option *ngFor="let e of empresasDisponiveis" [ngValue]="e.idEmpresa">
-            {{ e.nomeEmpresa }}
-          </option>
-        </select>
+      <div class="text-xs text-slate-500 font-medium">
+        Os planos exibidos e salvos usam a empresa selecionada no cabeçalho.
       </div>
       <button
         type="button"
@@ -72,9 +62,6 @@
             <th class="w-[30%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
               Plano
             </th>
-            <th class="px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
-              Empresas
-            </th>
             <th class="w-36 px-3 py-3 text-right text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
               Ações
             </th>
@@ -82,7 +69,7 @@
         </thead>
         <tbody class="divide-y divide-slate-100">
           <tr *ngIf="carregando && planos.length === 0">
-            <td colspan="3" class="py-8 text-center text-sm text-slate-500">Carregando…</td>
+            <td colspan="2" class="py-8 text-center text-sm text-slate-500">Carregando…</td>
           </tr>
           <tr
             *ngFor="let p of planos; let odd = odd"
@@ -96,18 +83,6 @@
                 class="ml-2 inline-flex items-center rounded-md border border-amber-200/80 bg-amber-50 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-amber-800"
                 >Padrão</span
               >
-            </td>
-            <td class="px-3 py-3 align-middle">
-              <div *ngIf="!p.empresas?.length" class="text-slate-400 text-xs">—</div>
-              <div *ngIf="p.empresas?.length" class="flex flex-wrap gap-1.5">
-                <div
-                  *ngFor="let emp of p.empresas || []"
-                  class="inline-flex min-w-0 max-w-[min(100%,280px)] items-center rounded-lg border border-slate-200/80 bg-slate-50 px-2 py-0.5 text-xs text-slate-800"
-                  [title]="emp.nomeEmpresa"
-                >
-                  <span class="block truncate">{{ emp.nomeEmpresa }}</span>
-                </div>
-              </div>
             </td>
             <td class="px-3 py-3 text-right align-middle whitespace-nowrap">
               <div
@@ -161,7 +136,7 @@
             </td>
           </tr>
           <tr *ngIf="!carregando && planos.length === 0">
-            <td colspan="3" class="py-12 px-4 text-center">
+            <td colspan="2" class="py-12 px-4 text-center">
               <p class="text-sm text-slate-600">Nenhum plano cadastrado.</p>
               <p class="text-xs text-slate-400 mt-1">Use <strong class="text-slate-600">+ Novo plano</strong> para começar.</p>
             </td>
@@ -200,7 +175,7 @@
         <h2 class="text-lg font-semibold text-slate-900 tracking-tight">
           {{ editandoId != null ? 'Editar plano' : 'Novo plano de contas' }}
         </h2>
-        <p class="text-sm text-slate-500 mt-1">Defina o nome, empresas e se é o plano padrão.</p>
+        <p class="text-sm text-slate-500 mt-1">Defina o nome e se é o plano padrão.</p>
       </div>
       <button
         type="button"
@@ -224,25 +199,9 @@
         <input type="checkbox" id="padrao" [(ngModel)]="formPadrao" />
         <label for="padrao" class="text-sm text-slate-700">Definir como plano padrão</label>
       </div>
-      <div>
-        <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Empresas vinculadas</p>
-        <div class="max-h-48 overflow-y-auto rounded-xl border border-slate-200/80 divide-y divide-slate-100 bg-slate-50/30">
-              <label
-                *ngFor="let e of empresasDisponiveis"
-                class="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm"
-              >
-            <input
-              type="checkbox"
-              *ngIf="e.idEmpresa"
-              [(ngModel)]="formEmpresaIds[e.idEmpresa!]"
-            />
-            <span>{{ e.nomeEmpresa }}</span>
-          </label>
-        </div>
-        <p *ngIf="!isAdmin" class="text-xs text-amber-700 mt-1">
-          Usuários não-admin precisam vincular ao menos uma empresa.
-        </p>
-      </div>
+      <p class="text-xs text-slate-500">
+        O plano será salvo automaticamente para a empresa selecionada no cabeçalho.
+      </p>
     </div>
     <div class="flex justify-end gap-2 pt-1">
       <button

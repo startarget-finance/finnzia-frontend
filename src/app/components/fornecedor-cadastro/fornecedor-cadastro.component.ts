@@ -1,8 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AuthService } from '../../services/auth.service';
-import { CompaniaInfo, CompanySelectorService } from '../../services/company-selector.service';
+import { CompanySelectorService } from '../../services/company-selector.service';
 import {
   FornecedorCadastro,
   FornecedorCadastroPayload,
@@ -24,7 +23,6 @@ export class FornecedorCadastroComponent implements OnInit {
   linhas: FornecedorCadastro[] = [];
 
   filtroQ = '';
-  filtroEmpresaId: number | null = null;
   filtroTipoPessoa: '' | 'PF' | 'PJ' = '';
   filtroAtivo: 'todos' | 'sim' | 'nao' = 'todos';
 
@@ -32,9 +30,6 @@ export class FornecedorCadastroComponent implements OnInit {
   pageSize = 20;
   totalElements = 0;
   totalPages = 0;
-
-  empresasDisponiveis: CompaniaInfo[] = [];
-  isAdmin = false;
 
   modalAberto = false;
   editandoId: number | null = null;
@@ -45,7 +40,6 @@ export class FornecedorCadastroComponent implements OnInit {
   formEmail = '';
   formTelefone = '';
   formAtivo = true;
-  formEmpresaIds: Record<number, boolean> = {};
 
   private readonly coresAvatar = [
     'bg-emerald-600',
@@ -58,23 +52,32 @@ export class FornecedorCadastroComponent implements OnInit {
 
   constructor(
     private readonly api: FornecedorCadastroService,
-    private readonly companySelector: CompanySelectorService,
-    private readonly auth: AuthService
+    private readonly companySelector: CompanySelectorService
   ) {}
 
   ngOnInit(): void {
-    this.isAdmin = this.auth.getCurrentUser()?.role === 'admin';
-    this.companySelector.empresasPermitidas$.subscribe((list) => {
-      this.empresasDisponiveis = (list || []).filter((e) => e.ativo && e.idEmpresa);
+    this.companySelector.empresaSelecionada$.subscribe(() => {
       this.carregar();
     });
   }
 
+  private idEmpresaAtual(): number | null {
+    return this.companySelector.obterIdEmpresaSelecionada();
+  }
+
   carregar(): void {
     this.erro = null;
+    const idEmpresaAtual = this.idEmpresaAtual();
+    if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
+      this.carregando = false;
+      this.linhas = [];
+      this.totalElements = 0;
+      this.totalPages = 0;
+      this.resumoTotal.emit(0);
+      this.erro = 'Selecione uma empresa no cabeçalho para ver e cadastrar fornecedores.';
+      return;
+    }
     this.carregando = true;
-    const idEmp =
-      this.filtroEmpresaId != null && this.filtroEmpresaId > 0 ? this.filtroEmpresaId : undefined;
     const tp = this.filtroTipoPessoa || undefined;
     let ativo: boolean | undefined;
     if (this.filtroAtivo === 'sim') {
@@ -85,7 +88,7 @@ export class FornecedorCadastroComponent implements OnInit {
     this.api
       .listar({
         q: this.filtroQ || undefined,
-        idEmpresa: idEmp,
+        idEmpresa: idEmpresaAtual,
         tipoPessoa: tp,
         ativo,
         page: this.pageIndex,
@@ -116,7 +119,6 @@ export class FornecedorCadastroComponent implements OnInit {
 
   limparFiltros(): void {
     this.filtroQ = '';
-    this.filtroEmpresaId = null;
     this.filtroTipoPessoa = '';
     this.filtroAtivo = 'todos';
     this.pageIndex = 0;
@@ -155,12 +157,6 @@ export class FornecedorCadastroComponent implements OnInit {
     this.formEmail = '';
     this.formTelefone = '';
     this.formAtivo = true;
-    this.formEmpresaIds = {};
-    for (const e of this.empresasDisponiveis) {
-      if (e.idEmpresa) {
-        this.formEmpresaIds[e.idEmpresa] = false;
-      }
-    }
     this.modalAberto = true;
   }
 
@@ -173,13 +169,6 @@ export class FornecedorCadastroComponent implements OnInit {
     this.formEmail = f.email || '';
     this.formTelefone = f.telefone || '';
     this.formAtivo = f.ativo !== false;
-    this.formEmpresaIds = {};
-    const ids = new Set(f.idEmpresas || []);
-    for (const e of this.empresasDisponiveis) {
-      if (e.idEmpresa) {
-        this.formEmpresaIds[e.idEmpresa] = ids.has(e.idEmpresa);
-      }
-    }
     this.modalAberto = true;
   }
 
@@ -187,13 +176,8 @@ export class FornecedorCadastroComponent implements OnInit {
     this.modalAberto = false;
   }
 
-  coletarEmpresas(): number[] {
-    return Object.entries(this.formEmpresaIds)
-      .filter(([, v]) => v)
-      .map(([k]) => Number(k));
-  }
-
   montarPayload(): FornecedorCadastroPayload {
+    const idEmpresaAtual = this.idEmpresaAtual();
     return {
       razaoSocial: this.formRazaoSocial.trim(),
       nomeFantasia: this.formNomeFantasia.trim() || undefined,
@@ -202,7 +186,7 @@ export class FornecedorCadastroComponent implements OnInit {
       email: this.formEmail.trim() || undefined,
       telefone: this.formTelefone.trim() || undefined,
       ativo: this.formAtivo,
-      idEmpresas: this.coletarEmpresas()
+      idEmpresas: idEmpresaAtual != null && idEmpresaAtual > 0 ? [idEmpresaAtual] : []
     };
   }
 
@@ -212,9 +196,9 @@ export class FornecedorCadastroComponent implements OnInit {
       this.erro = 'Informe a razão social ou nome.';
       return;
     }
-    const idEmpresas = this.coletarEmpresas();
-    if (!this.isAdmin && idEmpresas.length === 0) {
-      this.erro = 'Selecione pelo menos uma empresa.';
+    const idEmpresaAtual = this.idEmpresaAtual();
+    if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
+      this.erro = 'Selecione uma empresa no cabeçalho.';
       return;
     }
     const body = this.montarPayload();

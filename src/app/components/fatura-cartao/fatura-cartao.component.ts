@@ -1,11 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import {
   CartaoResumo,
   ContaPagarGerada,
   FaturaCartaoService,
   LancamentoImportado,
+  PontoFatura,
 } from '../../services/fatura-cartao.service';
 
 @Component({
@@ -28,7 +30,10 @@ export class FaturaCartaoComponent implements OnInit {
   carregandoCartoes = false;
   erroTela = '';
 
-  constructor(private faturaCartaoService: FaturaCartaoService) {}
+  constructor(
+    private faturaCartaoService: FaturaCartaoService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.carregarCartoes();
@@ -148,6 +153,172 @@ export class FaturaCartaoComponent implements OnInit {
           this.contasPagarGeradas = [];
         },
       });
+  }
+
+  abrirLancamentosDaFatura(): void {
+    const hoje = new Date();
+    const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+    const conta = this.extrairContaParaFiltro(this.cartaoSelecionado);
+    this.router.navigate(['/movimentacoes'], {
+      queryParams: this.limparQueryParamsVazios({
+        origem: 'fatura',
+        textoPesquisa: this.cartaoSelecionado.nome,
+        tipo: 'despesa',
+        dataInicial: this.dateToStr(inicio),
+        dataFinal: this.dateToStr(fim),
+        conta,
+      }),
+    });
+  }
+
+  abrirLancamentoImportado(l: LancamentoImportado): void {
+    const conta = this.extrairContaParaFiltro(l) ?? this.extrairContaParaFiltro(this.cartaoSelecionado);
+    this.router.navigate(['/movimentacoes'], {
+      queryParams: this.limparQueryParamsVazios({
+        origem: 'fatura',
+        textoPesquisa: l.descricao,
+        tipo: 'despesa',
+        categoria: l.categoria || undefined,
+        conta,
+      }),
+    });
+  }
+
+  abrirLancamentosDoMes(ponto: PontoFatura, index: number): void {
+    const periodo = this.resolverPeriodoDoPonto(ponto, index, this.cartaoSelecionado.pontos.length);
+    const conta = this.extrairContaParaFiltro(this.cartaoSelecionado);
+    this.router.navigate(['/movimentacoes'], {
+      queryParams: this.limparQueryParamsVazios({
+        origem: 'fatura',
+        textoPesquisa: this.cartaoSelecionado.nome,
+        tipo: 'despesa',
+        dataInicial: this.dateToStr(periodo.inicio),
+        dataFinal: this.dateToStr(periodo.fim),
+        conta,
+      }),
+    });
+  }
+
+  private limparQueryParamsVazios(params: Record<string, string | undefined>): Record<string, string> {
+    return Object.entries(params).reduce((acc, [key, value]) => {
+      if (value !== undefined && value !== null && String(value).trim() !== '') {
+        acc[key] = String(value);
+      }
+      return acc;
+    }, {} as Record<string, string>);
+  }
+
+  private extrairContaParaFiltro(payload: unknown): string | undefined {
+    if (!payload || typeof payload !== 'object') {
+      return undefined;
+    }
+    const dados = payload as Record<string, unknown>;
+    const camposContaId = ['contaBancariaId', 'idContaFinanceira', 'IdContaFinanceira', 'idConta', 'contaId'];
+    const camposContaNome = ['contaBancariaNome', 'nomeContaFinanceira', 'NomeContaFinanceira', 'conta', 'nomeConta'];
+
+    for (const campo of camposContaId) {
+      const valor = dados[campo];
+      if (valor !== undefined && valor !== null && String(valor).trim() !== '') {
+        return String(valor);
+      }
+    }
+    for (const campo of camposContaNome) {
+      const valor = dados[campo];
+      if (typeof valor === 'string' && valor.trim() !== '') {
+        return valor.trim();
+      }
+    }
+
+    return undefined;
+  }
+
+  private resolverPeriodoDoPonto(
+    ponto: PontoFatura,
+    index: number,
+    total: number
+  ): { inicio: Date; fim: Date } {
+    const mes = (ponto.mes || '').trim();
+    const parsed = this.parseMesComAno(mes) ?? this.parseNomeMes(mes);
+    let ano: number;
+    let mesIndex: number;
+
+    if (parsed) {
+      ano = parsed.ano;
+      mesIndex = parsed.mesIndex;
+    } else {
+      // Fallback: assume série cronológica até o mês atual.
+      const hoje = new Date();
+      const offset = Math.max(0, total - 1 - index);
+      const base = new Date(hoje.getFullYear(), hoje.getMonth() - offset, 1);
+      ano = base.getFullYear();
+      mesIndex = base.getMonth();
+    }
+
+    const inicio = new Date(ano, mesIndex, 1);
+    const fim = new Date(ano, mesIndex + 1, 0);
+    return { inicio, fim };
+  }
+
+  private parseMesComAno(value: string): { ano: number; mesIndex: number } | null {
+    const mmYyyy = value.match(/^(\d{1,2})[\/-](\d{2,4})$/);
+    if (mmYyyy) {
+      const mes = Number(mmYyyy[1]);
+      const anoBruto = Number(mmYyyy[2]);
+      const ano = anoBruto < 100 ? 2000 + anoBruto : anoBruto;
+      if (mes >= 1 && mes <= 12) {
+        return { ano, mesIndex: mes - 1 };
+      }
+    }
+
+    const yyyyMm = value.match(/^(\d{4})[\/-](\d{1,2})$/);
+    if (yyyyMm) {
+      const ano = Number(yyyyMm[1]);
+      const mes = Number(yyyyMm[2]);
+      if (mes >= 1 && mes <= 12) {
+        return { ano, mesIndex: mes - 1 };
+      }
+    }
+
+    return null;
+  }
+
+  private parseNomeMes(value: string): { ano: number; mesIndex: number } | null {
+    const nomesMeses: Record<string, number> = {
+      jan: 0,
+      fev: 1,
+      mar: 2,
+      abr: 3,
+      mai: 4,
+      jun: 5,
+      jul: 6,
+      ago: 7,
+      set: 8,
+      out: 9,
+      nov: 10,
+      dez: 11,
+    };
+    const token = value.toLowerCase().slice(0, 3);
+    if (!(token in nomesMeses)) {
+      return null;
+    }
+    const mesIndex = nomesMeses[token];
+    const hoje = new Date();
+    let ano = hoje.getFullYear();
+
+    // Se o mês do ponto é "à frente" do mês atual, assume série do ano anterior.
+    if (mesIndex > hoje.getMonth()) {
+      ano -= 1;
+    }
+
+    return { ano, mesIndex };
+  }
+
+  private dateToStr(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   }
 
   private carregarCartoes(): void {

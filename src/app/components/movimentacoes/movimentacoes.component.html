@@ -13,16 +13,21 @@
             <p class="mt-0.5 text-sm text-slate-500">Acompanhe e gerencie o fluxo de caixa da sua empresa</p>
           </div>
         </div>
-        <div class="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200/80 bg-slate-50/90 py-1.5 pl-3 pr-1.5 shadow-sm ring-1 ring-slate-200/60">
-          <span class="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Fonte</span>
-          <select id="fonteDados"
-                  [(ngModel)]="fonteDados"
-                  (change)="onFonteDadosChange()"
-                  [disabled]="loading"
-                  class="cursor-pointer rounded-xl border border-slate-200 bg-white py-2 pl-3 pr-8 text-sm font-medium text-slate-700 shadow-sm transition-colors focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/25 hover:bg-slate-50/80 disabled:cursor-not-allowed disabled:opacity-50">
-            <option value="omie">OMIE</option>
-            <option value="bomcontrole">Bom Controle</option>
-          </select>
+        <div class="flex flex-wrap gap-2">
+          <a
+            routerLink="/contas-a-pagar"
+            class="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2 text-sm font-semibold text-rose-700 transition-colors hover:bg-rose-100"
+          >
+            <i class="fi fi-rr-credit-card text-[0.85rem] leading-none" aria-hidden="true"></i>
+            Contas a pagar
+          </a>
+          <a
+            routerLink="/contas-a-receber"
+            class="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
+          >
+            <i class="fi fi-rr-bank text-[0.85rem] leading-none" aria-hidden="true"></i>
+            Contas a receber
+          </a>
         </div>
       </div>
     </div>
@@ -177,6 +182,12 @@
             Filtros de busca
           </h3>
           <div class="flex flex-wrap items-center gap-3">
+            <div *ngIf="origemNavegacao"
+                 class="inline-flex items-center gap-1.5 rounded-full border border-sky-200/80 bg-sky-50/90 px-3 py-1 text-xs font-medium text-sky-800"
+                 title="Filtros aplicados automaticamente">
+              <span class="h-1.5 w-1.5 rounded-full bg-sky-500"></span>
+              Filtro aplicado via {{ origemNavegacaoLabel }}
+            </div>
             <div *ngIf="getTotalFiltrosAtivos() > 0" class="inline-flex items-center gap-1.5 rounded-full border border-violet-200/80 bg-violet-50/90 px-3 py-1 text-xs font-medium text-violet-800">
               <span class="h-1.5 w-1.5 rounded-full bg-violet-500"></span>
               {{ getTotalFiltrosAtivos() }} filtro{{ getTotalFiltrosAtivos() > 1 ? 's' : '' }} ativo{{ getTotalFiltrosAtivos() > 1 ? 's' : '' }}
@@ -188,7 +199,7 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
           
           <!-- Período -->
           <div class="relative z-[130]">
@@ -289,6 +300,21 @@
             </div>
           </div>
 
+          <!-- Conta Bancária -->
+          <div>
+            <label class="mb-1.5 block text-xs font-medium text-slate-500">Conta bancária</label>
+            <div class="relative">
+              <select [(ngModel)]="filtrosUI.conta"
+                      (ngModelChange)="onFiltroChange()"
+                      class="w-full cursor-pointer appearance-none rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/25">
+                <option *ngFor="let conta of contasBancarias" [value]="conta.value">{{ conta.label }}</option>
+              </select>
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400">
+                <i class="fi fi-rr-angle-small-down h-4 w-4 flex items-center justify-center text-[0.85rem] leading-none" aria-hidden="true"></i>
+              </div>
+            </div>
+          </div>
+
           <!-- Status (Pendente / Quitado) -->
           <div>
             <label class="mb-1.5 block text-xs font-medium text-slate-500">Status</label>
@@ -335,7 +361,7 @@
       <!-- Tabela de Movimentações -->
       <div class="relative z-10 overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.32)] ring-1 ring-slate-200/70 backdrop-blur-sm">
         <div class="w-full overflow-x-auto">
-          <table class="w-full min-w-[920px] table-auto divide-y divide-slate-100">
+          <table class="w-full min-w-[1080px] table-auto divide-y divide-slate-100">
             <thead class="bg-slate-50/95">
               <tr>
                 <th scope="col" (click)="toggleSort('tipo')" class="w-24 cursor-pointer select-none rounded-tl-xl px-3 py-3.5 text-left align-middle text-xs font-semibold uppercase tracking-wider text-slate-600 transition-colors hover:bg-slate-100/80">
@@ -344,8 +370,8 @@
                 <th scope="col" (click)="toggleSort('data')" class="w-28 cursor-pointer select-none px-3 py-3.5 text-left align-middle text-xs font-semibold uppercase tracking-wider text-slate-600 transition-colors hover:bg-slate-100/80">
                   <span class="inline-flex items-center gap-1">Data Venc.<span *ngIf="sortBy === 'data'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span></span>
                 </th>
-                <th scope="col" class="w-[32%] px-3 py-3.5 text-left align-middle text-xs font-semibold uppercase tracking-wider text-slate-600">Descrição</th>
-                <th scope="col" class="w-[24%] px-3 py-3.5 text-left align-middle text-xs font-semibold uppercase tracking-wider text-slate-600">Cliente/Forn.</th>
+                <th scope="col" class="w-[28%] px-3 py-3.5 text-left align-middle text-xs font-semibold uppercase tracking-wider text-slate-600">Descrição</th>
+                <th scope="col" class="w-[22%] px-3 py-3.5 text-left align-middle text-xs font-semibold uppercase tracking-wider text-slate-600">Cliente/Forn.</th>
                 <th scope="col" class="w-32 px-3 py-3.5 text-left align-middle text-xs font-semibold uppercase tracking-wider text-slate-600">Categoria</th>
                 <th scope="col" (click)="toggleSort('valor')" class="w-28 cursor-pointer select-none px-3 py-3.5 text-right align-middle text-xs font-semibold uppercase tracking-wider text-slate-600 transition-colors hover:bg-slate-100/80">
                   <span class="inline-flex items-center gap-1">Valor<span *ngIf="sortBy === 'valor'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span></span>
@@ -356,7 +382,8 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 bg-white">
-              <tr *ngFor="let mov of movimentacoesParaExibir" class="group cursor-pointer transition-colors duration-150 hover:bg-violet-50/35">
+              <ng-container *ngFor="let mov of movimentacoesParaExibir">
+              <tr class="group transition-colors duration-150 hover:bg-violet-50/35">
                 
                 <!-- Tipo -->
                 <td class="px-3 py-3.5 whitespace-nowrap align-middle">
@@ -374,12 +401,12 @@
                 </td>
                 
                 <!-- Descrição -->
-                <td class="w-[32%] px-3 py-3.5 align-middle text-sm font-medium text-slate-900">
+                <td class="w-[28%] px-3 py-3.5 align-middle text-sm font-medium text-slate-900">
                   <div class="line-clamp-1 break-words" [title]="formatarDescricaoResumida(mov.Nome)">{{ formatarDescricaoResumida(mov.Nome) }}</div>
                 </td>
                 
                 <!-- Cliente/Fornecedor -->
-                <td class="w-[24%] px-3 py-3.5 align-middle text-sm">
+                <td class="w-[22%] px-3 py-3.5 align-middle text-sm">
                   <div class="line-clamp-2 break-words font-medium leading-tight text-slate-900" [title]="formatarClienteFornecedorResumido(mov.NomeClienteFornecedor || mov.NomeFantasiaClienteFornecedor || '-')">
                     {{ formatarClienteFornecedorResumido(mov.NomeClienteFornecedor || mov.NomeFantasiaClienteFornecedor || '-') }}
                   </div>
@@ -400,16 +427,126 @@
                 </td>
                 
                 <!-- Status -->
-                <td class="px-3 py-3.5 whitespace-nowrap text-center align-middle">
-                  <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border"
-                       [class.bg-emerald-50]="mov.DataQuitacao" [class.text-emerald-700]="mov.DataQuitacao" [class.border-emerald-200]="mov.DataQuitacao"
-                       [class.bg-amber-50]="!mov.DataQuitacao" [class.text-amber-700]="!mov.DataQuitacao" [class.border-amber-200]="!mov.DataQuitacao">
-                    <svg *ngIf="mov.DataQuitacao" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    <svg *ngIf="!mov.DataQuitacao" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    {{ mov.DataQuitacao ? 'Quitado' : 'Pendente' }}
+                <td class="px-3 py-3.5 whitespace-nowrap align-middle">
+                  <div class="flex items-center justify-between gap-2">
+                    <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border"
+                         [class.bg-emerald-50]="mov.DataQuitacao" [class.text-emerald-700]="mov.DataQuitacao" [class.border-emerald-200]="mov.DataQuitacao"
+                         [class.bg-amber-50]="!mov.DataQuitacao" [class.text-amber-700]="!mov.DataQuitacao" [class.border-amber-200]="!mov.DataQuitacao">
+                      <svg *ngIf="mov.DataQuitacao" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                      <svg *ngIf="!mov.DataQuitacao" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      {{ mov.DataQuitacao ? 'Quitado' : 'Pendente' }}
+                    </div>
+
+                    <!-- Ações (anexos) no lado direito do status, pequeno e sem texto -->
+                    <div class="flex items-center gap-1.5">
+                      <button
+                        *ngFor="let t of tiposAnexoLista"
+                        type="button"
+                        (click)="alternarPainelAnexo(mov, t.id, $event)"
+                        [attr.title]="temAnexo(mov, t.id) ? (t.labelCompleto + ' anexado') : ('Anexar ' + t.labelCompleto.toLowerCase())"
+                        [ngClass]="temAnexo(mov, t.id) ? t.btnFilled : t.btnEmpty"
+                        class="inline-flex h-7 w-7 items-center justify-center rounded-md border transition-all duration-150"
+                      >
+                        <i class="fi {{ t.iconSlug }} h-3.5 w-3.5 flex items-center justify-center text-[0.85rem] leading-none"
+                           aria-hidden="true"></i>
+                      </button>
+                    </div>
                   </div>
                 </td>
               </tr>
+
+              <tr *ngIf="painelAnexoAbertoPara(mov)" class="bg-gradient-to-r from-slate-50/98 via-white to-violet-50/30">
+                <td colspan="7" class="border-t border-slate-200/80 px-4 py-5 align-top">
+                  <div class="mx-auto max-w-3xl space-y-5">
+                    <div class="flex flex-wrap items-start justify-between gap-3">
+                      <div class="flex min-w-0 gap-3">
+                        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-violet-200/80 bg-gradient-to-br from-violet-50 to-white shadow-sm">
+                          <i class="fi fi-rr-folder-upload text-[1.15rem] leading-none text-violet-600" aria-hidden="true"></i>
+                        </div>
+                        <div class="min-w-0">
+                          <p class="text-base font-semibold tracking-tight text-slate-900">Documentos do lançamento</p>
+                          <p class="mt-1 max-w-xl text-xs leading-relaxed text-slate-500">
+                            Escolha o tipo abaixo, arraste o arquivo para a área tracejada ou use <span class="font-medium text-slate-600">Selecionar arquivo</span>.
+                            Os metadados permanecem neste navegador até existir upload no servidor.
+                          </p>
+                        </div>
+                      </div>
+                      <button type="button" (click)="fecharPainelAnexo()"
+                              class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200/90 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900">
+                        <i class="fi fi-rr-cross-small flex h-4 w-4 items-center justify-center text-[0.85rem] leading-none" aria-hidden="true"></i>
+                        Fechar
+                      </button>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                      <button type="button"
+                              *ngFor="let t of tiposAnexoLista"
+                              (click)="selecionarTipoAnexoAlvo(t.id)"
+                              [ngClass]="tipoAnexoAlvo === t.id ? t.pillSelected : t.pillIdle"
+                              class="inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-semibold transition-all duration-150">
+                        <i class="fi {{ t.iconSlug }} flex h-3.5 w-3.5 shrink-0 items-center justify-center text-[0.72rem] leading-none"
+                           aria-hidden="true"></i>
+                        {{ t.labelCompleto }}
+                      </button>
+                    </div>
+
+                    <div
+                      (dragenter)="onDragEnterPainel($event)"
+                      (dragleave)="onDragLeavePainel($event)"
+                      (dragover)="onDragOverPainel($event)"
+                      (drop)="onDropPainel($event, mov)"
+                      [ngClass]="anexoDragOver
+                        ? 'border-violet-400 bg-violet-50/70 ring-2 ring-violet-300/45 shadow-[0_12px_40px_-24px_rgba(109,40,217,0.55)]'
+                        : 'border-slate-200/90 bg-white/90 shadow-sm'"
+                      class="rounded-2xl border-2 border-dashed px-4 py-9 text-center transition-all duration-200">
+                      <div class="mx-auto flex max-w-sm flex-col items-center">
+                        <span class="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-violet-100 bg-violet-50/80 text-violet-600">
+                          <i class="fi fi-rr-cloud-upload text-[1.35rem] leading-none" aria-hidden="true"></i>
+                        </span>
+                        <p class="text-sm font-semibold text-slate-800">Solte o arquivo aqui</p>
+                        <p class="mt-1 text-xs text-slate-500">
+                          Destino:
+                          <span class="font-semibold text-slate-700">{{ labelTipoAnexoAlvo() }}</span>
+                        </p>
+                        <div class="mt-5 flex flex-wrap items-center justify-center gap-2">
+                          <label class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/90 px-3.5 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:border-violet-200 hover:from-violet-50/40 hover:to-white hover:text-violet-900">
+                            <i class="fi fi-rr-folder-open flex h-4 w-4 items-center justify-center text-[0.9rem] leading-none text-violet-600/90" aria-hidden="true"></i>
+                            Selecionar arquivo
+                            <input type="file" class="hidden" (change)="aoSelecionarArquivoPainel($event, mov)" />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <ul class="overflow-hidden divide-y divide-slate-100 rounded-2xl border border-slate-200/80 bg-white text-sm shadow-sm ring-1 ring-slate-100/80">
+                      <li *ngFor="let t of tiposAnexoLista" class="flex flex-wrap items-center justify-between gap-3 px-3.5 py-3">
+                        <div class="flex min-w-0 items-start gap-3">
+                          <span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200/80 bg-slate-50/90 text-slate-600">
+                            <i class="fi {{ t.iconSlug }} flex h-4 w-4 items-center justify-center text-[0.9rem] leading-none"
+                               aria-hidden="true"></i>
+                          </span>
+                          <div class="min-w-0">
+                            <p class="text-[11px] font-bold uppercase tracking-wide text-slate-500">{{ t.labelCompleto }}</p>
+                            <p *ngIf="obterAnexo(mov, t.id) as a" class="mt-0.5 truncate font-medium text-slate-800" [title]="a.nomeArquivo">
+                              {{ a.nomeArquivo }}
+                              <span class="text-xs font-normal text-slate-500"> · {{ formatarTamanhoArquivo(a.tamanhoBytes) }}</span>
+                            </p>
+                            <p *ngIf="!obterAnexo(mov, t.id)" class="mt-0.5 text-xs text-slate-400">Não anexado</p>
+                          </div>
+                        </div>
+                        <button *ngIf="obterAnexo(mov, t.id)"
+                                type="button"
+                                (click)="removerAnexoMov(mov, t.id)"
+                                class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-rose-200/90 bg-rose-50 px-2.5 py-1.5 text-[11px] font-semibold text-rose-700 transition-colors hover:bg-rose-100">
+                          <i class="fi fi-rr-trash flex h-3.5 w-3.5 items-center justify-center text-[0.72rem] leading-none" aria-hidden="true"></i>
+                          Remover
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+              </ng-container>
 
               <!-- Empty State -->
               <tr *ngIf="movimentacoesParaExibir.length === 0">
@@ -434,7 +571,7 @@
       </div>
 
       <!-- Modal Detalhes por Categoria / Cliente -->
-      <div *ngIf="mostrarModalDetalhes" class="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" (click)="fecharModalDetalhes()">
+      <div *ngIf="mostrarModalDetalhes" class="fixed inset-0 z-[10050] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" (click)="fecharModalDetalhes()">
         <div class="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl shadow-slate-900/15" (click)="$event.stopPropagation()">
           <div class="flex items-center justify-between border-b border-slate-200/80 bg-gradient-to-r from-slate-50/95 to-violet-50/30 px-6 py-4">
             <h3 class="text-lg font-semibold text-slate-900">

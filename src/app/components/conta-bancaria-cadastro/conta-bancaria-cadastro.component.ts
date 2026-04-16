@@ -1,8 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AuthService } from '../../services/auth.service';
-import { CompaniaInfo, CompanySelectorService } from '../../services/company-selector.service';
+import { CompanySelectorService } from '../../services/company-selector.service';
 import {
   CategoriaContaBancaria,
   ContaBancariaCadastro,
@@ -26,16 +25,12 @@ export class ContaBancariaCadastroComponent implements OnInit {
   linhas: ContaBancariaCadastro[] = [];
 
   filtroQ = '';
-  filtroEmpresaId: number | null = null;
   filtroAtivo: 'todos' | 'sim' | 'nao' = 'todos';
 
   pageIndex = 0;
   pageSize = 20;
   totalElements = 0;
   totalPages = 0;
-
-  empresasDisponiveis: CompaniaInfo[] = [];
-  isAdmin = false;
 
   modalAberto = false;
   editandoId: number | null = null;
@@ -48,7 +43,6 @@ export class ContaBancariaCadastroComponent implements OnInit {
   formTipo: TipoContaBancaria = 'CORRENTE';
   formSaldoInicial = 0;
   formAtivo = true;
-  formEmpresaIds: Record<number, boolean> = {};
 
   private readonly coresAvatar = [
     'bg-emerald-600',
@@ -61,23 +55,32 @@ export class ContaBancariaCadastroComponent implements OnInit {
 
   constructor(
     private readonly api: ContaBancariaCadastroService,
-    private readonly companySelector: CompanySelectorService,
-    private readonly auth: AuthService
+    private readonly companySelector: CompanySelectorService
   ) {}
 
   ngOnInit(): void {
-    this.isAdmin = this.auth.getCurrentUser()?.role === 'admin';
-    this.companySelector.empresasPermitidas$.subscribe((list) => {
-      this.empresasDisponiveis = (list || []).filter((e) => e.ativo && e.idEmpresa);
+    this.companySelector.empresaSelecionada$.subscribe(() => {
       this.carregar();
     });
   }
 
+  private idEmpresaAtual(): number | null {
+    return this.companySelector.obterIdEmpresaSelecionada();
+  }
+
   carregar(): void {
     this.erro = null;
+    const idEmpresaAtual = this.idEmpresaAtual();
+    if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
+      this.carregando = false;
+      this.linhas = [];
+      this.totalElements = 0;
+      this.totalPages = 0;
+      this.resumoTotal.emit(0);
+      this.erro = 'Selecione uma empresa no cabeçalho para ver e cadastrar contas.';
+      return;
+    }
     this.carregando = true;
-    const idEmp =
-      this.filtroEmpresaId != null && this.filtroEmpresaId > 0 ? this.filtroEmpresaId : undefined;
     let ativo: boolean | undefined;
     if (this.filtroAtivo === 'sim') {
       ativo = true;
@@ -87,7 +90,7 @@ export class ContaBancariaCadastroComponent implements OnInit {
     this.api
       .listar({
         q: this.filtroQ || undefined,
-        idEmpresa: idEmp,
+        idEmpresa: idEmpresaAtual,
         ativo,
         page: this.pageIndex,
         size: this.pageSize,
@@ -117,7 +120,6 @@ export class ContaBancariaCadastroComponent implements OnInit {
 
   limparFiltros(): void {
     this.filtroQ = '';
-    this.filtroEmpresaId = null;
     this.filtroAtivo = 'todos';
     this.pageIndex = 0;
     this.carregar();
@@ -173,12 +175,6 @@ export class ContaBancariaCadastroComponent implements OnInit {
     this.formTipo = 'CORRENTE';
     this.formSaldoInicial = 0;
     this.formAtivo = true;
-    this.formEmpresaIds = {};
-    for (const e of this.empresasDisponiveis) {
-      if (e.idEmpresa) {
-        this.formEmpresaIds[e.idEmpresa] = false;
-      }
-    }
     this.modalAberto = true;
   }
 
@@ -194,24 +190,11 @@ export class ContaBancariaCadastroComponent implements OnInit {
     this.formTipo = c.tipo === 'POUPANCA' ? 'POUPANCA' : 'CORRENTE';
     this.formSaldoInicial = Number(c.saldoInicial ?? 0);
     this.formAtivo = c.ativo !== false;
-    const ids = new Set(c.idEmpresas || []);
-    this.formEmpresaIds = {};
-    for (const e of this.empresasDisponiveis) {
-      if (e.idEmpresa) {
-        this.formEmpresaIds[e.idEmpresa] = ids.has(e.idEmpresa);
-      }
-    }
     this.modalAberto = true;
   }
 
   fecharModal(): void {
     this.modalAberto = false;
-  }
-
-  coletarEmpresas(): number[] {
-    return Object.entries(this.formEmpresaIds)
-      .filter(([, v]) => v)
-      .map(([k]) => Number(k));
   }
 
   salvar(): void {
@@ -225,9 +208,9 @@ export class ContaBancariaCadastroComponent implements OnInit {
         return;
       }
     }
-    const idEmpresas = this.coletarEmpresas();
-    if (!this.isAdmin && idEmpresas.length === 0) {
-      this.erro = 'Selecione pelo menos uma empresa.';
+    const idEmpresaAtual = this.idEmpresaAtual();
+    if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
+      this.erro = 'Selecione uma empresa no cabeçalho.';
       return;
     }
     const ag = this.formCategoria === 'BANCARIA' ? this.formAgencia.trim() : this.formAgencia.trim() || '0';
@@ -242,7 +225,7 @@ export class ContaBancariaCadastroComponent implements OnInit {
       tipo: this.formCategoria === 'BANCARIA' ? this.formTipo : undefined,
       saldoInicial: Number(this.formSaldoInicial) || 0,
       ativo: this.formAtivo,
-      idEmpresas
+      idEmpresas: [idEmpresaAtual]
     };
     this.erro = null;
     this.carregando = true;

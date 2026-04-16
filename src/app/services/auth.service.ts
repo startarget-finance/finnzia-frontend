@@ -305,6 +305,7 @@ export class AuthService {
     
     const map: Record<string, keyof NonNullable<User['permissions']>> = {
       'dashboard': 'dashboard',
+      'rotina': 'dashboard',
       'relatorio': 'relatorio',
       'movimentacoes': 'movimentacoes',
       'fluxo-caixa': 'fluxoCaixa',

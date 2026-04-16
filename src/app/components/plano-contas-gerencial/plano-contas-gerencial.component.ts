@@ -7,7 +7,6 @@ import {
   PlanoContasGerencialPayload,
   PlanoContasGerencialService
 } from '../../services/plano-contas-gerencial.service';
-import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-plano-contas-gerencial',
@@ -23,27 +22,25 @@ export class PlanoContasGerencialComponent implements OnInit {
   carregando = false;
   erro: string | null = null;
   planos: PlanoContasGerencial[] = [];
-  filtroEmpresaId: number | null = null;
 
   empresasDisponiveis: CompaniaInfo[] = [];
-  isAdmin = false;
 
   modalAberto = false;
   editandoId: number | null = null;
   formNome = '';
   formPadrao = false;
-  formEmpresaIds: Record<number, boolean> = {};
 
   constructor(
     private readonly api: PlanoContasGerencialService,
-    private readonly companySelector: CompanySelectorService,
-    private readonly auth: AuthService
+    private readonly companySelector: CompanySelectorService
   ) {}
 
   ngOnInit(): void {
-    this.isAdmin = this.auth.getCurrentUser()?.role === 'admin';
     this.companySelector.empresasPermitidas$.subscribe((list) => {
       this.empresasDisponiveis = (list || []).filter((e) => e.ativo && e.idEmpresa);
+      this.carregar();
+    });
+    this.companySelector.empresaSelecionada$.subscribe(() => {
       this.carregar();
     });
   }
@@ -51,7 +48,8 @@ export class PlanoContasGerencialComponent implements OnInit {
   carregar(): void {
     this.erro = null;
     this.carregando = true;
-    const fid = this.filtroEmpresaId != null && this.filtroEmpresaId > 0 ? this.filtroEmpresaId : undefined;
+    const idEmpresaAtual = this.idEmpresaAtual();
+    const fid = idEmpresaAtual != null && idEmpresaAtual > 0 ? idEmpresaAtual : undefined;
     this.api.listar(fid).subscribe({
       next: (data) => {
         this.planos = data || [];
@@ -70,12 +68,6 @@ export class PlanoContasGerencialComponent implements OnInit {
     this.editandoId = null;
     this.formNome = '';
     this.formPadrao = false;
-    this.formEmpresaIds = {};
-    for (const e of this.empresasDisponiveis) {
-      if (e.idEmpresa) {
-        this.formEmpresaIds[e.idEmpresa] = false;
-      }
-    }
     this.modalAberto = true;
   }
 
@@ -83,23 +75,11 @@ export class PlanoContasGerencialComponent implements OnInit {
     this.editandoId = p.id;
     this.formNome = p.nome;
     this.formPadrao = !!p.padrao;
-    this.formEmpresaIds = {};
-    for (const e of this.empresasDisponiveis) {
-      if (e.idEmpresa) {
-        this.formEmpresaIds[e.idEmpresa] = p.idEmpresas?.includes(e.idEmpresa) ?? false;
-      }
-    }
     this.modalAberto = true;
   }
 
   fecharModal(): void {
     this.modalAberto = false;
-  }
-
-  coletarEmpresasSelecionadas(): number[] {
-    return Object.entries(this.formEmpresaIds)
-      .filter(([, v]) => v)
-      .map(([k]) => Number(k));
   }
 
   salvar(): void {
@@ -108,14 +88,14 @@ export class PlanoContasGerencialComponent implements OnInit {
       this.erro = 'Informe o nome do plano.';
       return;
     }
-    const idEmpresas = this.coletarEmpresasSelecionadas();
-    if (!this.isAdmin && idEmpresas.length === 0) {
-      this.erro = 'Selecione pelo menos uma empresa.';
+    const idEmpresaAtual = this.idEmpresaAtual();
+    if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
+      this.erro = 'Selecione uma empresa no cabeçalho para salvar o plano.';
       return;
     }
     const body: PlanoContasGerencialPayload = {
       nome,
-      idEmpresas,
+      idEmpresas: [idEmpresaAtual],
       padrao: this.formPadrao
     };
     this.erro = null;
@@ -187,13 +167,18 @@ export class PlanoContasGerencialComponent implements OnInit {
         }
         this.importarLote(arr as unknown[]);
       } catch {
-        this.erro = 'Arquivo inválido. Use JSON: [{"nome":"...","idEmpresas":[1],"padrao":false}]';
+        this.erro = 'Arquivo inválido. Use JSON: [{"nome":"...","padrao":false}]';
       }
     };
     reader.readAsText(file);
   }
 
   private importarLote(items: unknown[]): void {
+    const idEmpresaAtual = this.idEmpresaAtual();
+    if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
+      this.erro = 'Selecione uma empresa no cabeçalho para importar planos.';
+      return;
+    }
     let i = 0;
     const next = (): void => {
       if (i >= items.length) {
@@ -203,24 +188,21 @@ export class PlanoContasGerencialComponent implements OnInit {
       }
       const raw = items[i++] as Record<string, unknown>;
       const nome = String(raw['nome'] || '').trim();
-      const ids = Array.isArray(raw['idEmpresas'])
-        ? (raw['idEmpresas'] as unknown[]).map((x) => Number(x)).filter((n) => n > 0)
-        : [];
       const padrao = raw['padrao'] === true;
       if (!nome) {
         next();
         return;
       }
-      if (!this.isAdmin && ids.length === 0) {
-        next();
-        return;
-      }
-      this.api.criar({ nome, idEmpresas: ids, padrao }).subscribe({
+      this.api.criar({ nome, idEmpresas: [idEmpresaAtual], padrao }).subscribe({
         next: () => next(),
         error: () => next()
       });
     };
     this.carregando = true;
     next();
+  }
+
+  private idEmpresaAtual(): number | null {
+    return this.companySelector.obterIdEmpresaSelecionada();
   }
 }

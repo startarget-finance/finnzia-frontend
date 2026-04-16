@@ -1,0 +1,160 @@
+<div class="min-h-full bg-gradient-to-b from-slate-50 via-white to-slate-100/70 pb-12 font-sans">
+  <div class="mx-auto max-w-[1800px] px-4 pt-6 sm:px-6 lg:px-8">
+    <div class="relative mb-8 overflow-hidden rounded-3xl border border-slate-200/70 bg-white/85 p-6 shadow-sm shadow-slate-900/5 backdrop-blur-sm sm:p-7">
+      <div aria-hidden="true" class="pointer-events-none absolute inset-0 bg-[radial-gradient(900px_circle_at_8%_-10%,rgba(139,92,246,0.07),transparent_55%),radial-gradient(800px_circle_at_100%_0%,rgba(20,184,166,0.06),transparent_50%)]"></div>
+      <div class="relative z-[1] flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-start gap-4">
+          <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-teal-500 shadow-lg shadow-violet-500/25 ring-2 ring-white/90">
+            <i class="fi fi-rr-file-import text-[1.35rem] leading-none text-white" aria-hidden="true"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Conciliação OFX</h1>
+            <p class="mt-0.5 text-sm text-slate-500">Arquivos de conciliação e histórico de importações bancárias</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-6 rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm">
+      <div class="flex flex-wrap items-end gap-3">
+        <input #ofxInput type="file" accept=".ofx" class="hidden" (change)="onSelecionarArquivo($event)" />
+        <button type="button"
+                (click)="ofxInput.click()"
+                class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+          <i class="fi fi-rr-upload text-[0.9rem] leading-none" aria-hidden="true"></i>
+          Selecionar OFX
+        </button>
+        <button type="button"
+                (click)="importarArquivo()"
+                [disabled]="importando || !ofxSelecionado"
+                class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60">
+          <i class="fi fi-rr-cloud-upload text-[0.9rem] leading-none" aria-hidden="true"></i>
+          {{ importando ? 'Importando...' : 'Importar' }}
+        </button>
+
+        <div class="ml-auto flex flex-wrap items-end gap-3">
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-500">Status</label>
+            <select [(ngModel)]="filtros.status" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" (change)="carregar()">
+              <option value="">Todos</option>
+              <option value="CONCILIADO">Conciliado</option>
+              <option value="PARCIAL">Parcial</option>
+              <option value="PENDENTE">Pendente</option>
+            </select>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-500">Tipo</label>
+            <select [(ngModel)]="filtros.tipo" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" (change)="carregar()">
+              <option value="">Todos</option>
+              <option value="MANUAL">Manual</option>
+              <option value="AUTOMATICO">Automático</option>
+            </select>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-500">Conta</label>
+            <select [(ngModel)]="filtros.conta" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" (change)="carregar()">
+              <option value="">Todas</option>
+              <option *ngFor="let conta of contasDisponiveis" [value]="conta">{{ conta }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-500">De</label>
+            <input [(ngModel)]="filtros.dataInicio" type="date" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-500">Até</label>
+            <input [(ngModel)]="filtros.dataFim" type="date" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" />
+          </div>
+          <button type="button" (click)="carregar()"
+                  class="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-3.5 py-2.5 text-sm font-semibold text-white hover:bg-violet-700">
+            <i class="fi fi-rr-filter text-[0.85rem] leading-none" aria-hidden="true"></i>
+            Aplicar
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="feedback" class="mt-4 rounded-xl border px-4 py-3 text-sm font-medium"
+           [ngClass]="feedback.tipo === 'sucesso' ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-rose-200 bg-rose-50 text-rose-800'">
+        {{ feedback.mensagem }}
+      </div>
+      <div *ngIf="error" class="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800">
+        {{ error }}
+      </div>
+    </div>
+
+    <div class="mb-4 flex items-center justify-between">
+      <div class="text-sm text-slate-500">{{ itensFiltrados.length }} arquivo(s) encontrado(s)</div>
+      <div class="w-full max-w-sm">
+        <input [(ngModel)]="filtros.pesquisa" (ngModelChange)="aplicarFiltroLocal()" type="text" placeholder="Pesquisar..."
+               class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" />
+      </div>
+    </div>
+
+    <div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-100 text-sm">
+          <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-600">
+            <tr>
+              <th class="px-3 py-3 text-left">Tipo</th>
+              <th class="px-3 py-3 text-left">Status</th>
+              <th class="px-3 py-3 text-left">Data</th>
+              <th class="px-3 py-3 text-left">Banco</th>
+              <th class="px-3 py-3 text-left">Período</th>
+              <th class="px-3 py-3 text-right">Conciliadas</th>
+              <th class="px-3 py-3 text-right">Ignoradas</th>
+              <th class="px-3 py-3 text-right">Pendentes</th>
+              <th class="px-3 py-3 text-right">Total</th>
+              <th class="px-3 py-3 text-center">Ações</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr *ngIf="loading">
+              <td colspan="10" class="px-4 py-10 text-center text-slate-500">Carregando...</td>
+            </tr>
+            <tr *ngIf="!loading && itensFiltrados.length === 0">
+              <td colspan="10" class="px-4 py-10 text-center text-slate-500">Nenhuma conciliação encontrada.</td>
+            </tr>
+            <tr *ngFor="let item of itensFiltrados" class="hover:bg-slate-50/70">
+              <td class="px-3 py-3">
+                <span class="rounded-md px-2 py-1 text-xs font-semibold"
+                      [ngClass]="item.tipo === 'AUTOMATICO' ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-700'">
+                  {{ item.tipo || '-' }}
+                </span>
+              </td>
+              <td class="px-3 py-3">
+                <span class="rounded-md px-2 py-1 text-xs font-semibold"
+                      [ngClass]="item.status === 'CONCILIADO' ? 'bg-emerald-100 text-emerald-700' : (item.status === 'PARCIAL' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700')">
+                  {{ item.status || '-' }}
+                </span>
+              </td>
+              <td class="px-3 py-3 text-slate-700">{{ formatDateTime(item.dataImportacao) }}</td>
+              <td class="px-3 py-3 text-slate-700">{{ item.banco || '-' }}</td>
+              <td class="px-3 py-3 text-slate-700">
+                {{ formatDate(item.periodoInicio) }} até {{ formatDate(item.periodoFim) }}
+              </td>
+              <td class="px-3 py-3 text-right font-semibold text-slate-700">{{ item.conciliadas ?? 0 }}</td>
+              <td class="px-3 py-3 text-right font-semibold text-slate-700">{{ item.ignoradas ?? 0 }}</td>
+              <td class="px-3 py-3 text-right font-semibold text-slate-700">{{ item.pendentes ?? 0 }}</td>
+              <td class="px-3 py-3 text-right font-semibold text-slate-900">{{ item.total ?? 0 }}</td>
+              <td class="px-3 py-3">
+                <div class="flex items-center justify-center gap-2">
+                  <button type="button" (click)="abrirMovimentacoes(item)"
+                          class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100"
+                          title="Ver movimentações">
+                    <i class="fi fi-rr-search text-[0.85rem] leading-none" aria-hidden="true"></i>
+                  </button>
+                  <button type="button" (click)="excluir(item)"
+                          class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50"
+                          title="Excluir">
+                    <i class="fi fi-rr-trash text-[0.85rem] leading-none" aria-hidden="true"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+

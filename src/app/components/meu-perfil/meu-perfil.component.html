@@ -1,152 +1,182 @@
-<div class="min-h-screen bg-gray-50 p-4 lg:p-6">
-  <div class="max-w-4xl mx-auto">
-    <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900">Meu Perfil</h1>
-      <p class="mt-2 text-gray-600">Gerencie suas informações pessoais e segurança da conta</p>
-    </div>
+<div class="min-h-full bg-gradient-to-b from-slate-50 via-white to-slate-100/70 px-4 pb-12 pt-6 sm:px-6 lg:px-8">
+  <div class="mx-auto w-full max-w-5xl">
+    <section class="relative mb-6 overflow-hidden rounded-3xl border border-slate-200/70 bg-white/90 p-6 shadow-sm shadow-slate-900/5 backdrop-blur-sm sm:p-7">
+      <div aria-hidden="true" class="pointer-events-none absolute inset-0 bg-[radial-gradient(800px_circle_at_5%_-10%,rgba(139,92,246,0.08),transparent_55%),radial-gradient(600px_circle_at_100%_0%,rgba(20,184,166,0.07),transparent_45%)]"></div>
+      <div class="relative z-[1] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 class="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Meu Perfil</h1>
+          <p class="mt-1 text-sm text-slate-500">Gerencie suas informações pessoais e segurança da conta</p>
+        </div>
+        <span class="inline-flex w-fit items-center rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.08em] text-violet-700">
+          Central de conta
+        </span>
+      </div>
+    </section>
 
-    <!-- Mensagens -->
-    <div *ngIf="mensagemSucesso" class="mb-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
+    <div *ngIf="mensagemSucesso" class="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
       {{ mensagemSucesso }}
     </div>
 
-    <div *ngIf="erro" class="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
-      {{ erro }}
-      <button (click)="erro = null" class="float-right text-red-600 hover:text-red-800">×</button>
+    <div *ngIf="erro" class="mb-4 flex items-start justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800">
+      <span>{{ erro }}</span>
+      <button type="button" (click)="erro = null" class="inline-flex h-6 w-6 items-center justify-center rounded-md text-rose-500 transition-colors hover:bg-rose-100 hover:text-rose-700">×</button>
     </div>
 
-    <!-- Informações do Perfil -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-      <div class="flex items-center justify-between mb-6">
-        <h2 class="text-xl font-semibold text-gray-900">Informações Pessoais</h2>
-        <button 
+    <section class="mb-6 rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-900/5 sm:p-6">
+      <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 class="text-lg font-semibold tracking-tight text-slate-900">Informações Pessoais</h2>
+        <button
           *ngIf="!editandoPerfil"
+          type="button"
           (click)="iniciarEdicaoPerfil()"
-          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-violet-500/25 transition-all hover:brightness-105"
+        >
+          <i class="fi fi-rr-user-pen flex h-4 w-4 items-center justify-center text-[0.8rem] leading-none" aria-hidden="true"></i>
           Editar Perfil
         </button>
       </div>
 
-      <div *ngIf="usuario && !editandoPerfil" class="space-y-4">
-        <div class="flex items-center gap-4">
-          <div class="h-20 w-20 rounded-full bg-gray-300 flex items-center justify-center">
-            <span class="text-2xl font-medium text-gray-700">
-              {{ usuario.name.charAt(0).toUpperCase() }}
+      <div *ngIf="usuario && !editandoPerfil">
+        <div class="rounded-2xl border border-slate-200/80 bg-gradient-to-r from-slate-50 to-violet-50/40 p-4 sm:p-5">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-4">
+              <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-teal-500 text-lg font-bold tracking-wide text-white shadow-[0_12px_30px_-16px_rgba(124,58,237,0.85)]">
+                {{ iniciaisUsuario }}
+              </div>
+              <div class="min-w-0">
+                <p class="truncate text-lg font-semibold text-slate-900">{{ usuario.name }}</p>
+                <p class="truncate text-sm text-slate-500">{{ usuario.email }}</p>
+              </div>
+            </div>
+            <span class="inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold"
+                  [ngClass]="usuario.role === 'admin' ? 'bg-violet-100 text-violet-700' : 'bg-sky-100 text-sky-700'">
+              {{ papelUsuarioLabel }}
             </span>
-          </div>
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900">{{ usuario.name }}</h3>
-            <p class="text-sm text-gray-600">{{ usuario.email }}</p>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <p class="text-gray-900">{{ usuario.email }}</p>
+        <div class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div class="rounded-2xl border border-slate-200/80 bg-white p-4">
+            <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Email</p>
+            <p class="mt-1.5 text-sm font-medium text-slate-900">{{ usuario.email }}</p>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Conta</label>
-            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
-                  [class]="usuario.role === 'admin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'">
-              {{ usuario.role === 'admin' ? 'Administrador' : 'Cliente' }}
-            </span>
+          <div class="rounded-2xl border border-slate-200/80 bg-white p-4">
+            <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Tipo de Conta</p>
+            <p class="mt-1.5 text-sm font-medium text-slate-900">{{ papelUsuarioLabel }}</p>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Último Acesso</label>
-            <p class="text-gray-900">{{ formatarData(usuario.loginTime) }}</p>
+          <div class="rounded-2xl border border-slate-200/80 bg-white p-4">
+            <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Último Acesso</p>
+            <p class="mt-1.5 text-sm font-medium text-slate-900">{{ formatarData(usuario.loginTime) }}</p>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Data de Criação</label>
-            <p class="text-gray-900">{{ formatarData(usuario.dataCriacao) }}</p>
+          <div class="rounded-2xl border border-slate-200/80 bg-white p-4">
+            <p class="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Data de Criação</p>
+            <p class="mt-1.5 text-sm font-medium text-slate-900">{{ formatarData(usuario.dataCriacao) }}</p>
           </div>
         </div>
       </div>
 
-      <!-- Formulário de Edição -->
       <div *ngIf="editandoPerfil" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Nome</label>
-          <input 
-            type="text" 
+          <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Nome</label>
+          <input
+            type="text"
             [(ngModel)]="formPerfil.nome"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 shadow-sm outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20"
+            placeholder="Digite seu nome completo"
+          />
         </div>
 
-        <div class="flex justify-end gap-3 mt-6">
-          <button 
+        <div class="flex flex-wrap justify-end gap-2 pt-1">
+          <button
+            type="button"
             (click)="cancelarEdicaoPerfil()"
-            class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">
+            class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+          >
             Cancelar
           </button>
-          <button 
+          <button
+            type="button"
             (click)="salvarPerfil()"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            class="rounded-xl bg-gradient-to-r from-violet-600 to-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-violet-500/25 transition-all hover:brightness-105"
+          >
             Salvar Alterações
           </button>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Alteração de Senha -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div class="flex items-center justify-between mb-6">
+    <section class="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-900/5 sm:p-6">
+      <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 class="text-xl font-semibold text-gray-900">Segurança</h2>
-          <p class="text-sm text-gray-600 mt-1">Altere sua senha para manter sua conta segura</p>
+          <h2 class="text-lg font-semibold tracking-tight text-slate-900">Segurança</h2>
+          <p class="mt-1 text-sm text-slate-500">Atualize sua senha regularmente para manter sua conta protegida</p>
         </div>
-        <button 
+        <button
           *ngIf="!alterandoSenha"
+          type="button"
           (click)="iniciarAlteracaoSenha()"
-          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+          class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-violet-500/25 transition-all hover:brightness-105"
+        >
+          <i class="fi fi-rr-lock flex h-4 w-4 items-center justify-center text-[0.8rem] leading-none" aria-hidden="true"></i>
           Alterar Senha
         </button>
       </div>
 
-      <!-- Formulário de Alteração de Senha -->
+      <div *ngIf="!alterandoSenha" class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-6 text-center text-sm text-slate-500">
+        Recomendação: use senha com letras maiúsculas, minúsculas, números e símbolos.
+      </div>
+
       <div *ngIf="alterandoSenha" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Senha Atual</label>
-          <input 
-            type="password" 
+          <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Senha Atual</label>
+          <input
+            type="password"
             [(ngModel)]="formSenha.senhaAtual"
             placeholder="Digite sua senha atual"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 shadow-sm outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20"
+          />
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Nova Senha</label>
-          <input 
-            type="password" 
-            [(ngModel)]="formSenha.novaSenha"
-            placeholder="Digite a nova senha (mínimo 6 caracteres)"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Nova Senha</label>
+            <input
+              type="password"
+              [(ngModel)]="formSenha.novaSenha"
+              placeholder="Mínimo de 6 caracteres"
+              class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 shadow-sm outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20"
+            />
+          </div>
+
+          <div>
+            <label class="mb-1.5 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Confirmar Nova Senha</label>
+            <input
+              type="password"
+              [(ngModel)]="formSenha.confirmarSenha"
+              placeholder="Repita a nova senha"
+              class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-800 shadow-sm outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20"
+            />
+          </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Confirmar Nova Senha</label>
-          <input 
-            type="password" 
-            [(ngModel)]="formSenha.confirmarSenha"
-            placeholder="Confirme a nova senha"
-            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-        </div>
-
-        <div class="flex justify-end gap-3 mt-6">
-          <button 
+        <div class="flex flex-wrap justify-end gap-2 pt-1">
+          <button
+            type="button"
             (click)="cancelarAlteracaoSenha()"
-            class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">
+            class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+          >
             Cancelar
           </button>
-          <button 
+          <button
+            type="button"
             (click)="salvarSenha()"
-            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-            Alterar Senha
+            class="rounded-xl bg-gradient-to-r from-violet-600 to-teal-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-violet-500/25 transition-all hover:brightness-105"
+          >
+            Atualizar Senha
           </button>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 </div>
 

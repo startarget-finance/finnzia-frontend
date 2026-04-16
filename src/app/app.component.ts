@@ -40,6 +40,19 @@ export class AppComponent implements OnInit {
     return this.authService.getCurrentUser()?.name || 'Usuário';
   }
 
+  /**
+   * Retorna até 2 iniciais para o avatar do usuário.
+   */
+  get iniciaisUsuarioAtual(): string {
+    const nome = (this.nomeUsuarioAtual || '').trim();
+    if (!nome) return 'US';
+    const partes = nome.split(/\s+/).filter(Boolean);
+    if (partes.length === 1) {
+      return partes[0].slice(0, 2).toUpperCase();
+    }
+    return `${partes[0][0]}${partes[partes.length - 1][0]}`.toUpperCase();
+  }
+
   constructor(
     private authService: AuthService,
     private usuarioService: UsuarioService,
@@ -181,11 +194,19 @@ export class AppComponent implements OnInit {
     return this.hasPermission('dashboard');
   }
 
+  canAccessRotina(): boolean {
+    return this.hasPermission('dashboard');
+  }
+
   canAccessRelatorio(): boolean {
     return this.hasPermission('relatorio');
   }
 
   canAccessMovimentacoes(): boolean {
+    return this.hasPermission('movimentacoes');
+  }
+
+  canAccessConciliacaoOfx(): boolean {
     return this.hasPermission('movimentacoes');
   }
 

@@ -6,7 +6,7 @@ import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { DadosFinanceiros } from '../../models/dados-financeiros.model';
-import { BomControleService, ResumoFinanceiroResponse, FiltrosMovimentacoes } from '../../services/bomcontrole.service';
+import { ErpFinanceiroService, ResumoFinanceiroResponse, FiltrosMovimentacoes } from '../../services/erp-financeiro.service';
 import { CompanySelectorService } from '../../services/company-selector.service';
 
 Chart.register(...registerables);
@@ -97,7 +97,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
-    private bomControleService: BomControleService,
+    private erpFinanceiroService: ErpFinanceiroService,
     private companySelectorService: CompanySelectorService
   ) {}
 
@@ -517,11 +517,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     this.resumoSubscription?.unsubscribe();
     this.resumoCarregando = true;
-    this.resumoSubscription = this.bomControleService.obterResumoFinanceiro(filtros)
+    this.resumoSubscription = this.erpFinanceiroService.obterResumoFinanceiro(filtros)
       .pipe(finalize(() => { this.resumoCarregando = false; }))
       .subscribe({
-        next: (resumo) => this.atualizarResumoComDados(resumo),
-        error: (error) => {
+        next: (resumo: ResumoFinanceiroResponse) => this.atualizarResumoComDados(resumo),
+        error: (error: any) => {
           console.error('Erro ao carregar o resumo financeiro:', error);
         }
       });
@@ -558,17 +558,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.resumoFonteDados = resumo.fonteDados ?? null;
 
     // KPIs adicionais calculados no backend.
-    this.mediaNovosContratosReais3m = resumo.mediaNovosContratosReais3m ?? null;
-    this.mediaNovosContratosUnidades3m = resumo.mediaNovosContratosUnidades3m ?? null;
-    this.custoFinanceiroInvestimento = resumo.custoFinanceiroInvestimento ?? null;
-    this.mediaCustoFixo = resumo.mediaCustoFixo ?? null;
-    this.mediaCustoVariavel = resumo.mediaCustoVariavel ?? null;
-    this.mediaCustoEstrategico = resumo.mediaCustoEstrategico ?? null;
-    this.totalClientesAtivos = resumo.totalClientesAtivos ?? null;
-    this.churnPercent = resumo.churnPercent ?? null;
-    this.ltvMeses = resumo.ltvMeses ?? null;
-    this.inadimplenciaValor = resumo.inadimplenciaValor ?? null;
-    this.inadimplenciaTaxa = resumo.inadimplenciaTaxa ?? null;
+    this.mediaNovosContratosReais3m = resumo.mediaNovosContratosReais3m ?? 0;
+    this.mediaNovosContratosUnidades3m = resumo.mediaNovosContratosUnidades3m ?? 0;
+    this.custoFinanceiroInvestimento = resumo.custoFinanceiroInvestimento ?? 0;
+    this.mediaCustoFixo = resumo.mediaCustoFixo ?? 0;
+    this.mediaCustoVariavel = resumo.mediaCustoVariavel ?? 0;
+    this.mediaCustoEstrategico = resumo.mediaCustoEstrategico ?? 0;
+    this.totalClientesAtivos = resumo.totalClientesAtivos ?? 0;
+    this.churnPercent = resumo.churnPercent ?? 0;
+    this.ltvMeses = resumo.ltvMeses ?? 0;
+    this.inadimplenciaValor = resumo.inadimplenciaValor ?? 0;
+    this.inadimplenciaTaxa = resumo.inadimplenciaTaxa ?? 0;
 
     // Atualiza gráficos com base nos totais reais retornados do backend.
     if (isPlatformBrowser(this.platformId)) {

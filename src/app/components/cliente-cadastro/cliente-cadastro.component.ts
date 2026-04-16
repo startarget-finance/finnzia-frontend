@@ -1,8 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AuthService } from '../../services/auth.service';
-import { CompaniaInfo, CompanySelectorService } from '../../services/company-selector.service';
+import { CompanySelectorService } from '../../services/company-selector.service';
 import {
   ClienteCadastro,
   ClienteCadastroPayload,
@@ -33,9 +32,6 @@ export class ClienteCadastroComponent implements OnInit {
   totalElements = 0;
   totalPages = 0;
 
-  empresasDisponiveis: CompaniaInfo[] = [];
-  isAdmin = false;
-
   modalAberto = false;
   editandoId: number | null = null;
 
@@ -44,7 +40,6 @@ export class ClienteCadastroComponent implements OnInit {
   formCpfCnpj = '';
   formTipoPessoa: 'PF' | 'PJ' = 'PJ';
   formClassificacao = 3;
-  formEmpresaIds: Record<number, boolean> = {};
   formEmail = '';
   formCelular = '';
   formEndereco = '';
@@ -64,15 +59,10 @@ export class ClienteCadastroComponent implements OnInit {
 
   constructor(
     private readonly api: ClienteCadastroService,
-    private readonly companySelector: CompanySelectorService,
-    private readonly auth: AuthService
+    private readonly companySelector: CompanySelectorService
   ) {}
 
   ngOnInit(): void {
-    this.isAdmin = this.auth.getCurrentUser()?.role === 'admin';
-    this.companySelector.empresasPermitidas$.subscribe((list) => {
-      this.empresasDisponiveis = (list || []).filter((e) => e.ativo && e.idEmpresa);
-    });
     this.companySelector.empresaSelecionada$.subscribe(() => {
       this.carregar();
     });
@@ -155,13 +145,6 @@ export class ClienteCadastroComponent implements OnInit {
     this.formResponsavel = '';
     this.formCpf = '';
     this.formBloqueado = false;
-    const idCtx = this.idEmpresaAtual();
-    this.formEmpresaIds = {};
-    for (const e of this.empresasDisponiveis) {
-      if (e.idEmpresa) {
-        this.formEmpresaIds[e.idEmpresa] = idCtx != null && idCtx > 0 && e.idEmpresa === idCtx;
-      }
-    }
     this.modalAberto = true;
   }
 
@@ -179,13 +162,6 @@ export class ClienteCadastroComponent implements OnInit {
     this.formResponsavel = c.responsavel || '';
     this.formCpf = c.cpf || '';
     this.formBloqueado = !!c.bloqueado;
-    this.formEmpresaIds = {};
-    const ids = new Set(c.idEmpresas || []);
-    for (const e of this.empresasDisponiveis) {
-      if (e.idEmpresa) {
-        this.formEmpresaIds[e.idEmpresa] = ids.has(e.idEmpresa);
-      }
-    }
     this.modalAberto = true;
   }
 
@@ -193,14 +169,9 @@ export class ClienteCadastroComponent implements OnInit {
     this.modalAberto = false;
   }
 
-  coletarEmpresasSelecionadas(): number[] {
-    return Object.entries(this.formEmpresaIds)
-      .filter(([, v]) => v)
-      .map(([k]) => Number(k));
-  }
-
   montarPayload(): ClienteCadastroPayload {
-    const idEmpresas = this.coletarEmpresasSelecionadas();
+    const idEmp = this.idEmpresaAtual();
+    const idEmpresas = idEmp != null && idEmp > 0 ? [idEmp] : [];
     return {
       razaoSocial: this.formRazaoSocial.trim(),
       nomeFantasia: this.formNomeFantasia.trim() || undefined,
@@ -227,11 +198,6 @@ export class ClienteCadastroComponent implements OnInit {
     const idCtx = this.idEmpresaAtual();
     if (idCtx == null || idCtx <= 0) {
       this.erro = 'Selecione uma empresa no cabeçalho.';
-      return;
-    }
-    const idEmpresas = this.coletarEmpresasSelecionadas();
-    if (!this.isAdmin && idEmpresas.length === 0) {
-      this.erro = 'Selecione pelo menos uma empresa.';
       return;
     }
     const body = this.montarPayload();
@@ -396,13 +362,18 @@ export class ClienteCadastroComponent implements OnInit {
         this.importarLote(arr as unknown[]);
       } catch {
         this.erro =
-          'Arquivo inválido. Use JSON: [{"razaoSocial":"...","idEmpresas":[1],...}]';
+          'Arquivo inválido. Use JSON: [{"razaoSocial":"...",...}]';
       }
     };
     reader.readAsText(file);
   }
 
   private importarLote(items: unknown[]): void {
+    const idCtx = this.idEmpresaAtual();
+    if (idCtx == null || idCtx <= 0) {
+      this.erro = 'Selecione uma empresa no cabeçalho para importar clientes.';
+      return;
+    }
     let i = 0;
     const next = (): void => {
       if (i >= items.length) {
@@ -412,21 +383,14 @@ export class ClienteCadastroComponent implements OnInit {
       }
       const raw = items[i++] as Record<string, unknown>;
       const razaoSocial = String(raw['razaoSocial'] || '').trim();
-      const idEmpresas = Array.isArray(raw['idEmpresas'])
-        ? (raw['idEmpresas'] as unknown[]).map((x) => Number(x)).filter((n) => n > 0)
-        : [];
       if (!razaoSocial) {
-        next();
-        return;
-      }
-      if (!this.isAdmin && idEmpresas.length === 0) {
         next();
         return;
       }
       const tp = raw['tipoPessoa'] === 'PF' ? 'PF' : 'PJ';
       const body: ClienteCadastroPayload = {
         razaoSocial,
-        idEmpresas,
+        idEmpresas: [idCtx],
         tipoPessoa: tp,
         nomeFantasia: String(raw['nomeFantasia'] || '').trim() || undefined,
         cpfCnpj: String(raw['cpfCnpj'] || '').trim() || undefined,
