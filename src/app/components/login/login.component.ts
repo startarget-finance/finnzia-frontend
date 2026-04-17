@@ -1,11 +1,8 @@
 import { Component, OnInit, OnDestroy, PLATFORM_ID, Inject } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
-import { UsuarioService } from '../../services/usuario.service';
-import { CompanySelectorService, CompaniaInfo } from '../../services/company-selector.service';
 
 @Component({
   selector: 'app-login',
@@ -36,8 +33,6 @@ export class LoginComponent implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     private authService: AuthService,
-    private usuarioService: UsuarioService,
-    private companySelectorService: CompanySelectorService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
@@ -103,8 +98,7 @@ export class LoginComponent implements OnInit, OnDestroy {
       const result = await this.authService.loginWithResult(this.loginForm.email, this.loginForm.password);
 
       if (result.success) {
-        // Não bloquear a navegação: sincronizar empresas em background
-        this.sincronizarEmpresasPosLogin();
+        // Fluxo single-tenant: login bem-sucedido segue direto para o dashboard.
         this.router.navigate(['/dashboard']);
       } else if (result.timeout) {
         this.errorMessage = 'Não foi possível conectar no momento. Tente novamente em alguns segundos.';
@@ -139,40 +133,5 @@ export class LoginComponent implements OnInit, OnDestroy {
   onRegister(): void {
     // Implementar navegação para registro
     alert('Funcionalidade de registro será implementada em breve.');
-  }
-
-  /**
-   * Após login, sincroniza empresas do usuário no seletor global
-   * para evitar depender de um reload completo da aplicação
-   */
-  private async sincronizarEmpresasPosLogin(): Promise<void> {
-    try {
-      const usuarioAtual = await firstValueFrom(this.usuarioService.buscarMeuPerfil());
-      if (!usuarioAtual?.id) {
-        this.companySelectorService.limparSessao();
-        return;
-      }
-
-      const empresas = await firstValueFrom(this.usuarioService.obterEmpresasUsuario(usuarioAtual.id));
-      const empresasInfo: CompaniaInfo[] = (empresas || [])
-        .filter((empresa: any) => empresa.ativo)
-        .map((empresa: any) => ({
-          id: empresa.id,
-          idEmpresa: empresa.idEmpresa,
-          nomeEmpresa: empresa.nomeEmpresa,
-          padrao: empresa.padrao,
-          ativo: empresa.ativo,
-          dataCriacao: empresa.dataCriacao
-        }));
-
-      if (empresasInfo.length > 0) {
-        this.companySelectorService.atualizarEmpresas(empresasInfo);
-      } else {
-        this.companySelectorService.limparSessao();
-      }
-    } catch (error) {
-      console.error('Erro ao sincronizar empresas após login:', error);
-      this.companySelectorService.limparSessao();
-    }
   }
 }

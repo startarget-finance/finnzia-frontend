@@ -292,6 +292,13 @@ export class GerenciarAcessosComponent implements OnInit {
       assinatura: false,
       gerenciarAcessos: false
     };
+
+    this.empresaSelecionadaParaConfig = null;
+    this.asaasApiKeyInput = '';
+    this.asaasBaseUrlInput = '';
+    this.asaasConfiguradoParaEmpresa = false;
+    this.configAsaasStatus = 'idle';
+    this.configAsaasMessage = '';
     
     // Carregar empresas do usuário
     this.carregarEmpresasUsuario(usuario.id);
@@ -326,13 +333,33 @@ export class GerenciarAcessosComponent implements OnInit {
           this.empresaUnicaSelecionada = primeiraAtiva?.idEmpresa ?? null;
         }
 
+        // Regra operacional atual: 1 usuário = 1 empresa.
+        // Se não houver vínculo retornado, usa o ID do usuário como ID da empresa.
+        if (!this.empresaUnicaSelecionada) {
+          this.empresaUnicaSelecionada = usuarioId;
+        }
+
+        this.empresaSelecionadaParaConfig = this.empresaUnicaSelecionada;
+        if (this.empresaSelecionadaParaConfig) {
+          this.onEmpresaConfigChange();
+        } else {
+          this.asaasConfiguradoParaEmpresa = false;
+          this.asaasApiKeyInput = '';
+          this.asaasBaseUrlInput = '';
+          this.configAsaasStatus = 'idle';
+          this.configAsaasMessage = '';
+        }
+
         console.log(`✅ Carregadas ${Object.keys(this.empresasUsuario).length} empresas do usuário`);
         this.carregandoEmpresas = false;
       },
       error: (error) => {
         console.error('Erro ao carregar empresas do usuário:', error);
         this.empresasUsuario = {};
-        this.empresaUnicaSelecionada = null;
+        // Fallback para manter o fluxo de configuração Asaas no modelo 1:1.
+        this.empresaUnicaSelecionada = usuarioId;
+        this.empresaSelecionadaParaConfig = usuarioId;
+        this.onEmpresaConfigChange();
         this.carregandoEmpresas = false;
       }
     });
@@ -343,6 +370,12 @@ export class GerenciarAcessosComponent implements OnInit {
     this.usuarioPermissoes = null;
     this.permissoesEditando = {};
     this.empresaUnicaSelecionada = null;
+    this.empresaSelecionadaParaConfig = null;
+    this.asaasApiKeyInput = '';
+    this.asaasBaseUrlInput = '';
+    this.asaasConfiguradoParaEmpresa = false;
+    this.configAsaasStatus = 'idle';
+    this.configAsaasMessage = '';
   }
 
   /**
@@ -577,6 +610,21 @@ export class GerenciarAcessosComponent implements OnInit {
     if (!id) return undefined;
     const empresa = this.empresasDisponiveis.find(e => e.Id === id);
     return empresa?.Nome;
+  }
+
+  getEmpresaConfigLabel(): string {
+    if (!this.empresaSelecionadaParaConfig) {
+      return 'Empresa não vinculada';
+    }
+    const nome = this.getEmpresaPadraoNome();
+    if (nome) {
+      return nome;
+    }
+    const nomeConta = (this.usuarioPermissoes?.name || '').trim();
+    if (nomeConta) {
+      return nomeConta;
+    }
+    return 'Conta vinculada';
   }
 
   /**
