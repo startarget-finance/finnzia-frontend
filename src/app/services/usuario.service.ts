@@ -217,5 +217,14 @@ export class UsuarioService {
       headers: this.getAuthHeaders()
     });
   }
+
+  atribuirEmpresaUsuario(
+    usuarioId: number,
+    payload: { idEmpresa: number; nomeEmpresa?: string; padrao?: boolean }
+  ): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/${usuarioId}/empresas`, payload, {
+      headers: this.getAuthHeaders()
+    });
+  }
 }
 

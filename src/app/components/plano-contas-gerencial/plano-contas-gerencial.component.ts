@@ -1,12 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { CompaniaInfo, CompanySelectorService } from '../../services/company-selector.service';
 import {
   PlanoContasGerencial,
   PlanoContasGerencialPayload,
   PlanoContasGerencialService
 } from '../../services/plano-contas-gerencial.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-plano-contas-gerencial',
@@ -14,7 +17,7 @@ import {
   imports: [CommonModule, FormsModule],
   templateUrl: './plano-contas-gerencial.component.html'
 })
-export class PlanoContasGerencialComponent implements OnInit {
+export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
   /** Quando true, usado dentro da Parametrização — sem moldura de página inteira. */
   @Input() embedded = false;
   @Output() resumoTotal = new EventEmitter<number>();
@@ -29,26 +32,45 @@ export class PlanoContasGerencialComponent implements OnInit {
   editandoId: number | null = null;
   formNome = '';
   formPadrao = false;
+  private readonly destroy$ = new Subject<void>();
 
   constructor(
     private readonly api: PlanoContasGerencialService,
-    private readonly companySelector: CompanySelectorService
+    private readonly companySelector: CompanySelectorService,
+    private readonly authService: AuthService
   ) {}
 
   ngOnInit(): void {
-    this.companySelector.empresasPermitidas$.subscribe((list) => {
+    this.companySelector.empresasPermitidas$.pipe(takeUntil(this.destroy$)).subscribe((list) => {
       this.empresasDisponiveis = (list || []).filter((e) => e.ativo && e.idEmpresa);
       this.carregar();
     });
-    this.companySelector.empresaSelecionada$.subscribe(() => {
+    this.companySelector.empresaSelecionada$.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.carregar();
     });
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   carregar(): void {
     this.erro = null;
-    this.carregando = true;
+    if (!this.authService.isAuthenticated() || !this.authService.getToken()) {
+      this.carregando = false;
+      this.planos = [];
+      this.resumoTotal.emit(0);
+      return;
+    }
     const idEmpresaAtual = this.idEmpresaAtual();
+    if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
+      this.carregando = false;
+      this.planos = [];
+      this.resumoTotal.emit(0);
+      return;
+    }
+    this.carregando = true;
     const fid = idEmpresaAtual != null && idEmpresaAtual > 0 ? idEmpresaAtual : undefined;
     this.api.listar(fid).subscribe({
       next: (data) => {

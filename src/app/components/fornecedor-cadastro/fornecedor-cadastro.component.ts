@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { CompanySelectorService } from '../../services/company-selector.service';
 import {
+  ConsultaCnpjResult,
   FornecedorCadastro,
   FornecedorCadastroPayload,
   FornecedorCadastroService
@@ -40,6 +42,9 @@ export class FornecedorCadastroComponent implements OnInit {
   formEmail = '';
   formTelefone = '';
   formAtivo = true;
+  consultandoCnpj = false;
+  statusConsultaCnpj: string | null = null;
+  private ultimoCnpjConsultado = '';
 
   private readonly coresAvatar = [
     'bg-emerald-600',
@@ -157,6 +162,9 @@ export class FornecedorCadastroComponent implements OnInit {
     this.formEmail = '';
     this.formTelefone = '';
     this.formAtivo = true;
+    this.statusConsultaCnpj = null;
+    this.consultandoCnpj = false;
+    this.ultimoCnpjConsultado = '';
     this.modalAberto = true;
   }
 
@@ -164,24 +172,123 @@ export class FornecedorCadastroComponent implements OnInit {
     this.editandoId = f.id;
     this.formRazaoSocial = f.razaoSocial || '';
     this.formNomeFantasia = f.nomeFantasia || '';
-    this.formCpfCnpj = f.cpfCnpj || '';
+    this.formCpfCnpj = this.aplicarMascaraCpfCnpj(this.apenasDigitos(f.cpfCnpj || ''));
     this.formTipoPessoa = f.tipoPessoa === 'PF' ? 'PF' : 'PJ';
     this.formEmail = f.email || '';
     this.formTelefone = f.telefone || '';
     this.formAtivo = f.ativo !== false;
+    this.statusConsultaCnpj = null;
+    this.consultandoCnpj = false;
+    this.ultimoCnpjConsultado = this.apenasDigitos(this.formCpfCnpj);
     this.modalAberto = true;
   }
 
   fecharModal(): void {
     this.modalAberto = false;
+    this.consultandoCnpj = false;
+    this.statusConsultaCnpj = null;
+    this.ultimoCnpjConsultado = '';
+  }
+
+  onCpfCnpjBlur(): void {
+    const digits = this.apenasDigitos(this.formCpfCnpj);
+    this.formCpfCnpj = this.aplicarMascaraCpfCnpj(digits);
+    this.atualizarTipoPessoaPorDocumento(digits);
+    this.tentarConsultaCnpj(digits);
+  }
+
+  onCpfCnpjInput(): void {
+    const digits = this.apenasDigitos(this.formCpfCnpj).slice(0, 14);
+    this.formCpfCnpj = this.aplicarMascaraCpfCnpj(digits);
+    this.atualizarTipoPessoaPorDocumento(digits);
+
+    if (digits.length < 14) {
+      this.statusConsultaCnpj = null;
+      return;
+    }
+
+    this.tentarConsultaCnpj(digits);
+  }
+
+  private aplicarDadosCnpj(cnpj: string, dados: ConsultaCnpjResult): void {
+    const razao = (dados.razaoSocial || '').trim();
+    const fantasia = (dados.nomeFantasia || '').trim();
+
+    if (razao) {
+      this.formRazaoSocial = razao;
+    }
+    if (fantasia) {
+      this.formNomeFantasia = fantasia;
+    }
+
+    this.ultimoCnpjConsultado = cnpj;
+    if (razao || fantasia) {
+      this.statusConsultaCnpj = 'Dados preenchidos automaticamente pelo CNPJ.';
+    } else {
+      this.statusConsultaCnpj = 'CNPJ encontrado, mas sem dados de razao social/fantasia.';
+    }
+  }
+
+  private apenasDigitos(valor: string): string {
+    return (valor || '').replace(/\D/g, '');
+  }
+
+  private atualizarTipoPessoaPorDocumento(digits: string): void {
+    if (digits.length === 11) {
+      this.formTipoPessoa = 'PF';
+      return;
+    }
+    if (digits.length === 14) {
+      this.formTipoPessoa = 'PJ';
+    }
+  }
+
+  private aplicarMascaraCpfCnpj(digits: string): string {
+    if (!digits) {
+      return '';
+    }
+    if (digits.length <= 11) {
+      return digits
+        .replace(/^(\d{3})(\d)/, '$1.$2')
+        .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+        .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3-$4');
+    }
+    return digits
+      .replace(/^(\d{2})(\d)/, '$1.$2')
+      .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+      .replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3/$4')
+      .replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d)/, '$1.$2.$3/$4-$5');
+  }
+
+  private tentarConsultaCnpj(digits: string): void {
+    if (digits.length !== 14 || this.consultandoCnpj) {
+      return;
+    }
+
+    if (digits === this.ultimoCnpjConsultado && this.formRazaoSocial.trim()) {
+      return;
+    }
+
+    this.consultandoCnpj = true;
+    this.statusConsultaCnpj = null;
+    this.api
+      .consultarCnpj(digits)
+      .pipe(finalize(() => (this.consultandoCnpj = false)))
+      .subscribe({
+        next: (dados) => this.aplicarDadosCnpj(digits, dados),
+        error: () => {
+          this.statusConsultaCnpj = 'Nao foi possivel consultar o CNPJ automaticamente.';
+        }
+      });
   }
 
   montarPayload(): FornecedorCadastroPayload {
     const idEmpresaAtual = this.idEmpresaAtual();
+    const documento = this.apenasDigitos(this.formCpfCnpj);
     return {
       razaoSocial: this.formRazaoSocial.trim(),
       nomeFantasia: this.formNomeFantasia.trim() || undefined,
-      cpfCnpj: this.formCpfCnpj.trim() || undefined,
+      cpfCnpj: documento || undefined,
       tipoPessoa: this.formTipoPessoa,
       email: this.formEmail.trim() || undefined,
       telefone: this.formTelefone.trim() || undefined,

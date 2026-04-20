@@ -7,6 +7,19 @@ export interface EmpresaConfigResponse {
   idEmpresa: number;
   asaasConfigurado: boolean;
   asaasBaseUrl: string;
+  cnpj?: string;
+  razaoSocial?: string;
+  nomeFantasia?: string;
+  emailEmpresa?: string;
+  telefoneEmpresa?: string;
+}
+
+export interface EmpresaCadastroBasicoPayload {
+  cnpj?: string;
+  razaoSocial?: string;
+  nomeFantasia?: string;
+  emailEmpresa?: string;
+  telefoneEmpresa?: string;
 }
 
 @Injectable({
@@ -24,10 +37,20 @@ export class EmpresaConfigService {
     return this.http.get<EmpresaConfigResponse>(`${this.baseUrl}/${idEmpresa}`);
   }
 
-  saveConfig(idEmpresa: number, asaasApiKey: string, asaasBaseUrl?: string): Observable<{ message: string }> {
+  saveConfig(
+    idEmpresa: number,
+    asaasApiKey: string,
+    asaasBaseUrl?: string,
+    empresa?: EmpresaCadastroBasicoPayload
+  ): Observable<{ message: string }> {
     return this.http.put<{ message: string }>(`${this.baseUrl}/${idEmpresa}`, {
       asaasApiKey: asaasApiKey || null,
-      asaasBaseUrl: asaasBaseUrl || null
+      asaasBaseUrl: asaasBaseUrl || null,
+      cnpj: empresa?.cnpj || null,
+      razaoSocial: empresa?.razaoSocial || null,
+      nomeFantasia: empresa?.nomeFantasia || null,
+      emailEmpresa: empresa?.emailEmpresa || null,
+      telefoneEmpresa: empresa?.telefoneEmpresa || null
     });
   }
 }

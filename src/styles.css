@@ -127,3 +127,48 @@
   }
 
 }
+
+/* SweetAlert2 theme (global) */
+div:where(.swal2-container) .swal2-popup {
+  border-radius: 20px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 30px 80px -45px rgba(15, 23, 42, 0.52);
+  padding: 1.5rem;
+}
+
+div:where(.swal2-container) .swal2-title {
+  color: #0f172a;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+div:where(.swal2-container) .swal2-html-container,
+div:where(.swal2-container) .swal2-content {
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+div:where(.swal2-container) .swal2-actions {
+  gap: 0.5rem;
+  margin-top: 1.2rem;
+}
+
+div:where(.swal2-container) .swal2-styled.swal2-confirm {
+  border: none !important;
+  border-radius: 12px !important;
+  background: linear-gradient(90deg, #7c3aed, #14b8a6) !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+  padding: 0.62rem 1.15rem !important;
+  box-shadow: 0 10px 20px -14px rgba(124, 58, 237, 0.65);
+}
+
+div:where(.swal2-container) .swal2-styled.swal2-cancel {
+  border-radius: 12px !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #fff !important;
+  color: #334155 !important;
+  font-weight: 600 !important;
+  padding: 0.62rem 1.15rem !important;
+}

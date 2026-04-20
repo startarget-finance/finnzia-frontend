@@ -36,6 +36,18 @@
 
       <p *ngIf="!isSidebarCollapsed" class="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Financeiro</p>
 
+      <a *ngIf="canAccessGerenciarAcessos()" routerLink="/gerenciar-acessos"
+         routerLinkActive #rlaGerDesk="routerLinkActive"
+         [ngClass]="rlaGerDesk.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+         class="flex min-h-[2.75rem] items-center rounded-xl transition-all duration-200"
+         [class.gap-3]="!isSidebarCollapsed"
+         [class.px-3]="!isSidebarCollapsed"
+         [class.justify-center]="isSidebarCollapsed"
+         title="Gerenciar Acessos">
+        <i class="fi fi-rr-key flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
+        <span *ngIf="!isSidebarCollapsed" class="truncate">Gerenciar Acessos</span>
+      </a>
+
       <a *ngIf="canAccessDashboard()" routerLink="/dashboard"
          routerLinkActive #rlaDash="routerLinkActive"
          [ngClass]="rlaDash.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
@@ -192,6 +204,13 @@
       </div>
       <nav class="flex-1 space-y-1 overflow-y-auto px-3 py-4 text-[14px] font-medium tracking-tight">
         <p class="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Financeiro</p>
+        <a *ngIf="canAccessGerenciarAcessos()" routerLink="/gerenciar-acessos" (click)="closeMobileMenu()"
+           routerLinkActive #rlaGerMob="routerLinkActive"
+           [ngClass]="rlaGerMob.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
+          <i class="fi fi-rr-key flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
+          Gerenciar Acessos
+        </a>
         <a *ngIf="canAccessDashboard()" routerLink="/dashboard" (click)="closeMobileMenu()"
            routerLinkActive #rlaDashM="routerLinkActive"
            [ngClass]="rlaDashM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"

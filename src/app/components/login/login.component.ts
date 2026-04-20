@@ -39,7 +39,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     // Verificar se já está logado
     if (this.authService.isAuthenticated()) {
-      this.router.navigate(['/dashboard']);
+      this.router.navigate(['/gerenciar-acessos']);
       return;
     }
 
@@ -98,8 +98,9 @@ export class LoginComponent implements OnInit, OnDestroy {
       const result = await this.authService.loginWithResult(this.loginForm.email, this.loginForm.password);
 
       if (result.success) {
-        // Fluxo single-tenant: login bem-sucedido segue direto para o dashboard.
-        this.router.navigate(['/dashboard']);
+        // Tenta abrir Gerenciar Acessos como home.
+        // Se o usuário não tiver permissão, o AuthGuard redireciona para /dashboard.
+        this.router.navigate(['/gerenciar-acessos']);
       } else if (result.timeout) {
         this.errorMessage = 'Não foi possível conectar no momento. Tente novamente em alguns segundos.';
       } else {

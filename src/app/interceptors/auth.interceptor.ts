@@ -14,7 +14,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   // Não adicionar token para webhooks externos (como Clint)
   // Webhooks não precisam de autenticação JWT
-  if (req.url.includes('functions-api.clint.digital') || req.url.includes('clint.digital')) {
+  if (
+    req.url.includes('functions-api.clint.digital') ||
+    req.url.includes('clint.digital') ||
+    req.url.includes('brasilapi.com.br')
+  ) {
     return next(req);
   }
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { API_CONFIG } from '../config/api.config';
 
 export type TipoPessoaFornecedor = 'PF' | 'PJ';
@@ -54,6 +54,12 @@ export interface FornecedorListParams {
   sort?: string;
 }
 
+export interface ConsultaCnpjResult {
+  cnpj: string;
+  razaoSocial: string;
+  nomeFantasia?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class FornecedorCadastroService {
   private readonly base = `${API_CONFIG.BACKEND_API_URL}/api/cadastro/fornecedores`;
@@ -101,5 +107,20 @@ export class FornecedorCadastroService {
 
   setAtivo(id: number, ativo: boolean): Observable<FornecedorCadastro> {
     return this.http.patch<FornecedorCadastro>(`${this.base}/${id}/ativo`, { ativo });
+  }
+
+  consultarCnpj(cnpj: string): Observable<ConsultaCnpjResult> {
+    const digits = (cnpj || '').replace(/\D/g, '');
+    return this.http
+      .get<{ cnpj?: string; razao_social?: string; nome_fantasia?: string }>(
+        `https://brasilapi.com.br/api/cnpj/v1/${digits}`
+      )
+      .pipe(
+        map((res) => ({
+          cnpj: digits,
+          razaoSocial: (res?.razao_social || '').trim(),
+          nomeFantasia: (res?.nome_fantasia || '').trim() || undefined
+        }))
+      );
   }
 }

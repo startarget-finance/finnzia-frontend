@@ -1,10 +1,25 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { finalize } from 'rxjs';
+import Swal from 'sweetalert2';
 import { UsuarioService, Usuario, CriarUsuarioRequest, AtualizarUsuarioRequest, AtualizarPermissoesRequest, PageResponse } from '../../services/usuario.service';
 import { ErpFinanceiroService } from '../../services/erp-financeiro.service';
 import { CompanySelectorService, CompaniaInfo } from '../../services/company-selector.service';
 import { EmpresaConfigService } from '../../services/empresa-config.service';
+
+interface EmpresaResumoUsuario {
+  idEmpresa: number | null;
+  nomeEmpresa: string;
+  cnpj?: string;
+  razaoSocial?: string;
+  nomeFantasia?: string;
+  emailEmpresa?: string;
+  telefoneEmpresa?: string;
+  carregando: boolean;
+  erro?: string;
+}
 
 @Component({
   selector: 'app-gerenciar-acessos',
@@ -51,6 +66,13 @@ export class GerenciarAcessosComponent implements OnInit {
     senha: '',
     role: 'CLIENTE'
   };
+  novoUsuarioEmpresa = {
+    cnpj: '',
+    razaoSocial: '',
+    nomeFantasia: '',
+    emailEmpresa: '',
+    telefoneEmpresa: ''
+  };
   isModalNovoAberto: boolean = false;
 
   // Gerenciamento de empresas (BOMControle)
@@ -70,12 +92,19 @@ export class GerenciarAcessosComponent implements OnInit {
   configAsaasStatus: 'idle' | 'loading' | 'saved' | 'error' = 'idle';
   configAsaasMessage = '';
   asaasConfiguradoParaEmpresa = false;
+  consultandoCnpjNovoUsuario = false;
+  cnpjNovoUsuarioStatus: string | null = null;
+  private ultimoCnpjNovoUsuarioConsultado = '';
+  empresaResumoPorUsuario: Record<number, EmpresaResumoUsuario> = {};
+  usuarioEmpresaDetalhes: Usuario | null = null;
+  isModalEmpresaAberto = false;
 
   constructor(
     private usuarioService: UsuarioService,
     private erpFinanceiroService: ErpFinanceiroService,
     private companySelectorService: CompanySelectorService,
-    private empresaConfigService: EmpresaConfigService
+    private empresaConfigService: EmpresaConfigService,
+    private http: HttpClient
   ) {}
 
   ngOnInit() {
@@ -200,7 +229,94 @@ export class GerenciarAcessosComponent implements OnInit {
     this.totalElementos = response.totalElements || 0;
     this.totalPaginas = response.totalPages || 0;
     this.paginaAtual = response.number || 0;
+    this.carregarResumoEmpresasDaPagina(this.usuarios);
     this.carregando = false;
+  }
+
+  private carregarResumoEmpresasDaPagina(usuarios: Usuario[]): void {
+    this.empresaResumoPorUsuario = {};
+    usuarios.forEach((usuario) => this.carregarResumoEmpresaUsuario(usuario.id));
+  }
+
+  private carregarResumoEmpresaUsuario(usuarioId: number): void {
+    this.empresaResumoPorUsuario[usuarioId] = {
+      idEmpresa: null,
+      nomeEmpresa: 'Carregando empresa...',
+      carregando: true
+    };
+
+    this.usuarioService.obterEmpresasUsuario(usuarioId).subscribe({
+      next: (empresas: any[]) => {
+        const primeiraAtiva = (empresas || []).find((e) => !!e?.ativo) || (empresas || [])[0];
+        const idEmpresa = Number(primeiraAtiva?.idEmpresa || usuarioId);
+        const nomeEmpresa = String(primeiraAtiva?.nomeEmpresa || `Empresa ${idEmpresa}`).trim();
+        this.empresaResumoPorUsuario[usuarioId] = {
+          idEmpresa,
+          nomeEmpresa: nomeEmpresa || `Empresa ${idEmpresa}`,
+          carregando: false
+        };
+        if (idEmpresa > 0) {
+          this.carregarDadosEmpresaConfig(usuarioId, idEmpresa);
+        }
+      },
+      error: () => {
+        const idEmpresa = Number(usuarioId);
+        this.empresaResumoPorUsuario[usuarioId] = {
+          idEmpresa,
+          nomeEmpresa: `Empresa ${idEmpresa}`,
+          carregando: false,
+          erro: 'Não foi possível carregar vínculo da empresa.'
+        };
+        this.carregarDadosEmpresaConfig(usuarioId, idEmpresa);
+      }
+    });
+  }
+
+  private carregarDadosEmpresaConfig(usuarioId: number, idEmpresa: number): void {
+    this.empresaConfigService.getConfig(idEmpresa).subscribe({
+      next: (config) => {
+        const atual = this.empresaResumoPorUsuario[usuarioId];
+        if (!atual) return;
+        this.empresaResumoPorUsuario[usuarioId] = {
+          ...atual,
+          cnpj: config.cnpj || undefined,
+          razaoSocial: config.razaoSocial || undefined,
+          nomeFantasia: config.nomeFantasia || undefined,
+          emailEmpresa: config.emailEmpresa || undefined,
+          telefoneEmpresa: config.telefoneEmpresa || undefined
+        };
+      },
+      error: () => {
+        // Sem config detalhada ainda: mantém nome e vínculo já carregados.
+      }
+    });
+  }
+
+  getResumoEmpresa(usuarioId: number): EmpresaResumoUsuario | null {
+    return this.empresaResumoPorUsuario[usuarioId] || null;
+  }
+
+  abrirModalEmpresa(usuario: Usuario): void {
+    this.usuarioEmpresaDetalhes = usuario;
+    this.isModalEmpresaAberto = true;
+    if (!this.empresaResumoPorUsuario[usuario.id]) {
+      this.carregarResumoEmpresaUsuario(usuario.id);
+    }
+  }
+
+  fecharModalEmpresa(): void {
+    this.isModalEmpresaAberto = false;
+    this.usuarioEmpresaDetalhes = null;
+  }
+
+  formatarCnpj(cnpj?: string): string {
+    const digits = (cnpj || '').replace(/\D/g, '');
+    if (digits.length !== 14) return cnpj || '-';
+    return digits
+      .replace(/^(\d{2})(\d)/, '$1.$2')
+      .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+      .replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3/$4')
+      .replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d)/, '$1.$2.$3/$4-$5');
   }
 
   /**
@@ -440,6 +556,16 @@ export class GerenciarAcessosComponent implements OnInit {
       senha: '',
       role: 'CLIENTE'
     };
+    this.novoUsuarioEmpresa = {
+      cnpj: '',
+      razaoSocial: '',
+      nomeFantasia: '',
+      emailEmpresa: '',
+      telefoneEmpresa: ''
+    };
+    this.consultandoCnpjNovoUsuario = false;
+    this.cnpjNovoUsuarioStatus = null;
+    this.ultimoCnpjNovoUsuarioConsultado = '';
     this.isModalNovoAberto = true;
 
     // Para single-tenant: usar automaticamente a primeira empresa disponível
@@ -457,29 +583,174 @@ export class GerenciarAcessosComponent implements OnInit {
 
   fecharModalNovo() {
     this.isModalNovoAberto = false;
+    this.consultandoCnpjNovoUsuario = false;
+    this.cnpjNovoUsuarioStatus = null;
+    this.ultimoCnpjNovoUsuarioConsultado = '';
   }
 
   /**
    * Cria novo usuário
    */
   criarUsuario() {
-    if (!this.novoUsuario.nome || !this.novoUsuario.email || !this.novoUsuario.senha) {
-      this.erro = 'Preencha todos os campos obrigatórios.';
+    const cnpj = this.apenasDigitos(this.novoUsuarioEmpresa.cnpj);
+    const razaoSocial = (this.novoUsuarioEmpresa.razaoSocial || '').trim();
+    const nomeFantasia = (this.novoUsuarioEmpresa.nomeFantasia || '').trim();
+    const emailEmpresa = (this.novoUsuarioEmpresa.emailEmpresa || '').trim().toLowerCase();
+    const telefoneEmpresa = (this.novoUsuarioEmpresa.telefoneEmpresa || '').trim();
+    if (!this.novoUsuario.nome || !this.novoUsuario.senha) {
+      this.erro = 'Preencha nome e senha do usuário.';
       return;
     }
+    if (cnpj.length !== 14 || !razaoSocial || !nomeFantasia || !emailEmpresa) {
+      this.erro = 'Informe CNPJ, razão social, nome fantasia e email da empresa.';
+      return;
+    }
+    this.novoUsuario.email = emailEmpresa;
 
     this.carregando = true;
+    this.erro = null;
     this.usuarioService.criarUsuario(this.novoUsuario).subscribe({
       next: (novoUsuario) => {
-        this.carregarUsuarios(); // Recarrega lista
-        this.fecharModalNovo();
+        const idEmpresa = Number(novoUsuario?.id);
+        const nomeEmpresa = razaoSocial || nomeFantasia || this.novoUsuario.nome.trim();
+        this.usuarioService
+          .atribuirEmpresaUsuario(novoUsuario.id, {
+            idEmpresa,
+            nomeEmpresa,
+            padrao: true
+          })
+          .subscribe({
+            next: () => {
+              this.empresaConfigService
+                .saveConfig(
+                  idEmpresa,
+                  this.asaasApiKeyInput?.trim() || '',
+                  this.asaasBaseUrlInput?.trim() || undefined,
+                  {
+                    cnpj,
+                    razaoSocial,
+                    nomeFantasia,
+                    emailEmpresa: emailEmpresa || undefined,
+                    telefoneEmpresa: telefoneEmpresa || undefined
+                  }
+                )
+                .subscribe({
+                  next: () => {
+                    this.carregarUsuarios();
+                    this.fecharModalNovo();
+                    this.carregando = false;
+                    Swal.fire({
+                      icon: 'success',
+                      title: 'Conta criada com sucesso',
+                      text: 'Usuário e empresa foram cadastrados corretamente.',
+                      confirmButtonText: 'Perfeito'
+                    });
+                  },
+                  error: (error) => {
+                    this.erro = error.error?.message || 'Usuário criado, mas falhou ao salvar dados da empresa.';
+                    this.carregarUsuarios();
+                    this.carregando = false;
+                    const mensagem = this.erro || 'Usuário criado, mas houve falha ao salvar dados complementares.';
+                    Swal.fire({
+                      icon: 'warning',
+                      title: 'Conta criada parcialmente',
+                      text: mensagem,
+                      confirmButtonText: 'Entendi'
+                    });
+                  }
+                });
+            },
+            error: (error) => {
+              this.erro = error.error?.erro || 'Usuário criado, mas falhou ao vincular empresa.';
+              this.carregarUsuarios();
+              this.carregando = false;
+              const mensagem = this.erro || 'Usuário criado, mas houve falha no vínculo da empresa.';
+              Swal.fire({
+                icon: 'warning',
+                title: 'Conta criada parcialmente',
+                text: mensagem,
+                confirmButtonText: 'Entendi'
+              });
+            }
+          });
       },
       error: (error) => {
         this.erro = error.error?.message || 'Erro ao criar usuário. Tente novamente.';
         console.error('Erro ao criar usuário:', error);
         this.carregando = false;
+        const mensagem = this.erro || 'Erro inesperado ao criar a conta.';
+        Swal.fire({
+          icon: 'error',
+          title: 'Não foi possível criar a conta',
+          text: mensagem,
+          confirmButtonText: 'Fechar'
+        });
       }
     });
+  }
+
+  onNovoUsuarioCnpjInput(): void {
+    const digits = this.apenasDigitos(this.novoUsuarioEmpresa.cnpj).slice(0, 14);
+    this.novoUsuarioEmpresa.cnpj = this.aplicarMascaraCnpj(digits);
+    if (digits.length < 14) {
+      this.cnpjNovoUsuarioStatus = null;
+      return;
+    }
+    this.consultarCnpjNovoUsuario(digits);
+  }
+
+  onNovoUsuarioEmailEmpresaChange(): void {
+    this.novoUsuario.email = (this.novoUsuarioEmpresa.emailEmpresa || '').trim().toLowerCase();
+  }
+
+  private apenasDigitos(valor: string): string {
+    return (valor || '').replace(/\D/g, '');
+  }
+
+  private aplicarMascaraCnpj(digits: string): string {
+    if (!digits) {
+      return '';
+    }
+    return digits
+      .replace(/^(\d{2})(\d)/, '$1.$2')
+      .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+      .replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3/$4')
+      .replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d)/, '$1.$2.$3/$4-$5');
+  }
+
+  private consultarCnpjNovoUsuario(cnpj: string): void {
+    if (cnpj.length !== 14 || this.consultandoCnpjNovoUsuario) {
+      return;
+    }
+    if (cnpj === this.ultimoCnpjNovoUsuarioConsultado && this.novoUsuarioEmpresa.razaoSocial.trim()) {
+      return;
+    }
+
+    this.consultandoCnpjNovoUsuario = true;
+    this.cnpjNovoUsuarioStatus = null;
+    this.http
+      .get<{ razao_social?: string; nome_fantasia?: string }>(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`)
+      .pipe(finalize(() => (this.consultandoCnpjNovoUsuario = false)))
+      .subscribe({
+        next: (dados) => {
+          const razao = (dados?.razao_social || '').trim();
+          const fantasia = (dados?.nome_fantasia || '').trim();
+          if (razao) {
+            this.novoUsuarioEmpresa.razaoSocial = razao;
+          }
+          if (fantasia) {
+            this.novoUsuarioEmpresa.nomeFantasia = fantasia;
+          }
+          this.ultimoCnpjNovoUsuarioConsultado = cnpj;
+          this.cnpjNovoUsuarioStatus =
+            razao || fantasia
+              ? 'Razão social e nome fantasia preenchidos automaticamente.'
+              : 'CNPJ encontrado, mas sem dados de razão/fantasia.';
+        },
+        error: () => {
+          this.cnpjNovoUsuarioStatus = 'Não foi possível consultar o CNPJ agora.';
+        }
+      });
   }
 
   /**

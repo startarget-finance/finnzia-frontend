@@ -48,8 +48,10 @@ export class AuthService {
     const userData = localStorage.getItem('userData');
     
     if (token && userData) {
+      const user = this.normalizeUserRole(JSON.parse(userData));
       this.isAuthenticatedSubject.next(true);
-      this.userSubject.next(JSON.parse(userData));
+      this.userSubject.next(user);
+      localStorage.setItem('userData', JSON.stringify(user));
     }
   }
 
@@ -164,7 +166,7 @@ export class AuthService {
       const mappedUser: User = {
         email: apiResponse.usuario.email,
         name: apiResponse.usuario.name,
-        role: apiResponse.usuario.role?.toLowerCase() ?? 'cliente',
+        role: this.normalizeRole(apiResponse.usuario.role),
         loginTime: apiResponse.usuario.loginTime,
         permissions: this.mapPermissionsFromBackend(apiResponse.usuario.permissions)
       };
@@ -233,8 +235,9 @@ export class AuthService {
 
   // Atualizar usuário (por exemplo, permissões)
   updateCurrentUser(user: User) {
-    this.userSubject.next(user);
-    localStorage.setItem('userData', JSON.stringify(user));
+    const normalized = this.normalizeUserRole(user);
+    this.userSubject.next(normalized);
+    localStorage.setItem('userData', JSON.stringify(normalized));
   }
 
   // Obter token
@@ -289,7 +292,7 @@ export class AuthService {
   // Verificar permissões
   hasRole(role: string): boolean {
     const user = this.getCurrentUser();
-    return user?.role === role;
+    return this.normalizeRole(user?.role) === this.normalizeRole(role);
   }
 
   // Verificar se pode acessar rota
@@ -301,7 +304,7 @@ export class AuthService {
     if (!user) return false;
     
     // Admin pode acessar tudo
-    if (user.role === 'admin') return true;
+    if (this.normalizeRole(user.role) === 'admin') return true;
     
     const map: Record<string, keyof NonNullable<User['permissions']>> = {
       'dashboard': 'dashboard',
@@ -359,5 +362,22 @@ export class AuthService {
       console.error('Erro ao redefinir senha:', error);
       return false;
     }
+  }
+
+  private normalizeRole(role?: string): string {
+    const value = (role || '').trim().toLowerCase();
+    if (value === 'admin' || value === 'role_admin') return 'admin';
+    if (value === 'cliente' || value === 'role_cliente' || value === 'user' || value === 'role_user') {
+      return 'cliente';
+    }
+    if (value.includes('admin')) return 'admin';
+    return value || 'cliente';
+  }
+
+  private normalizeUserRole(user: User): User {
+    return {
+      ...user,
+      role: this.normalizeRole(user?.role)
+    };
   }
 }
