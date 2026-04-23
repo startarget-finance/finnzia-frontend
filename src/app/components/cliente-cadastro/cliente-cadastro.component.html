@@ -2,9 +2,7 @@
   <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
     <div *ngIf="!embedded">
       <h1 class="text-2xl font-semibold text-slate-900 tracking-tight">Cadastro de clientes</h1>
-      <p class="text-sm text-slate-500 mt-1">
-        Clientes da empresa selecionada no cabeçalho — dados Finnzia (sem integração externa).
-      </p>
+      <p class="text-sm text-slate-500 mt-1">Cadastro de clientes da empresa (sem integração externa).</p>
     </div>
   </div>
 
@@ -287,7 +285,7 @@
         <h2 class="text-lg font-semibold text-slate-900 tracking-tight">
           {{ editandoId != null ? 'Editar cliente' : 'Novo cliente' }}
         </h2>
-        <p class="text-sm text-slate-500 mt-1">Dados cadastrais e contato financeiro da empresa selecionada.</p>
+        <p class="text-sm text-slate-500 mt-1">Dados cadastrais e contato financeiro do cliente.</p>
       </div>
       <button
         type="button"
@@ -386,9 +384,7 @@
         <input type="checkbox" id="bloq" [(ngModel)]="formBloqueado" />
         <label for="bloq" class="text-sm text-slate-700">Cliente bloqueado</label>
       </div>
-      <p class="text-xs text-slate-500">
-        Este cliente será salvo automaticamente na empresa selecionada no cabeçalho.
-      </p>
+      <p class="text-xs text-slate-500">Este cliente será salvo automaticamente no cadastro da empresa.</p>
     </div>
     <div class="flex justify-end gap-2 pt-1">
       <button

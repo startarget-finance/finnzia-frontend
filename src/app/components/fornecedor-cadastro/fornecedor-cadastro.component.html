@@ -238,7 +238,7 @@
         <h2 class="text-lg font-semibold text-slate-900 tracking-tight">
           {{ editandoId != null ? "Editar fornecedor" : "Novo fornecedor" }}
         </h2>
-        <p class="text-sm text-slate-500 mt-1">Dados cadastrais; vínculo usa a empresa do cabeçalho.</p>
+        <p class="text-sm text-slate-500 mt-1">Dados cadastrais do fornecedor.</p>
       </div>
       <button
         type="button"
@@ -306,9 +306,7 @@
         <input type="checkbox" id="forn-ativo" [(ngModel)]="formAtivo" />
         <label for="forn-ativo" class="text-sm text-slate-700">Ativo</label>
       </div>
-      <p class="text-xs text-slate-500">
-        Este fornecedor será salvo automaticamente na empresa selecionada no cabeçalho.
-      </p>
+      <p class="text-xs text-slate-500">Este fornecedor será salvo automaticamente no cadastro da empresa.</p>
     </div>
     <div class="flex justify-end gap-2 pt-1">
       <button
