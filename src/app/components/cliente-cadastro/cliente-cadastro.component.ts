@@ -47,6 +47,7 @@ export class ClienteCadastroComponent implements OnInit {
   formResponsavel = '';
   formCpf = '';
   formBloqueado = false;
+  private modalSnapshot = '';
 
   private readonly coresAvatar = [
     'bg-emerald-600',
@@ -66,22 +67,30 @@ export class ClienteCadastroComponent implements OnInit {
     this.companySelector.empresaSelecionada$.subscribe(() => {
       this.carregar();
     });
+    this.companySelector.empresasPermitidas$.subscribe(() => {
+      this.carregar();
+    });
   }
 
-  private idEmpresaAtual(): number | null {
-    return this.companySelector.obterIdEmpresaSelecionada();
+  private idEmpresaContexto(): number | null {
+    const selecionada = this.companySelector.obterIdEmpresaSelecionada();
+    if (selecionada != null && selecionada > 0) {
+      return selecionada;
+    }
+    const primeiraAtiva = this.companySelector.obterEmpresasAtivas()[0];
+    return primeiraAtiva?.idEmpresa ?? null;
   }
 
   carregar(): void {
     this.erro = null;
-    const idEmp = this.idEmpresaAtual();
+    const idEmp = this.idEmpresaContexto();
     if (idEmp == null || idEmp <= 0) {
       this.carregando = false;
       this.linhas = [];
       this.totalElements = 0;
       this.totalPages = 0;
       this.resumoTotal.emit(0);
-      this.erro = 'Selecione uma empresa no cabeçalho para ver e cadastrar clientes.';
+      this.erro = null;
       return;
     }
 
@@ -145,6 +154,7 @@ export class ClienteCadastroComponent implements OnInit {
     this.formResponsavel = '';
     this.formCpf = '';
     this.formBloqueado = false;
+    this.atualizarSnapshotModal();
     this.modalAberto = true;
   }
 
@@ -162,15 +172,46 @@ export class ClienteCadastroComponent implements OnInit {
     this.formResponsavel = c.responsavel || '';
     this.formCpf = c.cpf || '';
     this.formBloqueado = !!c.bloqueado;
+    this.atualizarSnapshotModal();
     this.modalAberto = true;
   }
 
   fecharModal(): void {
+    if (this.temAlteracoesModal() && !confirm('Existem alterações não salvas. Deseja fechar mesmo assim?')) {
+      return;
+    }
     this.modalAberto = false;
   }
 
+  private estadoModalAtual(): string {
+    return JSON.stringify({
+      editandoId: this.editandoId,
+      formRazaoSocial: this.formRazaoSocial,
+      formNomeFantasia: this.formNomeFantasia,
+      formCpfCnpj: this.formCpfCnpj,
+      formTipoPessoa: this.formTipoPessoa,
+      formClassificacao: this.formClassificacao,
+      formEmail: this.formEmail,
+      formCelular: this.formCelular,
+      formEndereco: this.formEndereco,
+      formCep: this.formCep,
+      formResponsavel: this.formResponsavel,
+      formCpf: this.formCpf,
+      formBloqueado: this.formBloqueado
+    });
+  }
+
+  private atualizarSnapshotModal(): void {
+    this.modalSnapshot = this.estadoModalAtual();
+  }
+
+  private temAlteracoesModal(): boolean {
+    if (!this.modalAberto) return false;
+    return this.modalSnapshot !== this.estadoModalAtual();
+  }
+
   montarPayload(): ClienteCadastroPayload {
-    const idEmp = this.idEmpresaAtual();
+    const idEmp = this.idEmpresaContexto();
     const idEmpresas = idEmp != null && idEmp > 0 ? [idEmp] : [];
     return {
       razaoSocial: this.formRazaoSocial.trim(),
@@ -195,9 +236,9 @@ export class ClienteCadastroComponent implements OnInit {
       this.erro = 'Informe a razão social ou nome.';
       return;
     }
-    const idCtx = this.idEmpresaAtual();
+    const idCtx = this.idEmpresaContexto();
     if (idCtx == null || idCtx <= 0) {
-      this.erro = 'Selecione uma empresa no cabeçalho.';
+      this.erro = 'Não foi possível identificar a empresa do cadastro.';
       return;
     }
     const body = this.montarPayload();
@@ -369,9 +410,9 @@ export class ClienteCadastroComponent implements OnInit {
   }
 
   private importarLote(items: unknown[]): void {
-    const idCtx = this.idEmpresaAtual();
+    const idCtx = this.idEmpresaContexto();
     if (idCtx == null || idCtx <= 0) {
-      this.erro = 'Selecione uma empresa no cabeçalho para importar clientes.';
+      this.erro = 'Não foi possível identificar a empresa para importar clientes.';
       return;
     }
     let i = 0;

@@ -39,6 +39,7 @@ export class FuncionarioCadastroComponent implements OnInit {
   formEmail = '';
   formTelefone = '';
   formAtivo = true;
+  private modalSnapshot = '';
 
   constructor(
     private readonly api: FuncionarioCadastroService,
@@ -49,22 +50,30 @@ export class FuncionarioCadastroComponent implements OnInit {
     this.companySelector.empresaSelecionada$.subscribe(() => {
       this.carregar();
     });
+    this.companySelector.empresasPermitidas$.subscribe(() => {
+      this.carregar();
+    });
   }
 
-  private idEmpresaAtual(): number | null {
-    return this.companySelector.obterIdEmpresaSelecionada();
+  private idEmpresaContexto(): number | null {
+    const selecionada = this.companySelector.obterIdEmpresaSelecionada();
+    if (selecionada != null && selecionada > 0) {
+      return selecionada;
+    }
+    const primeiraAtiva = this.companySelector.obterEmpresasAtivas()[0];
+    return primeiraAtiva?.idEmpresa ?? null;
   }
 
   carregar(): void {
     this.erro = null;
-    const idEmp = this.idEmpresaAtual();
+    const idEmp = this.idEmpresaContexto();
     if (idEmp == null || idEmp <= 0) {
       this.carregando = false;
       this.linhas = [];
       this.totalElements = 0;
       this.totalPages = 0;
       this.resumoTotal.emit(0);
-      this.erro = 'Selecione uma empresa no cabeçalho para ver e cadastrar funcionários.';
+      this.erro = null;
       return;
     }
 
@@ -157,6 +166,7 @@ export class FuncionarioCadastroComponent implements OnInit {
     this.formEmail = '';
     this.formTelefone = '';
     this.formAtivo = true;
+    this.atualizarSnapshotModal();
     this.modalAberto = true;
   }
 
@@ -169,15 +179,41 @@ export class FuncionarioCadastroComponent implements OnInit {
     this.formEmail = f.email || '';
     this.formTelefone = f.telefone || '';
     this.formAtivo = f.ativo !== false;
+    this.atualizarSnapshotModal();
     this.modalAberto = true;
   }
 
   fecharModal(): void {
+    if (this.temAlteracoesModal() && !confirm('Existem alterações não salvas. Deseja fechar mesmo assim?')) {
+      return;
+    }
     this.modalAberto = false;
   }
 
+  private estadoModalAtual(): string {
+    return JSON.stringify({
+      editandoId: this.editandoId,
+      formNomeCompleto: this.formNomeCompleto,
+      formCpf: this.formCpf,
+      formCargo: this.formCargo,
+      formDepartamento: this.formDepartamento,
+      formEmail: this.formEmail,
+      formTelefone: this.formTelefone,
+      formAtivo: this.formAtivo
+    });
+  }
+
+  private atualizarSnapshotModal(): void {
+    this.modalSnapshot = this.estadoModalAtual();
+  }
+
+  private temAlteracoesModal(): boolean {
+    if (!this.modalAberto) return false;
+    return this.modalSnapshot !== this.estadoModalAtual();
+  }
+
   montarPayload(): FuncionarioCadastroPayload {
-    const idEmp = this.idEmpresaAtual();
+    const idEmp = this.idEmpresaContexto();
     const body: FuncionarioCadastroPayload = {
       nomeCompleto: this.formNomeCompleto.trim(),
       cpf: this.formCpf.trim() || undefined,
@@ -199,9 +235,9 @@ export class FuncionarioCadastroComponent implements OnInit {
       this.erro = 'Informe o nome completo.';
       return;
     }
-    const idEmp = this.idEmpresaAtual();
+    const idEmp = this.idEmpresaContexto();
     if (idEmp == null || idEmp <= 0) {
-      this.erro = 'Selecione uma empresa no cabeçalho.';
+      this.erro = 'Não foi possível identificar a empresa do cadastro.';
       return;
     }
     const body = this.montarPayload();

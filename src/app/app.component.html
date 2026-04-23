@@ -35,31 +35,6 @@
          [class.px-1.5]="isSidebarCollapsed">
 
       <p *ngIf="!isSidebarCollapsed" class="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Financeiro</p>
-
-      <a *ngIf="canAccessGerenciarAcessos()" routerLink="/gerenciar-acessos"
-         routerLinkActive #rlaGerDesk="routerLinkActive"
-         [ngClass]="rlaGerDesk.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
-         class="flex min-h-[2.75rem] items-center rounded-xl transition-all duration-200"
-         [class.gap-3]="!isSidebarCollapsed"
-         [class.px-3]="!isSidebarCollapsed"
-         [class.justify-center]="isSidebarCollapsed"
-         title="Gerenciar Acessos">
-        <i class="fi fi-rr-key flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
-        <span *ngIf="!isSidebarCollapsed" class="truncate">Gerenciar Acessos</span>
-      </a>
-
-      <a *ngIf="canAccessDashboard()" routerLink="/dashboard"
-         routerLinkActive #rlaDash="routerLinkActive"
-         [ngClass]="rlaDash.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
-         class="flex min-h-[2.75rem] items-center rounded-xl transition-all duration-200"
-         [class.gap-3]="!isSidebarCollapsed"
-         [class.px-3]="!isSidebarCollapsed"
-         [class.justify-center]="isSidebarCollapsed"
-         title="Dashboard">
-        <i class="fi fi-rr-apps flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
-        <span *ngIf="!isSidebarCollapsed" class="truncate">Dashboard</span>
-      </a>
-
       <a *ngIf="canAccessRotina()" routerLink="/rotina"
          routerLinkActive #rlaRot="routerLinkActive"
          [ngClass]="rlaRot.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
@@ -71,17 +46,16 @@
         <i class="fi fi-rr-list-check flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
         <span *ngIf="!isSidebarCollapsed" class="truncate">Pagina Inicial - Rotina</span>
       </a>
-
-      <a *ngIf="canAccessRelatorio()" routerLink="/relatorio"
-         routerLinkActive #rlaRel="routerLinkActive"
-         [ngClass]="rlaRel.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+      <a *ngIf="canAccessContratos()" routerLink="/contratos"
+         routerLinkActive #rlaCon="routerLinkActive"
+         [ngClass]="rlaCon.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
          class="flex min-h-[2.75rem] items-center rounded-xl transition-all duration-200"
          [class.gap-3]="!isSidebarCollapsed"
          [class.px-3]="!isSidebarCollapsed"
          [class.justify-center]="isSidebarCollapsed"
-         title="Relatório">
-        <i class="fi fi-rr-chart-histogram flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
-        <span *ngIf="!isSidebarCollapsed" class="truncate">Relatório</span>
+         title="Contratos">
+        <i class="fi fi-rr-file-signature flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
+        <span *ngIf="!isSidebarCollapsed" class="truncate">Contratos</span>
       </a>
 
       <a *ngIf="canAccessMovimentacoes()" routerLink="/movimentacoes"
@@ -95,6 +69,28 @@
         <i class="fi fi-rr-exchange flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
         <span *ngIf="!isSidebarCollapsed" class="truncate">Movimentações</span>
       </a>
+      <a *ngIf="canAccessMovimentacoes()" routerLink="/contas-a-receber"
+         routerLinkActive #rlaCar="routerLinkActive"
+         [ngClass]="rlaCar.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+         class="flex min-h-[2.75rem] items-center rounded-xl transition-all duration-200"
+         [class.gap-3]="!isSidebarCollapsed"
+         [class.px-3]="!isSidebarCollapsed"
+         [class.justify-center]="isSidebarCollapsed"
+         title="Contas a Receber">
+        <i class="fi fi-rr-hand-holding-usd flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
+        <span *ngIf="!isSidebarCollapsed" class="truncate">Contas a Receber</span>
+      </a>
+      <a *ngIf="canAccessMovimentacoes()" routerLink="/contas-a-pagar"
+         routerLinkActive #rlaCap="routerLinkActive"
+         [ngClass]="rlaCap.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+         class="flex min-h-[2.75rem] items-center rounded-xl transition-all duration-200"
+         [class.gap-3]="!isSidebarCollapsed"
+         [class.px-3]="!isSidebarCollapsed"
+         [class.justify-center]="isSidebarCollapsed"
+         title="Contas a Pagar">
+        <i class="fi fi-rr-money-bill-wave flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
+        <span *ngIf="!isSidebarCollapsed" class="truncate">Contas a Pagar</span>
+      </a>
 
       <a *ngIf="canAccessConciliacaoOfx()" routerLink="/conciliacao-ofx"
          routerLinkActive #rlaConc="routerLinkActive"
@@ -103,9 +99,9 @@
          [class.gap-3]="!isSidebarCollapsed"
          [class.px-3]="!isSidebarCollapsed"
          [class.justify-center]="isSidebarCollapsed"
-         title="Conciliação OFX">
+         title="Conciliação Bancária">
         <i class="fi fi-rr-file-import flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
-        <span *ngIf="!isSidebarCollapsed" class="truncate">Conciliação OFX</span>
+        <span *ngIf="!isSidebarCollapsed" class="truncate">Conciliação Bancária</span>
       </a>
 
       <a *ngIf="canAccessFaturaCartao()" routerLink="/fatura-cartao"
@@ -115,9 +111,33 @@
          [class.gap-3]="!isSidebarCollapsed"
          [class.px-3]="!isSidebarCollapsed"
          [class.justify-center]="isSidebarCollapsed"
-         title="Fatura cartão">
+         title="Fatura Cartão Crédito">
         <i class="fi fi-rr-credit-card flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
-        <span *ngIf="!isSidebarCollapsed" class="truncate">Fatura cartão</span>
+        <span *ngIf="!isSidebarCollapsed" class="truncate">Fatura Cartão Crédito</span>
+      </a>
+
+      <p *ngIf="!isSidebarCollapsed" class="px-3 pb-2 pt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Relatórios</p>
+      <a *ngIf="canAccessDashboard()" routerLink="/dashboard"
+         routerLinkActive #rlaDash="routerLinkActive"
+         [ngClass]="rlaDash.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+         class="flex min-h-[2.75rem] items-center rounded-xl transition-all duration-200"
+         [class.gap-3]="!isSidebarCollapsed"
+         [class.px-3]="!isSidebarCollapsed"
+         [class.justify-center]="isSidebarCollapsed"
+         title="Dashboard">
+        <i class="fi fi-rr-apps flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
+        <span *ngIf="!isSidebarCollapsed" class="truncate">Dashboard</span>
+      </a>
+      <a *ngIf="canAccessRelatorio()" routerLink="/relatorio"
+         routerLinkActive #rlaRel="routerLinkActive"
+         [ngClass]="rlaRel.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+         class="flex min-h-[2.75rem] items-center rounded-xl transition-all duration-200"
+         [class.gap-3]="!isSidebarCollapsed"
+         [class.px-3]="!isSidebarCollapsed"
+         [class.justify-center]="isSidebarCollapsed"
+         title="Relatórios">
+        <i class="fi fi-rr-chart-histogram flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
+        <span *ngIf="!isSidebarCollapsed" class="truncate">Relatórios</span>
       </a>
 
       <a *ngIf="canAccessFluxoCaixa()" routerLink="/fluxo-caixa"
@@ -132,7 +152,7 @@
         <span *ngIf="!isSidebarCollapsed" class="truncate">DFC</span>
       </a>
 
-      <p *ngIf="!isSidebarCollapsed" class="px-3 pb-2 pt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Operações</p>
+      <p *ngIf="!isSidebarCollapsed" class="px-3 pb-2 pt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Configurações</p>
       <div *ngIf="isSidebarCollapsed" class="mx-auto my-2 h-px w-8 rounded-full bg-slate-200/90" aria-hidden="true"></div>
 
       <a *ngIf="canAccessParametrizacao()" routerLink="/parametrizacao"
@@ -147,18 +167,7 @@
         <span *ngIf="!isSidebarCollapsed" class="truncate">Parametrização</span>
       </a>
 
-      <a *ngIf="canAccessContratos()" routerLink="/contratos"
-         routerLinkActive #rlaCon="routerLinkActive"
-         [ngClass]="rlaCon.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
-         class="flex min-h-[2.75rem] items-center rounded-xl transition-all duration-200"
-         [class.gap-3]="!isSidebarCollapsed"
-         [class.px-3]="!isSidebarCollapsed"
-         [class.justify-center]="isSidebarCollapsed"
-         title="Contratos">
-        <i class="fi fi-rr-file-signature flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
-        <span *ngIf="!isSidebarCollapsed" class="truncate">Contratos</span>
-      </a>
-
+      <p *ngIf="!isSidebarCollapsed" class="px-3 pb-2 pt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Ferramentas</p>
       <a *ngIf="canAccessFrenteCaixaComercial()" routerLink="/frente-caixa-comercial"
          routerLinkActive #rlaFc="routerLinkActive"
          [ngClass]="rlaFc.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
@@ -166,9 +175,9 @@
          [class.gap-3]="!isSidebarCollapsed"
          [class.px-3]="!isSidebarCollapsed"
          [class.justify-center]="isSidebarCollapsed"
-         title="Frente comercial">
+         title="Frente Comercial">
         <i class="fi fi-rr-bullhorn flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
-        <span *ngIf="!isSidebarCollapsed" class="truncate">Frente comercial</span>
+        <span *ngIf="!isSidebarCollapsed" class="truncate">Frente Comercial</span>
       </a>
 
       <a *ngIf="canAccessChat()" routerLink="/chat"
@@ -204,69 +213,12 @@
       </div>
       <nav class="flex-1 space-y-1 overflow-y-auto px-3 py-4 text-[14px] font-medium tracking-tight">
         <p class="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Financeiro</p>
-        <a *ngIf="canAccessGerenciarAcessos()" routerLink="/gerenciar-acessos" (click)="closeMobileMenu()"
-           routerLinkActive #rlaGerMob="routerLinkActive"
-           [ngClass]="rlaGerMob.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
-           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
-          <i class="fi fi-rr-key flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
-          Gerenciar Acessos
-        </a>
-        <a *ngIf="canAccessDashboard()" routerLink="/dashboard" (click)="closeMobileMenu()"
-           routerLinkActive #rlaDashM="routerLinkActive"
-           [ngClass]="rlaDashM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
-           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
-          <i class="fi fi-rr-apps flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
-          Dashboard
-        </a>
         <a *ngIf="canAccessRotina()" routerLink="/rotina" (click)="closeMobileMenu()"
            routerLinkActive #rlaRotM="routerLinkActive"
            [ngClass]="rlaRotM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
            class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
           <i class="fi fi-rr-list-check flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
           Pagina Inicial - Rotina
-        </a>
-        <a *ngIf="canAccessRelatorio()" routerLink="/relatorio" (click)="closeMobileMenu()"
-           routerLinkActive #rlaRelM="routerLinkActive"
-           [ngClass]="rlaRelM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
-           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
-          <i class="fi fi-rr-chart-histogram flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
-          Relatório
-        </a>
-        <a *ngIf="canAccessMovimentacoes()" routerLink="/movimentacoes" (click)="closeMobileMenu()"
-           routerLinkActive #rlaMovM="routerLinkActive"
-           [ngClass]="rlaMovM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
-           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
-          <i class="fi fi-rr-exchange flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
-          Movimentações
-        </a>
-        <a *ngIf="canAccessConciliacaoOfx()" routerLink="/conciliacao-ofx" (click)="closeMobileMenu()"
-           routerLinkActive #rlaConcM="routerLinkActive"
-           [ngClass]="rlaConcM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
-           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
-          <i class="fi fi-rr-file-import flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
-          Conciliação OFX
-        </a>
-        <a *ngIf="canAccessFaturaCartao()" routerLink="/fatura-cartao" (click)="closeMobileMenu()"
-           routerLinkActive #rlaFatM="routerLinkActive"
-           [ngClass]="rlaFatM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
-           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
-          <i class="fi fi-rr-credit-card flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
-          Fatura cartão
-        </a>
-        <a *ngIf="canAccessFluxoCaixa()" routerLink="/fluxo-caixa" (click)="closeMobileMenu()"
-           routerLinkActive #rlaDfcM="routerLinkActive"
-           [ngClass]="rlaDfcM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
-           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
-          <i class="fi fi-rr-chart-line-up flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
-          DFC
-        </a>
-        <p class="px-3 pb-2 pt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Operações</p>
-        <a *ngIf="canAccessParametrizacao()" routerLink="/parametrizacao" (click)="closeMobileMenu()"
-           routerLinkActive #rlaParamM="routerLinkActive"
-           [ngClass]="rlaParamM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
-           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
-          <i class="fi fi-rr-settings-sliders flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
-          Parametrização
         </a>
         <a *ngIf="canAccessContratos()" routerLink="/contratos" (click)="closeMobileMenu()"
            routerLinkActive #rlaConM="routerLinkActive"
@@ -275,12 +227,81 @@
           <i class="fi fi-rr-file-signature flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
           Contratos
         </a>
+        <a *ngIf="canAccessMovimentacoes()" routerLink="/movimentacoes" (click)="closeMobileMenu()"
+           routerLinkActive #rlaMovM="routerLinkActive"
+           [ngClass]="rlaMovM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
+          <i class="fi fi-rr-exchange flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
+          Movimentações
+        </a>
+        <a *ngIf="canAccessMovimentacoes()" routerLink="/contas-a-receber" (click)="closeMobileMenu()"
+           routerLinkActive #rlaCarM="routerLinkActive"
+           [ngClass]="rlaCarM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
+          <i class="fi fi-rr-hand-holding-usd flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
+          Contas a Receber
+        </a>
+        <a *ngIf="canAccessMovimentacoes()" routerLink="/contas-a-pagar" (click)="closeMobileMenu()"
+           routerLinkActive #rlaCapM="routerLinkActive"
+           [ngClass]="rlaCapM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
+          <i class="fi fi-rr-money-bill-wave flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
+          Contas a Pagar
+        </a>
+        <a *ngIf="canAccessFaturaCartao()" routerLink="/fatura-cartao" (click)="closeMobileMenu()"
+           routerLinkActive #rlaFatM="routerLinkActive"
+           [ngClass]="rlaFatM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
+          <i class="fi fi-rr-credit-card flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
+          Fatura Cartão Crédito
+        </a>
+        <a *ngIf="canAccessConciliacaoOfx()" routerLink="/conciliacao-ofx" (click)="closeMobileMenu()"
+           routerLinkActive #rlaConcM="routerLinkActive"
+           [ngClass]="rlaConcM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
+          <i class="fi fi-rr-file-import flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
+          Conciliação Bancária
+        </a>
+
+        <p class="px-3 pb-2 pt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Relatórios</p>
+        <a *ngIf="canAccessDashboard()" routerLink="/dashboard" (click)="closeMobileMenu()"
+           routerLinkActive #rlaDashM="routerLinkActive"
+           [ngClass]="rlaDashM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
+          <i class="fi fi-rr-apps flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
+          Dashboard
+        </a>
+        <a *ngIf="canAccessRelatorio()" routerLink="/relatorio" (click)="closeMobileMenu()"
+           routerLinkActive #rlaRelM="routerLinkActive"
+           [ngClass]="rlaRelM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
+          <i class="fi fi-rr-chart-histogram flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
+          Relatórios
+        </a>
+        <a *ngIf="canAccessFluxoCaixa()" routerLink="/fluxo-caixa" (click)="closeMobileMenu()"
+           routerLinkActive #rlaDfcM="routerLinkActive"
+           [ngClass]="rlaDfcM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
+          <i class="fi fi-rr-chart-line-up flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
+          DFC
+        </a>
+
+        <p class="px-3 pb-2 pt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Configurações</p>
+        <a *ngIf="canAccessParametrizacao()" routerLink="/parametrizacao" (click)="closeMobileMenu()"
+           routerLinkActive #rlaParamM="routerLinkActive"
+           [ngClass]="rlaParamM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
+          <i class="fi fi-rr-settings-sliders flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
+          Parametrização
+        </a>
+
+        <p class="px-3 pb-2 pt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Ferramentas</p>
         <a *ngIf="canAccessFrenteCaixaComercial()" routerLink="/frente-caixa-comercial" (click)="closeMobileMenu()"
            routerLinkActive #rlaFcM="routerLinkActive"
            [ngClass]="rlaFcM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
            class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
           <i class="fi fi-rr-bullhorn flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
-          Frente comercial
+          Frente Comercial
         </a>
         <a *ngIf="canAccessChat()" routerLink="/chat" (click)="closeMobileMenu()"
            routerLinkActive #rlaChatM="routerLinkActive"

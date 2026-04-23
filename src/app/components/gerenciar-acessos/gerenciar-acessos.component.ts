@@ -17,6 +17,8 @@ interface EmpresaResumoUsuario {
   nomeFantasia?: string;
   emailEmpresa?: string;
   telefoneEmpresa?: string;
+  taxaCartaoCredito?: number;
+  taxaAntecipacaoCredito?: number;
   carregando: boolean;
   erro?: string;
 }
@@ -89,12 +91,15 @@ export class GerenciarAcessosComponent implements OnInit {
   empresaSelecionadaParaConfig: number | null = null;
   asaasApiKeyInput = '';
   asaasBaseUrlInput = '';
+  taxaCartaoCreditoInput: number | null = null;
+  taxaAntecipacaoCreditoInput: number | null = null;
   configAsaasStatus: 'idle' | 'loading' | 'saved' | 'error' = 'idle';
   configAsaasMessage = '';
   asaasConfiguradoParaEmpresa = false;
   consultandoCnpjNovoUsuario = false;
   cnpjNovoUsuarioStatus: string | null = null;
   private ultimoCnpjNovoUsuarioConsultado = '';
+  fieldErrorsNovoUsuario: Record<string, string> = {};
   empresaResumoPorUsuario: Record<number, EmpresaResumoUsuario> = {};
   usuarioEmpresaDetalhes: Usuario | null = null;
   isModalEmpresaAberto = false;
@@ -283,7 +288,9 @@ export class GerenciarAcessosComponent implements OnInit {
           razaoSocial: config.razaoSocial || undefined,
           nomeFantasia: config.nomeFantasia || undefined,
           emailEmpresa: config.emailEmpresa || undefined,
-          telefoneEmpresa: config.telefoneEmpresa || undefined
+          telefoneEmpresa: config.telefoneEmpresa || undefined,
+          taxaCartaoCredito: this.normalizarTaxa(config.taxaCartaoCredito),
+          taxaAntecipacaoCredito: this.normalizarTaxa(config.taxaAntecipacaoCredito)
         };
       },
       error: () => {
@@ -566,6 +573,7 @@ export class GerenciarAcessosComponent implements OnInit {
     this.consultandoCnpjNovoUsuario = false;
     this.cnpjNovoUsuarioStatus = null;
     this.ultimoCnpjNovoUsuarioConsultado = '';
+    this.fieldErrorsNovoUsuario = {};
     this.isModalNovoAberto = true;
 
     // Para single-tenant: usar automaticamente a primeira empresa disponível
@@ -597,14 +605,35 @@ export class GerenciarAcessosComponent implements OnInit {
     const nomeFantasia = (this.novoUsuarioEmpresa.nomeFantasia || '').trim();
     const emailEmpresa = (this.novoUsuarioEmpresa.emailEmpresa || '').trim().toLowerCase();
     const telefoneEmpresa = (this.novoUsuarioEmpresa.telefoneEmpresa || '').trim();
-    if (!this.novoUsuario.nome || !this.novoUsuario.senha) {
-      this.erro = 'Preencha nome e senha do usuário.';
+    const nomeResponsavel = (this.novoUsuario.nome || '').trim();
+    const senha = this.novoUsuario.senha || '';
+    this.fieldErrorsNovoUsuario = {};
+    if (cnpj.length !== 14) {
+      this.fieldErrorsNovoUsuario['cnpj'] = 'Informe um CNPJ válido.';
+    }
+    if (!razaoSocial) {
+      this.fieldErrorsNovoUsuario['razaoSocial'] = 'Razão social é obrigatória.';
+    }
+    if (!emailEmpresa) {
+      this.fieldErrorsNovoUsuario['emailEmpresa'] = 'Email da empresa é obrigatório.';
+    } else if (!this.emailValido(emailEmpresa)) {
+      this.fieldErrorsNovoUsuario['emailEmpresa'] = 'Informe um email válido.';
+    }
+    if (!nomeResponsavel) {
+      this.fieldErrorsNovoUsuario['nomeResponsavel'] = 'Nome do responsável é obrigatório.';
+    }
+    if (!senha) {
+      this.fieldErrorsNovoUsuario['senha'] = 'Senha é obrigatória.';
+    } else if (senha.length < 6) {
+      this.fieldErrorsNovoUsuario['senha'] = 'A senha deve ter pelo menos 6 caracteres.';
+    }
+
+    if (Object.keys(this.fieldErrorsNovoUsuario).length > 0) {
+      this.erro = 'Preencha os campos obrigatórios para continuar.';
       return;
     }
-    if (cnpj.length !== 14 || !razaoSocial || !nomeFantasia || !emailEmpresa) {
-      this.erro = 'Informe CNPJ, razão social, nome fantasia e email da empresa.';
-      return;
-    }
+
+    this.novoUsuario.nome = nomeResponsavel;
     this.novoUsuario.email = emailEmpresa;
 
     this.carregando = true;
@@ -692,6 +721,7 @@ export class GerenciarAcessosComponent implements OnInit {
   onNovoUsuarioCnpjInput(): void {
     const digits = this.apenasDigitos(this.novoUsuarioEmpresa.cnpj).slice(0, 14);
     this.novoUsuarioEmpresa.cnpj = this.aplicarMascaraCnpj(digits);
+    this.clearFieldErrorNovoUsuario('cnpj');
     if (digits.length < 14) {
       this.cnpjNovoUsuarioStatus = null;
       return;
@@ -701,6 +731,7 @@ export class GerenciarAcessosComponent implements OnInit {
 
   onNovoUsuarioEmailEmpresaChange(): void {
     this.novoUsuario.email = (this.novoUsuarioEmpresa.emailEmpresa || '').trim().toLowerCase();
+    this.clearFieldErrorNovoUsuario('emailEmpresa');
   }
 
   private apenasDigitos(valor: string): string {
@@ -751,6 +782,20 @@ export class GerenciarAcessosComponent implements OnInit {
           this.cnpjNovoUsuarioStatus = 'Não foi possível consultar o CNPJ agora.';
         }
       });
+  }
+
+  private emailValido(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  clearFieldErrorNovoUsuario(field: string): void {
+    if (this.fieldErrorsNovoUsuario[field]) {
+      delete this.fieldErrorsNovoUsuario[field];
+    }
+  }
+
+  hasFieldErrorNovoUsuario(field: string): boolean {
+    return !!this.fieldErrorsNovoUsuario[field];
   }
 
   /**
@@ -914,10 +959,14 @@ export class GerenciarAcessosComponent implements OnInit {
       next: (res) => {
         this.asaasConfiguradoParaEmpresa = res.asaasConfigurado;
         this.asaasBaseUrlInput = res.asaasBaseUrl || '';
+        this.taxaCartaoCreditoInput = this.normalizarTaxa(res.taxaCartaoCredito) ?? null;
+        this.taxaAntecipacaoCreditoInput = this.normalizarTaxa(res.taxaAntecipacaoCredito) ?? null;
         this.configAsaasStatus = 'idle';
       },
       error: () => {
         this.asaasConfiguradoParaEmpresa = false;
+        this.taxaCartaoCreditoInput = null;
+        this.taxaAntecipacaoCreditoInput = null;
         this.configAsaasStatus = 'idle';
       }
     });
@@ -942,7 +991,11 @@ export class GerenciarAcessosComponent implements OnInit {
     this.empresaConfigService.saveConfig(
       this.empresaSelecionadaParaConfig,
       this.asaasApiKeyInput?.trim() || '',
-      this.asaasBaseUrlInput?.trim() || undefined
+      this.asaasBaseUrlInput?.trim() || undefined,
+      {
+        taxaCartaoCredito: this.normalizarTaxa(this.taxaCartaoCreditoInput),
+        taxaAntecipacaoCredito: this.normalizarTaxa(this.taxaAntecipacaoCreditoInput)
+      }
     ).subscribe({
       next: (res: { message?: string; contratosImportados?: number; importacaoErro?: string }) => {
         this.configAsaasStatus = 'saved';
@@ -968,5 +1021,16 @@ export class GerenciarAcessosComponent implements OnInit {
         }
       }
     });
+  }
+
+  private normalizarTaxa(valor: number | null | undefined): number | undefined {
+    if (valor == null || Number.isNaN(Number(valor))) {
+      return undefined;
+    }
+    const taxa = Number(valor);
+    if (taxa < 0) {
+      return 0;
+    }
+    return Number(taxa.toFixed(4));
   }
 }

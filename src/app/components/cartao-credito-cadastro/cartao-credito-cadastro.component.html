@@ -1,0 +1,132 @@
+<div class="space-y-4">
+  <div class="rounded-2xl border border-slate-200/80 bg-gradient-to-r from-slate-50/70 to-white p-4 sm:p-5">
+    <div class="mb-4 flex items-center justify-between gap-3 border-b border-slate-200/70 pb-3">
+      <div>
+        <h3 class="text-sm font-semibold text-slate-900">Cadastro de cartão de crédito</h3>
+        <p class="mt-1 text-xs text-slate-500">Campos padronizados para uso no menu Fatura e gestão de despesas.</p>
+      </div>
+      <span *ngIf="carregando" class="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-500">Atualizando dados...</span>
+    </div>
+
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div class="xl:col-span-2">
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Nome do cartão <span class="text-rose-500">*</span></label>
+        <input [(ngModel)]="form.nome" (input)="onTextFieldInput('nome')" [ngClass]="isRequiredFieldInvalid('nome') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'" class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100" placeholder="Ex: Nubank PJ Empresarial" />
+        <p *ngIf="fieldErrors.nome" class="mt-1 text-xs font-medium text-rose-600">{{ fieldErrors.nome }}</p>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Bandeira <span class="text-rose-500">*</span></label>
+        <select [(ngModel)]="form.bandeira" (ngModelChange)="onTextFieldInput('bandeira')" [ngClass]="isRequiredFieldInvalid('bandeira') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'" class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100">
+          <option *ngFor="let b of bandeiras" [ngValue]="b">{{ b }}</option>
+        </select>
+        <p *ngIf="fieldErrors.bandeira" class="mt-1 text-xs font-medium text-rose-600">{{ fieldErrors.bandeira }}</p>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Final (4 dígitos) <span class="text-rose-500">*</span></label>
+        <input [(ngModel)]="form.finalCartao" (input)="onFinalCartaoInput()" maxlength="4" inputmode="numeric" [ngClass]="isRequiredFieldInvalid('finalCartao') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'" class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100" placeholder="1234" />
+        <p *ngIf="fieldErrors.finalCartao" class="mt-1 text-xs font-medium text-rose-600">{{ fieldErrors.finalCartao }}</p>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Limite <span class="text-rose-500">*</span></label>
+        <div class="relative">
+          <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm font-semibold text-slate-500">R$</span>
+          <input
+            [(ngModel)]="limiteDisplay"
+            (input)="onLimiteInput()"
+            (blur)="onLimiteBlur()"
+            inputmode="numeric"
+            [ngClass]="isRequiredFieldInvalid('limite') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'"
+            class="w-full rounded-xl border bg-white pl-10 pr-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100"
+            placeholder="0,00"
+          />
+        </div>
+        <p *ngIf="fieldErrors.limite" class="mt-1 text-xs font-medium text-rose-600">{{ fieldErrors.limite }}</p>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Dia fechamento <span class="text-rose-500">*</span></label>
+        <select [(ngModel)]="form.diaFechamento" (ngModelChange)="onTextFieldInput('diaFechamento')" [ngClass]="isRequiredFieldInvalid('diaFechamento') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'" class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100">
+          <option [ngValue]="null">Selecione</option>
+          <option *ngFor="let d of dias" [ngValue]="d">{{ d }}</option>
+        </select>
+        <p *ngIf="fieldErrors.diaFechamento" class="mt-1 text-xs font-medium text-rose-600">{{ fieldErrors.diaFechamento }}</p>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Dia vencimento <span class="text-rose-500">*</span></label>
+        <select [(ngModel)]="form.diaVencimento" (ngModelChange)="onTextFieldInput('diaVencimento')" [ngClass]="isRequiredFieldInvalid('diaVencimento') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'" class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100">
+          <option [ngValue]="null">Selecione</option>
+          <option *ngFor="let d of dias" [ngValue]="d">{{ d }}</option>
+        </select>
+        <p *ngIf="fieldErrors.diaVencimento" class="mt-1 text-xs font-medium text-rose-600">{{ fieldErrors.diaVencimento }}</p>
+      </div>
+      <div class="md:col-span-2 xl:col-span-2">
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Conta referência</label>
+        <select [(ngModel)]="contaReferenciaSelect" (ngModelChange)="onContaReferenciaSelectChange()" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100">
+          <option value="">Sem vínculo</option>
+          <option *ngFor="let c of contasReferencia" [value]="c">{{ c }}</option>
+          <option [value]="opcaoContaManual">Informar manualmente...</option>
+        </select>
+        <input
+          *ngIf="contaReferenciaManual"
+          [(ngModel)]="form.contaReferencia"
+          class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100"
+          placeholder="Digite a conta de referência"
+        />
+      </div>
+    </div>
+
+    <div class="mt-4 flex flex-wrap items-center gap-2">
+      <button type="button" (click)="salvar()" [disabled]="salvando" class="rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
+        {{ editandoId ? 'Atualizar cartão' : 'Cadastrar cartão' }}
+      </button>
+      <button type="button" (click)="novo()" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+        Limpar
+      </button>
+    </div>
+
+    <p *ngIf="mensagem" class="mt-3 text-sm font-medium text-emerald-700">{{ mensagem }}</p>
+    <p *ngIf="erro" class="mt-3 text-sm font-medium text-rose-700">{{ erro }}</p>
+  </div>
+
+  <div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white">
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-slate-50 text-[11px] uppercase tracking-[0.12em] text-slate-500">
+          <tr>
+            <th class="px-3 py-3 text-left">Cartão</th>
+            <th class="px-3 py-3 text-left">Bandeira</th>
+            <th class="px-3 py-3 text-left">Final</th>
+            <th class="px-3 py-3 text-right">Limite</th>
+            <th class="px-3 py-3 text-left">Fechamento</th>
+            <th class="px-3 py-3 text-left">Vencimento</th>
+            <th class="px-3 py-3 text-left">Conta referência</th>
+            <th class="px-3 py-3 text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <tr *ngIf="!carregando && itens.length === 0">
+            <td colspan="8" class="px-4 py-8 text-center text-sm text-slate-500">Nenhum cartão cadastrado.</td>
+          </tr>
+          <tr *ngFor="let item of itens" class="hover:bg-slate-50/70">
+            <td class="px-3 py-3 font-medium text-slate-800">{{ item.nome }}</td>
+            <td class="px-3 py-3 text-slate-700">{{ item.bandeira || '-' }}</td>
+            <td class="px-3 py-3 text-slate-700">{{ item.finalCartao || '-' }}</td>
+            <td class="px-3 py-3 text-right text-slate-700">{{ formatarLimiteTabela(item.limite) }}</td>
+            <td class="px-3 py-3 text-slate-700">{{ item.diaFechamento || '-' }}</td>
+            <td class="px-3 py-3 text-slate-700">{{ item.diaVencimento || '-' }}</td>
+            <td class="px-3 py-3 text-slate-700">{{ item.contaReferencia || '-' }}</td>
+            <td class="px-3 py-3">
+              <div class="flex items-center justify-center gap-2">
+                <button type="button" (click)="editar(item)" class="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100">
+                  Editar
+                </button>
+                <button type="button" (click)="remover(item)" class="rounded-lg border border-rose-200 px-2.5 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50">
+                  Remover
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

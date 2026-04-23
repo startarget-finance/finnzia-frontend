@@ -7,6 +7,7 @@ import { ClienteCadastroComponent } from '../cliente-cadastro/cliente-cadastro.c
 import { ContaBancariaCadastroComponent } from '../conta-bancaria-cadastro/conta-bancaria-cadastro.component';
 import { FornecedorCadastroComponent } from '../fornecedor-cadastro/fornecedor-cadastro.component';
 import { FuncionarioCadastroComponent } from '../funcionario-cadastro/funcionario-cadastro.component';
+import { CartaoCreditoCadastroComponent } from '../cartao-credito-cadastro/cartao-credito-cadastro.component';
 import { PlanoContasGerencialComponent } from '../plano-contas-gerencial/plano-contas-gerencial.component';
 import { CompanySelectorService } from '../../services/company-selector.service';
 import { PlanoContasGerencialService } from '../../services/plano-contas-gerencial.service';
@@ -14,8 +15,9 @@ import { ContaBancariaCadastroService } from '../../services/conta-bancaria-cada
 import { FornecedorCadastroService } from '../../services/fornecedor-cadastro.service';
 import { ClienteCadastroService } from '../../services/cliente-cadastro.service';
 import { FuncionarioCadastroService } from '../../services/funcionario-cadastro.service';
+import { FaturaCartaoService } from '../../services/fatura-cartao.service';
 
-type ParamTab = 'contas-bancarias' | 'plano-contas' | 'fornecedores' | 'clientes' | 'funcionarios';
+type ParamTab = 'contas-bancarias' | 'plano-contas' | 'fornecedores' | 'clientes' | 'funcionarios' | 'cartoes-credito';
 
 @Component({
   selector: 'app-parametrizacao',
@@ -27,7 +29,8 @@ type ParamTab = 'contas-bancarias' | 'plano-contas' | 'fornecedores' | 'clientes
     ClienteCadastroComponent,
     ContaBancariaCadastroComponent,
     FornecedorCadastroComponent,
-    FuncionarioCadastroComponent
+    FuncionarioCadastroComponent,
+    CartaoCreditoCadastroComponent
   ],
   templateUrl: './parametrizacao.component.html'
 })
@@ -39,6 +42,7 @@ export class ParametrizacaoComponent implements OnInit, OnDestroy {
   clientesTotalResumo: number | null = null;
   fornecedoresTotalResumo: number | null = null;
   funcionariosTotalResumo: number | null = null;
+  cartoesCreditoTotalResumo: number | null = null;
 
   resumosCarregando = false;
 
@@ -50,7 +54,8 @@ export class ParametrizacaoComponent implements OnInit, OnDestroy {
     private readonly contaBancariaService: ContaBancariaCadastroService,
     private readonly fornecedorService: FornecedorCadastroService,
     private readonly clienteService: ClienteCadastroService,
-    private readonly funcionarioService: FuncionarioCadastroService
+    private readonly funcionarioService: FuncionarioCadastroService,
+    private readonly faturaCartaoService: FaturaCartaoService
   ) {}
 
   ngOnInit(): void {
@@ -124,6 +129,10 @@ export class ParametrizacaoComponent implements OnInit, OnDestroy {
         .pipe(
           map((p) => p?.totalElements ?? 0),
           catchError(() => of(0))
+        ),
+      cartoes: this.faturaCartaoService.listarCadastros(idEmpresa ?? undefined).pipe(
+        map((resp) => resp?.itens?.length ?? 0),
+        catchError(() => of(0))
         )
     })
       .pipe(takeUntil(this.destroy$))
@@ -134,6 +143,7 @@ export class ParametrizacaoComponent implements OnInit, OnDestroy {
           this.fornecedoresTotalResumo = r.fornecedores;
           this.clientesTotalResumo = r.clientes;
           this.funcionariosTotalResumo = r.funcionarios;
+          this.cartoesCreditoTotalResumo = r.cartoes;
           this.resumosCarregando = false;
         },
         error: () => {

@@ -46,6 +46,18 @@ export interface ContaPagarGerada {
   status: 'prototipo';
 }
 
+export interface CartaoCreditoCadastro {
+  id: number;
+  nome: string;
+  bandeira?: string | null;
+  finalCartao?: string | null;
+  limite?: number | null;
+  diaFechamento?: number | null;
+  diaVencimento?: number | null;
+  contaReferencia?: string | null;
+  ativo?: boolean;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -92,6 +104,27 @@ export class FaturaCartaoService {
       { nomeCartao, lancamentos },
       { headers: this.getHeaders() }
     );
+  }
+
+  listarCadastros(idsEmpresa?: number): Observable<{ itens: CartaoCreditoCadastro[] }> {
+    let params = new HttpParams();
+    if (idsEmpresa) params = params.set('idsEmpresa', String(idsEmpresa));
+    return this.http.get<{ itens: CartaoCreditoCadastro[] }>(`${this.apiUrl}/cadastros`, {
+      headers: this.getHeaders(),
+      params,
+    });
+  }
+
+  criarCadastro(payload: Partial<CartaoCreditoCadastro>): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/cadastros`, payload, { headers: this.getHeaders() });
+  }
+
+  atualizarCadastro(id: number, payload: Partial<CartaoCreditoCadastro>): Observable<any> {
+    return this.http.put<any>(`${this.apiUrl}/cadastros/${id}`, payload, { headers: this.getHeaders() });
+  }
+
+  removerCadastro(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/cadastros/${id}`, { headers: this.getHeaders() });
   }
 }
 

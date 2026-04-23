@@ -42,6 +42,7 @@ export class FornecedorCadastroComponent implements OnInit {
   formEmail = '';
   formTelefone = '';
   formAtivo = true;
+  private modalSnapshot = '';
   consultandoCnpj = false;
   statusConsultaCnpj: string | null = null;
   private ultimoCnpjConsultado = '';
@@ -64,22 +65,30 @@ export class FornecedorCadastroComponent implements OnInit {
     this.companySelector.empresaSelecionada$.subscribe(() => {
       this.carregar();
     });
+    this.companySelector.empresasPermitidas$.subscribe(() => {
+      this.carregar();
+    });
   }
 
-  private idEmpresaAtual(): number | null {
-    return this.companySelector.obterIdEmpresaSelecionada();
+  private idEmpresaContexto(): number | null {
+    const selecionada = this.companySelector.obterIdEmpresaSelecionada();
+    if (selecionada != null && selecionada > 0) {
+      return selecionada;
+    }
+    const primeiraAtiva = this.companySelector.obterEmpresasAtivas()[0];
+    return primeiraAtiva?.idEmpresa ?? null;
   }
 
   carregar(): void {
     this.erro = null;
-    const idEmpresaAtual = this.idEmpresaAtual();
+    const idEmpresaAtual = this.idEmpresaContexto();
     if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
       this.carregando = false;
       this.linhas = [];
       this.totalElements = 0;
       this.totalPages = 0;
       this.resumoTotal.emit(0);
-      this.erro = 'Selecione uma empresa no cabeçalho para ver e cadastrar fornecedores.';
+      this.erro = null;
       return;
     }
     this.carregando = true;
@@ -165,6 +174,7 @@ export class FornecedorCadastroComponent implements OnInit {
     this.statusConsultaCnpj = null;
     this.consultandoCnpj = false;
     this.ultimoCnpjConsultado = '';
+    this.atualizarSnapshotModal();
     this.modalAberto = true;
   }
 
@@ -180,14 +190,40 @@ export class FornecedorCadastroComponent implements OnInit {
     this.statusConsultaCnpj = null;
     this.consultandoCnpj = false;
     this.ultimoCnpjConsultado = this.apenasDigitos(this.formCpfCnpj);
+    this.atualizarSnapshotModal();
     this.modalAberto = true;
   }
 
   fecharModal(): void {
+    if (this.temAlteracoesModal() && !confirm('Existem alterações não salvas. Deseja fechar mesmo assim?')) {
+      return;
+    }
     this.modalAberto = false;
     this.consultandoCnpj = false;
     this.statusConsultaCnpj = null;
     this.ultimoCnpjConsultado = '';
+  }
+
+  private estadoModalAtual(): string {
+    return JSON.stringify({
+      editandoId: this.editandoId,
+      formRazaoSocial: this.formRazaoSocial,
+      formNomeFantasia: this.formNomeFantasia,
+      formCpfCnpj: this.formCpfCnpj,
+      formTipoPessoa: this.formTipoPessoa,
+      formEmail: this.formEmail,
+      formTelefone: this.formTelefone,
+      formAtivo: this.formAtivo
+    });
+  }
+
+  private atualizarSnapshotModal(): void {
+    this.modalSnapshot = this.estadoModalAtual();
+  }
+
+  private temAlteracoesModal(): boolean {
+    if (!this.modalAberto) return false;
+    return this.modalSnapshot !== this.estadoModalAtual();
   }
 
   onCpfCnpjBlur(): void {
@@ -283,7 +319,7 @@ export class FornecedorCadastroComponent implements OnInit {
   }
 
   montarPayload(): FornecedorCadastroPayload {
-    const idEmpresaAtual = this.idEmpresaAtual();
+    const idEmpresaAtual = this.idEmpresaContexto();
     const documento = this.apenasDigitos(this.formCpfCnpj);
     return {
       razaoSocial: this.formRazaoSocial.trim(),
@@ -303,9 +339,9 @@ export class FornecedorCadastroComponent implements OnInit {
       this.erro = 'Informe a razão social ou nome.';
       return;
     }
-    const idEmpresaAtual = this.idEmpresaAtual();
+    const idEmpresaAtual = this.idEmpresaContexto();
     if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
-      this.erro = 'Selecione uma empresa no cabeçalho.';
+      this.erro = 'Não foi possível identificar a empresa do cadastro.';
       return;
     }
     const body = this.montarPayload();

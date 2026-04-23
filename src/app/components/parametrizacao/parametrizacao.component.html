@@ -19,12 +19,12 @@
               Parametrização da empresa
             </h1>
             <p class="mt-2 max-w-lg text-sm leading-relaxed text-slate-500">
-              Cadastros vinculados à empresa selecionada no cabeçalho. Os totais abaixo atualizam automaticamente.
+              Central de cadastros da empresa. Os totais abaixo atualizam automaticamente.
             </p>
           </div>
 
           <!-- Cards KPI -->
-          <div class="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:max-w-5xl xl:shrink-0">
+          <div class="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 xl:max-w-6xl xl:shrink-0">
             <div
               class="group relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white px-4 py-4 shadow-sm transition-all duration-200 hover:border-violet-200/80 hover:shadow-md"
             >
@@ -102,9 +102,7 @@
               </div>
             </div>
 
-            <div
-              class="group relative col-span-2 overflow-hidden rounded-2xl border border-slate-200/70 bg-white px-4 py-4 shadow-sm transition-all duration-200 hover:border-violet-200/80 hover:shadow-md sm:col-span-1"
-            >
+            <div class="group relative col-span-2 overflow-hidden rounded-2xl border border-slate-200/70 bg-white px-4 py-4 shadow-sm transition-all duration-200 hover:border-violet-200/80 hover:shadow-md sm:col-span-1">
               <div class="flex items-start gap-3">
                 <span
                   class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition-colors group-hover:bg-violet-100 group-hover:text-violet-700"
@@ -116,6 +114,23 @@
                   <p class="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-slate-900">
                     <span *ngIf="resumosCarregando" class="text-slate-400 animate-pulse">···</span>
                     <span *ngIf="!resumosCarregando">{{ funcionariosTotalResumo ?? '—' }}</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="group relative col-span-2 overflow-hidden rounded-2xl border border-slate-200/70 bg-white px-4 py-4 shadow-sm transition-all duration-200 hover:border-teal-200/80 hover:shadow-md sm:col-span-1">
+              <div class="flex items-start gap-3">
+                <span
+                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition-colors group-hover:bg-teal-100 group-hover:text-teal-700"
+                >
+                  <i class="fi fi-rr-credit-card text-[1.05rem] leading-none" aria-hidden="true"></i>
+                </span>
+                <div class="min-w-0 flex-1">
+                  <p class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Cartões</p>
+                  <p class="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-slate-900">
+                    <span *ngIf="resumosCarregando" class="text-slate-400 animate-pulse">···</span>
+                    <span *ngIf="!resumosCarregando">{{ cartoesCreditoTotalResumo ?? '—' }}</span>
                   </p>
                 </div>
               </div>
@@ -188,6 +203,18 @@
           >
             Funcionários
           </button>
+          <button
+            type="button"
+            (click)="setTab('cartoes-credito')"
+            [ngClass]="
+              activeTab === 'cartoes-credito'
+                ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-md shadow-violet-500/20'
+                : 'text-slate-600 hover:bg-white/70 hover:text-slate-900'
+            "
+            class="rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200"
+          >
+            Cartões de crédito
+          </button>
         </nav>
       </div>
     </section>
@@ -201,7 +228,7 @@
         class="border-b border-slate-100 bg-gradient-to-r from-white to-slate-50/40 px-5 py-4 sm:px-6 sm:py-5"
       >
         <h2 class="text-base font-semibold tracking-tight text-slate-900 sm:text-lg">Plano de contas</h2>
-        <p class="mt-1 text-sm text-slate-500">Modelos gerenciais por empresa — cadastro interno Finnzia.</p>
+        <p class="mt-1 text-sm text-slate-500">Modelos gerenciais da empresa para organização financeira.</p>
       </div>
       <div class="px-4 py-4 sm:px-6 sm:pb-6">
         <app-plano-contas-gerencial [embedded]="true" (resumoTotal)="planoContasTotalResumo = $event" />
@@ -214,7 +241,7 @@
     >
       <div class="border-b border-slate-100 bg-gradient-to-r from-white to-slate-50/40 px-5 py-4 sm:px-6 sm:py-5">
         <h2 class="text-base font-semibold tracking-tight text-slate-900 sm:text-lg">Contas bancárias</h2>
-        <p class="mt-1 text-sm text-slate-500">Instituições e caixas vinculados às empresas do grupo.</p>
+        <p class="mt-1 text-sm text-slate-500">Instituições bancárias e caixas cadastrados para operação financeira.</p>
       </div>
       <div class="px-4 py-4 sm:px-6 sm:pb-6">
         <app-conta-bancaria-cadastro [embedded]="true" (resumoTotal)="contasBancariasTotalResumo = $event" />
@@ -227,7 +254,7 @@
     >
       <div class="border-b border-slate-100 bg-gradient-to-r from-white to-slate-50/40 px-5 py-4 sm:px-6 sm:py-5">
         <h2 class="text-base font-semibold tracking-tight text-slate-900 sm:text-lg">Fornecedores</h2>
-        <p class="mt-1 text-sm text-slate-500">Cadastro corporativo com vínculo por empresa e situação ativa.</p>
+        <p class="mt-1 text-sm text-slate-500">Cadastro de fornecedores com controle de status e dados fiscais.</p>
       </div>
       <div class="px-4 py-4 sm:px-6 sm:pb-6">
         <app-fornecedor-cadastro [embedded]="true" (resumoTotal)="fornecedoresTotalResumo = $event" />
@@ -253,10 +280,23 @@
     >
       <div class="border-b border-slate-100 bg-gradient-to-r from-white to-slate-50/40 px-5 py-4 sm:px-6 sm:py-5">
         <h2 class="text-base font-semibold tracking-tight text-slate-900 sm:text-lg">Funcionários</h2>
-        <p class="mt-1 text-sm text-slate-500">Colaboradores, cargos e alocação por empresa.</p>
+        <p class="mt-1 text-sm text-slate-500">Colaboradores, cargos e dados de contato da operação.</p>
       </div>
       <div class="px-4 py-4 sm:px-6 sm:pb-6">
         <app-funcionario-cadastro [embedded]="true" (resumoTotal)="funcionariosTotalResumo = $event" />
+      </div>
+    </section>
+
+    <section
+      *ngIf="activeTab === 'cartoes-credito'"
+      class="overflow-hidden rounded-2xl border border-slate-200/70 bg-white shadow-[0_8px_30px_-16px_rgba(15,23,42,0.12)]"
+    >
+      <div class="border-b border-slate-100 bg-gradient-to-r from-white to-slate-50/40 px-5 py-4 sm:px-6 sm:py-5">
+        <h2 class="text-base font-semibold tracking-tight text-slate-900 sm:text-lg">Cartões de crédito</h2>
+        <p class="mt-1 text-sm text-slate-500">Cadastre os cartões que serão usados no menu Fatura e na geração de despesas.</p>
+      </div>
+      <div class="px-4 py-4 sm:px-6 sm:pb-6">
+        <app-cartao-credito-cadastro [embedded]="true" (resumoTotal)="cartoesCreditoTotalResumo = $event" />
       </div>
     </section>
   </div>

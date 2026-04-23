@@ -7,6 +7,7 @@ import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ErpFinanceiroService, MovimentacaoFinanceira, FiltrosMovimentacoes } from '../../services/erp-financeiro.service';
 import { OmieService, MovimentacaoOmie, MovimentacoesOmieResponse, FiltrosMovimentacoesOmie } from '../../services/omie.service';
 import { CompanySelectorService } from '../../services/company-selector.service';
+import Swal from 'sweetalert2';
 import {
   MovimentacoesAnexosService,
   TipoAnexoMovimentacao,
@@ -20,6 +21,28 @@ import {
   templateUrl: './movimentacoes.component.html',
 })
 export class MovimentacoesComponent implements OnInit, OnDestroy {
+  mostrarModalCadastro = false;
+  salvandoCadastro = false;
+  cadastroSnapshot = '';
+  cadastroErrors: Record<string, string> = {};
+  novoLancamento: {
+    tipo: 'receita' | 'despesa';
+    descricao: string;
+    clienteFornecedor: string;
+    valor: string;
+    dataVencimento: string;
+    dataCompetencia: string;
+    marcarComoQuitado: boolean;
+    dataQuitacao: string;
+    categoria: string;
+    conta: string;
+    observacao: string;
+    categoriaOpcao: string;
+    categoriaManual: string;
+    contaOpcao: string;
+    contaManual: string;
+  } = this.criarEstadoInicialCadastro('despesa');
+
   // UI: Date Range Picker
   mostrarRangePicker: boolean = false;
   visibleMonth: Date = new Date();
@@ -251,6 +274,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
         this.anexoDragOver = false;
         this.anexoDragDepth = 0;
       });
+
+    this.abrirCadastroViaQueryParam();
   }
 
   ngOnDestroy(): void {
@@ -341,6 +366,219 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     });
 
     return true;
+  }
+
+  private abrirCadastroViaQueryParam(): void {
+    const novo = this.route.snapshot.queryParamMap.get('novo');
+    if (novo === 'receita' || novo === 'despesa') {
+      this.abrirModalCadastro(novo);
+    }
+  }
+
+  private criarEstadoInicialCadastro(tipo: 'receita' | 'despesa') {
+    const hoje = this.dateToStr(new Date());
+    return {
+      tipo,
+      descricao: '',
+      clienteFornecedor: '',
+      valor: '',
+      dataVencimento: hoje,
+      dataCompetencia: hoje,
+      marcarComoQuitado: false,
+      dataQuitacao: '',
+      categoria: '',
+      conta: '',
+      observacao: '',
+      categoriaOpcao: '',
+      categoriaManual: '',
+      contaOpcao: '',
+      contaManual: '',
+    };
+  }
+
+  abrirModalCadastro(tipo: 'receita' | 'despesa'): void {
+    this.novoLancamento = this.criarEstadoInicialCadastro(tipo);
+    this.cadastroErrors = {};
+    this.mostrarModalCadastro = true;
+    this.atualizarSnapshotCadastro();
+  }
+
+  async fecharModalCadastro(force = false): Promise<void> {
+    if (force) {
+      this.mostrarModalCadastro = false;
+      return;
+    }
+    if (!this.temAlteracoesCadastro()) {
+      this.mostrarModalCadastro = false;
+      return;
+    }
+    const confirmacao = await Swal.fire({
+      icon: 'warning',
+      title: 'Descartar alterações?',
+      text: 'Existem dados não salvos neste cadastro.',
+      showCancelButton: true,
+      confirmButtonText: 'Descartar',
+      cancelButtonText: 'Continuar editando',
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#334155',
+      reverseButtons: true,
+    });
+    if (confirmacao.isConfirmed) {
+      this.mostrarModalCadastro = false;
+    }
+  }
+
+  private atualizarSnapshotCadastro(): void {
+    this.cadastroSnapshot = JSON.stringify(this.novoLancamento);
+  }
+
+  private temAlteracoesCadastro(): boolean {
+    return JSON.stringify(this.novoLancamento) !== this.cadastroSnapshot;
+  }
+
+  private validarCadastroLancamento(): boolean {
+    const errors: Record<string, string> = {};
+    const valorBruto = String(this.novoLancamento.valor ?? '').trim();
+    const valorNumerico = this.parseValorBr(valorBruto);
+    const categoriaFinal = this.obterCategoriaFinalCadastro();
+
+    if (!this.novoLancamento.descricao.trim()) {
+      errors['descricao'] = 'Informe a descrição.';
+    }
+    if (!this.novoLancamento.clienteFornecedor.trim()) {
+      errors['clienteFornecedor'] = 'Informe o cliente/fornecedor.';
+    }
+    if (!this.novoLancamento.dataVencimento) {
+      errors['dataVencimento'] = 'Informe a data de vencimento.';
+    }
+    if (this.novoLancamento.marcarComoQuitado && !this.novoLancamento.dataQuitacao) {
+      errors['dataQuitacao'] = 'Informe a data de quitação/recebimento.';
+    }
+    if (!categoriaFinal.trim()) {
+      errors['categoria'] = 'Informe a categoria.';
+    }
+    if (!this.novoLancamento.valor || !Number.isFinite(valorNumerico) || valorNumerico <= 0) {
+      errors['valor'] = 'Informe um valor maior que zero.';
+    }
+    this.cadastroErrors = errors;
+    return Object.keys(errors).length === 0;
+  }
+
+  async salvarNovoLancamento(): Promise<void> {
+    if (!this.validarCadastroLancamento()) {
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Campos obrigatórios pendentes',
+        text: 'Revise os campos destacados para continuar.',
+        confirmButtonColor: '#334155',
+      });
+      return;
+    }
+
+    const valorBruto = String(this.novoLancamento.valor ?? '').trim();
+    const valorNumerico = this.parseValorBr(valorBruto);
+    const categoriaFinal = this.obterCategoriaFinalCadastro();
+    const contaFinal = this.obterContaFinalCadastro();
+    this.salvandoCadastro = true;
+    this.erpFinanceiroService.criarMovimentacao({
+      debito: this.novoLancamento.tipo === 'despesa',
+      dataVencimento: this.novoLancamento.dataVencimento,
+      dataCompetencia: this.novoLancamento.dataCompetencia || this.novoLancamento.dataVencimento,
+      dataQuitacao: this.novoLancamento.marcarComoQuitado
+        ? (this.novoLancamento.dataQuitacao || this.novoLancamento.dataVencimento)
+        : undefined,
+      valor: valorNumerico,
+      nome: this.novoLancamento.descricao.trim(),
+      observacao: this.novoLancamento.observacao.trim() || undefined,
+      nomeCategoriaFinanceira: categoriaFinal,
+      nomeContaFinanceira: contaFinal || undefined,
+      nomeClienteFornecedor: this.novoLancamento.clienteFornecedor.trim() || undefined,
+    })
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: async () => {
+        this.salvandoCadastro = false;
+        this.fecharModalCadastro(true);
+        this.carregarMovimentacoes();
+        await Swal.fire({
+          icon: 'success',
+          title: 'Cadastro realizado',
+          text: 'A movimentação foi criada com sucesso.',
+          confirmButtonColor: '#16a34a',
+        });
+      },
+      error: async (err) => {
+        this.salvandoCadastro = false;
+        await Swal.fire({
+          icon: 'error',
+          title: 'Não foi possível cadastrar',
+          text: err?.error?.mensagem || 'Tente novamente em instantes.',
+          confirmButtonColor: '#dc2626',
+        });
+      }
+    });
+  }
+
+  onValorDigitado(valor: string): void {
+    this.novoLancamento.valor = this.formatarValorBrEmDigitacao(valor);
+  }
+
+  onCategoriaOpcaoChange(): void {
+    if (this.novoLancamento.categoriaOpcao !== '__manual__') {
+      this.novoLancamento.categoriaManual = '';
+    }
+  }
+
+  onContaOpcaoChange(): void {
+    if (this.novoLancamento.contaOpcao !== '__manual__') {
+      this.novoLancamento.contaManual = '';
+    }
+  }
+
+  onToggleMarcarComoQuitado(): void {
+    if (!this.novoLancamento.marcarComoQuitado) {
+      this.novoLancamento.dataQuitacao = '';
+      delete this.cadastroErrors['dataQuitacao'];
+      return;
+    }
+    if (!this.novoLancamento.dataQuitacao) {
+      this.novoLancamento.dataQuitacao = this.novoLancamento.dataVencimento || this.dateToStr(new Date());
+    }
+  }
+
+  private obterCategoriaFinalCadastro(): string {
+    if (this.novoLancamento.categoriaOpcao === '__manual__') {
+      return this.novoLancamento.categoriaManual.trim();
+    }
+    return this.novoLancamento.categoriaOpcao.trim();
+  }
+
+  private obterContaFinalCadastro(): string {
+    if (this.novoLancamento.contaOpcao === '__manual__') {
+      return this.novoLancamento.contaManual.trim();
+    }
+    return this.novoLancamento.contaOpcao.trim();
+  }
+
+  private parseValorBr(valor: string): number {
+    const normalizado = String(valor || '')
+      .replace(/\./g, '')
+      .replace(',', '.')
+      .replace(/[^\d.-]/g, '');
+    const numero = Number(normalizado);
+    return Number.isFinite(numero) ? numero : 0;
+  }
+
+  private formatarValorBrEmDigitacao(valor: string): string {
+    const digitos = String(valor || '').replace(/\D/g, '');
+    if (!digitos) {
+      return '';
+    }
+    const numero = Number(digitos) / 100;
+    return new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(numero);
   }
 
   // ===== Carregamento de Dados =====

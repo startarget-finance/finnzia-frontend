@@ -183,6 +183,17 @@ export interface ConciliacoesOfxResponse {
   itens: ConciliacaoOfxItem[];
 }
 
+export interface AprovarConciliacaoOfxResponse {
+  erro: boolean;
+  mensagem?: string;
+  importacaoId?: number;
+  status?: string;
+  aprovadasAgora?: number;
+  conciliadasTotal?: number;
+  pendentesTotal?: number;
+  totalMovimentacoes?: number;
+}
+
 export interface FiltrosMovimentacoes {
   dataInicio?: string;
   dataTermino?: string;
@@ -196,6 +207,19 @@ export interface FiltrosMovimentacoes {
   orderDirection?: 'asc' | 'desc';
   itensPorPagina?: number;
   numeroDaPagina?: number;
+}
+
+export interface CriarMovimentacaoPayload {
+  debito: boolean;
+  dataVencimento: string;
+  dataCompetencia?: string;
+  dataQuitacao?: string;
+  valor: number;
+  nome: string;
+  observacao?: string;
+  nomeCategoriaFinanceira: string;
+  nomeContaFinanceira?: string;
+  nomeClienteFornecedor?: string;
 }
 
 @Injectable({
@@ -243,6 +267,12 @@ export class ErpFinanceiroService {
     return this.http.get<MovimentacoesResponse>(`${this.apiUrl}/movimentacoes`, {
       headers: this.getHeaders(),
       params
+    });
+  }
+
+  criarMovimentacao(payload: CriarMovimentacaoPayload): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/movimentacoes`, payload, {
+      headers: this.getHeaders()
     });
   }
 
@@ -303,6 +333,12 @@ export class ErpFinanceiroService {
 
   excluirConciliacaoOfx(id: number): Observable<{ erro: boolean; removido: boolean }> {
     return this.http.delete<{ erro: boolean; removido: boolean }>(`${this.apiUrl}/conciliacoes-ofx/${id}`, {
+      headers: this.getHeaders(),
+    });
+  }
+
+  aprovarConciliacaoOfx(id: number): Observable<AprovarConciliacaoOfxResponse> {
+    return this.http.post<AprovarConciliacaoOfxResponse>(`${this.apiUrl}/conciliacoes-ofx/${id}/aprovar`, {}, {
       headers: this.getHeaders(),
     });
   }

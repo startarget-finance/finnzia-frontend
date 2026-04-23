@@ -43,6 +43,33 @@ export class ContaBancariaCadastroComponent implements OnInit {
   formTipo: TipoContaBancaria = 'CORRENTE';
   formSaldoInicial = 0;
   formAtivo = true;
+  instituicaoSelecionada = '';
+  private modalSnapshot = '';
+
+  readonly gruposInstituicoes = [
+    {
+      tipo: 'Bancos tradicionais',
+      itens: [
+        { banco: 'Banco do Brasil', instituicao: 'Banco do Brasil S.A.' },
+        { banco: 'Caixa', instituicao: 'Caixa Econômica Federal' },
+        { banco: 'Bradesco', instituicao: 'Banco Bradesco S.A.' },
+        { banco: 'Itaú', instituicao: 'Itaú Unibanco S.A.' },
+        { banco: 'Santander', instituicao: 'Banco Santander (Brasil) S.A.' },
+        { banco: 'Safra', instituicao: 'Banco Safra S.A.' }
+      ]
+    },
+    {
+      tipo: 'Bancos digitais',
+      itens: [
+        { banco: 'Nubank', instituicao: 'Nu Pagamentos S.A. (Nubank)' },
+        { banco: 'Inter', instituicao: 'Banco Inter S.A.' },
+        { banco: 'C6 Bank', instituicao: 'Banco C6 S.A.' },
+        { banco: 'PagBank', instituicao: 'PagSeguro Internet S.A. (PagBank)' },
+        { banco: 'Mercado Pago', instituicao: 'Mercado Pago Instituição de Pagamento Ltda.' },
+        { banco: 'PicPay', instituicao: 'PicPay Instituição de Pagamento S.A.' }
+      ]
+    }
+  ];
 
   private readonly coresAvatar = [
     'bg-emerald-600',
@@ -62,22 +89,30 @@ export class ContaBancariaCadastroComponent implements OnInit {
     this.companySelector.empresaSelecionada$.subscribe(() => {
       this.carregar();
     });
+    this.companySelector.empresasPermitidas$.subscribe(() => {
+      this.carregar();
+    });
   }
 
-  private idEmpresaAtual(): number | null {
-    return this.companySelector.obterIdEmpresaSelecionada();
+  private idEmpresaContexto(): number | null {
+    const selecionada = this.companySelector.obterIdEmpresaSelecionada();
+    if (selecionada != null && selecionada > 0) {
+      return selecionada;
+    }
+    const primeiraAtiva = this.companySelector.obterEmpresasAtivas()[0];
+    return primeiraAtiva?.idEmpresa ?? null;
   }
 
   carregar(): void {
     this.erro = null;
-    const idEmpresaAtual = this.idEmpresaAtual();
+    const idEmpresaAtual = this.idEmpresaContexto();
     if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
       this.carregando = false;
       this.linhas = [];
       this.totalElements = 0;
       this.totalPages = 0;
       this.resumoTotal.emit(0);
-      this.erro = 'Selecione uma empresa no cabeçalho para ver e cadastrar contas.';
+      this.erro = null;
       return;
     }
     this.carregando = true;
@@ -175,6 +210,8 @@ export class ContaBancariaCadastroComponent implements OnInit {
     this.formTipo = 'CORRENTE';
     this.formSaldoInicial = 0;
     this.formAtivo = true;
+    this.instituicaoSelecionada = '';
+    this.atualizarSnapshotModal();
     this.modalAberto = true;
   }
 
@@ -190,11 +227,51 @@ export class ContaBancariaCadastroComponent implements OnInit {
     this.formTipo = c.tipo === 'POUPANCA' ? 'POUPANCA' : 'CORRENTE';
     this.formSaldoInicial = Number(c.saldoInicial ?? 0);
     this.formAtivo = c.ativo !== false;
+    this.instituicaoSelecionada = this.formInstituicao;
+    this.atualizarSnapshotModal();
     this.modalAberto = true;
   }
 
+  selecionarInstituicao(): void {
+    this.formInstituicao = this.instituicaoSelecionada;
+    const item = this.gruposInstituicoes
+      .flatMap((g) => g.itens)
+      .find((opt) => opt.instituicao === this.instituicaoSelecionada);
+    if (item) {
+      this.formBanco = item.banco;
+    }
+  }
+
   fecharModal(): void {
+    if (this.temAlteracoesModal() && !confirm('Existem alterações não salvas. Deseja fechar mesmo assim?')) {
+      return;
+    }
     this.modalAberto = false;
+  }
+
+  private estadoModalAtual(): string {
+    return JSON.stringify({
+      editandoId: this.editandoId,
+      formNomeConta: this.formNomeConta,
+      formCategoria: this.formCategoria,
+      formInstituicao: this.formInstituicao,
+      formBanco: this.formBanco,
+      formAgencia: this.formAgencia,
+      formConta: this.formConta,
+      formTipo: this.formTipo,
+      formSaldoInicial: this.formSaldoInicial,
+      formAtivo: this.formAtivo,
+      instituicaoSelecionada: this.instituicaoSelecionada
+    });
+  }
+
+  private atualizarSnapshotModal(): void {
+    this.modalSnapshot = this.estadoModalAtual();
+  }
+
+  private temAlteracoesModal(): boolean {
+    if (!this.modalAberto) return false;
+    return this.modalSnapshot !== this.estadoModalAtual();
   }
 
   salvar(): void {
@@ -208,9 +285,9 @@ export class ContaBancariaCadastroComponent implements OnInit {
         return;
       }
     }
-    const idEmpresaAtual = this.idEmpresaAtual();
+    const idEmpresaAtual = this.idEmpresaContexto();
     if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
-      this.erro = 'Selecione uma empresa no cabeçalho.';
+      this.erro = 'Não foi possível identificar a empresa do cadastro.';
       return;
     }
     const ag = this.formCategoria === 'BANCARIA' ? this.formAgencia.trim() : this.formAgencia.trim() || '0';

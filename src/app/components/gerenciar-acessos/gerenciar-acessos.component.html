@@ -293,6 +293,14 @@
               <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Telefone</p>
               <p class="mt-1 text-sm text-slate-800">{{ empresa.telefoneEmpresa || '-' }}</p>
             </div>
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Taxa cartão crédito</p>
+              <p class="mt-1 text-sm text-slate-800">{{ empresa.taxaCartaoCredito != null ? (empresa.taxaCartaoCredito + '%') : '-' }}</p>
+            </div>
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">Taxa antecipação</p>
+              <p class="mt-1 text-sm text-slate-800">{{ empresa.taxaAntecipacaoCredito != null ? (empresa.taxaAntecipacaoCredito + '%') : '-' }}</p>
+            </div>
           </div>
 
           <div class="mt-6 flex justify-end">
@@ -392,26 +400,31 @@
           <div class="space-y-5">
             <div class="rounded-2xl border border-slate-200/80 bg-white p-4 sm:p-5">
               <h4 class="mb-1 text-xs font-semibold uppercase tracking-[0.11em] text-violet-600">1. Dados da Empresa</h4>
-              <p class="mb-3 text-xs text-slate-500">O email da empresa será o login do sistema.</p>
+              <p class="mb-3 text-xs text-slate-500">O email da empresa será o login do sistema. Campos com * são obrigatórios.</p>
               <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label class="mb-1 block text-xs font-medium text-slate-600">CNPJ</label>
+                  <label class="mb-1 block text-xs font-medium text-slate-600">CNPJ *</label>
                   <input
                     type="text"
                     [(ngModel)]="novoUsuarioEmpresa.cnpj"
                     (ngModelChange)="onNovoUsuarioCnpjInput()"
                     placeholder="00.000.000/0000-00"
-                    class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20">
+                    [ngClass]="hasFieldErrorNovoUsuario('cnpj') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'"
+                    class="w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20">
+                  <p *ngIf="fieldErrorsNovoUsuario['cnpj']" class="mt-1 text-[11px] font-medium text-rose-600">{{ fieldErrorsNovoUsuario['cnpj'] }}</p>
                   <p *ngIf="consultandoCnpjNovoUsuario" class="mt-1 text-[11px] text-slate-500">Consultando CNPJ...</p>
                   <p *ngIf="cnpjNovoUsuarioStatus" class="mt-1 text-[11px] text-slate-500">{{ cnpjNovoUsuarioStatus }}</p>
                 </div>
                 <div>
-                  <label class="mb-1 block text-xs font-medium text-slate-600">Razão social</label>
+                  <label class="mb-1 block text-xs font-medium text-slate-600">Razão social *</label>
                   <input
                     type="text"
                     [(ngModel)]="novoUsuarioEmpresa.razaoSocial"
+                    (ngModelChange)="clearFieldErrorNovoUsuario('razaoSocial')"
                     placeholder="Razão social da empresa"
-                    class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20">
+                    [ngClass]="hasFieldErrorNovoUsuario('razaoSocial') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'"
+                    class="w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20">
+                  <p *ngIf="fieldErrorsNovoUsuario['razaoSocial']" class="mt-1 text-[11px] font-medium text-rose-600">{{ fieldErrorsNovoUsuario['razaoSocial'] }}</p>
                 </div>
                 <div>
                   <label class="mb-1 block text-xs font-medium text-slate-600">Nome fantasia</label>
@@ -428,7 +441,9 @@
                     [(ngModel)]="novoUsuarioEmpresa.emailEmpresa"
                     (ngModelChange)="onNovoUsuarioEmailEmpresaChange()"
                     placeholder="financeiro@empresa.com"
-                    class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20">
+                    [ngClass]="hasFieldErrorNovoUsuario('emailEmpresa') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'"
+                    class="w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20">
+                  <p *ngIf="fieldErrorsNovoUsuario['emailEmpresa']" class="mt-1 text-[11px] font-medium text-rose-600">{{ fieldErrorsNovoUsuario['emailEmpresa'] }}</p>
                 </div>
                 <div class="sm:col-span-2">
                   <label class="mb-1 block text-xs font-medium text-slate-600">Telefone da empresa</label>
@@ -446,21 +461,28 @@
               <p class="mb-3 text-xs text-slate-500">Cadastro do responsável e permissões de acesso.</p>
               <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div class="sm:col-span-2">
-                  <label class="mb-1 block text-xs font-medium text-slate-600">Nome do responsável</label>
+                  <label class="mb-1 block text-xs font-medium text-slate-600">Nome do responsável *</label>
                   <input
                     type="text"
                     [(ngModel)]="novoUsuario.nome"
-                    class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20">
+                    (ngModelChange)="clearFieldErrorNovoUsuario('nomeResponsavel')"
+                    [ngClass]="hasFieldErrorNovoUsuario('nomeResponsavel') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'"
+                    class="w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20">
+                  <p *ngIf="fieldErrorsNovoUsuario['nomeResponsavel']" class="mt-1 text-[11px] font-medium text-rose-600">{{ fieldErrorsNovoUsuario['nomeResponsavel'] }}</p>
                 </div>
                 <div>
-                  <label class="mb-1 block text-xs font-medium text-slate-600">Senha</label>
+                  <label class="mb-1 block text-xs font-medium text-slate-600">Senha *</label>
                   <input
                     type="password"
                     [(ngModel)]="novoUsuario.senha"
-                    class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20">
+                    (ngModelChange)="clearFieldErrorNovoUsuario('senha')"
+                    placeholder="Mínimo 6 caracteres"
+                    [ngClass]="hasFieldErrorNovoUsuario('senha') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'"
+                    class="w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20">
+                  <p *ngIf="fieldErrorsNovoUsuario['senha']" class="mt-1 text-[11px] font-medium text-rose-600">{{ fieldErrorsNovoUsuario['senha'] }}</p>
                 </div>
                 <div>
-                  <label class="mb-1 block text-xs font-medium text-slate-600">Perfil de acesso</label>
+                  <label class="mb-1 block text-xs font-medium text-slate-600">Perfil de acesso *</label>
                   <select
                     [(ngModel)]="novoUsuario.role"
                     class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition-colors hover:border-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20">
@@ -621,6 +643,26 @@
                 type="text"
                 [(ngModel)]="asaasBaseUrlInput"
                 placeholder="https://sandbox.asaas.com"
+                class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20" />
+            </div>
+            <div class="sm:col-span-3">
+              <label class="mb-1 block text-xs font-medium text-slate-600">Taxa cartão crédito (%)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.0001"
+                [(ngModel)]="taxaCartaoCreditoInput"
+                placeholder="Ex.: 3.4900"
+                class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20" />
+            </div>
+            <div class="sm:col-span-3">
+              <label class="mb-1 block text-xs font-medium text-slate-600">Taxa antecipação (%)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.0001"
+                [(ngModel)]="taxaAntecipacaoCreditoInput"
+                placeholder="Ex.: 1.2000 (ao mês)"
                 class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20" />
             </div>
           </div>

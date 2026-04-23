@@ -207,7 +207,6 @@
 <div
   *ngIf="modalAberto"
   class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-[6px]"
-  (click)="fecharModal()"
 >
   <div
     class="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(15,23,42,0.25)] border border-slate-200/80 max-w-md w-full max-h-[90vh] overflow-y-auto p-6 space-y-5"
@@ -250,10 +249,24 @@
       </div>
       <div>
         <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Instituição (subtítulo no tipo)</label>
+        <select
+          [(ngModel)]="instituicaoSelecionada"
+          (ngModelChange)="selecionarInstituicao()"
+          class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 bg-white text-sm text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+        >
+          <option value="">Selecione uma instituição</option>
+          <optgroup *ngFor="let grupo of gruposInstituicoes" [label]="grupo.tipo">
+            <option *ngFor="let item of grupo.itens" [value]="item.instituicao">
+              {{ item.banco }}
+            </option>
+          </optgroup>
+          <option [value]="formInstituicao" *ngIf="formInstituicao && !instituicaoSelecionada">Atual: {{ formInstituicao }}</option>
+          <option value="">Outro (preenchimento manual abaixo)</option>
+        </select>
         <input
           [(ngModel)]="formInstituicao"
-          class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-          placeholder="Ex.: Nu Pagamentos S.A. (Nubank)"
+          class="mt-2 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          placeholder="Instituição (opcional para ajustar manualmente)"
         />
       </div>
       <div>

@@ -9,7 +9,7 @@
           </div>
           <div>
             <h1 class="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Conciliação OFX</h1>
-            <p class="mt-0.5 text-sm text-slate-500">Arquivos de conciliação e histórico de importações bancárias</p>
+            <p class="mt-0.5 text-sm text-slate-500">Pré-aprovação e histórico de importações bancárias (sem conciliação automática)</p>
           </div>
         </div>
       </div>
@@ -31,6 +31,14 @@
           <i class="fi fi-rr-cloud-upload text-[0.9rem] leading-none" aria-hidden="true"></i>
           {{ importando ? 'Importando...' : 'Importar' }}
         </button>
+        <div *ngIf="ofxSelecionado" class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+          <div class="font-semibold">Arquivo anexado: {{ ofxSelecionado.name }}</div>
+          <div class="opacity-80">Tamanho: {{ tamanhoArquivoSelecionado() }}</div>
+        </div>
+        <div *ngIf="ultimaContaConciliada" class="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-800">
+          <div class="font-semibold">Última conta importada</div>
+          <div>{{ ultimaContaConciliada }}</div>
+        </div>
 
         <div class="ml-auto flex flex-wrap items-end gap-3">
           <div>
@@ -99,6 +107,7 @@
               <th class="px-3 py-3 text-left">Status</th>
               <th class="px-3 py-3 text-left">Data</th>
               <th class="px-3 py-3 text-left">Banco</th>
+              <th class="px-3 py-3 text-left">Conta importada</th>
               <th class="px-3 py-3 text-left">Período</th>
               <th class="px-3 py-3 text-right">Conciliadas</th>
               <th class="px-3 py-3 text-right">Ignoradas</th>
@@ -109,10 +118,10 @@
           </thead>
           <tbody class="divide-y divide-slate-100">
             <tr *ngIf="loading">
-              <td colspan="10" class="px-4 py-10 text-center text-slate-500">Carregando...</td>
+              <td colspan="11" class="px-4 py-10 text-center text-slate-500">Carregando...</td>
             </tr>
             <tr *ngIf="!loading && itensFiltrados.length === 0">
-              <td colspan="10" class="px-4 py-10 text-center text-slate-500">Nenhuma conciliação encontrada.</td>
+              <td colspan="11" class="px-4 py-10 text-center text-slate-500">Nenhuma conciliação encontrada.</td>
             </tr>
             <tr *ngFor="let item of itensFiltrados" class="hover:bg-slate-50/70">
               <td class="px-3 py-3">
@@ -126,9 +135,14 @@
                       [ngClass]="item.status === 'CONCILIADO' ? 'bg-emerald-100 text-emerald-700' : (item.status === 'PARCIAL' ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700')">
                   {{ item.status || '-' }}
                 </span>
+                <div *ngIf="isLoteSemNovosLancamentos(item)"
+                     class="mt-1 inline-flex rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600">
+                  Sem novos lançamentos (duplicado)
+                </div>
               </td>
               <td class="px-3 py-3 text-slate-700">{{ formatDateTime(item.dataImportacao) }}</td>
               <td class="px-3 py-3 text-slate-700">{{ item.banco || '-' }}</td>
+              <td class="px-3 py-3 text-slate-700">{{ item.conta || '-' }}</td>
               <td class="px-3 py-3 text-slate-700">
                 {{ formatDate(item.periodoInicio) }} até {{ formatDate(item.periodoFim) }}
               </td>
@@ -138,6 +152,13 @@
               <td class="px-3 py-3 text-right font-semibold text-slate-900">{{ item.total ?? 0 }}</td>
               <td class="px-3 py-3">
                 <div class="flex items-center justify-center gap-2">
+                  <button type="button"
+                          (click)="aprovar(item)"
+                          [disabled]="aprovandoId === item.id || item.status === 'CONCILIADO'"
+                          class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 text-emerald-600 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+                          [title]="item.status === 'CONCILIADO' ? 'Lote já aprovado' : 'Aprovar lote'">
+                    <i class="fi fi-rr-check text-[0.85rem] leading-none" aria-hidden="true"></i>
+                  </button>
                   <button type="button" (click)="abrirMovimentacoes(item)"
                           class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100"
                           title="Ver movimentações">

@@ -12,6 +12,8 @@ export interface EmpresaConfigResponse {
   nomeFantasia?: string;
   emailEmpresa?: string;
   telefoneEmpresa?: string;
+  taxaCartaoCredito?: number;
+  taxaAntecipacaoCredito?: number;
 }
 
 export interface EmpresaCadastroBasicoPayload {
@@ -20,6 +22,8 @@ export interface EmpresaCadastroBasicoPayload {
   nomeFantasia?: string;
   emailEmpresa?: string;
   telefoneEmpresa?: string;
+  taxaCartaoCredito?: number;
+  taxaAntecipacaoCredito?: number;
 }
 
 @Injectable({
@@ -50,7 +54,9 @@ export class EmpresaConfigService {
       razaoSocial: empresa?.razaoSocial || null,
       nomeFantasia: empresa?.nomeFantasia || null,
       emailEmpresa: empresa?.emailEmpresa || null,
-      telefoneEmpresa: empresa?.telefoneEmpresa || null
+      telefoneEmpresa: empresa?.telefoneEmpresa || null,
+      taxaCartaoCredito: empresa?.taxaCartaoCredito ?? null,
+      taxaAntecipacaoCredito: empresa?.taxaAntecipacaoCredito ?? null
     });
   }
 }

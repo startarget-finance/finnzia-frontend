@@ -32,6 +32,7 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
   editandoId: number | null = null;
   formNome = '';
   formPadrao = false;
+  private modalSnapshot = '';
   private readonly destroy$ = new Subject<void>();
 
   constructor(
@@ -63,7 +64,7 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
       this.resumoTotal.emit(0);
       return;
     }
-    const idEmpresaAtual = this.idEmpresaAtual();
+    const idEmpresaAtual = this.idEmpresaContexto();
     if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
       this.carregando = false;
       this.planos = [];
@@ -90,6 +91,7 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
     this.editandoId = null;
     this.formNome = '';
     this.formPadrao = false;
+    this.atualizarSnapshotModal();
     this.modalAberto = true;
   }
 
@@ -97,11 +99,32 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
     this.editandoId = p.id;
     this.formNome = p.nome;
     this.formPadrao = !!p.padrao;
+    this.atualizarSnapshotModal();
     this.modalAberto = true;
   }
 
   fecharModal(): void {
+    if (this.temAlteracoesModal() && !confirm('Existem alterações não salvas. Deseja fechar mesmo assim?')) {
+      return;
+    }
     this.modalAberto = false;
+  }
+
+  private estadoModalAtual(): string {
+    return JSON.stringify({
+      editandoId: this.editandoId,
+      formNome: this.formNome,
+      formPadrao: this.formPadrao
+    });
+  }
+
+  private atualizarSnapshotModal(): void {
+    this.modalSnapshot = this.estadoModalAtual();
+  }
+
+  private temAlteracoesModal(): boolean {
+    if (!this.modalAberto) return false;
+    return this.modalSnapshot !== this.estadoModalAtual();
   }
 
   salvar(): void {
@@ -110,9 +133,9 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
       this.erro = 'Informe o nome do plano.';
       return;
     }
-    const idEmpresaAtual = this.idEmpresaAtual();
+    const idEmpresaAtual = this.idEmpresaContexto();
     if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
-      this.erro = 'Selecione uma empresa no cabeçalho para salvar o plano.';
+      this.erro = 'Não foi possível identificar a empresa do cadastro.';
       return;
     }
     const body: PlanoContasGerencialPayload = {
@@ -196,9 +219,9 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
   }
 
   private importarLote(items: unknown[]): void {
-    const idEmpresaAtual = this.idEmpresaAtual();
+    const idEmpresaAtual = this.idEmpresaContexto();
     if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
-      this.erro = 'Selecione uma empresa no cabeçalho para importar planos.';
+      this.erro = 'Não foi possível identificar a empresa para importar planos.';
       return;
     }
     let i = 0;
@@ -224,7 +247,12 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
     next();
   }
 
-  private idEmpresaAtual(): number | null {
-    return this.companySelector.obterIdEmpresaSelecionada();
+  private idEmpresaContexto(): number | null {
+    const selecionada = this.companySelector.obterIdEmpresaSelecionada();
+    if (selecionada != null && selecionada > 0) {
+      return selecionada;
+    }
+    const primeiraAtiva = this.companySelector.obterEmpresasAtivas()[0];
+    return primeiraAtiva?.idEmpresa ?? null;
   }
 }
