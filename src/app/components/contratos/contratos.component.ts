@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, finalize, forkJoin, takeUntil } from 'rxjs';
 import { ContratoDTO, ContratoService, WorkflowAction } from '../../services/contrato.service';
 import { ContractTableComponent } from './contract-table.component';
@@ -81,7 +82,10 @@ export class ContratosComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private filtroTextoSubject = new Subject<string>();
 
-  constructor(public contratoService: ContratoService) {
+  constructor(
+    public contratoService: ContratoService,
+    private route: ActivatedRoute
+  ) {
     // Debounce para busca por texto
     this.filtroTextoSubject.pipe(
       debounceTime(300),
@@ -93,8 +97,40 @@ export class ContratosComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.carregarContratos();
     this.carregarResumoGeral();
+    this.route.queryParamMap.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.aplicarQueryParamInicial();
+      this.carregarContratos();
+    });
+  }
+
+  /**
+   * Deep-link a partir da Frente comercial (e outros): /contratos?area=comercial&modulo=propostas
+   */
+  private aplicarQueryParamInicial(): void {
+    const q = this.route.snapshot.queryParamMap;
+    const area = q.get('area');
+    const modulo = q.get('modulo');
+
+    if (area === 'cobrancas') {
+      this.activeArea = 'cobrancas';
+      this.activeModule = 'operacao';
+    } else if (area === 'comercial') {
+      this.activeArea = 'comercial';
+      this.activeModule = 'dashboard';
+    }
+
+    const modulosComercial = new Set<string>(['dashboard', 'propostas', 'fluxo', 'envios', 'clientes', 'detalhe']);
+    const modulosCobranca = new Set<string>(['operacao', 'carteira']);
+
+    if (modulo && this.activeArea === 'comercial' && modulosComercial.has(modulo)) {
+      this.activeModule = modulo as typeof this.activeModule;
+    }
+    if (modulo && this.activeArea === 'cobrancas' && modulosCobranca.has(modulo)) {
+      this.activeModule = modulo as typeof this.activeModule;
+    }
+
+    this.activeTab = 'tabela';
   }
 
   ngOnDestroy() {

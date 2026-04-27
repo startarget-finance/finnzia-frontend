@@ -9,6 +9,11 @@ import {
   ErpFinanceiroService,
   OfxImportResponse,
 } from '../../services/erp-financeiro.service';
+import { CompanySelectorService } from '../../services/company-selector.service';
+import {
+  ContaBancariaCadastro,
+  ContaBancariaCadastroService,
+} from '../../services/conta-bancaria-cadastro.service';
 
 @Component({
   selector: 'app-conciliacao-ofx',
@@ -25,6 +30,10 @@ export class ConciliacaoOfxComponent implements OnInit, OnDestroy {
 
   ofxSelecionado: File | null = null;
   ultimaContaConciliada: string | null = null;
+
+  /** Conta cadastrada vinculada ao extrato OFX (nome amigável + id no backend). */
+  contasParaImportacao: ContaBancariaCadastro[] = [];
+  contaImportacaoId: string = '';
 
   filtros = {
     status: '',
@@ -44,6 +53,8 @@ export class ConciliacaoOfxComponent implements OnInit, OnDestroy {
   constructor(
     private erpFinanceiroService: ErpFinanceiroService,
     private router: Router,
+    private companySelectorService: CompanySelectorService,
+    private contaBancariaCadastroService: ContaBancariaCadastroService,
   ) {}
 
   ngOnInit(): void {
@@ -51,6 +62,10 @@ export class ConciliacaoOfxComponent implements OnInit, OnDestroy {
     const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
     this.filtros.dataInicio = this.toIsoDate(inicioMes);
     this.filtros.dataFim = this.toIsoDate(hoje);
+    this.carregarContasParaImportacao();
+    this.companySelectorService.empresaSelecionada$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.carregarContasParaImportacao());
     this.carregar();
   }
 
@@ -65,15 +80,71 @@ export class ConciliacaoOfxComponent implements OnInit, OnDestroy {
     this.feedback = null;
   }
 
+  labelConta(c: ContaBancariaCadastro): string {
+    const nome = (c.nomeConta && c.nomeConta.trim()) || c.banco || 'Conta';
+    const ag = [c.agencia, c.conta].filter((x) => !!x && String(x).trim()).join(' / ');
+    return ag ? `${nome} (${ag})` : nome;
+  }
+
+  private contaIdImportacaoSelecionado(): number | null {
+    const s = (this.contaImportacaoId || '').trim();
+    if (!s) {
+      return null;
+    }
+    const n = Number(s);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
+
+  private carregarContasParaImportacao(): void {
+    const idEmp = this.companySelectorService.obterIdEmpresaSelecionada();
+    if (!idEmp) {
+      this.contasParaImportacao = [];
+      return;
+    }
+    this.contaBancariaCadastroService
+      .listar({ idEmpresa: idEmp, page: 0, size: 500, ativo: true })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (page) => {
+          this.contasParaImportacao = page.content || [];
+          if (
+            this.contaImportacaoId &&
+            !this.contasParaImportacao.some((c) => String(c.id) === this.contaImportacaoId)
+          ) {
+            this.contaImportacaoId = '';
+          }
+        },
+        error: () => {
+          this.contasParaImportacao = [];
+        },
+      });
+  }
+
   importarArquivo(): void {
     if (!this.ofxSelecionado) {
       this.feedback = { tipo: 'erro', mensagem: 'Selecione um arquivo OFX para importar.' };
       return;
     }
 
+    if (this.contasParaImportacao.length > 0 && this.contaIdImportacaoSelecionado() == null) {
+      this.feedback = {
+        tipo: 'erro',
+        mensagem:
+          'Selecione a conta cadastrada correspondente a este OFX. Assim os lançamentos aparecem com nome profissional e vínculo correto.',
+      };
+      return;
+    }
+
+    const idConta = this.contaIdImportacaoSelecionado();
+    const contaSel = idConta != null ? this.contasParaImportacao.find((c) => c.id === idConta) : undefined;
+    const opts =
+      idConta != null && contaSel
+        ? { idContaBancaria: idConta, nomeContaExibicao: this.labelConta(contaSel) }
+        : undefined;
+
     this.importando = true;
     this.feedback = null;
-    this.erpFinanceiroService.importarOfx(this.ofxSelecionado)
+    this.erpFinanceiroService.importarOfx(this.ofxSelecionado, opts)
       .pipe(
         takeUntil(this.destroy$),
         finalize(() => {

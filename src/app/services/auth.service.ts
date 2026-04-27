@@ -1,11 +1,12 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject, TimeoutError } from 'rxjs';
 import { timeout } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { API_CONFIG } from '../config/api.config';
-import { CompanySelectorService } from './company-selector.service';
+import { CompanySelectorService, type CompaniaInfo } from './company-selector.service';
 
 export interface User {
   email: string;
@@ -24,6 +25,11 @@ export interface User {
   };
 }
 
+/** Sessão por aba: token e user ficam no `sessionStorage` (cada aba = usuário possível). */
+const STORAGE_KEY_TOKEN = 'authToken';
+const STORAGE_KEY_USER = 'userData';
+const STORAGE_KEY_REMEMBER = 'rememberMe';
+
 @Injectable({
   providedIn: 'root'
 })
@@ -37,21 +43,59 @@ export class AuthService {
   constructor(
     private router: Router,
     private http: HttpClient,
-    private companySelectorService: CompanySelectorService
+    private companySelectorService: CompanySelectorService,
+    @Inject(PLATFORM_ID) private platformId: object
   ) {
     this.checkAuthStatus();
   }
 
+  /**
+   * Uma única vez: se ainda houver token no `localStorage` (versão antiga, compartilhada
+   * entre abas), copia para o `sessionStorage` desta aba e limpa o local, para passar
+   * a respeitar sessão independente por aba.
+   */
+  private migrarSessaoDeLocalStorageUmaVez(): void {
+    if (!isPlatformBrowser(this.platformId) || !window.sessionStorage || !window.localStorage) {
+      return;
+    }
+    if (window.sessionStorage.getItem(STORAGE_KEY_TOKEN) && window.sessionStorage.getItem(STORAGE_KEY_USER)) {
+      return;
+    }
+    const lt = window.localStorage.getItem(STORAGE_KEY_TOKEN);
+    const lu = window.localStorage.getItem(STORAGE_KEY_USER);
+    if (!lt || !lu) {
+      return;
+    }
+    try {
+      window.sessionStorage.setItem(STORAGE_KEY_TOKEN, lt);
+      window.sessionStorage.setItem(STORAGE_KEY_USER, lu);
+      const r = window.localStorage.getItem(STORAGE_KEY_REMEMBER);
+      if (r) {
+        window.sessionStorage.setItem(STORAGE_KEY_REMEMBER, r);
+      }
+    } catch {
+      return;
+    }
+    window.localStorage.removeItem(STORAGE_KEY_TOKEN);
+    window.localStorage.removeItem(STORAGE_KEY_USER);
+    window.localStorage.removeItem(STORAGE_KEY_REMEMBER);
+  }
+
   // Verificar status de autenticação
   private checkAuthStatus(): void {
-    const token = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('userData');
-    
+    if (!isPlatformBrowser(this.platformId) || !window.sessionStorage) {
+      return;
+    }
+    this.migrarSessaoDeLocalStorageUmaVez();
+    const token = window.sessionStorage.getItem(STORAGE_KEY_TOKEN);
+    const userData = window.sessionStorage.getItem(STORAGE_KEY_USER);
+
     if (token && userData) {
       const user = this.normalizeUserRole(JSON.parse(userData));
       this.isAuthenticatedSubject.next(true);
       this.userSubject.next(user);
-      localStorage.setItem('userData', JSON.stringify(user));
+      window.sessionStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+      void this.hydrateCompanyContextFromBackend();
     }
   }
 
@@ -201,25 +245,90 @@ export class AuthService {
 
   // Salvar sessão do usuário
   private setUserSession(user: User, token: string): void {
-    localStorage.setItem('authToken', token);
-    localStorage.setItem('userData', JSON.stringify(user));
-    
+    if (isPlatformBrowser(this.platformId) && window.sessionStorage) {
+      window.sessionStorage.setItem(STORAGE_KEY_TOKEN, token);
+      window.sessionStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+    }
     this.isAuthenticatedSubject.next(true);
     this.userSubject.next(user);
+    void this.hydrateCompanyContextFromBackend();
+  }
+
+  /**
+   * Carrega empresas vinculadas ao usuário (API) e preenche o CompanySelectorService.
+   * Necessário para o nome da empresa no topo: antes só havia dado se outra tela tinha
+   * gravado sessionStorage, o que o cliente nunca alcançava.
+   */
+  private async hydrateCompanyContextFromBackend(): Promise<void> {
+    if (API_CONFIG.USE_BACKEND_MOCK_AUTH) {
+      const u = this.getCurrentUser();
+      const em = (u?.email || '').toLowerCase();
+      if (em.includes('julia')) {
+        const demo: CompaniaInfo = {
+          idEmpresa: 1,
+          nomeEmpresa: 'Julia',
+          padrao: true,
+          ativo: true,
+        };
+        this.companySelectorService.atualizarEmpresas([demo]);
+      }
+      return;
+    }
+    if (!this.isTokenValid()) {
+      return;
+    }
+    const headers = this.getHttpAuthHeaders();
+    if (!headers['Authorization']) {
+      return;
+    }
+    const base = API_CONFIG.BACKEND_API_URL;
+    try {
+      const me = await firstValueFrom(
+        this.http.get<{ id: number }>(`${base}/api/usuarios/me`, { headers })
+      );
+      if (!me?.id) {
+        return;
+      }
+      const raw = await firstValueFrom(
+        this.http.get<unknown[]>(`${base}/api/usuarios/${me.id}/empresas`, { headers })
+      );
+      if (!raw?.length) {
+        return;
+      }
+      const list: CompaniaInfo[] = (raw as any[]).map((e) => ({
+        id: e.id,
+        idEmpresa: Number(e.idEmpresa ?? e.id_empresa) || 0,
+        nomeEmpresa: String(
+          e.nomeEmpresa ?? e.nome ?? e.nomeFantasia ?? e.razaoSocial ?? 'Empresa'
+        ).trim() || 'Empresa',
+        padrao: Boolean(e.padrao),
+        ativo: e.ativo !== false,
+      })).filter((c) => c.idEmpresa > 0);
+      if (list.length > 0) {
+        this.companySelectorService.atualizarEmpresas(list);
+      }
+    } catch (e) {
+      console.warn(
+        '[Finnza] Não foi possível carregar empresas do usuário; nome da empresa no cabeçalho pode ficar vazio.',
+        e
+      );
+    }
   }
 
   // Logout
   logout(): void {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userData');
-    localStorage.removeItem('rememberMe');
-    
+    if (isPlatformBrowser(this.platformId) && window.sessionStorage) {
+      window.sessionStorage.removeItem(STORAGE_KEY_TOKEN);
+      window.sessionStorage.removeItem(STORAGE_KEY_USER);
+      window.sessionStorage.removeItem(STORAGE_KEY_REMEMBER);
+    }
+
     // Limpa cache e notificações de empresa selecionada
     this.companySelectorService.limparSessao();
-    
+
     this.isAuthenticatedSubject.next(false);
     this.userSubject.next(null);
-    
+
     this.router.navigate(['/login']);
   }
 
@@ -237,12 +346,22 @@ export class AuthService {
   updateCurrentUser(user: User) {
     const normalized = this.normalizeUserRole(user);
     this.userSubject.next(normalized);
-    localStorage.setItem('userData', JSON.stringify(normalized));
+    if (isPlatformBrowser(this.platformId) && window.sessionStorage) {
+      window.sessionStorage.setItem(STORAGE_KEY_USER, JSON.stringify(normalized));
+    }
   }
 
   // Obter token
   getToken(): string | null {
-    return localStorage.getItem('authToken');
+    if (!isPlatformBrowser(this.platformId) || !window.sessionStorage) {
+      return null;
+    }
+    return window.sessionStorage.getItem(STORAGE_KEY_TOKEN);
+  }
+
+  private getHttpAuthHeaders(): { [key: string]: string } {
+    const token = this.getToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
   }
 
   // Verificar se token é válido
@@ -326,9 +445,10 @@ export class AuthService {
   // Renovar token (simulação)
   async refreshToken(): Promise<boolean> {
     try {
-      // Simular renovação de token
       const newToken = 'mock-jwt-token-' + Date.now();
-      localStorage.setItem('authToken', newToken);
+      if (isPlatformBrowser(this.platformId) && window.sessionStorage) {
+        window.sessionStorage.setItem(STORAGE_KEY_TOKEN, newToken);
+      }
       return true;
     } catch (error) {
       console.error('Erro ao renovar token:', error);

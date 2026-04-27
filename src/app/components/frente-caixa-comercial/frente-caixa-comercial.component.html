@@ -1,37 +1,47 @@
 <div class="min-h-full bg-[#F8FAFC]">
   <div class="mx-auto max-w-[1700px] space-y-5 px-4 py-6 sm:px-6">
     <header class="rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-900 text-white p-5 sm:p-6 shadow-lg shadow-slate-900/10">
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-        <div class="space-y-1.5">
+      <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+        <div class="space-y-2 max-w-2xl">
           <p class="text-[11px] uppercase tracking-[0.2em] text-slate-300 font-medium">Operação comercial</p>
-          <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">Frente de caixa comercial</h1>
-          <p class="text-sm text-slate-200 max-w-2xl">
-            Painel operacional para priorização diária de cobranças e acompanhamento do caixa previsto x realizado.
-          </p>
-          <p class="text-xs text-slate-300">
-            Referência: {{ hojeIso | slice:8:10 }}/{{ hojeIso | slice:5:7 }}/{{ hojeIso | slice:0:4 }}
+          <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight">Frente comercial</h1>
+          <p class="text-sm text-slate-200 leading-relaxed">
+            Ponto para <strong class="text-white font-medium">lançar vendas no financeiro</strong>: entradas e contas a receber ficam em
+            <strong class="text-white font-medium">Movimentações</strong>, no mesmo cadastro usado pelo resto do gestor.
           </p>
         </div>
 
-        <div class="flex flex-col sm:items-end gap-3">
-          <div class="inline-flex items-center gap-2 rounded-full bg-white/10 border border-white/15 px-3 py-1.5">
-            <span class="h-2.5 w-2.5 rounded-full" [class.bg-emerald-400]="statusSaudeCarteira === 'alta'" [class.bg-amber-400]="statusSaudeCarteira === 'media'" [class.bg-red-400]="statusSaudeCarteira === 'baixa'"></span>
-            <span class="text-xs font-medium text-slate-100">Saúde da carteira: {{ formatPercent(taxaAdimplencia) }}</span>
-          </div>
-          <div class="flex flex-wrap gap-2">
+        <div class="flex flex-col sm:items-end gap-3 shrink-0">
+          <div class="flex flex-wrap gap-2 justify-end">
             <button
               type="button"
               (click)="carregar()"
               [disabled]="loading"
-              class="h-9 px-4 rounded-xl bg-white text-slate-800 text-sm font-medium hover:bg-slate-100 disabled:opacity-60"
+              class="h-9 px-4 rounded-xl bg-white/95 text-slate-800 text-sm font-medium hover:bg-white disabled:opacity-60"
             >
-              {{ loading ? 'Atualizando...' : 'Atualizar dados' }}
+              {{ loading ? 'Atualizando...' : 'Atualizar' }}
             </button>
             <a
-              routerLink="/contas-a-receber"
-              class="h-9 px-4 rounded-xl border border-white/20 text-sm font-medium text-white hover:bg-white/10 inline-flex items-center"
+              [routerLink]="movimentacoesPath"
+              [queryParams]="qpLancarVenda"
+              class="h-9 px-5 rounded-xl bg-gradient-to-r from-violet-500 to-cyan-400 text-white text-sm font-semibold shadow-sm inline-flex items-center justify-center"
             >
-              Ir para contas a receber
+              Lançar nova venda
+            </a>
+          </div>
+          <div class="flex flex-wrap gap-2 justify-end text-xs">
+            <a
+              [routerLink]="movimentacoesPath"
+              [queryParams]="qpMovimentacoesReceitasMes"
+              class="rounded-lg border border-white/20 px-3 py-1.5 text-slate-100 hover:bg-white/10"
+            >
+              Movimentações (receitas)
+            </a>
+            <a routerLink="/contas-a-receber" class="rounded-lg border border-white/20 px-3 py-1.5 text-slate-100 hover:bg-white/10">
+              Contas a receber
+            </a>
+            <a routerLink="/fluxo-caixa" class="rounded-lg border border-white/20 px-3 py-1.5 text-slate-100 hover:bg-white/10">
+              DFC
             </a>
           </div>
         </div>
@@ -42,128 +52,44 @@
       {{ error }}
     </div>
 
-    <section class="space-y-3">
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-12">
-        <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm xl:col-span-4 min-h-[110px]">
-          <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Recebido no mês</p>
-          <p class="mt-1 text-2xl font-semibold tabular-nums text-emerald-700">{{ formatCurrency(recebidoMes) }}</p>
-          <p class="mt-1 text-[11px] text-gray-400">{{ totalRecebidasMes }} cobranças liquidadas</p>
-        </article>
-
-        <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm xl:col-span-4 min-h-[110px]">
-          <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Em aberto</p>
-          <p class="mt-1 text-2xl font-semibold tabular-nums text-slate-900">{{ formatCurrency(emAberto) }}</p>
-          <p class="mt-1 text-[11px] text-gray-400">{{ totalAberto }} cobranças pendentes/atrasadas</p>
-        </article>
-
-        <article class="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm xl:col-span-2 min-h-[110px]">
-          <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-700">Vence hoje</p>
-          <p class="mt-1 text-2xl font-semibold tabular-nums text-amber-800">{{ venceHoje }}</p>
-        </article>
-
-        <article class="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm xl:col-span-2 min-h-[110px]">
-          <p class="text-[11px] font-semibold uppercase tracking-wide text-red-700">Em atraso</p>
-          <p class="mt-1 text-2xl font-semibold tabular-nums text-red-800">{{ atrasado }}</p>
-        </article>
+    <section class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm space-y-4">
+      <div class="border-b border-gray-100 pb-3">
+        <h2 class="text-sm font-semibold text-slate-900">Mês corrente (financeiro)</h2>
+        <p class="text-xs text-gray-500 mt-0.5">Resumo alinhado a Movimentações e ao painel de contas a receber.</p>
       </div>
 
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-12">
-        <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm xl:col-span-2 min-h-[96px]">
-          <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Adimplência</p>
-          <p class="mt-1 text-2xl font-semibold tabular-nums text-slate-900">{{ formatPercent(taxaAdimplencia) }}</p>
+        <article class="rounded-xl border border-emerald-200/80 bg-emerald-50/50 p-4 xl:col-span-3">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-emerald-800">Receitas no período</p>
+          <p class="mt-1 text-2xl font-semibold tabular-nums text-emerald-900">{{ formatCurrency(totalReceitasPeriodo) }}</p>
+          <p class="mt-1 text-[11px] text-emerald-800/90">Soma das entradas (receitas) filtradas</p>
         </article>
 
-        <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm xl:col-span-2 min-h-[96px]">
-          <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Ticket médio mês</p>
-          <p class="mt-1 text-2xl font-semibold tabular-nums text-slate-900">{{ formatCurrency(ticketMedioMes) }}</p>
+        <article class="rounded-xl border border-gray-200 bg-slate-50/80 p-4 xl:col-span-3" *ngIf="resumo">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-gray-500">A receber (carteira)</p>
+          <p class="mt-1 text-2xl font-semibold tabular-nums text-slate-900">{{ formatCurrency(resumo.contasReceber?.totalGeral) }}</p>
+          <p class="mt-1 text-[11px] text-gray-500">Posição de contas a receber</p>
         </article>
 
-        <article class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm xl:col-span-8">
-          <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-gray-600">
-            <span class="inline-flex items-center gap-2">
-              <span class="h-2 w-2 rounded-full bg-red-500"></span>
-              Risco de atraso na carteira aberta: <strong class="text-slate-800">{{ formatPercent(riscoAtrasoPercent) }}</strong>
-            </span>
-            <span class="inline-flex items-center gap-2">
-              <span class="h-2 w-2 rounded-full bg-slate-400"></span>
-              Base de análise: <strong class="text-slate-800">{{ totalAberto }} pendências</strong>
-            </span>
-            <span class="inline-flex items-center gap-2">
-              <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-              Recebimentos no mês: <strong class="text-slate-800">{{ totalRecebidasMes }} liquidações</strong>
-            </span>
-          </div>
+        <article class="rounded-xl border border-amber-200/80 bg-amber-50/50 p-4 xl:col-span-3" *ngIf="resumo">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-amber-900">Pendente</p>
+          <p class="mt-1 text-2xl font-semibold tabular-nums text-amber-950">{{ formatCurrency(resumo.contasReceber?.totalPendente) }}</p>
+          <p class="mt-1 text-[11px] text-amber-900/85">Ainda em aberto</p>
+        </article>
+
+        <article class="rounded-xl border border-violet-200/80 bg-violet-50/40 p-4 xl:col-span-3">
+          <p class="text-[11px] font-semibold uppercase tracking-wide text-violet-900">Registros (receitas)</p>
+          <p class="mt-1 text-2xl font-semibold tabular-nums text-violet-950">{{ totalRegistrosReceitas }}</p>
+          <p class="mt-1 text-[11px] text-violet-900/85">Quantidade no período (ERP)</p>
         </article>
       </div>
     </section>
 
     <div class="grid grid-cols-1 gap-5 xl:grid-cols-5">
       <section class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm xl:col-span-3">
-        <div class="px-4 sm:px-5 py-4 border-b border-gray-100 space-y-4">
-          <div class="flex items-center justify-between gap-3">
-            <div>
-              <h2 class="text-sm font-semibold text-slate-900">Fila de atuação comercial</h2>
-              <p class="text-xs text-gray-500">Priorize os críticos primeiro para proteger o caixa do mês</p>
-            </div>
-            <span class="text-xs text-gray-400">
-              {{ inicioPaginaFila }} a {{ fimPaginaFila }} de {{ filaFiltradaBase.length }} itens
-            </span>
-          </div>
-
-          <div class="flex flex-wrap gap-2">
-            <button
-              type="button"
-              (click)="setFiltroFila('criticos')"
-              class="h-8 px-3 rounded-lg text-xs font-medium border transition-colors"
-              [class.bg-red-600]="filtroFila === 'criticos'"
-              [class.border-red-600]="filtroFila === 'criticos'"
-              [class.text-white]="filtroFila === 'criticos'"
-              [class.bg-white]="filtroFila !== 'criticos'"
-              [class.border-gray-200]="filtroFila !== 'criticos'"
-              [class.text-gray-700]="filtroFila !== 'criticos'"
-            >
-              Críticos ({{ totalCriticos }})
-            </button>
-            <button
-              type="button"
-              (click)="setFiltroFila('hoje')"
-              class="h-8 px-3 rounded-lg text-xs font-medium border transition-colors"
-              [class.bg-amber-600]="filtroFila === 'hoje'"
-              [class.border-amber-600]="filtroFila === 'hoje'"
-              [class.text-white]="filtroFila === 'hoje'"
-              [class.bg-white]="filtroFila !== 'hoje'"
-              [class.border-gray-200]="filtroFila !== 'hoje'"
-              [class.text-gray-700]="filtroFila !== 'hoje'"
-            >
-              Vence hoje ({{ totalHoje }})
-            </button>
-            <button
-              type="button"
-              (click)="setFiltroFila('semana')"
-              class="h-8 px-3 rounded-lg text-xs font-medium border transition-colors"
-              [class.bg-blue-600]="filtroFila === 'semana'"
-              [class.border-blue-600]="filtroFila === 'semana'"
-              [class.text-white]="filtroFila === 'semana'"
-              [class.bg-white]="filtroFila !== 'semana'"
-              [class.border-gray-200]="filtroFila !== 'semana'"
-              [class.text-gray-700]="filtroFila !== 'semana'"
-            >
-              Próx. 7 dias ({{ totalSemana }})
-            </button>
-            <button
-              type="button"
-              (click)="setFiltroFila('todos')"
-              class="h-8 px-3 rounded-lg text-xs font-medium border transition-colors"
-              [class.bg-slate-900]="filtroFila === 'todos'"
-              [class.border-slate-900]="filtroFila === 'todos'"
-              [class.text-white]="filtroFila === 'todos'"
-              [class.bg-white]="filtroFila !== 'todos'"
-              [class.border-gray-200]="filtroFila !== 'todos'"
-              [class.text-gray-700]="filtroFila !== 'todos'"
-            >
-              Todos ({{ filaPrioritaria.length }})
-            </button>
-          </div>
+        <div class="px-4 sm:px-5 py-4 border-b border-gray-100">
+          <h2 class="text-sm font-semibold text-slate-900">Últimas entradas (receitas)</h2>
+          <p class="text-xs text-gray-500 mt-1">Detalhe em Movimentações. Use “Lançar nova venda” para incluir outra.</p>
         </div>
 
         <div *ngIf="loading" class="py-12 px-4 space-y-3">
@@ -172,149 +98,97 @@
           <div class="h-12 rounded-xl bg-slate-100 animate-pulse"></div>
         </div>
 
-        <div *ngIf="!loading && filaFiltrada.length === 0" class="py-14 text-center text-sm text-gray-500">
-          Não há cobranças para este filtro no momento.
+        <div *ngIf="!loading && ultimasReceitas.length === 0" class="py-14 px-5 text-center space-y-4">
+          <p class="text-sm text-gray-600 leading-relaxed">Nenhuma receita listada no período.</p>
+          <a
+            [routerLink]="movimentacoesPath"
+            [queryParams]="qpLancarVenda"
+            class="inline-flex items-center justify-center h-10 px-6 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 text-white text-sm font-semibold shadow-sm"
+          >
+            Lançar nova venda
+          </a>
         </div>
 
-        <div *ngIf="!loading && filaFiltrada.length > 0" class="overflow-x-auto max-h-[640px]">
+        <div *ngIf="!loading && ultimasReceitas.length > 0" class="overflow-x-auto max-h-[560px]">
           <table class="min-w-full text-sm">
             <thead class="sticky top-0 z-10 bg-slate-50 text-left text-[11px] font-semibold text-gray-500 border-b border-gray-100 uppercase tracking-wide">
               <tr>
-                <th class="py-3 px-4">Cliente</th>
+                <th class="py-3 px-4">Cliente / fornecedor</th>
+                <th class="py-3 px-4">Descrição</th>
                 <th class="py-3 px-4">Vencimento</th>
-                <th class="py-3 px-4">Prazo</th>
                 <th class="py-3 px-4 text-right">Valor</th>
-                <th class="py-3 px-4">Status</th>
-                <th class="py-3 px-4 text-right">Ação</th>
+                <th class="py-3 px-4">Situação</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
-              <tr *ngFor="let row of filaFiltrada; let i = index" class="hover:bg-slate-50/80" [ngClass]="i % 2 === 1 ? 'bg-slate-50' : ''">
+              <tr *ngFor="let m of ultimasReceitas; let i = index" class="hover:bg-slate-50/80" [ngClass]="i % 2 === 1 ? 'bg-slate-50/50' : ''">
                 <td class="py-3 px-4">
-                  <p class="font-medium text-slate-900 truncate max-w-[260px]" [title]="nomeCliente(row.contrato)">
-                    {{ nomeCliente(row.contrato) }}
-                  </p>
-                  <p class="text-[11px] text-gray-500 truncate max-w-[280px]" [title]="row.contrato.titulo">
-                    {{ row.contrato.titulo }}
+                  <p class="font-medium text-slate-900 truncate max-w-[200px]" [title]="nomeClienteOuFornecedor(m)">
+                    {{ nomeClienteOuFornecedor(m) }}
                   </p>
                 </td>
-                <td class="py-3 px-4 text-gray-600 whitespace-nowrap">{{ fmtData(row.cobranca.dataVencimento) }}</td>
+                <td class="py-3 px-4 text-gray-600 truncate max-w-[220px]" [title]="descricaoMov(m)">{{ descricaoMov(m) }}</td>
+                <td class="py-3 px-4 text-gray-600 whitespace-nowrap">{{ fmtData(m.DataVencimento) }}</td>
+                <td class="py-3 px-4 text-right font-semibold text-slate-800 tabular-nums">{{ formatCurrency(m.Valor) }}</td>
                 <td class="py-3 px-4">
-                  <span class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold" [ngClass]="prazoClass(row.cobranca)">
-                    {{ prazoLabel(row.cobranca) }}
-                  </span>
-                </td>
-                <td class="py-3 px-4 text-right font-semibold text-slate-800 tabular-nums">
-                  {{ formatCurrency(row.cobranca.valor) }}
-                </td>
-                <td class="py-3 px-4">
-                  <span class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold" [ngClass]="badgeClass(row.cobranca)">
-                    {{ statusLabel(row.cobranca) }}
-                  </span>
-                </td>
-                <td class="py-3 px-4 text-right">
-                  <button
-                    *ngIf="row.cobranca.linkPagamento"
-                    type="button"
-                    (click)="abrirLink(row.cobranca)"
-                    class="inline-flex items-center justify-center h-8 min-w-[86px] px-3 rounded-lg bg-slate-900 text-white text-[11px] font-medium leading-none whitespace-nowrap hover:bg-slate-800"
+                  <span
+                    *ngIf="recebidoPendente(m) === 'recebido'"
+                    class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800"
+                    >Recebido</span
                   >
-                    Abrir link
-                  </button>
-                  <span *ngIf="!row.cobranca.linkPagamento" class="text-[11px] text-gray-400">Sem link</span>
+                  <span
+                    *ngIf="recebidoPendente(m) === 'pendente'"
+                    class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800"
+                    >Pendente</span
+                  >
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-
-        <div *ngIf="!loading && filaFiltradaBase.length > 0"
-             class="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-4 py-3 text-xs text-slate-500">
-          <span>
-            Exibindo {{ inicioPaginaFila }} a {{ fimPaginaFila }} de {{ filaFiltradaBase.length }}
-          </span>
-          <div class="flex items-center gap-1.5">
-            <button type="button"
-                    (click)="irPrimeiraPaginaFila()"
-                    [disabled]="paginaAtualFila <= 1"
-                    class="rounded-lg border border-slate-200 px-2.5 py-1.5 font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">
-              Primeiro
-            </button>
-            <button type="button"
-                    (click)="irPaginaAnteriorFila()"
-                    [disabled]="paginaAtualFila <= 1"
-                    class="rounded-lg border border-slate-200 px-2.5 py-1.5 font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">
-              Anterior
-            </button>
-            <span class="px-2 text-slate-600">Página {{ paginaAtualFila }} de {{ totalPaginasFila }}</span>
-            <button type="button"
-                    (click)="irProximaPaginaFila()"
-                    [disabled]="paginaAtualFila >= totalPaginasFila"
-                    class="rounded-lg border border-slate-200 px-2.5 py-1.5 font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">
-              Próxima
-            </button>
-            <button type="button"
-                    (click)="irUltimaPaginaFila()"
-                    [disabled]="paginaAtualFila >= totalPaginasFila"
-                    class="rounded-lg border border-slate-200 px-2.5 py-1.5 font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">
-              Último
-            </button>
-          </div>
-        </div>
       </section>
 
-      <section class="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm xl:col-span-2">
-        <div class="px-4 sm:px-5 py-4 border-b border-gray-100">
-          <h2 class="text-sm font-semibold text-slate-900">Entradas recentes no mês</h2>
-          <p class="text-xs text-gray-500">Recebimentos confirmados para conferência rápida do time</p>
+      <section class="flex flex-col rounded-2xl border border-gray-200 bg-white shadow-sm xl:col-span-2 overflow-hidden">
+        <div class="px-4 sm:px-5 py-4 border-b border-gray-100 bg-slate-50/50">
+          <h2 class="text-sm font-semibold text-slate-900">Atalhos</h2>
+          <p class="text-xs text-gray-500 mt-1">Mesmo financeiro usado no restante do sistema.</p>
         </div>
-
-        <div class="flex-1 overflow-y-auto max-h-[560px]">
-          <div *ngIf="loading" class="py-8 px-4 space-y-3">
-            <div class="h-14 rounded-xl bg-slate-100 animate-pulse"></div>
-            <div class="h-14 rounded-xl bg-slate-100 animate-pulse"></div>
-            <div class="h-14 rounded-xl bg-slate-100 animate-pulse"></div>
-          </div>
-
-          <div *ngIf="!loading && ultimosRecebidos.length === 0" class="py-8 px-4 space-y-3">
-            <div class="rounded-xl border border-dashed border-gray-200 bg-slate-50 px-4 py-5 text-center">
-              <p class="text-sm font-medium text-slate-700">Nenhum recebimento no mês na amostra atual</p>
-              <p class="text-xs text-gray-500 mt-1">Concentre a atuação em cobranças críticas para virar caixa nos próximos dias.</p>
-            </div>
-            <div class="grid grid-cols-2 gap-2">
-              <div class="rounded-lg border border-gray-200 bg-white px-3 py-2">
-                <p class="text-[11px] text-gray-500 uppercase font-semibold">Críticos</p>
-                <p class="text-lg font-semibold text-red-700 tabular-nums">{{ totalCriticos }}</p>
-              </div>
-              <div class="rounded-lg border border-gray-200 bg-white px-3 py-2">
-                <p class="text-[11px] text-gray-500 uppercase font-semibold">Vence hoje</p>
-                <p class="text-lg font-semibold text-amber-700 tabular-nums">{{ totalHoje }}</p>
-              </div>
-            </div>
-          </div>
-
-          <ul class="divide-y divide-gray-100">
-            <li *ngFor="let row of ultimosRecebidos" class="px-4 py-3 hover:bg-slate-50/70">
-              <div class="flex justify-between gap-2">
-                <p class="text-sm font-medium text-slate-800 truncate flex-1">{{ nomeCliente(row.contrato) }}</p>
-                <span class="text-sm font-semibold text-emerald-700 tabular-nums shrink-0">
-                  {{ formatCurrency(row.cobranca.valor) }}
-                </span>
-              </div>
-              <p class="text-[11px] text-gray-500 truncate mt-0.5">{{ row.contrato.titulo }}</p>
-              <p class="text-[11px] text-gray-400 mt-1">Pago em {{ fmtData(row.cobranca.dataPagamento) }}</p>
-            </li>
-          </ul>
+        <ul class="flex-1 space-y-0 divide-y divide-gray-100 text-sm text-slate-700">
+          <li class="px-4 sm:px-5 py-4">
+            <p class="font-medium text-slate-900">Incluir venda (receita)</p>
+            <p class="mt-1 text-xs text-gray-600">
+              <a [routerLink]="movimentacoesPath" [queryParams]="qpLancarVenda" class="text-violet-600 font-medium hover:underline"
+                >Abrir lançamento em Movimentações</a
+              >
+            </p>
+          </li>
+          <li class="px-4 sm:px-5 py-4">
+            <p class="font-medium text-slate-900">Conferir tudo</p>
+            <p class="mt-1 text-xs text-gray-600">
+              <a [routerLink]="movimentacoesPath" [queryParams]="qpMovimentacoesReceitasMes" class="text-violet-600 font-medium hover:underline"
+                >Movimentações com filtro de receitas do mês</a
+              >
+            </p>
+          </li>
+          <li class="px-4 sm:px-5 py-4">
+            <p class="font-medium text-slate-900">Contas a receber e DFC</p>
+            <p class="mt-1 text-xs text-gray-600">
+              <a routerLink="/contas-a-receber" class="text-violet-600 font-medium hover:underline">Contas a receber</a>
+              ·
+              <a routerLink="/fluxo-caixa" class="text-violet-600 font-medium hover:underline">DFC</a>
+            </p>
+          </li>
+        </ul>
+        <div class="px-4 sm:px-5 py-4 border-t border-gray-100 bg-gray-50/80">
+          <a
+            [routerLink]="movimentacoesPath"
+            [queryParams]="qpLancarVenda"
+            class="flex w-full items-center justify-center h-10 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-800"
+          >
+            Lançar nova venda
+          </a>
         </div>
       </section>
     </div>
-
-    <p class="text-[11px] text-gray-400 text-center pb-4">
-      Painel montado com até 500 contratos mais recentes.
-      Para reconciliação financeira completa, use
-      <a routerLink="/movimentacoes" class="text-violet-600 hover:underline">Movimentações</a>
-      e
-      <a routerLink="/fluxo-caixa" class="text-violet-600 hover:underline">DFC</a>.
-    </p>
   </div>
 </div>

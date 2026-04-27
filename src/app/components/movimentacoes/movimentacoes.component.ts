@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ErpFinanceiroService, MovimentacaoFinanceira, FiltrosMovimentacoes } from '../../services/erp-financeiro.service';
+import { ContaBancariaCadastroService } from '../../services/conta-bancaria-cadastro.service';
 import { OmieService, MovimentacaoOmie, MovimentacoesOmieResponse, FiltrosMovimentacoesOmie } from '../../services/omie.service';
 import { CompanySelectorService } from '../../services/company-selector.service';
 import Swal from 'sweetalert2';
@@ -22,6 +23,9 @@ import {
 })
 export class MovimentacoesComponent implements OnInit, OnDestroy {
   mostrarModalCadastro = false;
+  /** Reutiliza o mesmo formulário do cadastro para edição de lançamento existente. */
+  cadastroModo: 'novo' | 'editar' = 'novo';
+  editandoMovimentacaoId: string | null = null;
   salvandoCadastro = false;
   cadastroSnapshot = '';
   cadastroErrors: Record<string, string> = {};
@@ -205,6 +209,11 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     { value: '', label: 'Todas as contas' }
   ];
 
+  /** id cadastro (string) → nome amigável para o filtro e formulários */
+  private rotuloContaPorId = new Map<string, string>();
+  /** número da conta (cadastro) → mesmo rótulo (movimentações às vezes só trazem o número) */
+  private rotuloContaPorNumeroConta = new Map<string, string>();
+
   // Fonte de dados fixa: ERP (backend próprio)
   readonly fonteDados: 'erp' = 'erp';
 
@@ -216,6 +225,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     private omieService: OmieService,
     private companySelectorService: CompanySelectorService,
     private movimentacoesAnexosService: MovimentacoesAnexosService,
+    private contaBancariaCadastroService: ContaBancariaCadastroService,
     private route: ActivatedRoute
   ) {
     this.visibleMonth = new Date();
@@ -265,6 +275,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     
     // Carrega automaticamente com filtro de data do mês atual
     // A empresa é obtida via CompanySelectorService (X-Empresa-Id header)
+    this.carregarMapaNomesContasCadastro();
     this.carregarMovimentacoes();
 
     this.companySelectorService.empresaSelecionada$
@@ -273,6 +284,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
         this.painelAnexoMovId = null;
         this.anexoDragOver = false;
         this.anexoDragDepth = 0;
+        this.carregarMapaNomesContasCadastro();
       });
 
     this.abrirCadastroViaQueryParam();
@@ -397,19 +409,104 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   }
 
   abrirModalCadastro(tipo: 'receita' | 'despesa'): void {
+    this.cadastroModo = 'novo';
+    this.editandoMovimentacaoId = null;
     this.novoLancamento = this.criarEstadoInicialCadastro(tipo);
     this.cadastroErrors = {};
     this.mostrarModalCadastro = true;
     this.atualizarSnapshotCadastro();
   }
 
+  abrirModalEdicao(mov: MovimentacaoFinanceira): void {
+    const id = mov.IdMovimentacaoFinanceiraParcela;
+    if (!id) {
+      return;
+    }
+    this.cadastroModo = 'editar';
+    this.editandoMovimentacaoId = id;
+    this.cadastroErrors = {};
+
+    const tipo: 'receita' | 'despesa' = mov.Debito ? 'despesa' : 'receita';
+    const hoje = this.dateToStr(new Date());
+    const catNome = (mov.NomeCategoriaFinanceira || '').trim();
+    const catEscolha = this.resolverOpcaoOuManual(this.categorias, catNome);
+    const contaNome = (mov.NomeContaFinanceira || '').trim();
+    const contaEscolha = this.resolverOpcaoOuManual(this.contasBancarias, contaNome);
+
+    const venc = this.normalizarDataParaInput(mov.DataVencimento);
+    const comp = this.normalizarDataParaInput(mov.DataCompetencia) || venc;
+    const quit = this.normalizarDataParaInput(mov.DataQuitacao);
+    const temQuit = !!quit;
+
+    this.novoLancamento = {
+      tipo,
+      descricao: (mov.Nome || '').trim(),
+      clienteFornecedor: (
+        mov.NomeClienteFornecedor ||
+        mov.NomeFantasiaClienteFornecedor ||
+        mov.RazaoSocialClienteFornecedor ||
+        ''
+      ).toString().trim(),
+      valor: this.valorNumericoParaInputBr(mov.Valor),
+      dataVencimento: venc || hoje,
+      dataCompetencia: comp || venc || hoje,
+      marcarComoQuitado: temQuit,
+      dataQuitacao: temQuit ? quit : '',
+      categoria: '',
+      conta: '',
+      observacao: (mov.Observacao || '').toString(),
+      categoriaOpcao: catEscolha.opcao,
+      categoriaManual: catEscolha.manual,
+      contaOpcao: contaEscolha.opcao,
+      contaManual: contaEscolha.manual,
+    };
+
+    this.mostrarModalCadastro = true;
+    this.atualizarSnapshotCadastro();
+  }
+
+  private resolverOpcaoOuManual(
+    opcoes: Array<{ value: string; label: string }>,
+    valorAtual: string
+  ): { opcao: string; manual: string } {
+    const t = (valorAtual || '').trim();
+    if (!t) {
+      return { opcao: '', manual: '' };
+    }
+    const found = opcoes.find((c) => c.label === t && !!c.value);
+    if (found) {
+      return { opcao: found.label, manual: '' };
+    }
+    return { opcao: '__manual__', manual: t };
+  }
+
+  private normalizarDataParaInput(v: string | undefined | null): string {
+    if (v == null || v === '') {
+      return '';
+    }
+    const s = String(v);
+    return s.length >= 10 ? s.substring(0, 10) : s;
+  }
+
+  private valorNumericoParaInputBr(valor: number | undefined | null): string {
+    if (valor == null || !Number.isFinite(Number(valor))) {
+      return '';
+    }
+    const cents = Math.round(Number(valor) * 100);
+    return this.formatarValorBrEmDigitacao(String(cents));
+  }
+
   async fecharModalCadastro(force = false): Promise<void> {
     if (force) {
       this.mostrarModalCadastro = false;
+      this.cadastroModo = 'novo';
+      this.editandoMovimentacaoId = null;
       return;
     }
     if (!this.temAlteracoesCadastro()) {
       this.mostrarModalCadastro = false;
+      this.cadastroModo = 'novo';
+      this.editandoMovimentacaoId = null;
       return;
     }
     const confirmacao = await Swal.fire({
@@ -425,6 +522,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     });
     if (confirmacao.isConfirmed) {
       this.mostrarModalCadastro = false;
+      this.cadastroModo = 'novo';
+      this.editandoMovimentacaoId = null;
     }
   }
 
@@ -479,8 +578,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     const valorNumerico = this.parseValorBr(valorBruto);
     const categoriaFinal = this.obterCategoriaFinalCadastro();
     const contaFinal = this.obterContaFinalCadastro();
-    this.salvandoCadastro = true;
-    this.erpFinanceiroService.criarMovimentacao({
+    const payload = {
       debito: this.novoLancamento.tipo === 'despesa',
       dataVencimento: this.novoLancamento.dataVencimento,
       dataCompetencia: this.novoLancamento.dataCompetencia || this.novoLancamento.dataVencimento,
@@ -493,17 +591,25 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       nomeCategoriaFinanceira: categoriaFinal,
       nomeContaFinanceira: contaFinal || undefined,
       nomeClienteFornecedor: this.novoLancamento.clienteFornecedor.trim() || undefined,
-    })
-    .pipe(takeUntil(this.destroy$))
-    .subscribe({
+    };
+
+    const isEdicao = this.cadastroModo === 'editar' && this.editandoMovimentacaoId;
+    this.salvandoCadastro = true;
+    const req$ = isEdicao
+      ? this.erpFinanceiroService.atualizarMovimentacao(this.editandoMovimentacaoId!, payload)
+      : this.erpFinanceiroService.criarMovimentacao(payload);
+
+    req$.pipe(takeUntil(this.destroy$)).subscribe({
       next: async () => {
         this.salvandoCadastro = false;
         this.fecharModalCadastro(true);
         this.carregarMovimentacoes();
         await Swal.fire({
           icon: 'success',
-          title: 'Cadastro realizado',
-          text: 'A movimentação foi criada com sucesso.',
+          title: isEdicao ? 'Alterações salvas' : 'Cadastro realizado',
+          text: isEdicao
+            ? 'O lançamento foi atualizado com sucesso.'
+            : 'A movimentação foi criada com sucesso.',
           confirmButtonColor: '#16a34a',
         });
       },
@@ -511,7 +617,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
         this.salvandoCadastro = false;
         await Swal.fire({
           icon: 'error',
-          title: 'Não foi possível cadastrar',
+          title: isEdicao ? 'Não foi possível salvar' : 'Não foi possível cadastrar',
           text: err?.error?.mensagem || 'Tente novamente em instantes.',
           confirmButtonColor: '#dc2626',
         });
@@ -1317,6 +1423,55 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     ];
   }
 
+  /**
+   * Carrega contas cadastradas para exibir nome/descrição no filtro (em vez de só ID ou número cru).
+   */
+  private carregarMapaNomesContasCadastro(): void {
+    const idEmp = this.empresaIdAtual();
+    this.rotuloContaPorId.clear();
+    this.rotuloContaPorNumeroConta.clear();
+    if (!idEmp) {
+      this.extrairContasBancarias();
+      return;
+    }
+    this.contaBancariaCadastroService
+      .listar({ idEmpresa: idEmp, page: 0, size: 500, ativo: true })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (page) => {
+          for (const c of page.content || []) {
+            const nome =
+              (c.nomeConta && c.nomeConta.trim()) ||
+              [c.instituicao, c.banco].filter((x) => !!x && String(x).trim()).join(' · ') ||
+              'Conta';
+            const agConta = [c.agencia, c.conta].filter((x) => !!x && String(x).trim()).join(' / ');
+            const label = agConta ? `${nome} (${agConta})` : nome;
+            this.rotuloContaPorId.set(String(c.id), label);
+            if (c.conta?.trim()) {
+              this.rotuloContaPorNumeroConta.set(c.conta.trim(), label);
+            }
+          }
+          this.extrairContasBancarias();
+        },
+        error: () => this.extrairContasBancarias(),
+      });
+  }
+
+  private rotuloContaBancariaDisplay(value: string, nomeMov: string): string {
+    const porId = this.rotuloContaPorId.get(value);
+    if (porId) {
+      return porId;
+    }
+    const nt = (nomeMov || '').trim();
+    if (nt) {
+      const porNumero = this.rotuloContaPorNumeroConta.get(nt);
+      if (porNumero) {
+        return porNumero;
+      }
+    }
+    return nt || `Conta ${value}`;
+  }
+
   extrairContasBancarias(): void {
     const contas = new Map<string, string>();
     const dadosParaExtrair = this.obterCache()?.data || this.movimentacoes;
@@ -1330,9 +1485,15 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       const value = idConta != null && String(idConta).trim() !== ''
         ? String(idConta)
         : nomeConta.toLowerCase();
-      const label = nomeConta || `Conta ${value}`;
+      const label = this.rotuloContaBancariaDisplay(value, nomeConta);
       if (!contas.has(value)) {
         contas.set(value, label);
+      }
+    });
+
+    this.rotuloContaPorId.forEach((label, id) => {
+      if (!contas.has(id)) {
+        contas.set(id, label);
       }
     });
 

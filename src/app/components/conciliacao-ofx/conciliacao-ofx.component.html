@@ -16,6 +16,27 @@
     </div>
 
     <div class="mb-6 rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm">
+      <div *ngIf="contasParaImportacao.length > 0" class="mb-4 rounded-xl border border-slate-200/90 bg-slate-50/90 px-4 py-3">
+        <label class="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-600"
+          >Conta cadastrada (destino deste extrato) *</label
+        >
+        <select
+          [(ngModel)]="contaImportacaoId"
+          class="mt-1 w-full max-w-xl rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100"
+        >
+          <option value="">Selecione a conta correspondente ao OFX…</option>
+          <option *ngFor="let c of contasParaImportacao" [value]="c.id">{{ labelConta(c) }}</option>
+        </select>
+        <p class="mt-2 text-[11px] leading-relaxed text-slate-500">
+          Os lançamentos importados usam o <span class="font-medium text-slate-700">nome do cadastro</span> e o vínculo
+          com a conta. O identificador que veio no arquivo (número da conta no OFX) fica na observação quando for diferente
+          do nome exibido.
+        </p>
+      </div>
+      <div *ngIf="contasParaImportacao.length === 0" class="mb-4 rounded-xl border border-amber-200/90 bg-amber-50/90 px-4 py-2.5 text-xs text-amber-900">
+        Cadastre ao menos uma conta em <span class="font-semibold">Parametrização → Contas bancárias</span> para vincular
+        o OFX a um nome profissional (sem isso, o sistema usa só o identificador do arquivo).
+      </div>
       <div class="flex flex-wrap items-end gap-3">
         <input #ofxInput type="file" accept=".ofx" class="hidden" (change)="onSelecionarArquivo($event)" />
         <button type="button"

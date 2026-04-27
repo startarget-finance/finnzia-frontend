@@ -276,6 +276,13 @@ export class ErpFinanceiroService {
     });
   }
 
+  atualizarMovimentacao(idMovimentacao: string, payload: CriarMovimentacaoPayload): Observable<any> {
+    const idEnc = encodeURIComponent(idMovimentacao);
+    return this.http.put<any>(`${this.apiUrl}/movimentacoes/${idEnc}`, payload, {
+      headers: this.getHeaders()
+    });
+  }
+
   obterResumoFinanceiro(filtros: FiltrosMovimentacoes = {}): Observable<ResumoFinanceiroResponse> {
     let params = new HttpParams();
     if (filtros.dataInicio) params = params.set('dataInicio', filtros.dataInicio);
@@ -302,9 +309,18 @@ export class ErpFinanceiroService {
     });
   }
 
-  importarOfx(file: File): Observable<OfxImportResponse> {
+  importarOfx(
+    file: File,
+    opts?: { idContaBancaria?: number; nomeContaExibicao?: string }
+  ): Observable<OfxImportResponse> {
     const form = new FormData();
     form.append('file', file, file.name);
+    if (opts?.idContaBancaria != null && opts.idContaBancaria > 0) {
+      form.append('idContaBancaria', String(opts.idContaBancaria));
+    }
+    if (opts?.nomeContaExibicao != null && opts.nomeContaExibicao.trim() !== '') {
+      form.append('nomeContaExibicao', opts.nomeContaExibicao.trim());
+    }
     // Não setar Content-Type manualmente; o browser coloca boundary.
     return this.http.post<OfxImportResponse>(`${this.apiUrl}/import/ofx`, form, {
       headers: this.getAuthHeadersOnly(),

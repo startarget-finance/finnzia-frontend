@@ -1,8 +1,10 @@
-import { Component, HostListener, OnInit, PLATFORM_ID, Inject } from '@angular/core';
+import { Component, HostListener, OnInit, OnDestroy, PLATFORM_ID, Inject } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from './services/auth.service';
+import { CompanySelectorService } from './services/company-selector.service';
 import { LoadingComponent } from './components/loading/loading.component';
 import { ErrorNotificationComponent } from './components/error-notification/error-notification.component';
 
@@ -12,7 +14,7 @@ import { ErrorNotificationComponent } from './components/error-notification/erro
   imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule, FormsModule, LoadingComponent, ErrorNotificationComponent],
   templateUrl: './app.component.html',
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   title = 'ia-financeira-erp';
   isMobileMenuOpen = false;
   isUserMenuOpen = false;
@@ -20,6 +22,11 @@ export class AppComponent implements OnInit {
   /** Desktop: sidebar estreita por padrão; expande ao passar o mouse e recolhe ao sair. */
   isSidebarCollapsed = true;
   currentYear: number = new Date().getFullYear();
+
+  /** Nome da empresa ativa (contexto multi-empresa) para exibir no topo. */
+  nomeEmpresaAtual: string | null = null;
+
+  private destroy$ = new Subject<void>();
 
   // Simular tipo de usuário (em produção viria do AuthService)
   get isAdmin(): boolean {
@@ -49,13 +56,26 @@ export class AppComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router,
+    private companySelector: CompanySelectorService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
   ngOnInit() {
     // Bloquear chamadas HTTP durante SSR para evitar page freeze no Vercel
-    if (!isPlatformBrowser(this.platformId)) { return; }
-    // Fluxo atual é single-tenant por usuário; não há sincronização de empresas por login.
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    this.companySelector.empresaSelecionada$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((emp) => {
+        const n = emp?.nomeEmpresa?.trim();
+        this.nomeEmpresaAtual = n && n.length > 0 ? n : null;
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   /**
@@ -109,9 +129,9 @@ export class AppComponent implements OnInit {
     return this.hasPermission('contratos');
   }
 
-  /** Mesma permissão de contratos: visão operacional do time comercial. */
+  /** Frente comercial: receitas em Movimentações. Quem tem movimentacoes ou contratos enxerga o atalho. */
   canAccessFrenteCaixaComercial(): boolean {
-    return this.hasPermission('contratos');
+    return this.hasPermission('movimentacoes') || this.hasPermission('contratos');
   }
 
   /** Parametrização operacional usada por Financeiro/DFC. */

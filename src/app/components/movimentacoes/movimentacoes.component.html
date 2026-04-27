@@ -453,8 +453,16 @@
                       {{ mov.DataQuitacao ? 'Quitado' : 'Pendente' }}
                     </div>
 
-                    <!-- Ações (anexos) no lado direito do status, pequeno e sem texto -->
+                    <!-- Ações: editar + anexos -->
                     <div class="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        (click)="abrirModalEdicao(mov); $event.stopPropagation()"
+                        title="Editar lançamento"
+                        class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-300/90 bg-white text-slate-600 transition-all duration-150 hover:border-violet-300 hover:bg-violet-50/60 hover:text-violet-800"
+                      >
+                        <i class="fi fi-rr-edit h-3.5 w-3.5 flex items-center justify-center text-[0.85rem] leading-none" aria-hidden="true"></i>
+                      </button>
                       <button
                         *ngFor="let t of tiposAnexoLista"
                         type="button"
@@ -627,9 +635,17 @@
           <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
             <div>
               <h3 class="text-lg font-semibold text-slate-900">
-                {{ novoLancamento.tipo === 'despesa' ? 'Nova conta a pagar' : 'Nova conta a receber' }}
+                <ng-container *ngIf="cadastroModo === 'editar'; else tituloNovoLancamento">Editar lançamento</ng-container>
+                <ng-template #tituloNovoLancamento>
+                  {{ novoLancamento.tipo === 'despesa' ? 'Nova conta a pagar' : 'Nova conta a receber' }}
+                </ng-template>
               </h3>
-              <p class="mt-0.5 text-xs text-slate-500">Preencha os dados e confirme o lançamento financeiro.</p>
+              <p class="mt-0.5 text-xs text-slate-500">
+                <ng-container *ngIf="cadastroModo === 'editar'">
+                  {{ novoLancamento.tipo === 'despesa' ? 'Despesa' : 'Receita' }} — ajuste os campos e salve. O tipo do lançamento não é alterado nesta tela.
+                </ng-container>
+                <ng-container *ngIf="cadastroModo !== 'editar'">Preencha os dados e confirme o lançamento financeiro.</ng-container>
+              </p>
             </div>
             <button type="button" (click)="fecharModalCadastro()" class="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800">
               <i class="fi fi-rr-cross-small text-[1rem] leading-none" aria-hidden="true"></i>
@@ -734,7 +750,7 @@
             </button>
             <button type="button" (click)="salvarNovoLancamento()" [disabled]="salvandoCadastro"
                     class="rounded-xl bg-gradient-to-r from-violet-600 to-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70">
-              {{ salvandoCadastro ? 'Salvando...' : 'Salvar lançamento' }}
+              {{ salvandoCadastro ? 'Salvando...' : (cadastroModo === 'editar' ? 'Salvar alterações' : 'Salvar lançamento') }}
             </button>
           </div>
         </div>

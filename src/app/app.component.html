@@ -175,9 +175,9 @@
          [class.gap-3]="!isSidebarCollapsed"
          [class.px-3]="!isSidebarCollapsed"
          [class.justify-center]="isSidebarCollapsed"
-         title="Frente Comercial">
+         title="Frente comercial — propostas e visão do time">
         <i class="fi fi-rr-bullhorn flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
-        <span *ngIf="!isSidebarCollapsed" class="truncate">Frente Comercial</span>
+        <span *ngIf="!isSidebarCollapsed" class="truncate">Frente comercial</span>
       </a>
 
       <a *ngIf="canAccessChat()" routerLink="/chat"
@@ -301,7 +301,7 @@
            [ngClass]="rlaFcM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
            class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
           <i class="fi fi-rr-bullhorn flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
-          Frente Comercial
+          Frente comercial
         </a>
         <a *ngIf="canAccessChat()" routerLink="/chat" (click)="closeMobileMenu()"
            routerLinkActive #rlaChatM="routerLinkActive"
@@ -331,8 +331,31 @@
   <!-- ========== MAIN CONTENT AREA ========== -->
   <div [ngClass]="{'relative z-0 flex flex-1 flex-col min-h-0 min-w-0': !isAuthPublicPage()}">
     <!-- Desktop top bar: branco, clean -->
-    <header *ngIf="!isAuthPublicPage()" class="hidden lg:flex h-[52px] bg-white border-b border-gray-200/90 items-center justify-between px-5 flex-shrink-0">
-      <div class="flex items-center gap-5 min-w-0"></div>
+    <header *ngIf="!isAuthPublicPage()" class="hidden lg:flex h-[52px] bg-white border-b border-gray-200/90 items-center justify-between gap-3 px-5 flex-shrink-0">
+      <div class="flex min-w-0 flex-1 items-center pr-2">
+        <div
+          *ngIf="nomeEmpresaAtual"
+          class="group flex min-w-0 max-w-[min(56vw,28rem)] items-stretch overflow-hidden rounded-lg border border-slate-200/90 bg-white shadow-sm ring-1 ring-slate-900/[0.04] transition-shadow duration-200 hover:shadow-md hover:ring-slate-900/[0.06]"
+          [attr.aria-label]="'Empresa ativa: ' + nomeEmpresaAtual"
+        >
+          <div class="w-1 shrink-0 bg-gradient-to-b from-violet-600 via-violet-500 to-teal-500" aria-hidden="true"></div>
+          <div class="flex min-w-0 flex-1 items-center gap-2.5 py-1.5 pl-2.5 pr-3.5">
+            <div
+              class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-slate-50 to-slate-100/90 text-violet-600 ring-1 ring-slate-200/60"
+            >
+              <i class="fi fi-rr-building flex h-[0.95rem] w-[0.95rem] items-center justify-center text-[0.8rem] leading-none" aria-hidden="true"></i>
+            </div>
+            <div class="min-w-0">
+              <p class="text-[10px] font-medium uppercase leading-none tracking-[0.14em] text-slate-500">Empresa ativa</p>
+              <p
+                class="mt-0.5 truncate text-sm font-semibold leading-snug tracking-tight text-slate-900"
+                [title]="nomeEmpresaAtual!">
+                {{ nomeEmpresaAtual }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="flex items-center gap-3 flex-shrink-0">
         <button type="button" class="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors" aria-label="Notificações">
@@ -418,10 +441,20 @@
           <path *ngIf="isMobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
-      <div class="flex-1 flex justify-center">
+      <div class="flex min-w-0 flex-1 flex-col items-center justify-center">
         <a routerLink="/dashboard" class="inline-flex max-w-[min(320px,calc(100vw-5rem))] items-center justify-center rounded-xl px-2 py-1.5 transition-colors hover:bg-slate-50/80">
           <img src="assets/images/finzzialogo.png" alt="Finzzia" class="block h-auto w-full max-h-14 object-contain object-center" />
         </a>
+        <div
+          *ngIf="nomeEmpresaAtual"
+          class="mt-1.5 flex w-full max-w-[min(300px,calc(100vw-5.5rem))] items-center justify-center gap-1.5"
+        >
+          <span
+            class="max-w-full truncate rounded-full border border-slate-200/90 bg-slate-50/90 px-2.5 py-0.5 text-center text-[11px] font-semibold leading-tight text-slate-800 shadow-sm ring-1 ring-slate-900/[0.03]"
+            [title]="nomeEmpresaAtual!">
+            {{ nomeEmpresaAtual }}
+          </span>
+        </div>
       </div>
       <div class="w-9"></div>
     </header>

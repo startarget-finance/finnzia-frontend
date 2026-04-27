@@ -2,13 +2,15 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 
 /**
- * Serviço para gerenciar a empresa selecionada no contexto da aplicação
- * 
- * Responsabilidades:
- * - Armazenar empresa padrão/selecionada do usuário
- * - Notificar componentes sobre mudanças
- * - Persistir seleção em sessionStorage
- * - Validar acesso à empresa
+ * Empresa ativa do contexto (um usuário, várias empresas permitidas).
+ *
+ * Cada aba do navegador tem seu **próprio** `sessionStorage` — o mesmo que no Bom
+ * Controle: você pode deixar uma aba em cada CNPJ. O que atrapalhava era
+ * o reload da lista da API, que redefinia sempre a empresa **padrão**; isso
+ * agora **preserva** a empresa já selecionada nessa aba, se ainda for válida.
+ *
+ * Ainda dá para abrir uma aba com contexto explícito na URL:
+ * `?idEmpresa=123` ou `?empresa=123` (a URL tem prioridade nesse carregamento).
  */
 @Injectable({
   providedIn: 'root'
@@ -86,15 +88,67 @@ export class CompanySelectorService {
     if (empresas) {
       this.empresasPermitidas.next(empresas);
       this.salvarListaNoStorage(empresas);
-      this.selecionarEmpresaPadrao();
+      this.aposAtualizarLista(empresas);
     } else {
       // Carregar do storage
       const empsStorage = this.carregarListaDoStorage();
       if (empsStorage.length > 0) {
         this.empresasPermitidas.next(empsStorage);
-        this.selecionarEmpresaPadrao();
+        this.aposAtualizarLista(empsStorage);
       }
     }
+  }
+
+  /**
+   * 1) Se a URL tiver `idEmpresa` / `empresa` / `e` válido na lista → usa.
+   * 2) Se já houver empresa nesta aba (sessionStorage) e ainda for permitida → mantém.
+   * 3) Senão → padrão da lista.
+   */
+  private aposAtualizarLista(empresas: CompaniaInfo[]): void {
+    if (empresas.length === 0) {
+      return;
+    }
+    const idUrl = this.lerIdEmpresaNaUrl();
+    if (idUrl != null) {
+      const matchUrl = this.encontrarEmpresa(empresas, idUrl);
+      if (matchUrl) {
+        this.selecionarEmpresa(matchUrl);
+        return;
+      }
+    }
+    const atual = this.empresaSelecionadaSubject.value;
+    if (atual?.idEmpresa) {
+      const manter = this.encontrarEmpresa(empresas, atual.idEmpresa);
+      if (manter) {
+        this.selecionarEmpresa(manter);
+        return;
+      }
+    }
+    this.selecionarEmpresaPadrao();
+  }
+
+  private encontrarEmpresa(empresas: CompaniaInfo[], idEmpresa: number): CompaniaInfo | null {
+    const e = empresas.find(
+      (x) => x.idEmpresa === idEmpresa && (x.ativo === undefined || x.ativo !== false)
+    );
+    return e ?? null;
+  }
+
+  private lerIdEmpresaNaUrl(): number | null {
+    if (typeof window === 'undefined' || !window.location?.search) {
+      return null;
+    }
+    const p = new URLSearchParams(window.location.search);
+    for (const key of ['idEmpresa', 'empresa', 'e']) {
+      const raw = p.get(key);
+      if (raw) {
+        const n = parseInt(String(raw), 10);
+        if (!Number.isNaN(n) && n > 0) {
+          return n;
+        }
+      }
+    }
+    return null;
   }
 
   /**
