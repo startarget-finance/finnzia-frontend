@@ -6,8 +6,11 @@ import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ErpFinanceiroService, MovimentacaoFinanceira, FiltrosMovimentacoes } from '../../services/erp-financeiro.service';
 import { ContaBancariaCadastroService } from '../../services/conta-bancaria-cadastro.service';
+import { ClienteCadastroService } from '../../services/cliente-cadastro.service';
+import { FornecedorCadastroService } from '../../services/fornecedor-cadastro.service';
 import { OmieService, MovimentacaoOmie, MovimentacoesOmieResponse, FiltrosMovimentacoesOmie } from '../../services/omie.service';
 import { CompanySelectorService } from '../../services/company-selector.service';
+import { CategoriasFinanceirasService, TipoCategoriaFinanceira } from '../../services/categorias-financeiras.service';
 import Swal from 'sweetalert2';
 import {
   MovimentacoesAnexosService,
@@ -32,7 +35,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   novoLancamento: {
     tipo: 'receita' | 'despesa';
     descricao: string;
-    clienteFornecedor: string;
+    clienteFornecedorOpcao: string;
+    clienteFornecedorManual: string;
     valor: string;
     dataVencimento: string;
     dataCompetencia: string;
@@ -205,6 +209,11 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   categorias: Array<{ value: string, label: string }> = [
     { value: '', label: 'Todas as Categorias' }
   ];
+  categoriasCadastro: Array<{ value: string; label: string; tipo: TipoCategoriaFinanceira }> = [];
+  categoriasCadastroTipo: Array<{ value: string; label: string }> = [];
+  clientesCadastro: Array<{ value: string; label: string }> = [];
+  fornecedoresCadastro: Array<{ value: string; label: string }> = [];
+  parceirosCadastroTipo: Array<{ value: string; label: string }> = [];
   contasBancarias: Array<{ value: string, label: string }> = [
     { value: '', label: 'Todas as contas' }
   ];
@@ -226,6 +235,9 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     private companySelectorService: CompanySelectorService,
     private movimentacoesAnexosService: MovimentacoesAnexosService,
     private contaBancariaCadastroService: ContaBancariaCadastroService,
+    private clienteCadastroService: ClienteCadastroService,
+    private fornecedorCadastroService: FornecedorCadastroService,
+    private categoriasFinanceirasService: CategoriasFinanceirasService,
     private route: ActivatedRoute
   ) {
     this.visibleMonth = new Date();
@@ -276,6 +288,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     // Carrega automaticamente com filtro de data do mês atual
     // A empresa é obtida via CompanySelectorService (X-Empresa-Id header)
     this.carregarMapaNomesContasCadastro();
+    this.carregarCategoriasCadastroPorEmpresa();
+    this.carregarParceirosCadastroPorEmpresa();
     this.carregarMovimentacoes();
 
     this.companySelectorService.empresaSelecionada$
@@ -285,6 +299,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
         this.anexoDragOver = false;
         this.anexoDragDepth = 0;
         this.carregarMapaNomesContasCadastro();
+        this.carregarCategoriasCadastroPorEmpresa();
+        this.carregarParceirosCadastroPorEmpresa();
       });
 
     this.abrirCadastroViaQueryParam();
@@ -392,10 +408,11 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     return {
       tipo,
       descricao: '',
-      clienteFornecedor: '',
+      clienteFornecedorOpcao: '',
+      clienteFornecedorManual: '',
       valor: '',
       dataVencimento: hoje,
-      dataCompetencia: hoje,
+      dataCompetencia: this.competenciaMesAnoDeData(hoje),
       marcarComoQuitado: false,
       dataQuitacao: '',
       categoria: '',
@@ -414,6 +431,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     this.novoLancamento = this.criarEstadoInicialCadastro(tipo);
     this.cadastroErrors = {};
     this.mostrarModalCadastro = true;
+    this.atualizarOpcoesCategoriaCadastro(tipo);
+    this.atualizarOpcoesParceiroCadastro(tipo);
     this.atualizarSnapshotCadastro();
   }
 
@@ -429,9 +448,18 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     const tipo: 'receita' | 'despesa' = mov.Debito ? 'despesa' : 'receita';
     const hoje = this.dateToStr(new Date());
     const catNome = (mov.NomeCategoriaFinanceira || '').trim();
-    const catEscolha = this.resolverOpcaoOuManual(this.categorias, catNome);
+    this.atualizarOpcoesCategoriaCadastro(tipo);
+    const catEscolha = this.resolverOpcaoOuManual(this.categoriasCadastroTipo, catNome);
     const contaNome = (mov.NomeContaFinanceira || '').trim();
     const contaEscolha = this.resolverOpcaoOuManual(this.contasBancarias, contaNome);
+    this.atualizarOpcoesParceiroCadastro(tipo);
+    const parceiroNome = (
+      mov.NomeClienteFornecedor ||
+      mov.NomeFantasiaClienteFornecedor ||
+      mov.RazaoSocialClienteFornecedor ||
+      ''
+    ).toString().trim();
+    const parceiroEscolha = this.resolverOpcaoOuManual(this.parceirosCadastroTipo, parceiroNome);
 
     const venc = this.normalizarDataParaInput(mov.DataVencimento);
     const comp = this.normalizarDataParaInput(mov.DataCompetencia) || venc;
@@ -441,15 +469,11 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     this.novoLancamento = {
       tipo,
       descricao: (mov.Nome || '').trim(),
-      clienteFornecedor: (
-        mov.NomeClienteFornecedor ||
-        mov.NomeFantasiaClienteFornecedor ||
-        mov.RazaoSocialClienteFornecedor ||
-        ''
-      ).toString().trim(),
+      clienteFornecedorOpcao: parceiroEscolha.opcao,
+      clienteFornecedorManual: parceiroEscolha.manual,
       valor: this.valorNumericoParaInputBr(mov.Valor),
       dataVencimento: venc || hoje,
-      dataCompetencia: comp || venc || hoje,
+      dataCompetencia: this.competenciaMesAnoDeData(comp || venc || hoje),
       marcarComoQuitado: temQuit,
       dataQuitacao: temQuit ? quit : '',
       categoria: '',
@@ -475,7 +499,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     }
     const found = opcoes.find((c) => c.label === t && !!c.value);
     if (found) {
-      return { opcao: found.label, manual: '' };
+      return { opcao: found.value, manual: '' };
     }
     return { opcao: '__manual__', manual: t };
   }
@@ -540,11 +564,12 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     const valorBruto = String(this.novoLancamento.valor ?? '').trim();
     const valorNumerico = this.parseValorBr(valorBruto);
     const categoriaFinal = this.obterCategoriaFinalCadastro();
+    const parceiroFinal = this.obterClienteFornecedorFinalCadastro();
 
     if (!this.novoLancamento.descricao.trim()) {
       errors['descricao'] = 'Informe a descrição.';
     }
-    if (!this.novoLancamento.clienteFornecedor.trim()) {
+    if (!parceiroFinal.trim()) {
       errors['clienteFornecedor'] = 'Informe o cliente/fornecedor.';
     }
     if (!this.novoLancamento.dataVencimento) {
@@ -578,10 +603,11 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     const valorNumerico = this.parseValorBr(valorBruto);
     const categoriaFinal = this.obterCategoriaFinalCadastro();
     const contaFinal = this.obterContaFinalCadastro();
+    const clienteFornecedorFinal = this.obterClienteFornecedorFinalCadastro();
     const payload = {
       debito: this.novoLancamento.tipo === 'despesa',
       dataVencimento: this.novoLancamento.dataVencimento,
-      dataCompetencia: this.novoLancamento.dataCompetencia || this.novoLancamento.dataVencimento,
+      dataCompetencia: this.competenciaMesAnoParaData(this.novoLancamento.dataCompetencia) || this.novoLancamento.dataVencimento,
       dataQuitacao: this.novoLancamento.marcarComoQuitado
         ? (this.novoLancamento.dataQuitacao || this.novoLancamento.dataVencimento)
         : undefined,
@@ -590,7 +616,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       observacao: this.novoLancamento.observacao.trim() || undefined,
       nomeCategoriaFinanceira: categoriaFinal,
       nomeContaFinanceira: contaFinal || undefined,
-      nomeClienteFornecedor: this.novoLancamento.clienteFornecedor.trim() || undefined,
+      nomeClienteFornecedor: clienteFornecedorFinal || undefined,
     };
 
     const isEdicao = this.cadastroModo === 'editar' && this.editandoMovimentacaoId;
@@ -635,9 +661,24 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     }
   }
 
+  onTipoLancamentoChange(): void {
+    this.atualizarOpcoesCategoriaCadastro(this.novoLancamento.tipo);
+    this.atualizarOpcoesParceiroCadastro(this.novoLancamento.tipo);
+    this.novoLancamento.categoriaOpcao = '';
+    this.novoLancamento.categoriaManual = '';
+    this.novoLancamento.clienteFornecedorOpcao = '';
+    this.novoLancamento.clienteFornecedorManual = '';
+  }
+
   onContaOpcaoChange(): void {
     if (this.novoLancamento.contaOpcao !== '__manual__') {
       this.novoLancamento.contaManual = '';
+    }
+  }
+
+  onClienteFornecedorOpcaoChange(): void {
+    if (this.novoLancamento.clienteFornecedorOpcao !== '__manual__') {
+      this.novoLancamento.clienteFornecedorManual = '';
     }
   }
 
@@ -659,11 +700,141 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     return this.novoLancamento.categoriaOpcao.trim();
   }
 
+  private obterClienteFornecedorFinalCadastro(): string {
+    if (this.novoLancamento.clienteFornecedorOpcao === '__manual__') {
+      return this.novoLancamento.clienteFornecedorManual.trim();
+    }
+    return this.novoLancamento.clienteFornecedorOpcao.trim();
+  }
+
+  private carregarCategoriasCadastroPorEmpresa(): void {
+    const idEmp = this.empresaIdAtual();
+    if (!idEmp) {
+      this.categoriasCadastro = [];
+      this.categoriasCadastroTipo = [];
+      return;
+    }
+    this.categoriasFinanceirasService.listar(idEmp).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (categorias) => {
+        const opcoes: Array<{ value: string; label: string; tipo: TipoCategoriaFinanceira }> = [];
+        for (const c of categorias || []) {
+          const subs = c.subcategorias || [];
+          if (subs.length > 0) {
+            for (const s of subs) {
+              const label = `${c.nome} > ${s.nome}`;
+              opcoes.push({ value: label, label, tipo: c.tipo });
+            }
+          } else {
+            opcoes.push({ value: c.nome, label: c.nome, tipo: c.tipo });
+          }
+        }
+        this.categoriasCadastro = opcoes;
+        this.atualizarOpcoesCategoriaCadastro(this.novoLancamento.tipo);
+      },
+      error: () => {
+        this.categoriasCadastro = [];
+        this.categoriasCadastroTipo = [];
+      }
+    });
+  }
+
+  private atualizarOpcoesCategoriaCadastro(tipo: TipoCategoriaFinanceira): void {
+    this.categoriasCadastroTipo = this.categoriasCadastro
+      .filter((c) => c.tipo === tipo)
+      .map((c) => ({ value: c.value, label: c.label }));
+  }
+
+  private carregarParceirosCadastroPorEmpresa(): void {
+    const idEmp = this.empresaIdAtual();
+    if (!idEmp) {
+      this.clientesCadastro = [];
+      this.fornecedoresCadastro = [];
+      this.parceirosCadastroTipo = [];
+      return;
+    }
+
+    this.clienteCadastroService
+      .listar({ idEmpresa: idEmp, page: 0, size: 500, sort: 'razaoSocial,asc' })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (page) => {
+          this.clientesCadastro = (page.content || [])
+            .map((c) => {
+              const nome = (c.nomeFantasia || '').trim() || (c.razaoSocial || '').trim();
+              return nome ? { value: nome, label: nome } : null;
+            })
+            .filter((x): x is { value: string; label: string } => !!x);
+          this.atualizarOpcoesParceiroCadastro(this.novoLancamento.tipo);
+        },
+        error: () => {
+          this.clientesCadastro = [];
+          this.atualizarOpcoesParceiroCadastro(this.novoLancamento.tipo);
+        },
+      });
+
+    this.fornecedorCadastroService
+      .listar({ idEmpresa: idEmp, ativo: true, page: 0, size: 500, sort: 'razaoSocial,asc' })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (page) => {
+          this.fornecedoresCadastro = (page.content || [])
+            .map((f) => {
+              const nome = (f.nomeFantasia || '').trim() || (f.razaoSocial || '').trim();
+              return nome ? { value: nome, label: nome } : null;
+            })
+            .filter((x): x is { value: string; label: string } => !!x);
+          this.atualizarOpcoesParceiroCadastro(this.novoLancamento.tipo);
+        },
+        error: () => {
+          this.fornecedoresCadastro = [];
+          this.atualizarOpcoesParceiroCadastro(this.novoLancamento.tipo);
+        },
+      });
+  }
+
+  private atualizarOpcoesParceiroCadastro(tipo: 'receita' | 'despesa'): void {
+    this.parceirosCadastroTipo = (tipo === 'despesa' ? this.fornecedoresCadastro : this.clientesCadastro)
+      .slice()
+      .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
+  }
+
   private obterContaFinalCadastro(): string {
     if (this.novoLancamento.contaOpcao === '__manual__') {
       return this.novoLancamento.contaManual.trim();
     }
-    return this.novoLancamento.contaOpcao.trim();
+    const contaId = this.novoLancamento.contaOpcao.trim();
+    if (!contaId) {
+      return '';
+    }
+    return this.rotuloContaPorId.get(contaId) || this.novoLancamento.contaManual.trim() || '';
+  }
+
+  private competenciaMesAnoParaData(valor: string): string {
+    const v = (valor || '').trim();
+    if (!v) return '';
+    const m = /^(\d{4})-(\d{2})$/.exec(v);
+    if (!m) return '';
+    return `${m[1]}-${m[2]}-01`;
+  }
+
+  private competenciaMesAnoDeData(valor: string): string {
+    const v = (valor || '').trim();
+    if (!v) return '';
+    const m = /^(\d{4})-(\d{2})/.exec(v);
+    if (!m) return '';
+    return `${m[1]}-${m[2]}`;
+  }
+
+  cadastroTemParceiros(): boolean {
+    return this.parceirosCadastroTipo.length > 0;
+  }
+
+  movimentacaoEditandoAtual(): MovimentacaoFinanceira | null {
+    const id = this.editandoMovimentacaoId;
+    if (!id) {
+      return null;
+    }
+    return this.movimentacoes.find((m) => m.IdMovimentacaoFinanceiraParcela === id) || null;
   }
 
   private parseValorBr(valor: string): number {

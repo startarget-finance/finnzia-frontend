@@ -18,11 +18,9 @@
   <div class="space-y-3">
     <div *ngIf="!embedded" class="space-y-3">
       <div>
-        <h1 class="text-2xl font-semibold text-slate-900 tracking-tight">
-          Cadastro de Plano de Contas Gerencial
-        </h1>
+        <h1 class="text-2xl font-semibold text-slate-900 tracking-tight">Categorias financeiras</h1>
         <p class="text-sm text-slate-500 mt-1">
-          Modelos de plano para organização gerencial e financeira.
+          Cadastre categoria, subcategoria e tipo para usar em contas a pagar/receber.
         </p>
       </div>
     </div>
@@ -30,15 +28,13 @@
     <div
       class="flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-slate-200/80 bg-gradient-to-r from-slate-50/95 via-white to-violet-50/35 px-3.5 py-3.5 shadow-sm sm:px-4"
     >
-      <div class="text-xs text-slate-500 font-medium">
-        Cadastre e organize os planos conforme a estrutura gerencial da operação.
-      </div>
+      <div class="text-xs text-slate-500 font-medium">Estrutura igual ao DFC: Receita e Despesa com subcategorias.</div>
       <button
         type="button"
         (click)="abrirNovo()"
         class="h-10 shrink-0 rounded-xl bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 px-4 text-sm font-semibold text-white shadow-[0_12px_25px_-12px_rgba(124,58,237,0.55)] transition-all hover:brightness-105"
       >
-        + Novo plano
+        + Nova categoria
       </button>
     </div>
   </div>
@@ -59,86 +55,62 @@
       <table class="min-w-full text-[13px] text-slate-800">
         <thead>
           <tr class="border-b border-slate-200/90 bg-slate-50/90 text-left">
-            <th class="w-[30%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
-              Plano
-            </th>
-            <th class="w-36 px-3 py-3 text-right text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
+            <th class="w-36 px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Tipo</th>
+            <th class="w-[28%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Categoria</th>
+            <th class="px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Subcategorias</th>
+            <th class="w-20 px-3 py-3 text-right text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
               Ações
             </th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
-          <tr *ngIf="carregando && planos.length === 0">
-            <td colspan="2" class="py-8 text-center text-sm text-slate-500">Carregando…</td>
+          <tr *ngIf="carregando && categorias.length === 0">
+            <td colspan="4" class="py-8 text-center text-sm text-slate-500">Carregando…</td>
           </tr>
           <tr
-            *ngFor="let p of planos; let odd = odd"
+            *ngFor="let c of categorias; let odd = odd"
             class="transition-colors hover:bg-violet-50/35"
             [ngClass]="{ 'bg-slate-50/40': odd }"
           >
             <td class="px-3 py-3 align-middle">
-              <span class="font-semibold text-slate-900">{{ p.nome }}</span>
-              <span
-                *ngIf="p.padrao"
-                class="ml-2 inline-flex items-center rounded-md border border-amber-200/80 bg-amber-50 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-amber-800"
-                >Padrão</span
-              >
+              <span class="inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide" [ngClass]="badgeTipo(c.tipo)">
+                {{ tipoLabel(c.tipo) }}
+              </span>
             </td>
-            <td class="px-3 py-3 text-right align-middle whitespace-nowrap">
-              <div
-                class="inline-flex gap-0.5 rounded-xl border border-slate-200/80 bg-white p-0.5 shadow-sm"
-                role="group"
-                aria-label="Ações do plano"
-              >
-                <button
-                  type="button"
-                  (click)="marcarPadrao(p)"
-                  class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-amber-600 transition-colors hover:bg-amber-50"
-                  title="Marcar como padrão"
-                >
-                  <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                    <path
-                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                    />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  (click)="abrirEditar(p)"
-                  class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100"
-                  title="Editar"
-                >
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                    />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  (click)="excluir(p)"
-                  class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-rose-600 transition-colors hover:bg-rose-50"
-                  title="Excluir"
-                >
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                    />
-                  </svg>
-                </button>
+            <td class="px-3 py-3 align-middle">
+              <span class="font-semibold text-slate-900">{{ c.nome }}</span>
+            </td>
+            <td class="px-3 py-3 align-middle">
+              <div class="flex flex-wrap gap-1.5">
+                <span *ngFor="let s of c.subcategorias" class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs text-slate-700">
+                  {{ s.nome }}
+                  <button type="button" class="text-rose-500 hover:text-rose-700" title="Remover subcategoria" (click)="excluirSubcategoria(c, s.id)">×</button>
+                </span>
+                <span *ngIf="c.subcategorias.length === 0" class="text-xs text-slate-400">Sem subcategoria</span>
               </div>
             </td>
+            <td class="px-3 py-3 text-right align-middle whitespace-nowrap">
+              <button
+                type="button"
+                (click)="excluirCategoria(c)"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-600 transition-colors hover:bg-rose-100"
+                title="Excluir categoria"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  />
+                </svg>
+              </button>
+            </td>
           </tr>
-          <tr *ngIf="!carregando && planos.length === 0">
-            <td colspan="2" class="py-12 px-4 text-center">
-              <p class="text-sm text-slate-600">Nenhum plano cadastrado.</p>
-              <p class="text-xs text-slate-400 mt-1">Use <strong class="text-slate-600">+ Novo plano</strong> para começar.</p>
+          <tr *ngIf="!carregando && categorias.length === 0">
+            <td colspan="4" class="py-12 px-4 text-center">
+              <p class="text-sm text-slate-600">Nenhuma categoria cadastrada.</p>
+              <p class="text-xs text-slate-400 mt-1">Use <strong class="text-slate-600">+ Nova categoria</strong> para começar.</p>
             </td>
           </tr>
         </tbody>
@@ -147,12 +119,10 @@
     <div
       class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/70 px-3 py-2.5 text-xs text-slate-600"
     >
-      <span *ngIf="planos.length" class="font-medium tabular-nums">
-        1 a {{ planos.length }} de {{ planos.length }}
-      </span>
+      <span *ngIf="categorias.length" class="font-medium tabular-nums">Total: {{ categorias.length }} categorias</span>
       <label
         class="inline-flex h-8 cursor-pointer items-center rounded-lg border border-slate-200/80 bg-white px-3 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
-        [class.ml-auto]="!planos.length"
+        [class.ml-auto]="!categorias.length"
       >
         <input type="file" accept=".json,application/json" class="hidden" (change)="onImportarArquivo($event)" />
         Importar JSON
@@ -171,10 +141,8 @@
   >
     <div class="flex items-start justify-between gap-4">
       <div>
-        <h2 class="text-lg font-semibold text-slate-900 tracking-tight">
-          {{ editandoId != null ? 'Editar plano' : 'Novo plano de contas' }}
-        </h2>
-        <p class="text-sm text-slate-500 mt-1">Defina o nome e se é o plano padrão.</p>
+        <h2 class="text-lg font-semibold text-slate-900 tracking-tight">Nova categoria financeira</h2>
+        <p class="text-sm text-slate-500 mt-1">Defina o tipo e inclua uma subcategoria opcional.</p>
       </div>
       <button
         type="button"
@@ -187,19 +155,30 @@
     </div>
     <div class="space-y-4">
       <div>
-        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Nome</label>
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Tipo</label>
+        <select [(ngModel)]="formTipo" class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm">
+          <option value="despesa">Despesa</option>
+          <option value="receita">Receita</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Categoria</label>
         <input
-          [(ngModel)]="formNome"
+          [(ngModel)]="formCategoria"
           class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-          placeholder="Ex.: Padrão, Mais Saúde…"
+          placeholder="Ex.: Operacional"
         />
       </div>
-      <div class="flex items-center gap-2">
-        <input type="checkbox" id="padrao" [(ngModel)]="formPadrao" />
-        <label for="padrao" class="text-sm text-slate-700">Definir como plano padrão</label>
+      <div>
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Subcategoria (opcional)</label>
+        <input
+          [(ngModel)]="formSubcategoria"
+          class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          placeholder="Ex.: Aluguel"
+        />
       </div>
       <p class="text-xs text-slate-500">
-        O plano será salvo automaticamente no cadastro da empresa.
+        Se a categoria já existir para esse tipo, a subcategoria será adicionada nela.
       </p>
     </div>
     <div class="flex justify-end gap-2 pt-1">

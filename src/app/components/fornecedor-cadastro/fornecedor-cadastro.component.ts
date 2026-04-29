@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
+import Swal from 'sweetalert2';
 import { CompanySelectorService } from '../../services/company-selector.service';
 import {
   ConsultaCnpjResult,
@@ -313,7 +314,7 @@ export class FornecedorCadastroComponent implements OnInit {
       .subscribe({
         next: (dados) => this.aplicarDadosCnpj(digits, dados),
         error: () => {
-          this.statusConsultaCnpj = 'Nao foi possivel consultar o CNPJ automaticamente.';
+          this.statusConsultaCnpj = 'Não foi possível consultar o CNPJ automaticamente no momento. Preencha os dados manualmente.';
         }
       });
   }
@@ -362,9 +363,20 @@ export class FornecedorCadastroComponent implements OnInit {
     });
   }
 
-  excluir(f: FornecedorCadastro): void {
+  async excluir(f: FornecedorCadastro): Promise<void> {
     const nome = f.razaoSocial || 'este fornecedor';
-    if (!confirm(`Excluir ${nome}?`)) {
+    const confirmacao = await Swal.fire({
+      icon: 'warning',
+      title: 'Excluir fornecedor?',
+      text: `Tem certeza que deseja excluir "${nome}"?`,
+      showCancelButton: true,
+      confirmButtonText: 'Excluir',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#334155',
+      reverseButtons: true,
+    });
+    if (!confirmacao.isConfirmed) {
       return;
     }
     this.erro = null;

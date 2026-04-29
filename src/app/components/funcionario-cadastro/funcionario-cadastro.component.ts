@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import Swal from 'sweetalert2';
 import { CompanySelectorService } from '../../services/company-selector.service';
 import {
   FuncionarioCadastro,
@@ -258,9 +259,20 @@ export class FuncionarioCadastroComponent implements OnInit {
     });
   }
 
-  excluir(f: FuncionarioCadastro): void {
+  async excluir(f: FuncionarioCadastro): Promise<void> {
     const nome = f.nomeCompleto || 'este funcionário';
-    if (!confirm(`Excluir ${nome}?`)) {
+    const confirmacao = await Swal.fire({
+      icon: 'warning',
+      title: 'Excluir funcionário?',
+      text: `Tem certeza que deseja excluir "${nome}"?`,
+      showCancelButton: true,
+      confirmButtonText: 'Excluir',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#334155',
+      reverseButtons: true,
+    });
+    if (!confirmacao.isConfirmed) {
       return;
     }
     this.erro = null;

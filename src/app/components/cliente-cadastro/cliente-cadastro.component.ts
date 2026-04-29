@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CompanySelectorService } from '../../services/company-selector.service';
+import Swal from 'sweetalert2';
 import {
   ClienteCadastro,
   ClienteCadastroPayload,
@@ -259,9 +260,20 @@ export class ClienteCadastroComponent implements OnInit {
     });
   }
 
-  excluir(c: ClienteCadastro): void {
+  async excluir(c: ClienteCadastro): Promise<void> {
     const nome = c.razaoSocial || 'este cliente';
-    if (!confirm(`Excluir ${nome}?`)) {
+    const confirmacao = await Swal.fire({
+      icon: 'warning',
+      title: 'Excluir cliente?',
+      text: `Tem certeza que deseja excluir "${nome}"?`,
+      showCancelButton: true,
+      confirmButtonText: 'Excluir',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#334155',
+      reverseButtons: true,
+    });
+    if (!confirmacao.isConfirmed) {
       return;
     }
     this.erro = null;

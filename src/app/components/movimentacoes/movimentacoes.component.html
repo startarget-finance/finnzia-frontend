@@ -630,85 +630,102 @@
         </div>
       </div>
 
-      <div *ngIf="mostrarModalCadastro" class="fixed inset-0 z-[10060] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm">
-        <div class="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white shadow-2xl">
-          <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+      <div *ngIf="mostrarModalCadastro" class="fixed inset-0 z-[10060] flex items-center justify-center bg-black/60 p-3 backdrop-blur-sm sm:p-4">
+        <div class="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+          <div class="flex items-start justify-between border-b border-slate-200 px-5 py-3.5 sm:px-6">
             <div>
-              <h3 class="text-lg font-semibold text-slate-900">
+              <h3 class="text-base font-semibold text-slate-900 sm:text-lg">
                 <ng-container *ngIf="cadastroModo === 'editar'; else tituloNovoLancamento">Editar lançamento</ng-container>
                 <ng-template #tituloNovoLancamento>
                   {{ novoLancamento.tipo === 'despesa' ? 'Nova conta a pagar' : 'Nova conta a receber' }}
                 </ng-template>
               </h3>
-              <p class="mt-0.5 text-xs text-slate-500">
+              <p class="mt-0.5 text-[11px] text-slate-500 sm:text-xs">
                 <ng-container *ngIf="cadastroModo === 'editar'">
                   {{ novoLancamento.tipo === 'despesa' ? 'Despesa' : 'Receita' }} — ajuste os campos e salve. O tipo do lançamento não é alterado nesta tela.
                 </ng-container>
                 <ng-container *ngIf="cadastroModo !== 'editar'">Preencha os dados e confirme o lançamento financeiro.</ng-container>
               </p>
             </div>
-            <button type="button" (click)="fecharModalCadastro()" class="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800">
+            <button type="button" (click)="fecharModalCadastro()" class="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800">
               <i class="fi fi-rr-cross-small text-[1rem] leading-none" aria-hidden="true"></i>
             </button>
           </div>
 
-          <div class="grid grid-cols-1 gap-4 px-6 py-5 md:grid-cols-2">
+          <div class="grid grid-cols-1 gap-3 overflow-y-auto px-5 py-4 sm:px-6 md:grid-cols-2">
             <div>
-              <label class="mb-1 block text-xs font-semibold text-slate-600">Descrição *</label>
+              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Descrição *</label>
               <input [(ngModel)]="novoLancamento.descricao" type="text"
                      [class.border-rose-300]="cadastroErrors['descricao']"
-                     class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
                      placeholder="Ex.: pagamento fornecedor XPTO" />
               <p *ngIf="cadastroErrors['descricao']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['descricao'] }}</p>
             </div>
             <div>
-              <label class="mb-1 block text-xs font-semibold text-slate-600">Cliente/Fornecedor *</label>
-              <input [(ngModel)]="novoLancamento.clienteFornecedor" type="text"
-                     [class.border-rose-300]="cadastroErrors['clienteFornecedor']"
-                     class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-                     placeholder="Nome do cliente ou fornecedor" />
+              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Cliente/Fornecedor *</label>
+              <select [(ngModel)]="novoLancamento.clienteFornecedorOpcao"
+                      (ngModelChange)="onClienteFornecedorOpcaoChange()"
+                      [class.border-rose-300]="cadastroErrors['clienteFornecedor']"
+                      class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100">
+                <option value="">Selecione {{ novoLancamento.tipo === 'despesa' ? 'um fornecedor' : 'um cliente' }}</option>
+                <option *ngFor="let parceiro of parceirosCadastroTipo" [value]="parceiro.value">{{ parceiro.label }}</option>
+                <option value="__manual__">Digitar manualmente</option>
+              </select>
+              <input *ngIf="novoLancamento.clienteFornecedorOpcao === '__manual__'"
+                     [(ngModel)]="novoLancamento.clienteFornecedorManual" type="text"
+                     class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                     [placeholder]="novoLancamento.tipo === 'despesa' ? 'Nome do fornecedor' : 'Nome do cliente'" />
+              <button *ngIf="!cadastroTemParceiros()"
+                      type="button"
+                      routerLink="/parametrizacao"
+                      class="mt-2 inline-flex items-center rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-xs font-semibold text-violet-700 transition hover:bg-violet-100">
+                + Adicionar {{ novoLancamento.tipo === 'despesa' ? 'fornecedor' : 'cliente' }}
+              </button>
               <p *ngIf="cadastroErrors['clienteFornecedor']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['clienteFornecedor'] }}</p>
             </div>
             <div>
-              <label class="mb-1 block text-xs font-semibold text-slate-600">Valor (R$) *</label>
+              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Valor (R$) *</label>
               <input [ngModel]="novoLancamento.valor" (ngModelChange)="onValorDigitado($event)" type="text" inputmode="numeric"
                      [class.border-rose-300]="cadastroErrors['valor']"
-                     class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
                      placeholder="1.234,56" />
               <p *ngIf="cadastroErrors['valor']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['valor'] }}</p>
             </div>
             <div>
-              <label class="mb-1 block text-xs font-semibold text-slate-600">Categoria *</label>
+              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Categoria *</label>
               <select [(ngModel)]="novoLancamento.categoriaOpcao" (ngModelChange)="onCategoriaOpcaoChange()"
                      [class.border-rose-300]="cadastroErrors['categoria']"
-                     class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
               >
                 <option value="">Selecione uma categoria</option>
-                <option *ngFor="let categoria of categorias" [value]="categoria.label" [hidden]="!categoria.value">
+                <option *ngFor="let categoria of categoriasCadastroTipo" [value]="categoria.value">
                   {{ categoria.label }}
                 </option>
                 <option value="__manual__">Digitar manualmente</option>
               </select>
               <input *ngIf="novoLancamento.categoriaOpcao === '__manual__'" [(ngModel)]="novoLancamento.categoriaManual" type="text"
-                     class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-                     placeholder="Digite a categoria" />
+                     class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                     placeholder="Digite categoria ou subcategoria" />
+              <p *ngIf="categoriasCadastroTipo.length === 0" class="mt-1 text-[11px] text-slate-500">
+                Nenhuma categoria de {{ novoLancamento.tipo === 'receita' ? 'receita' : 'despesa' }} cadastrada no Plano de contas.
+              </p>
               <p *ngIf="cadastroErrors['categoria']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['categoria'] }}</p>
             </div>
             <div>
-              <label class="mb-1 block text-xs font-semibold text-slate-600">Vencimento *</label>
+              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Vencimento *</label>
               <input [(ngModel)]="novoLancamento.dataVencimento" type="date"
                      [class.border-rose-300]="cadastroErrors['dataVencimento']"
-                     class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
+                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
               <p *ngIf="cadastroErrors['dataVencimento']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['dataVencimento'] }}</p>
             </div>
             <div>
-              <label class="mb-1 block text-xs font-semibold text-slate-600">Competência</label>
-              <input [(ngModel)]="novoLancamento.dataCompetencia" type="date"
-                     class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
+              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Competência</label>
+              <input [(ngModel)]="novoLancamento.dataCompetencia" type="month"
+                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
             </div>
             <div>
-              <label class="mb-1 block text-xs font-semibold text-slate-600">Status inicial</label>
-              <label class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-medium text-slate-700">
+              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Status inicial</label>
+              <label class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700">
                 <input type="checkbox"
                        [(ngModel)]="novoLancamento.marcarComoQuitado"
                        (ngModelChange)="onToggleMarcarComoQuitado()"
@@ -719,32 +736,51 @@
                      [(ngModel)]="novoLancamento.dataQuitacao"
                      type="date"
                      [class.border-rose-300]="cadastroErrors['dataQuitacao']"
-                     class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
+                     class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
               <p *ngIf="cadastroErrors['dataQuitacao']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['dataQuitacao'] }}</p>
             </div>
             <div>
-              <label class="mb-1 block text-xs font-semibold text-slate-600">Conta bancária</label>
+              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Conta bancária</label>
               <select [(ngModel)]="novoLancamento.contaOpcao" (ngModelChange)="onContaOpcaoChange()"
-                      class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100">
+                      class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100">
                 <option value="">Selecione uma conta (opcional)</option>
-                <option *ngFor="let conta of contasBancarias" [value]="conta.label" [hidden]="!conta.value">
+                <option *ngFor="let conta of contasBancarias" [value]="conta.value" [hidden]="!conta.value">
                   {{ conta.label }}
                 </option>
                 <option value="__manual__">Digitar manualmente</option>
               </select>
               <input *ngIf="novoLancamento.contaOpcao === '__manual__'" [(ngModel)]="novoLancamento.contaManual" type="text"
-                     class="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                     class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
                      placeholder="Digite a conta bancária" />
             </div>
             <div class="md:col-span-2">
-              <label class="mb-1 block text-xs font-semibold text-slate-600">Observação</label>
+              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Observação</label>
               <textarea [(ngModel)]="novoLancamento.observacao" rows="3"
-                        class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
                         placeholder="Detalhes adicionais do lançamento"></textarea>
+            </div>
+            <div class="md:col-span-2">
+              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Anexos (comprovante, NF, boleto, fatura)</label>
+              <p *ngIf="cadastroModo !== 'editar'" class="text-xs text-slate-500">
+                Salve o lançamento para habilitar anexos.
+              </p>
+              <div *ngIf="cadastroModo === 'editar' && movimentacaoEditandoAtual() as movEdicao"
+                   class="rounded-lg border border-slate-200 bg-slate-50/60 p-2.5">
+                <div class="flex flex-wrap gap-2">
+                  <label *ngFor="let tipo of tiposAnexoLista"
+                         class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700 hover:border-violet-300 hover:bg-violet-50/40">
+                    <input type="file"
+                           class="hidden"
+                           (change)="tipoAnexoAlvo = tipo.id; aoSelecionarArquivoPainel($event, movEdicao)" />
+                    <i class="fi {{ tipo.iconSlug }} text-[0.85rem]" aria-hidden="true"></i>
+                    {{ tipo.labelCompleto }}
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4">
+          <div class="flex items-center justify-end gap-2 border-t border-slate-200 bg-white px-5 py-3 sm:px-6">
             <button type="button" (click)="fecharModalCadastro()" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
               Cancelar
             </button>

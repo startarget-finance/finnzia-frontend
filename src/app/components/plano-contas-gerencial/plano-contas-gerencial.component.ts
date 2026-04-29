@@ -3,12 +3,13 @@ import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angu
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import Swal from 'sweetalert2';
 import { CompaniaInfo, CompanySelectorService } from '../../services/company-selector.service';
 import {
-  PlanoContasGerencial,
-  PlanoContasGerencialPayload,
-  PlanoContasGerencialService
-} from '../../services/plano-contas-gerencial.service';
+  CategoriaFinanceira,
+  CategoriasFinanceirasService,
+  TipoCategoriaFinanceira,
+} from '../../services/categorias-financeiras.service';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -24,19 +25,19 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
 
   carregando = false;
   erro: string | null = null;
-  planos: PlanoContasGerencial[] = [];
+  categorias: CategoriaFinanceira[] = [];
 
   empresasDisponiveis: CompaniaInfo[] = [];
 
   modalAberto = false;
-  editandoId: number | null = null;
-  formNome = '';
-  formPadrao = false;
+  formTipo: TipoCategoriaFinanceira = 'despesa';
+  formCategoria = '';
+  formSubcategoria = '';
   private modalSnapshot = '';
   private readonly destroy$ = new Subject<void>();
 
   constructor(
-    private readonly api: PlanoContasGerencialService,
+    private readonly categoriasApi: CategoriasFinanceirasService,
     private readonly companySelector: CompanySelectorService,
     private readonly authService: AuthService
   ) {}
@@ -60,45 +61,37 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
     this.erro = null;
     if (!this.authService.isAuthenticated() || !this.authService.getToken()) {
       this.carregando = false;
-      this.planos = [];
+      this.categorias = [];
       this.resumoTotal.emit(0);
       return;
     }
     const idEmpresaAtual = this.idEmpresaContexto();
     if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
       this.carregando = false;
-      this.planos = [];
+      this.categorias = [];
       this.resumoTotal.emit(0);
       return;
     }
     this.carregando = true;
-    const fid = idEmpresaAtual != null && idEmpresaAtual > 0 ? idEmpresaAtual : undefined;
-    this.api.listar(fid).subscribe({
-      next: (data) => {
-        this.planos = data || [];
-        this.resumoTotal.emit(this.planos.length);
+    this.categoriasApi.listar(idEmpresaAtual).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (lista) => {
+        this.categorias = lista || [];
+        this.resumoTotal.emit(this.categorias.length);
         this.carregando = false;
       },
       error: (e) => {
         this.carregando = false;
-        this.erro = e.error?.mensagem || 'Não foi possível carregar os planos.';
+        this.categorias = [];
         this.resumoTotal.emit(0);
+        this.erro = e.error?.mensagem || 'Não foi possível carregar categorias.';
       }
     });
   }
 
   abrirNovo(): void {
-    this.editandoId = null;
-    this.formNome = '';
-    this.formPadrao = false;
-    this.atualizarSnapshotModal();
-    this.modalAberto = true;
-  }
-
-  abrirEditar(p: PlanoContasGerencial): void {
-    this.editandoId = p.id;
-    this.formNome = p.nome;
-    this.formPadrao = !!p.padrao;
+    this.formTipo = 'despesa';
+    this.formCategoria = '';
+    this.formSubcategoria = '';
     this.atualizarSnapshotModal();
     this.modalAberto = true;
   }
@@ -112,9 +105,9 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
 
   private estadoModalAtual(): string {
     return JSON.stringify({
-      editandoId: this.editandoId,
-      formNome: this.formNome,
-      formPadrao: this.formPadrao
+      formTipo: this.formTipo,
+      formCategoria: this.formCategoria,
+      formSubcategoria: this.formSubcategoria
     });
   }
 
@@ -128,80 +121,125 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
   }
 
   salvar(): void {
-    const nome = this.formNome.trim();
-    if (!nome) {
-      this.erro = 'Informe o nome do plano.';
+    const nomeCategoria = this.formCategoria.trim();
+    if (!nomeCategoria) {
+      this.erro = 'Informe a categoria.';
       return;
     }
     const idEmpresaAtual = this.idEmpresaContexto();
     if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
-      this.erro = 'Não foi possível identificar a empresa do cadastro.';
+      this.erro = 'Não foi possível identificar a empresa ativa.';
       return;
     }
-    const body: PlanoContasGerencialPayload = {
-      nome,
-      idEmpresas: [idEmpresaAtual],
-      padrao: this.formPadrao
-    };
     this.erro = null;
     this.carregando = true;
-    const req =
-      this.editandoId != null
-        ? this.api.atualizar(this.editandoId, body)
-        : this.api.criar(body);
-    req.subscribe({
-      next: () => {
-        this.carregando = false;
+    this.categoriasApi.salvar({
+      idEmpresa: idEmpresaAtual,
+      tipo: this.formTipo,
+      nomeCategoria,
+      nomeSubcategoria: this.formSubcategoria.trim() || undefined,
+    }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (lista) => {
+        this.categorias = lista || [];
+        this.resumoTotal.emit(this.categorias.length);
         this.modalAberto = false;
-        this.carregar();
+        this.carregando = false;
       },
       error: (e) => {
         this.carregando = false;
-        this.erro = e.error?.mensagem || 'Erro ao salvar.';
+        this.erro = e.error?.mensagem || 'Não foi possível salvar categoria.';
       }
     });
   }
 
-  marcarPadrao(p: PlanoContasGerencial): void {
-    this.erro = null;
-    this.carregando = true;
-    this.api.marcarPadrao(p.id).subscribe({
-      next: () => {
-        this.carregando = false;
-        this.carregar();
-      },
-      error: (e) => {
-        this.carregando = false;
-        this.erro = e.error?.mensagem || 'Não foi possível definir como padrão.';
-      }
+  async excluirCategoria(categoria: CategoriaFinanceira): Promise<void> {
+    const confirmacao = await Swal.fire({
+      icon: 'warning',
+      title: 'Excluir categoria?',
+      text: `A categoria "${categoria.nome}" e suas subcategorias serão excluídas.`,
+      showCancelButton: true,
+      confirmButtonText: 'Excluir',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#334155',
+      reverseButtons: true,
     });
-  }
-
-  excluir(p: PlanoContasGerencial): void {
-    if (!confirm(`Excluir o plano "${p.nome}"?`)) {
+    if (!confirmacao.isConfirmed) {
       return;
     }
+    const idEmpresaAtual = this.idEmpresaContexto();
+    if (!idEmpresaAtual) return;
     this.erro = null;
     this.carregando = true;
-    this.api.excluir(p.id).subscribe({
-      next: () => {
+    this.categoriasApi.excluirCategoria(idEmpresaAtual, categoria.id).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (lista) => {
+        this.categorias = lista || [];
+        this.resumoTotal.emit(this.categorias.length);
         this.carregando = false;
-        this.carregar();
       },
       error: (e) => {
         this.carregando = false;
-        this.erro = e.error?.mensagem || 'Não foi possível excluir.';
+        this.erro = e.error?.mensagem || 'Não foi possível excluir categoria.';
       }
     });
+  }
+
+  async excluirSubcategoria(categoria: CategoriaFinanceira, idSubcategoria: string | number): Promise<void> {
+    const nomeSub = (categoria.subcategorias || []).find((s) => String(s.id) === String(idSubcategoria))?.nome || 'esta subcategoria';
+    const confirmacao = await Swal.fire({
+      icon: 'warning',
+      title: 'Excluir subcategoria?',
+      text: `Tem certeza que deseja excluir "${nomeSub}"?`,
+      showCancelButton: true,
+      confirmButtonText: 'Excluir',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#334155',
+      reverseButtons: true,
+    });
+    if (!confirmacao.isConfirmed) {
+      return;
+    }
+    const idEmpresaAtual = this.idEmpresaContexto();
+    if (!idEmpresaAtual) return;
+    this.carregando = true;
+    this.categoriasApi.excluirSubcategoria(
+      idEmpresaAtual,
+      categoria.id,
+      idSubcategoria
+    ).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (lista) => {
+        this.categorias = lista || [];
+        this.resumoTotal.emit(this.categorias.length);
+        this.carregando = false;
+      },
+      error: (e) => {
+        this.carregando = false;
+        this.erro = e.error?.mensagem || 'Não foi possível excluir subcategoria.';
+      }
+    });
+  }
+
+  tipoLabel(tipo: TipoCategoriaFinanceira): string {
+    return tipo === 'receita' ? 'Receita' : 'Despesa';
+  }
+
+  badgeTipo(tipo: TipoCategoriaFinanceira): string {
+    return tipo === 'receita'
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+      : 'border-rose-200 bg-rose-50 text-rose-700';
   }
 
   onImportarArquivo(ev: Event): void {
+    const idEmpresaAtual = this.idEmpresaContexto();
+    if (!idEmpresaAtual) {
+      this.erro = 'Selecione uma empresa para importar categorias.';
+      return;
+    }
     const input = ev.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
-    if (!file) {
-      return;
-    }
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       try {
@@ -210,40 +248,42 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
         if (!Array.isArray(arr)) {
           throw new Error('JSON deve ser um array');
         }
-        this.importarLote(arr as unknown[]);
+        this.importarLote(idEmpresaAtual, arr as unknown[]);
       } catch {
-        this.erro = 'Arquivo inválido. Use JSON: [{"nome":"...","padrao":false}]';
+        this.erro =
+          'Arquivo inválido. Use JSON: [{"tipo":"despesa","categoria":"Operacional","subcategoria":"Aluguel"}]';
       }
     };
     reader.readAsText(file);
   }
 
-  private importarLote(items: unknown[]): void {
-    const idEmpresaAtual = this.idEmpresaContexto();
-    if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
-      this.erro = 'Não foi possível identificar a empresa para importar planos.';
-      return;
-    }
-    let i = 0;
+  private importarLote(idEmpresaAtual: number, items: unknown[]): void {
+    const itens = [...items];
     const next = (): void => {
-      if (i >= items.length) {
-        this.carregando = false;
+      const item = itens.shift();
+      if (!item) {
         this.carregar();
         return;
       }
-      const raw = items[i++] as Record<string, unknown>;
-      const nome = String(raw['nome'] || '').trim();
-      const padrao = raw['padrao'] === true;
-      if (!nome) {
+      const raw = item as Record<string, unknown>;
+      const tipoRaw = String(raw['tipo'] || '').toLowerCase().trim();
+      const tipo: TipoCategoriaFinanceira = tipoRaw === 'receita' ? 'receita' : 'despesa';
+      const categoria = String(raw['categoria'] || raw['nomeCategoria'] || '').trim();
+      const subcategoria = String(raw['subcategoria'] || raw['nomeSubcategoria'] || '').trim();
+      if (!categoria) {
         next();
         return;
       }
-      this.api.criar({ nome, idEmpresas: [idEmpresaAtual], padrao }).subscribe({
+      this.categoriasApi.salvar({
+        idEmpresa: idEmpresaAtual,
+        tipo,
+        nomeCategoria: categoria,
+        nomeSubcategoria: subcategoria || undefined,
+      }).pipe(takeUntil(this.destroy$)).subscribe({
         next: () => next(),
         error: () => next()
       });
     };
-    this.carregando = true;
     next();
   }
 

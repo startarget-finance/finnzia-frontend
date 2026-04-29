@@ -205,9 +205,20 @@ export class CartaoCreditoCadastroComponent implements OnInit, OnDestroy {
     });
   }
 
-  remover(item: CartaoCreditoCadastro): void {
+  async remover(item: CartaoCreditoCadastro): Promise<void> {
     if (!item?.id) return;
-    if (!confirm(`Remover o cartão "${item.nome}"?`)) return;
+    const confirmacao = await Swal.fire({
+      icon: 'warning',
+      title: 'Excluir cartão?',
+      text: `Tem certeza que deseja remover "${item.nome}"?`,
+      showCancelButton: true,
+      confirmButtonText: 'Excluir',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#334155',
+      reverseButtons: true,
+    });
+    if (!confirmacao.isConfirmed) return;
 
     this.faturaCartaoService.removerCadastro(item.id).subscribe({
       next: () => {

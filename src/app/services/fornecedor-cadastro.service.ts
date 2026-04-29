@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { Observable } from 'rxjs';
 import { API_CONFIG } from '../config/api.config';
 
 export type TipoPessoaFornecedor = 'PF' | 'PJ';
@@ -111,16 +111,6 @@ export class FornecedorCadastroService {
 
   consultarCnpj(cnpj: string): Observable<ConsultaCnpjResult> {
     const digits = (cnpj || '').replace(/\D/g, '');
-    return this.http
-      .get<{ cnpj?: string; razao_social?: string; nome_fantasia?: string }>(
-        `https://brasilapi.com.br/api/cnpj/v1/${digits}`
-      )
-      .pipe(
-        map((res) => ({
-          cnpj: digits,
-          razaoSocial: (res?.razao_social || '').trim(),
-          nomeFantasia: (res?.nome_fantasia || '').trim() || undefined
-        }))
-      );
+    return this.http.get<ConsultaCnpjResult>(`${this.base}/consultar-cnpj/${digits}`);
   }
 }

@@ -222,6 +222,38 @@ export interface CriarMovimentacaoPayload {
   nomeClienteFornecedor?: string;
 }
 
+export type HistoricoMovimentacaoAcao = 'CRIACAO' | 'EDICAO';
+
+export interface HistoricoMovimentacaoItem {
+  id: number;
+  idEmpresa: number;
+  acao: HistoricoMovimentacaoAcao;
+  origemMovimentacaoId?: string;
+  dataEvento: string;
+  descricao: string;
+  restauradoEm?: string;
+  debito: boolean;
+  dataVencimento?: string;
+  dataCompetencia?: string;
+  dataQuitacao?: string;
+  valor: number;
+  nome: string;
+  observacao?: string;
+  nomeCategoriaFinanceira: string;
+  nomeContaFinanceira?: string;
+  nomeClienteFornecedor?: string;
+}
+
+export interface HistoricoMovimentacoesResponse {
+  itens: HistoricoMovimentacaoItem[];
+  paginacao: {
+    itensPorPagina: number;
+    numeroDaPagina: number;
+    totalItens: number;
+    totalPaginas: number;
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -280,6 +312,32 @@ export class ErpFinanceiroService {
     const idEnc = encodeURIComponent(idMovimentacao);
     return this.http.put<any>(`${this.apiUrl}/movimentacoes/${idEnc}`, payload, {
       headers: this.getHeaders()
+    });
+  }
+
+  listarHistoricoMovimentacoes(filtros?: {
+    acao?: HistoricoMovimentacaoAcao | '';
+    dataInicio?: string;
+    dataFim?: string;
+    itensPorPagina?: number;
+    numeroDaPagina?: number;
+  }): Observable<HistoricoMovimentacoesResponse> {
+    let params = new HttpParams();
+    if (filtros?.acao) params = params.set('acao', filtros.acao);
+    if (filtros?.dataInicio) params = params.set('dataInicio', filtros.dataInicio);
+    if (filtros?.dataFim) params = params.set('dataFim', filtros.dataFim);
+    if (filtros?.itensPorPagina) params = params.set('itensPorPagina', String(filtros.itensPorPagina));
+    if (filtros?.numeroDaPagina) params = params.set('numeroDaPagina', String(filtros.numeroDaPagina));
+
+    return this.http.get<HistoricoMovimentacoesResponse>(`${this.apiUrl}/movimentacoes/historico`, {
+      headers: this.getHeaders(),
+      params,
+    });
+  }
+
+  restaurarMovimentacaoHistorico(idHistorico: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/movimentacoes/historico/${idHistorico}/restaurar`, {}, {
+      headers: this.getHeaders(),
     });
   }
 

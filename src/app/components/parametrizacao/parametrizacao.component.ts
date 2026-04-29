@@ -9,6 +9,7 @@ import { FornecedorCadastroComponent } from '../fornecedor-cadastro/fornecedor-c
 import { FuncionarioCadastroComponent } from '../funcionario-cadastro/funcionario-cadastro.component';
 import { CartaoCreditoCadastroComponent } from '../cartao-credito-cadastro/cartao-credito-cadastro.component';
 import { PlanoContasGerencialComponent } from '../plano-contas-gerencial/plano-contas-gerencial.component';
+import { MovimentacoesHistoricoComponent } from '../movimentacoes-historico/movimentacoes-historico.component';
 import { CompanySelectorService } from '../../services/company-selector.service';
 import { PlanoContasGerencialService } from '../../services/plano-contas-gerencial.service';
 import { ContaBancariaCadastroService } from '../../services/conta-bancaria-cadastro.service';
@@ -17,7 +18,7 @@ import { ClienteCadastroService } from '../../services/cliente-cadastro.service'
 import { FuncionarioCadastroService } from '../../services/funcionario-cadastro.service';
 import { FaturaCartaoService } from '../../services/fatura-cartao.service';
 
-type ParamTab = 'contas-bancarias' | 'plano-contas' | 'fornecedores' | 'clientes' | 'funcionarios' | 'cartoes-credito';
+type ParamTab = 'contas-bancarias' | 'plano-contas' | 'fornecedores' | 'clientes' | 'funcionarios' | 'cartoes-credito' | 'historico-movimentacoes';
 
 @Component({
   selector: 'app-parametrizacao',
@@ -30,7 +31,8 @@ type ParamTab = 'contas-bancarias' | 'plano-contas' | 'fornecedores' | 'clientes
     ContaBancariaCadastroComponent,
     FornecedorCadastroComponent,
     FuncionarioCadastroComponent,
-    CartaoCreditoCadastroComponent
+    CartaoCreditoCadastroComponent,
+    MovimentacoesHistoricoComponent
   ],
   templateUrl: './parametrizacao.component.html'
 })
