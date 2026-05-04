@@ -10,6 +10,8 @@ import {
   FornecedorCadastroPayload,
   FornecedorCadastroService
 } from '../../services/fornecedor-cadastro.service';
+import { maskBrPhone, maskCpfCnpj, onlyDigits } from '../../utils/input-masks';
+import { buildDeleteConfirmOptions, confirmUnsavedChanges } from '../../utils/sweet-alerts';
 
 @Component({
   selector: 'app-fornecedor-cadastro',
@@ -183,21 +185,22 @@ export class FornecedorCadastroComponent implements OnInit {
     this.editandoId = f.id;
     this.formRazaoSocial = f.razaoSocial || '';
     this.formNomeFantasia = f.nomeFantasia || '';
-    this.formCpfCnpj = this.aplicarMascaraCpfCnpj(this.apenasDigitos(f.cpfCnpj || ''));
+    this.formCpfCnpj = maskCpfCnpj(onlyDigits(f.cpfCnpj || ''));
     this.formTipoPessoa = f.tipoPessoa === 'PF' ? 'PF' : 'PJ';
     this.formEmail = f.email || '';
-    this.formTelefone = f.telefone || '';
+    this.formTelefone = maskBrPhone(onlyDigits(f.telefone || ''));
     this.formAtivo = f.ativo !== false;
     this.statusConsultaCnpj = null;
     this.consultandoCnpj = false;
-    this.ultimoCnpjConsultado = this.apenasDigitos(this.formCpfCnpj);
+    this.ultimoCnpjConsultado = onlyDigits(this.formCpfCnpj);
     this.atualizarSnapshotModal();
     this.modalAberto = true;
   }
 
-  fecharModal(): void {
-    if (this.temAlteracoesModal() && !confirm('Existem alterações não salvas. Deseja fechar mesmo assim?')) {
-      return;
+  async fecharModal(): Promise<void> {
+    if (this.temAlteracoesModal()) {
+      const deveFechar = await confirmUnsavedChanges();
+      if (!deveFechar) return;
     }
     this.modalAberto = false;
     this.consultandoCnpj = false;
@@ -228,15 +231,15 @@ export class FornecedorCadastroComponent implements OnInit {
   }
 
   onCpfCnpjBlur(): void {
-    const digits = this.apenasDigitos(this.formCpfCnpj);
-    this.formCpfCnpj = this.aplicarMascaraCpfCnpj(digits);
+    const digits = onlyDigits(this.formCpfCnpj);
+    this.formCpfCnpj = maskCpfCnpj(digits);
     this.atualizarTipoPessoaPorDocumento(digits);
     this.tentarConsultaCnpj(digits);
   }
 
   onCpfCnpjInput(): void {
-    const digits = this.apenasDigitos(this.formCpfCnpj).slice(0, 14);
-    this.formCpfCnpj = this.aplicarMascaraCpfCnpj(digits);
+    const digits = onlyDigits(this.formCpfCnpj).slice(0, 14);
+    this.formCpfCnpj = maskCpfCnpj(digits);
     this.atualizarTipoPessoaPorDocumento(digits);
 
     if (digits.length < 14) {
@@ -266,8 +269,14 @@ export class FornecedorCadastroComponent implements OnInit {
     }
   }
 
-  private apenasDigitos(valor: string): string {
-    return (valor || '').replace(/\D/g, '');
+  onTelefoneInput(): void {
+    const digits = onlyDigits(this.formTelefone);
+    this.formTelefone = maskBrPhone(digits);
+  }
+
+  onTelefoneBlur(): void {
+    const digits = onlyDigits(this.formTelefone);
+    this.formTelefone = maskBrPhone(digits);
   }
 
   private atualizarTipoPessoaPorDocumento(digits: string): void {
@@ -278,23 +287,6 @@ export class FornecedorCadastroComponent implements OnInit {
     if (digits.length === 14) {
       this.formTipoPessoa = 'PJ';
     }
-  }
-
-  private aplicarMascaraCpfCnpj(digits: string): string {
-    if (!digits) {
-      return '';
-    }
-    if (digits.length <= 11) {
-      return digits
-        .replace(/^(\d{3})(\d)/, '$1.$2')
-        .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
-        .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3-$4');
-    }
-    return digits
-      .replace(/^(\d{2})(\d)/, '$1.$2')
-      .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-      .replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3/$4')
-      .replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d)/, '$1.$2.$3/$4-$5');
   }
 
   private tentarConsultaCnpj(digits: string): void {
@@ -321,14 +313,15 @@ export class FornecedorCadastroComponent implements OnInit {
 
   montarPayload(): FornecedorCadastroPayload {
     const idEmpresaAtual = this.idEmpresaContexto();
-    const documento = this.apenasDigitos(this.formCpfCnpj);
+    const documento = onlyDigits(this.formCpfCnpj);
+    const telefone = onlyDigits(this.formTelefone);
     return {
       razaoSocial: this.formRazaoSocial.trim(),
       nomeFantasia: this.formNomeFantasia.trim() || undefined,
       cpfCnpj: documento || undefined,
       tipoPessoa: this.formTipoPessoa,
       email: this.formEmail.trim() || undefined,
-      telefone: this.formTelefone.trim() || undefined,
+      telefone: telefone || undefined,
       ativo: this.formAtivo,
       idEmpresas: idEmpresaAtual != null && idEmpresaAtual > 0 ? [idEmpresaAtual] : []
     };
@@ -365,17 +358,7 @@ export class FornecedorCadastroComponent implements OnInit {
 
   async excluir(f: FornecedorCadastro): Promise<void> {
     const nome = f.razaoSocial || 'este fornecedor';
-    const confirmacao = await Swal.fire({
-      icon: 'warning',
-      title: 'Excluir fornecedor?',
-      text: `Tem certeza que deseja excluir "${nome}"?`,
-      showCancelButton: true,
-      confirmButtonText: 'Excluir',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#dc2626',
-      cancelButtonColor: '#334155',
-      reverseButtons: true,
-    });
+    const confirmacao = await Swal.fire(buildDeleteConfirmOptions('fornecedor', nome));
     if (!confirmacao.isConfirmed) {
       return;
     }

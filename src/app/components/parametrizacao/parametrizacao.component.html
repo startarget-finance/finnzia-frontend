@@ -240,7 +240,9 @@
         class="border-b border-slate-100 bg-gradient-to-r from-white to-slate-50/40 px-5 py-4 sm:px-6 sm:py-5"
       >
         <h2 class="text-base font-semibold tracking-tight text-slate-900 sm:text-lg">Plano de contas</h2>
-        <p class="mt-1 text-sm text-slate-500">Modelos gerenciais da empresa para organização financeira.</p>
+        <p class="mt-1 text-sm text-slate-500">
+          Receita e despesa lado a lado; use o + no título para categorias e o + em cada linha para subcategorias.
+        </p>
       </div>
       <div class="px-4 py-4 sm:px-6 sm:pb-6">
         <app-plano-contas-gerencial [embedded]="true" (resumoTotal)="planoContasTotalResumo = $event" />

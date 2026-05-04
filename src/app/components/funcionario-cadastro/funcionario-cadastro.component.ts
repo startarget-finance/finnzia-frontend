@@ -8,6 +8,8 @@ import {
   FuncionarioCadastroPayload,
   FuncionarioCadastroService
 } from '../../services/funcionario-cadastro.service';
+import { maskBrPhone, maskCpf, onlyDigits } from '../../utils/input-masks';
+import { buildDeleteConfirmOptions, confirmUnsavedChanges } from '../../utils/sweet-alerts';
 
 @Component({
   selector: 'app-funcionario-cadastro',
@@ -54,6 +56,26 @@ export class FuncionarioCadastroComponent implements OnInit {
     this.companySelector.empresasPermitidas$.subscribe(() => {
       this.carregar();
     });
+  }
+
+  onCpfInput(): void {
+    const digits = onlyDigits(this.formCpf);
+    this.formCpf = maskCpf(digits);
+  }
+
+  onCpfBlur(): void {
+    const digits = onlyDigits(this.formCpf);
+    this.formCpf = maskCpf(digits);
+  }
+
+  onTelefoneInput(): void {
+    const digits = onlyDigits(this.formTelefone);
+    this.formTelefone = maskBrPhone(digits);
+  }
+
+  onTelefoneBlur(): void {
+    const digits = onlyDigits(this.formTelefone);
+    this.formTelefone = maskBrPhone(digits);
   }
 
   private idEmpresaContexto(): number | null {
@@ -174,19 +196,20 @@ export class FuncionarioCadastroComponent implements OnInit {
   abrirEditar(f: FuncionarioCadastro): void {
     this.editandoId = f.id;
     this.formNomeCompleto = f.nomeCompleto || '';
-    this.formCpf = f.cpf ? this.cpfExibicao(f.cpf) : '';
+    this.formCpf = maskCpf(onlyDigits(f.cpf || ''));
     this.formCargo = f.cargo || '';
     this.formDepartamento = f.departamento || '';
     this.formEmail = f.email || '';
-    this.formTelefone = f.telefone || '';
+    this.formTelefone = maskBrPhone(onlyDigits(f.telefone || ''));
     this.formAtivo = f.ativo !== false;
     this.atualizarSnapshotModal();
     this.modalAberto = true;
   }
 
-  fecharModal(): void {
-    if (this.temAlteracoesModal() && !confirm('Existem alterações não salvas. Deseja fechar mesmo assim?')) {
-      return;
+  async fecharModal(): Promise<void> {
+    if (this.temAlteracoesModal()) {
+      const deveFechar = await confirmUnsavedChanges();
+      if (!deveFechar) return;
     }
     this.modalAberto = false;
   }
@@ -215,13 +238,15 @@ export class FuncionarioCadastroComponent implements OnInit {
 
   montarPayload(): FuncionarioCadastroPayload {
     const idEmp = this.idEmpresaContexto();
+    const cpf = onlyDigits(this.formCpf);
+    const telefone = onlyDigits(this.formTelefone);
     const body: FuncionarioCadastroPayload = {
       nomeCompleto: this.formNomeCompleto.trim(),
-      cpf: this.formCpf.trim() || undefined,
+      cpf: cpf || undefined,
       cargo: this.formCargo.trim() || undefined,
       departamento: this.formDepartamento.trim() || undefined,
       email: this.formEmail.trim() || undefined,
-      telefone: this.formTelefone.trim() || undefined,
+      telefone: telefone || undefined,
       ativo: this.formAtivo
     };
     if (idEmp != null && idEmp > 0) {
@@ -261,17 +286,7 @@ export class FuncionarioCadastroComponent implements OnInit {
 
   async excluir(f: FuncionarioCadastro): Promise<void> {
     const nome = f.nomeCompleto || 'este funcionário';
-    const confirmacao = await Swal.fire({
-      icon: 'warning',
-      title: 'Excluir funcionário?',
-      text: `Tem certeza que deseja excluir "${nome}"?`,
-      showCancelButton: true,
-      confirmButtonText: 'Excluir',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#dc2626',
-      cancelButtonColor: '#334155',
-      reverseButtons: true,
-    });
+    const confirmacao = await Swal.fire(buildDeleteConfirmOptions('funcionário', nome));
     if (!confirmacao.isConfirmed) {
       return;
     }

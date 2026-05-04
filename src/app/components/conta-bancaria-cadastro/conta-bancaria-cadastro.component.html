@@ -280,21 +280,43 @@
       <div *ngIf="formCategoria === 'BANCARIA'" class="grid grid-cols-2 gap-3">
         <div>
           <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Agência *</label>
-          <input [(ngModel)]="formAgencia" class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" />
+          <input
+            [(ngModel)]="formAgencia"
+            inputmode="numeric"
+            autocomplete="off"
+            class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          />
         </div>
         <div>
           <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Conta *</label>
-          <input [(ngModel)]="formConta" class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" />
+          <input
+            [(ngModel)]="formConta"
+            inputmode="numeric"
+            autocomplete="off"
+            class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          />
         </div>
       </div>
       <div *ngIf="formCategoria === 'DINHEIRO'" class="grid grid-cols-2 gap-3">
         <div>
           <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Agência (opcional)</label>
-          <input [(ngModel)]="formAgencia" class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" placeholder="0" />
+          <input
+            [(ngModel)]="formAgencia"
+            inputmode="numeric"
+            autocomplete="off"
+            class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            placeholder="0"
+          />
         </div>
         <div>
           <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Conta (opcional)</label>
-          <input [(ngModel)]="formConta" class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" placeholder="0" />
+          <input
+            [(ngModel)]="formConta"
+            inputmode="numeric"
+            autocomplete="off"
+            class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            placeholder="0"
+          />
         </div>
       </div>
       <div *ngIf="formCategoria === 'BANCARIA'">

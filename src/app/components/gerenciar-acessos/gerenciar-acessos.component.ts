@@ -841,12 +841,16 @@ export class GerenciarAcessosComponent implements OnInit {
    */
   formatarData(data?: string): string {
     if (!data) return '-';
-    return new Date(data).toLocaleDateString('pt-BR', {
+    const dt = new Date(data);
+    if (Number.isNaN(dt.getTime())) return '-';
+    return dt.toLocaleString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: false
     });
   }
 

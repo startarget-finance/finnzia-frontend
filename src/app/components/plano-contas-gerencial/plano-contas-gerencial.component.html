@@ -18,114 +18,236 @@
   <div class="space-y-3">
     <div *ngIf="!embedded" class="space-y-3">
       <div>
-        <h1 class="text-2xl font-semibold text-slate-900 tracking-tight">Categorias financeiras</h1>
-        <p class="text-sm text-slate-500 mt-1">
-          Cadastre categoria, subcategoria e tipo para usar em contas a pagar/receber.
-        </p>
+        <h1 class="text-2xl font-semibold text-slate-900 tracking-tight">Plano de contas</h1>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <p class="text-xs text-slate-500 sm:text-sm">
+        Dica: use <strong class="text-slate-700">+</strong> para criar categoria e, na linha, subcategoria.
+      </p>
+      <details class="text-xs text-slate-500 sm:text-sm">
+        <summary class="cursor-pointer select-none text-slate-600 hover:text-slate-800">Saiba mais</summary>
+        <div class="mt-2 rounded-lg border border-slate-200/80 bg-slate-50/70 px-3 py-2.5 leading-relaxed">
+          Categorias e subcategorias seguem o mesmo padrão usado nas movimentações. Receita e Despesa ficam lado a lado para agilizar a montagem.
+        </div>
+      </details>
+    </div>
+
+    <p
+      *ngIf="erro"
+      class="text-sm text-red-700 bg-red-50/90 border border-red-200/60 rounded-lg px-3 py-2.5 shadow-sm"
+    >
+      {{ erro }}
+    </p>
+
+    <div class="grid gap-4 lg:grid-cols-2">
+      <!-- Receita -->
+      <div
+        class="overflow-hidden rounded-2xl border border-emerald-200/70 bg-white shadow-[0_12px_32px_-20px_rgba(5,150,105,0.35)] ring-1 ring-emerald-100/80"
+      >
+        <div
+          class="flex items-center justify-between gap-3 border-b border-emerald-100 bg-gradient-to-r from-emerald-50/95 via-white to-teal-50/40 px-4 py-3.5"
+        >
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span
+              class="inline-flex shrink-0 items-center rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-800"
+              >Receita</span
+            >
+            <span class="truncate text-xs text-slate-500 hidden sm:inline">Entradas</span>
+          </div>
+          <button
+            type="button"
+            (click)="abrirNovoParaTipo('receita')"
+            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-emerald-300 bg-white text-lg font-semibold leading-none text-emerald-700 shadow-sm transition hover:bg-emerald-50 hover:border-emerald-400"
+            title="Nova categoria de receita"
+            [attr.aria-label]="'Nova categoria de receita'"
+          >
+            +
+          </button>
+        </div>
+        <div class="max-h-[min(52vh,28rem)] overflow-y-auto p-3 sm:p-4 space-y-3">
+          <div *ngIf="carregando && porTipo('receita').length === 0" class="py-6 text-center text-sm text-slate-500">
+            Carregando…
+          </div>
+          <ng-container *ngIf="!carregando || porTipo('receita').length > 0">
+            <div
+              *ngFor="let c of porTipo('receita')"
+              class="rounded-xl border border-slate-200/80 bg-slate-50/50 p-3 shadow-sm"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <span class="font-semibold text-slate-900 text-sm leading-snug break-words">{{ c.nome }}</span>
+                <div class="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    (click)="abrirNovaSubcategoria(c)"
+                    class="flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 bg-white text-base font-medium text-emerald-700 transition hover:bg-emerald-50"
+                    title="Adicionar subcategoria"
+                    [attr.aria-label]="'Adicionar subcategoria em ' + c.nome"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    (click)="excluirCategoria(c)"
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-600 transition-colors hover:bg-rose-100"
+                    title="Excluir categoria"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <span
+                  *ngFor="let s of c.subcategorias"
+                  class="inline-flex items-center gap-1 rounded-md border border-emerald-100 bg-white px-2 py-0.5 text-xs text-slate-700"
+                >
+                  {{ s.nome }}
+                  <button
+                    type="button"
+                    class="text-rose-500 hover:text-rose-700"
+                    title="Remover subcategoria"
+                    (click)="excluirSubcategoria(c, s.id)"
+                    >×</button
+                  >
+                </span>
+                <span *ngIf="c.subcategorias.length === 0" class="text-xs italic text-slate-400">Sem subcategorias — use +</span>
+              </div>
+            </div>
+            <p *ngIf="!carregando && porTipo('receita').length === 0" class="rounded-lg border border-dashed border-emerald-200/80 bg-emerald-50/30 px-3 py-4 text-center text-sm text-slate-600">
+              Nenhuma categoria de receita ainda.
+              <span class="block mt-3">
+                <button
+                  type="button"
+                  (click)="abrirNovoParaTipo('receita')"
+                  class="inline-flex h-9 items-center justify-center rounded-lg bg-emerald-700 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-800"
+                  title="Criar primeira categoria de receita"
+                  [attr.aria-label]="'Criar primeira categoria de receita'"
+                >
+                  Criar primeira categoria
+                </button>
+              </span>
+            </p>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- Despesa -->
+      <div
+        class="overflow-hidden rounded-2xl border border-rose-200/70 bg-white shadow-[0_12px_32px_-20px_rgba(225,29,72,0.28)] ring-1 ring-rose-100/80"
+      >
+        <div
+          class="flex items-center justify-between gap-3 border-b border-rose-100 bg-gradient-to-r from-rose-50/95 via-white to-orange-50/30 px-4 py-3.5"
+        >
+          <div class="flex items-center gap-2.5 min-w-0">
+            <span
+              class="inline-flex shrink-0 items-center rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-rose-800"
+              >Despesa</span
+            >
+            <span class="truncate text-xs text-slate-500 hidden sm:inline">Saídas</span>
+          </div>
+          <button
+            type="button"
+            (click)="abrirNovoParaTipo('despesa')"
+            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-rose-300 bg-white text-lg font-semibold leading-none text-rose-700 shadow-sm transition hover:bg-rose-50 hover:border-rose-400"
+            title="Nova categoria de despesa"
+            [attr.aria-label]="'Nova categoria de despesa'"
+          >
+            +
+          </button>
+        </div>
+        <div class="max-h-[min(52vh,28rem)] overflow-y-auto p-3 sm:p-4 space-y-3">
+          <div *ngIf="carregando && porTipo('despesa').length === 0" class="py-6 text-center text-sm text-slate-500">
+            Carregando…
+          </div>
+          <ng-container *ngIf="!carregando || porTipo('despesa').length > 0">
+            <div
+              *ngFor="let c of porTipo('despesa')"
+              class="rounded-xl border border-slate-200/80 bg-slate-50/50 p-3 shadow-sm"
+            >
+              <div class="flex items-start justify-between gap-2">
+                <span class="font-semibold text-slate-900 text-sm leading-snug break-words">{{ c.nome }}</span>
+                <div class="flex shrink-0 items-center gap-1">
+                  <button
+                    type="button"
+                    (click)="abrirNovaSubcategoria(c)"
+                    class="flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 bg-white text-base font-medium text-rose-700 transition hover:bg-rose-50"
+                    title="Adicionar subcategoria"
+                    [attr.aria-label]="'Adicionar subcategoria em ' + c.nome"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    (click)="excluirCategoria(c)"
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-600 transition-colors hover:bg-rose-100"
+                    title="Excluir categoria"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <span
+                  *ngFor="let s of c.subcategorias"
+                  class="inline-flex items-center gap-1 rounded-md border border-rose-100 bg-white px-2 py-0.5 text-xs text-slate-700"
+                >
+                  {{ s.nome }}
+                  <button
+                    type="button"
+                    class="text-rose-500 hover:text-rose-700"
+                    title="Remover subcategoria"
+                    (click)="excluirSubcategoria(c, s.id)"
+                    >×</button
+                  >
+                </span>
+                <span *ngIf="c.subcategorias.length === 0" class="text-xs italic text-slate-400">Sem subcategorias — use +</span>
+              </div>
+            </div>
+            <p *ngIf="!carregando && porTipo('despesa').length === 0" class="rounded-lg border border-dashed border-rose-200/80 bg-rose-50/30 px-3 py-4 text-center text-sm text-slate-600">
+              Nenhuma categoria de despesa ainda.
+              <span class="block mt-3">
+                <button
+                  type="button"
+                  (click)="abrirNovoParaTipo('despesa')"
+                  class="inline-flex h-9 items-center justify-center rounded-lg bg-rose-700 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-800"
+                  title="Criar primeira categoria de despesa"
+                  [attr.aria-label]="'Criar primeira categoria de despesa'"
+                >
+                  Criar primeira categoria
+                </button>
+              </span>
+            </p>
+          </ng-container>
+        </div>
       </div>
     </div>
 
     <div
-      class="flex flex-wrap items-end justify-between gap-3 rounded-2xl border border-slate-200/80 bg-gradient-to-r from-slate-50/95 via-white to-violet-50/35 px-3.5 py-3.5 shadow-sm sm:px-4"
-    >
-      <div class="text-xs text-slate-500 font-medium">Estrutura igual ao DFC: Receita e Despesa com subcategorias.</div>
-      <button
-        type="button"
-        (click)="abrirNovo()"
-        class="h-10 shrink-0 rounded-xl bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 px-4 text-sm font-semibold text-white shadow-[0_12px_25px_-12px_rgba(124,58,237,0.55)] transition-all hover:brightness-105"
-      >
-        + Nova categoria
-      </button>
-    </div>
-  </div>
-
-  <p
-    *ngIf="erro"
-    class="text-sm text-red-700 bg-red-50/90 border border-red-200/60 rounded-lg px-3 py-2.5 shadow-sm"
-  >
-    {{ erro }}
-  </p>
-
-  <div
-    class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_18px_40px_-24px_rgba(15,23,42,0.22)] ring-1 ring-slate-200/60"
-    [class.mt-4]="!embedded"
-    [class.mt-3]="embedded"
-  >
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-[13px] text-slate-800">
-        <thead>
-          <tr class="border-b border-slate-200/90 bg-slate-50/90 text-left">
-            <th class="w-36 px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Tipo</th>
-            <th class="w-[28%] px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Categoria</th>
-            <th class="px-3 py-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">Subcategorias</th>
-            <th class="w-20 px-3 py-3 text-right text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">
-              Ações
-            </th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100">
-          <tr *ngIf="carregando && categorias.length === 0">
-            <td colspan="4" class="py-8 text-center text-sm text-slate-500">Carregando…</td>
-          </tr>
-          <tr
-            *ngFor="let c of categorias; let odd = odd"
-            class="transition-colors hover:bg-violet-50/35"
-            [ngClass]="{ 'bg-slate-50/40': odd }"
-          >
-            <td class="px-3 py-3 align-middle">
-              <span class="inline-flex items-center rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide" [ngClass]="badgeTipo(c.tipo)">
-                {{ tipoLabel(c.tipo) }}
-              </span>
-            </td>
-            <td class="px-3 py-3 align-middle">
-              <span class="font-semibold text-slate-900">{{ c.nome }}</span>
-            </td>
-            <td class="px-3 py-3 align-middle">
-              <div class="flex flex-wrap gap-1.5">
-                <span *ngFor="let s of c.subcategorias" class="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-0.5 text-xs text-slate-700">
-                  {{ s.nome }}
-                  <button type="button" class="text-rose-500 hover:text-rose-700" title="Remover subcategoria" (click)="excluirSubcategoria(c, s.id)">×</button>
-                </span>
-                <span *ngIf="c.subcategorias.length === 0" class="text-xs text-slate-400">Sem subcategoria</span>
-              </div>
-            </td>
-            <td class="px-3 py-3 text-right align-middle whitespace-nowrap">
-              <button
-                type="button"
-                (click)="excluirCategoria(c)"
-                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-600 transition-colors hover:bg-rose-100"
-                title="Excluir categoria"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  />
-                </svg>
-              </button>
-            </td>
-          </tr>
-          <tr *ngIf="!carregando && categorias.length === 0">
-            <td colspan="4" class="py-12 px-4 text-center">
-              <p class="text-sm text-slate-600">Nenhuma categoria cadastrada.</p>
-              <p class="text-xs text-slate-400 mt-1">Use <strong class="text-slate-600">+ Nova categoria</strong> para começar.</p>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div
-      class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/70 px-3 py-2.5 text-xs text-slate-600"
+      class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 text-xs text-slate-600"
     >
       <span *ngIf="categorias.length" class="font-medium tabular-nums">Total: {{ categorias.length }} categorias</span>
+      <span *ngIf="!categorias.length && !carregando" class="text-slate-500">Nenhuma categoria.</span>
       <label
         class="inline-flex h-8 cursor-pointer items-center rounded-lg border border-slate-200/80 bg-white px-3 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
-        [class.ml-auto]="!categorias.length"
+        [class.ml-auto]="categorias.length === 0"
       >
         <input type="file" accept=".json,application/json" class="hidden" (change)="onImportarArquivo($event)" />
-        Importar JSON
+        Importar
       </label>
     </div>
   </div>
@@ -141,44 +263,67 @@
   >
     <div class="flex items-start justify-between gap-4">
       <div>
-        <h2 class="text-lg font-semibold text-slate-900 tracking-tight">Nova categoria financeira</h2>
-        <p class="text-sm text-slate-500 mt-1">Defina o tipo e inclua uma subcategoria opcional.</p>
+        <h2 class="text-lg font-semibold text-slate-900 tracking-tight">
+          <ng-container *ngIf="modalModo === 'subcategoria'">Nova subcategoria</ng-container>
+          <ng-container *ngIf="modalModo === 'categoria'">Nova categoria — {{ tipoLabel(formTipo) }}</ng-container>
+        </h2>
+        <p class="text-sm text-slate-500 mt-1" *ngIf="modalModo === 'categoria'">
+          Informe o nome da categoria; a subcategoria é opcional neste passo.
+        </p>
+        <p class="text-sm text-slate-500 mt-1" *ngIf="modalModo === 'subcategoria'">
+          Em <strong class="text-slate-800">{{ formCategoria }}</strong> ({{ tipoLabel(formTipo) }}).
+        </p>
       </div>
       <button
         type="button"
         class="shrink-0 h-9 w-9 rounded-lg border border-slate-200/80 text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
         (click)="fecharModal()"
-        aria-label="Fechar"
+        [attr.aria-label]="'Fechar'"
       >
         ✕
       </button>
     </div>
     <div class="space-y-4">
-      <div>
+      <div *ngIf="modalModo === 'categoria'">
         <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Tipo</label>
         <select [(ngModel)]="formTipo" class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm">
           <option value="despesa">Despesa</option>
           <option value="receita">Receita</option>
         </select>
       </div>
+      <div *ngIf="modalModo === 'subcategoria'">
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Tipo</label>
+        <div class="mt-1.5 flex h-10 items-center rounded-lg border border-slate-200/90 bg-slate-50 px-3.5 text-sm text-slate-700">
+          {{ tipoLabel(formTipo) }}
+        </div>
+      </div>
       <div>
         <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Categoria</label>
         <input
+          *ngIf="modalModo === 'categoria'"
           [(ngModel)]="formCategoria"
           class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-          placeholder="Ex.: Operacional"
+          placeholder="Ex.: Operacional, Comercial…"
         />
+        <div
+          *ngIf="modalModo === 'subcategoria'"
+          class="mt-1.5 flex min-h-10 items-center rounded-lg border border-slate-200/90 bg-slate-50 px-3.5 text-sm font-medium text-slate-800"
+        >
+          {{ formCategoria }}
+        </div>
       </div>
       <div>
-        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Subcategoria (opcional)</label>
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{{
+          modalModo === 'subcategoria' ? 'Nome da subcategoria' : 'Subcategoria (opcional)'
+        }}</label>
         <input
           [(ngModel)]="formSubcategoria"
           class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-          placeholder="Ex.: Aluguel"
+          [placeholder]="modalModo === 'subcategoria' ? 'Ex.: Mensalidade, Aluguel…' : 'Pode ficar em branco e incluir depois com + na linha'"
         />
       </div>
-      <p class="text-xs text-slate-500">
-        Se a categoria já existir para esse tipo, a subcategoria será adicionada nela.
+      <p class="text-xs text-slate-500" *ngIf="modalModo === 'categoria'">
+        Se já existir categoria com o mesmo nome neste tipo, a subcategoria será acrescentada nela.
       </p>
     </div>
     <div class="flex justify-end gap-2 pt-1">

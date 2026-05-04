@@ -10,6 +10,7 @@ import {
   ContaBancariaCadastroService,
   TipoContaBancaria
 } from '../../services/conta-bancaria-cadastro.service';
+import { buildDeleteConfirmOptions, confirmUnsavedChanges } from '../../utils/sweet-alerts';
 
 @Component({
   selector: 'app-conta-bancaria-cadastro',
@@ -243,9 +244,10 @@ export class ContaBancariaCadastroComponent implements OnInit {
     }
   }
 
-  fecharModal(): void {
-    if (this.temAlteracoesModal() && !confirm('Existem alterações não salvas. Deseja fechar mesmo assim?')) {
-      return;
+  async fecharModal(): Promise<void> {
+    if (this.temAlteracoesModal()) {
+      const deveFechar = await confirmUnsavedChanges();
+      if (!deveFechar) return;
     }
     this.modalAberto = false;
   }
@@ -323,17 +325,7 @@ export class ContaBancariaCadastroComponent implements OnInit {
   }
 
   async excluir(c: ContaBancariaCadastro): Promise<void> {
-    const confirmacao = await Swal.fire({
-      icon: 'warning',
-      title: 'Excluir conta bancária?',
-      text: `Tem certeza que deseja excluir "${this.tituloConta(c)}"?`,
-      showCancelButton: true,
-      confirmButtonText: 'Excluir',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#dc2626',
-      cancelButtonColor: '#334155',
-      reverseButtons: true,
-    });
+    const confirmacao = await Swal.fire(buildDeleteConfirmOptions('conta bancária', this.tituloConta(c)));
     if (!confirmacao.isConfirmed) {
       return;
     }

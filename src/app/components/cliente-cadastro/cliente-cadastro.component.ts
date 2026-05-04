@@ -8,6 +8,8 @@ import {
   ClienteCadastroPayload,
   ClienteCadastroService
 } from '../../services/cliente-cadastro.service';
+import { maskBrPhone, maskCep, maskCpf, maskCpfCnpj, onlyDigits } from '../../utils/input-masks';
+import { buildDeleteConfirmOptions, confirmUnsavedChanges } from '../../utils/sweet-alerts';
 
 @Component({
   selector: 'app-cliente-cadastro',
@@ -71,6 +73,48 @@ export class ClienteCadastroComponent implements OnInit {
     this.companySelector.empresasPermitidas$.subscribe(() => {
       this.carregar();
     });
+  }
+
+  onCpfCnpjInput(): void {
+    const digits = onlyDigits(this.formCpfCnpj);
+    this.formCpfCnpj = maskCpfCnpj(digits);
+    if (digits.length === 11) this.formTipoPessoa = 'PF';
+    if (digits.length === 14) this.formTipoPessoa = 'PJ';
+  }
+
+  onCpfCnpjBlur(): void {
+    const digits = onlyDigits(this.formCpfCnpj);
+    this.formCpfCnpj = maskCpfCnpj(digits);
+  }
+
+  onCelularInput(): void {
+    const digits = onlyDigits(this.formCelular);
+    this.formCelular = maskBrPhone(digits);
+  }
+
+  onCelularBlur(): void {
+    const digits = onlyDigits(this.formCelular);
+    this.formCelular = maskBrPhone(digits);
+  }
+
+  onCepInput(): void {
+    const digits = onlyDigits(this.formCep);
+    this.formCep = maskCep(digits);
+  }
+
+  onCepBlur(): void {
+    const digits = onlyDigits(this.formCep);
+    this.formCep = maskCep(digits);
+  }
+
+  onCpfContatoInput(): void {
+    const digits = onlyDigits(this.formCpf);
+    this.formCpf = maskCpf(digits);
+  }
+
+  onCpfContatoBlur(): void {
+    const digits = onlyDigits(this.formCpf);
+    this.formCpf = maskCpf(digits);
   }
 
   private idEmpresaContexto(): number | null {
@@ -163,23 +207,24 @@ export class ClienteCadastroComponent implements OnInit {
     this.editandoId = c.id;
     this.formRazaoSocial = c.razaoSocial || '';
     this.formNomeFantasia = c.nomeFantasia || '';
-    this.formCpfCnpj = c.cpfCnpj || '';
+    this.formCpfCnpj = maskCpfCnpj(onlyDigits(c.cpfCnpj || ''));
     this.formTipoPessoa = c.tipoPessoa === 'PF' ? 'PF' : 'PJ';
     this.formClassificacao = c.classificacao != null ? Math.min(5, Math.max(1, c.classificacao)) : 3;
     this.formEmail = c.emailFinanceiro || '';
-    this.formCelular = c.celularFinanceiro || '';
+    this.formCelular = maskBrPhone(onlyDigits(c.celularFinanceiro || ''));
     this.formEndereco = c.enderecoCompleto || '';
-    this.formCep = c.cep || '';
+    this.formCep = maskCep(onlyDigits(c.cep || ''));
     this.formResponsavel = c.responsavel || '';
-    this.formCpf = c.cpf || '';
+    this.formCpf = maskCpf(onlyDigits(c.cpf || ''));
     this.formBloqueado = !!c.bloqueado;
     this.atualizarSnapshotModal();
     this.modalAberto = true;
   }
 
-  fecharModal(): void {
-    if (this.temAlteracoesModal() && !confirm('Existem alterações não salvas. Deseja fechar mesmo assim?')) {
-      return;
+  async fecharModal(): Promise<void> {
+    if (this.temAlteracoesModal()) {
+      const deveFechar = await confirmUnsavedChanges();
+      if (!deveFechar) return;
     }
     this.modalAberto = false;
   }
@@ -214,19 +259,23 @@ export class ClienteCadastroComponent implements OnInit {
   montarPayload(): ClienteCadastroPayload {
     const idEmp = this.idEmpresaContexto();
     const idEmpresas = idEmp != null && idEmp > 0 ? [idEmp] : [];
+    const cpfCnpjDigits = onlyDigits(this.formCpfCnpj);
+    const celularDigits = onlyDigits(this.formCelular);
+    const cepDigits = onlyDigits(this.formCep);
+    const cpfContatoDigits = onlyDigits(this.formCpf);
     return {
       razaoSocial: this.formRazaoSocial.trim(),
       nomeFantasia: this.formNomeFantasia.trim() || undefined,
-      cpfCnpj: this.formCpfCnpj.trim() || undefined,
+      cpfCnpj: cpfCnpjDigits || undefined,
       tipoPessoa: this.formTipoPessoa,
       classificacao: this.formClassificacao,
       idEmpresas,
       emailFinanceiro: this.formEmail.trim() || undefined,
-      celularFinanceiro: this.formCelular.trim() || undefined,
+      celularFinanceiro: celularDigits || undefined,
       enderecoCompleto: this.formEndereco.trim() || undefined,
-      cep: this.formCep.trim() || undefined,
+      cep: cepDigits || undefined,
       responsavel: this.formResponsavel.trim() || undefined,
-      cpf: this.formCpf.trim() || undefined,
+      cpf: cpfContatoDigits || undefined,
       bloqueado: this.formBloqueado
     };
   }
@@ -262,17 +311,7 @@ export class ClienteCadastroComponent implements OnInit {
 
   async excluir(c: ClienteCadastro): Promise<void> {
     const nome = c.razaoSocial || 'este cliente';
-    const confirmacao = await Swal.fire({
-      icon: 'warning',
-      title: 'Excluir cliente?',
-      text: `Tem certeza que deseja excluir "${nome}"?`,
-      showCancelButton: true,
-      confirmButtonText: 'Excluir',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#dc2626',
-      cancelButtonColor: '#334155',
-      reverseButtons: true,
-    });
+    const confirmacao = await Swal.fire(buildDeleteConfirmOptions('cliente', nome));
     if (!confirmacao.isConfirmed) {
       return;
     }

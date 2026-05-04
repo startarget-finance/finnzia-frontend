@@ -12,11 +12,34 @@ import { OmieService, MovimentacaoOmie, MovimentacoesOmieResponse, FiltrosMovime
 import { CompanySelectorService } from '../../services/company-selector.service';
 import { CategoriasFinanceirasService, TipoCategoriaFinanceira } from '../../services/categorias-financeiras.service';
 import Swal from 'sweetalert2';
+import * as XLSX from 'xlsx';
 import {
   MovimentacoesAnexosService,
   TipoAnexoMovimentacao,
   AnexoMovimentacaoMetadado,
 } from '../../services/movimentacoes-anexos.service';
+
+type ExportGroupId =
+  | 'identificacao'
+  | 'datas'
+  | 'valores'
+  | 'status'
+  | 'classificacao'
+  | 'parceiro'
+  | 'conta'
+  | 'parcelamento'
+  | 'anexos'
+  | 'origem'
+  | 'auditoria';
+
+type ExportFormat = 'csv' | 'xlsx';
+
+interface ExportColumnDef {
+  id: string;
+  label: string;
+  groupId: ExportGroupId;
+  getter: (mov: MovimentacaoFinanceira, idx: number) => string | number | boolean;
+}
 
 @Component({
   selector: 'app-movimentacoes',
@@ -25,6 +48,12 @@ import {
   templateUrl: './movimentacoes.component.html',
 })
 export class MovimentacoesComponent implements OnInit, OnDestroy {
+  mostrarModalExportacao = false;
+  abaExportacaoAtiva: ExportGroupId = 'identificacao';
+  exportFormat: ExportFormat = 'xlsx';
+  exportando = false;
+  private readonly exportStorageKey = 'movimentacoes_export_cols_v1';
+
   mostrarModalCadastro = false;
   /** Reutiliza o mesmo formulário do cadastro para edição de lançamento existente. */
   cadastroModo: 'novo' | 'editar' = 'novo';
@@ -225,6 +254,50 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
 
   // Fonte de dados fixa: ERP (backend próprio)
   readonly fonteDados: 'erp' = 'erp';
+  readonly exportGroups: Array<{ id: ExportGroupId; label: string; icon: string }> = [
+    { id: 'identificacao', label: 'Identificação', icon: 'fi-rr-id-badge' },
+    { id: 'datas', label: 'Datas', icon: 'fi-rr-calendar' },
+    { id: 'valores', label: 'Valores', icon: 'fi-rr-money' },
+    { id: 'status', label: 'Status', icon: 'fi-rr-time-check' },
+    { id: 'classificacao', label: 'Classificação', icon: 'fi-rr-tags' },
+    { id: 'parceiro', label: 'Cliente/Forn.', icon: 'fi-rr-users' },
+    { id: 'conta', label: 'Conta bancária', icon: 'fi-rr-bank' },
+    { id: 'parcelamento', label: 'Parcelamento', icon: 'fi-rr-list-check' },
+    { id: 'anexos', label: 'Anexos', icon: 'fi-rr-paperclip' },
+    { id: 'origem', label: 'Origem', icon: 'fi-rr-database' },
+    { id: 'auditoria', label: 'Auditoria', icon: 'fi-rr-clipboard-check' },
+  ];
+  readonly exportColumns: ExportColumnDef[] = [
+    { id: 'seq', label: 'Nº linha', groupId: 'identificacao', getter: (_m, idx) => idx + 1 },
+    { id: 'idMov', label: 'ID movimentação', groupId: 'identificacao', getter: (m) => this.idMovimentacao(m) },
+    { id: 'descricao', label: 'Descrição', groupId: 'identificacao', getter: (m) => m.Nome || '' },
+    { id: 'tipo', label: 'Tipo', groupId: 'identificacao', getter: (m) => (m.Debito ? 'Despesa' : 'Receita') },
+    { id: 'dataVenc', label: 'Data vencimento', groupId: 'datas', getter: (m) => m.DataVencimento || '' },
+    { id: 'dataComp', label: 'Data competência', groupId: 'datas', getter: (m) => m.DataCompetencia || '' },
+    { id: 'dataQuit', label: 'Data quitação', groupId: 'datas', getter: (m) => m.DataQuitacao || '' },
+    { id: 'valor', label: 'Valor', groupId: 'valores', getter: (m) => Number(m.Valor || 0) },
+    { id: 'valorSinal', label: 'Valor c/ sinal', groupId: 'valores', getter: (m) => (m.Debito ? -Number(m.Valor || 0) : Number(m.Valor || 0)) },
+    { id: 'status', label: 'Status pagamento', groupId: 'status', getter: (m) => ((m as any).DataQuitacao ? 'Quitado' : 'Pendente') },
+    { id: 'categoria', label: 'Categoria', groupId: 'classificacao', getter: (m) => this.categoriaExibicao(m) },
+    { id: 'nomeContaFin', label: 'Conta financeira', groupId: 'classificacao', getter: (m) => m.NomeContaFinanceira || '' },
+    { id: 'clienteFornecedor', label: 'Cliente/Fornecedor', groupId: 'parceiro', getter: (m) => this.nomeParceiroExibicao(m) },
+    { id: 'codigoParceiro', label: 'Código cliente/forn.', groupId: 'parceiro', getter: (m) => (m.CodigoClienteFornecedor as string | number | undefined) ?? '' },
+    { id: 'contaBancaria', label: 'Conta bancária (exibição)', groupId: 'conta', getter: (m) => this.rotuloContaBancariaDisplay(String((m as any).IdContaFinanceira ?? ''), String((m as any).NomeContaFinanceira ?? '')) },
+    { id: 'idConta', label: 'ID conta financeira', groupId: 'conta', getter: (m) => (m as any).IdContaFinanceira ?? '' },
+    { id: 'numParcela', label: 'Nº parcela', groupId: 'parcelamento', getter: (m) => m.NumeroParcela ?? '' },
+    { id: 'qtdParcela', label: 'Qtd parcelas', groupId: 'parcelamento', getter: (m) => m.QuantidadeParcela ?? '' },
+    { id: 'anexoComprovante', label: 'Tem comprovante', groupId: 'anexos', getter: (m) => this.temAnexo(m, 'comprovante') ? 'Sim' : 'Não' },
+    { id: 'anexoNF', label: 'Tem nota fiscal', groupId: 'anexos', getter: (m) => this.temAnexo(m, 'nota_fiscal') ? 'Sim' : 'Não' },
+    { id: 'anexoBoleto', label: 'Tem boleto', groupId: 'anexos', getter: (m) => this.temAnexo(m, 'boleto') ? 'Sim' : 'Não' },
+    { id: 'anexoFatura', label: 'Tem fatura', groupId: 'anexos', getter: (m) => this.temAnexo(m, 'fatura') ? 'Sim' : 'Não' },
+    { id: 'formaPagto', label: 'Forma pagamento', groupId: 'origem', getter: (m) => m.NomeFormaPagamento || '' },
+    { id: 'tipoMov', label: 'Tipo movimentação', groupId: 'origem', getter: (m) => m.NomeTipoMovimentacao || '' },
+    { id: 'empresa', label: 'Empresa', groupId: 'origem', getter: (m) => m.NomeEmpresa || '' },
+    { id: 'origemDados', label: 'Fonte dados', groupId: 'origem', getter: () => this.fonteDados },
+    { id: 'observacao', label: 'Observação', groupId: 'auditoria', getter: (m) => m.Observacao || '' },
+    { id: 'cpfCnpjCliente', label: 'CPF/CNPJ parceiro', groupId: 'auditoria', getter: (m) => (m as any).CPFCNPJCliente || '' },
+  ];
+  exportSelectedCols = new Set<string>();
 
   private destroy$ = new Subject<void>();
   private textoPesquisaSubject = new Subject<string>();
@@ -1364,7 +1437,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     if (this.filtrosUI.categoria) {
       const categoriaSelecionada = this.filtrosUI.categoria.toLowerCase();
       filtradas = filtradas.filter(mov => {
-        const nomeCategoria = (mov.NomeCategoriaFinanceira || '').toLowerCase();
+        const nomeCategoria = this.categoriaExibicao(mov).toLowerCase();
         const categoriaRoot = (mov.Valores?.[0]?.NomeCategoriaRoot || '').toLowerCase();
         return nomeCategoria === categoriaSelecionada || categoriaRoot === categoriaSelecionada;
       });
@@ -1393,7 +1466,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       const texto = this.filtrosUI.textoPesquisa.toLowerCase();
       filtradas = filtradas.filter(mov => 
         (mov.Nome && mov.Nome.toLowerCase().includes(texto)) ||
-        (mov.NomeClienteFornecedor && mov.NomeClienteFornecedor.toLowerCase().includes(texto)) ||
+        this.nomeParceiroExibicao(mov).toLowerCase().includes(texto) ||
+        this.categoriaExibicao(mov).toLowerCase().includes(texto) ||
         (mov.Observacao && mov.Observacao.toLowerCase().includes(texto))
       );
     }
@@ -1677,10 +1751,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   }
 
   extrairCategoriaRoot(mov: MovimentacaoFinanceira): string {
-    if (mov.Valores && mov.Valores.length > 0) {
-      return mov.Valores[0].NomeCategoriaRoot || mov.NomeCategoriaFinanceira || '';
-    }
-    return mov.NomeCategoriaFinanceira || '';
+    return this.categoriaExibicao(mov);
   }
 
   // ===== Paginação =====
@@ -1991,6 +2062,39 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       .trim();
   }
 
+  nomeParceiroExibicao(mov: MovimentacaoFinanceira): string {
+    const parceiroDireto =
+      (mov.NomeClienteFornecedor || '').trim() ||
+      (mov.NomeFantasiaClienteFornecedor || '').trim() ||
+      (mov.RazaoSocialClienteFornecedor || '').trim();
+
+    if (parceiroDireto) {
+      return parceiroDireto;
+    }
+
+    const descricao = (mov.Nome || '').trim();
+    if (descricao) {
+      const matchFatura = descricao.match(/fatura\s*n[ºo]?\s*\.?\s*\d+\s+(.+)$/i);
+      if (matchFatura?.[1]) {
+        return matchFatura[1].trim();
+      }
+      const partes = descricao.split(' - ').map((p) => p.trim()).filter(Boolean);
+      if (partes.length >= 2) {
+        return partes[partes.length - 1];
+      }
+    }
+
+    return '-';
+  }
+
+  categoriaExibicao(mov: MovimentacaoFinanceira): string {
+    const categoria = (mov.NomeCategoriaFinanceira || '').trim() || (mov.Valores?.[0]?.NomeCategoriaRoot || '').trim();
+    if (categoria) {
+      return categoria;
+    }
+    return mov.Debito ? 'OFX - Despesa importada' : 'OFX - Receita importada';
+  }
+
   getParcelaLabel(mov: MovimentacaoFinanceira): string {
     if (mov.NumeroParcela && mov.QuantidadeParcela) {
       return `${mov.NumeroParcela}/${mov.QuantidadeParcela}`;
@@ -2033,6 +2137,171 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       return 'Fatura';
     }
     return this.origemNavegacao;
+  }
+
+  abrirModalExportacao(): void {
+    this.mostrarModalExportacao = true;
+    this.abaExportacaoAtiva = 'identificacao';
+    this.hidratarSelecaoExportacao();
+  }
+
+  fecharModalExportacao(): void {
+    this.mostrarModalExportacao = false;
+  }
+
+  get colunasAbaAtiva(): ExportColumnDef[] {
+    return this.exportColumns.filter((c) => c.groupId === this.abaExportacaoAtiva);
+  }
+
+  colunaSelecionada(colId: string): boolean {
+    return this.exportSelectedCols.has(colId);
+  }
+
+  alternarColunaExportacao(colId: string): void {
+    if (this.exportSelectedCols.has(colId)) {
+      this.exportSelectedCols.delete(colId);
+    } else {
+      this.exportSelectedCols.add(colId);
+    }
+    this.salvarSelecaoExportacao();
+  }
+
+  selecionarTodasAbaAtiva(): void {
+    for (const c of this.colunasAbaAtiva) {
+      this.exportSelectedCols.add(c.id);
+    }
+    this.salvarSelecaoExportacao();
+  }
+
+  limparAbaAtiva(): void {
+    for (const c of this.colunasAbaAtiva) {
+      this.exportSelectedCols.delete(c.id);
+    }
+    this.salvarSelecaoExportacao();
+  }
+
+  selecionarPresetEssencial(): void {
+    const essenciais = ['idMov', 'descricao', 'tipo', 'dataVenc', 'valor', 'status', 'categoria', 'clienteFornecedor'];
+    this.exportSelectedCols = new Set(essenciais);
+    this.salvarSelecaoExportacao();
+  }
+
+  selecionarTodasColunas(): void {
+    this.exportSelectedCols = new Set(this.exportColumns.map((c) => c.id));
+    this.salvarSelecaoExportacao();
+  }
+
+  get totalColunasSelecionadas(): number {
+    return this.exportSelectedCols.size;
+  }
+
+  async exportarMovimentacoes(): Promise<void> {
+    if (this.totalColunasSelecionadas === 0) {
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Selecione colunas',
+        text: 'Marque pelo menos uma coluna para exportar.',
+        confirmButtonColor: '#334155',
+      });
+      return;
+    }
+
+    const colunas = this.exportColumns.filter((c) => this.exportSelectedCols.has(c.id));
+    const dadosFonte = this.movimentacoesOrdenadas;
+    const linhas = dadosFonte.map((mov, idx) => {
+      const row: Record<string, string | number | boolean> = {};
+      for (const c of colunas) {
+        row[c.label] = c.getter(mov, idx);
+      }
+      return row;
+    });
+
+    if (linhas.length === 0) {
+      await Swal.fire({
+        icon: 'info',
+        title: 'Sem dados para exportar',
+        text: 'Não há movimentações no filtro atual.',
+        confirmButtonColor: '#334155',
+      });
+      return;
+    }
+
+    try {
+      this.exportando = true;
+      const sufixo = new Date().toISOString().slice(0, 10);
+      if (this.exportFormat === 'xlsx') {
+        const sheet = XLSX.utils.json_to_sheet(linhas);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, sheet, 'Movimentacoes');
+        XLSX.writeFile(wb, `movimentacoes_${sufixo}.xlsx`);
+      } else {
+        const csv = this.toCsv(linhas, colunas.map((c) => c.label));
+        this.downloadBlob(csv, `movimentacoes_${sufixo}.csv`, 'text/csv;charset=utf-8;');
+      }
+      this.exportando = false;
+      this.mostrarModalExportacao = false;
+    } catch {
+      this.exportando = false;
+      await Swal.fire({
+        icon: 'error',
+        title: 'Falha ao exportar',
+        text: 'Não foi possível gerar o arquivo de exportação.',
+        confirmButtonColor: '#dc2626',
+      });
+    }
+  }
+
+  private toCsv(rows: Array<Record<string, string | number | boolean>>, headers: string[]): string {
+    const escapeCell = (v: unknown): string => {
+      const str = String(v ?? '');
+      const escaped = str.replace(/"/g, '""');
+      return `"${escaped}"`;
+    };
+    const headerLine = headers.map(escapeCell).join(';');
+    const body = rows
+      .map((row) => headers.map((h) => escapeCell(row[h])).join(';'))
+      .join('\r\n');
+    return `${headerLine}\r\n${body}`;
+  }
+
+  private downloadBlob(content: string, filename: string, mimeType: string): void {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  private hidratarSelecaoExportacao(): void {
+    if (this.exportSelectedCols.size > 0) {
+      return;
+    }
+    try {
+      const raw = window?.localStorage?.getItem(this.exportStorageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          this.exportSelectedCols = new Set(
+            parsed.filter((id: unknown) => typeof id === 'string' && this.exportColumns.some((c) => c.id === id))
+          );
+        }
+      }
+    } catch {
+      // noop
+    }
+    if (this.exportSelectedCols.size === 0) {
+      this.selecionarPresetEssencial();
+    }
+  }
+
+  private salvarSelecaoExportacao(): void {
+    try {
+      window?.localStorage?.setItem(this.exportStorageKey, JSON.stringify(Array.from(this.exportSelectedCols)));
+    } catch {
+      // noop
+    }
   }
 
   /** Lista completa ordenada (todos os itens quando há lista completa; senão só da página atual). */
@@ -2136,7 +2405,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     const filtradas = fonte.filter(mov => (mov.Debito ? !isReceita : isReceita));
     const map = new Map<string, { total: number; quantidade: number }>();
     filtradas.forEach(mov => {
-      const nome = mov.NomeCategoriaFinanceira || mov.Valores?.[0]?.NomeCategoriaRoot || '(Sem categoria)';
+      const nome = this.categoriaExibicao(mov) || '(Sem categoria)';
       const cur = map.get(nome) || { total: 0, quantidade: 0 };
       cur.total += mov.Valor ?? 0;
       cur.quantidade += 1;
@@ -2154,7 +2423,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     const filtradas = fonte.filter(mov => (mov.Debito ? !isReceita : isReceita));
     const map = new Map<string, { total: number; quantidade: number }>();
     filtradas.forEach(mov => {
-      const nome = (mov as any).NomeClienteFornecedor || (mov as any).NomeFantasiaClienteFornecedor || '(Sem cliente/fornecedor)';
+      const nome = this.nomeParceiroExibicao(mov);
       const cur = map.get(nome) || { total: 0, quantidade: 0 };
       cur.total += mov.Valor ?? 0;
       cur.quantidade += 1;
@@ -2182,6 +2451,4 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     }).format(value);
   }
 
-  // Métodos de exportação (exportarExcel e exportarPDF) removidos
-  // Implementar futuramente se necessário usando bibliotecas como ExcelJS ou jsPDF
 }
