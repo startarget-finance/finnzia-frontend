@@ -58,26 +58,24 @@
 
     <div>
     
-    <!-- Loading State (Skeleton-like) -->
-    <div *ngIf="loading" class="space-y-6 animate-pulse">
-      <div class="grid grid-cols-1 gap-6 md:grid-cols-4">
-        <div *ngFor="let i of [1,2,3,4]" class="h-32 rounded-2xl border border-slate-200/80 bg-white shadow-sm"></div>
-      </div>
-      <div class="h-24 rounded-2xl border border-slate-200/80 bg-white shadow-sm"></div>
-      <div class="h-96 rounded-2xl border border-slate-200/80 bg-white shadow-sm"></div>
+    <!-- Loading State -->
+    <div *ngIf="loading" class="mb-6">
+      <app-feedback-state
+        kind="loading"
+        title="Carregando movimentações"
+        message="Aguarde enquanto buscamos os dados do período."
+      />
     </div>
 
     <!-- Error State -->
-    <div *ngIf="error && !loading" class="mb-8 flex items-start gap-4 rounded-2xl border border-rose-200/80 bg-rose-50/90 p-5 shadow-sm">
-      <div class="mt-0.5 shrink-0 rounded-full bg-rose-100 p-2">
-        <svg class="h-5 w-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-      </div>
-      <div>
-        <h3 class="text-sm font-semibold text-rose-900">Não foi possível carregar os dados</h3>
-        <p class="mt-1 text-sm text-rose-700">{{ error }}</p>
-      </div>
+    <div *ngIf="error && !loading" class="mb-8">
+      <app-feedback-state
+        kind="error"
+        title="Não foi possível carregar os dados"
+        [message]="error"
+        actionLabel="Tentar novamente"
+        (action)="carregarMovimentacoes()"
+      />
     </div>
 
     <ng-container *ngIf="!loading">
@@ -583,18 +581,13 @@
               <!-- Empty State -->
               <tr *ngIf="movimentacoesParaExibir.length === 0">
                 <td colspan="7" class="px-6 py-20 text-center">
-                  <div class="flex flex-col items-center justify-center">
-                    <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200/80 bg-slate-50">
-                      <svg class="h-6 w-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                      </svg>
-                    </div>
-                    <p class="text-sm font-semibold text-slate-900">Nenhuma movimentação encontrada</p>
-                    <p class="mt-1 text-sm text-slate-500">Tente ajustar seus filtros ou período de busca.</p>
-                    <button type="button" (click)="limparFiltros()" class="mt-5 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900">
-                      Limpar filtros
-                    </button>
-                  </div>
+                  <app-feedback-state
+                    kind="empty"
+                    title="Nenhuma movimentação encontrada"
+                    message="Tente ajustar seus filtros ou período de busca."
+                    actionLabel="Limpar filtros"
+                    (action)="limparFiltros()"
+                  />
                 </td>
               </tr>
             </tbody>
@@ -750,12 +743,47 @@
 
           <div class="grid grid-cols-1 gap-3 overflow-y-auto px-5 py-4 sm:px-6 md:grid-cols-2">
             <div>
+              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Vencimento *</label>
+              <input [(ngModel)]="novoLancamento.dataVencimento" type="date"
+                     [class.border-rose-300]="cadastroErrors['dataVencimento']"
+                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
+              <p *ngIf="cadastroErrors['dataVencimento']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['dataVencimento'] }}</p>
+            </div>
+            <div>
+              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Valor (R$) *</label>
+              <input [ngModel]="novoLancamento.valor" (ngModelChange)="onValorDigitado($event)" type="text" inputmode="numeric"
+                     [class.border-rose-300]="cadastroErrors['valor']"
+                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                     placeholder="1.234,56" />
+              <p *ngIf="cadastroErrors['valor']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['valor'] }}</p>
+            </div>
+            <div>
               <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Descrição *</label>
               <input [(ngModel)]="novoLancamento.descricao" type="text"
                      [class.border-rose-300]="cadastroErrors['descricao']"
                      class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
                      placeholder="Ex.: pagamento fornecedor XPTO" />
               <p *ngIf="cadastroErrors['descricao']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['descricao'] }}</p>
+            </div>
+            <div>
+              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Categoria *</label>
+              <select [(ngModel)]="novoLancamento.categoriaOpcao" (ngModelChange)="onCategoriaOpcaoChange()"
+                     [class.border-rose-300]="cadastroErrors['categoria']"
+                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+              >
+                <option value="">Selecione uma categoria</option>
+                <option *ngFor="let categoria of categoriasCadastroTipo" [value]="categoria.value">
+                  {{ categoria.label }}
+                </option>
+                <option value="__manual__">Digitar manualmente</option>
+              </select>
+              <input *ngIf="novoLancamento.categoriaOpcao === '__manual__'" [(ngModel)]="novoLancamento.categoriaManual" type="text"
+                     class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                     placeholder="Digite categoria ou subcategoria" />
+              <p *ngIf="categoriasCadastroTipo.length === 0" class="mt-1 text-[11px] text-slate-500">
+                Nenhuma categoria de {{ novoLancamento.tipo === 'receita' ? 'receita' : 'despesa' }} cadastrada no Plano de contas.
+              </p>
+              <p *ngIf="cadastroErrors['categoria']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['categoria'] }}</p>
             </div>
             <div>
               <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Cliente/Fornecedor *</label>
@@ -780,44 +808,24 @@
               <p *ngIf="cadastroErrors['clienteFornecedor']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['clienteFornecedor'] }}</p>
             </div>
             <div>
-              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Valor (R$) *</label>
-              <input [ngModel]="novoLancamento.valor" (ngModelChange)="onValorDigitado($event)" type="text" inputmode="numeric"
-                     [class.border-rose-300]="cadastroErrors['valor']"
-                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-                     placeholder="1.234,56" />
-              <p *ngIf="cadastroErrors['valor']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['valor'] }}</p>
-            </div>
-            <div>
-              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Categoria *</label>
-              <select [(ngModel)]="novoLancamento.categoriaOpcao" (ngModelChange)="onCategoriaOpcaoChange()"
-                     [class.border-rose-300]="cadastroErrors['categoria']"
-                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-              >
-                <option value="">Selecione uma categoria</option>
-                <option *ngFor="let categoria of categoriasCadastroTipo" [value]="categoria.value">
-                  {{ categoria.label }}
+              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Conta bancária</label>
+              <select [(ngModel)]="novoLancamento.contaOpcao" (ngModelChange)="onContaOpcaoChange()"
+                      class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100">
+                <option value="">Selecione uma conta (opcional)</option>
+                <option *ngFor="let conta of contasBancarias" [value]="conta.value" [hidden]="!conta.value">
+                  {{ conta.label }}
                 </option>
                 <option value="__manual__">Digitar manualmente</option>
               </select>
-              <input *ngIf="novoLancamento.categoriaOpcao === '__manual__'" [(ngModel)]="novoLancamento.categoriaManual" type="text"
+              <input *ngIf="novoLancamento.contaOpcao === '__manual__'" [(ngModel)]="novoLancamento.contaManual" type="text"
                      class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-                     placeholder="Digite categoria ou subcategoria" />
-              <p *ngIf="categoriasCadastroTipo.length === 0" class="mt-1 text-[11px] text-slate-500">
-                Nenhuma categoria de {{ novoLancamento.tipo === 'receita' ? 'receita' : 'despesa' }} cadastrada no Plano de contas.
-              </p>
-              <p *ngIf="cadastroErrors['categoria']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['categoria'] }}</p>
-            </div>
-            <div>
-              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Vencimento *</label>
-              <input [(ngModel)]="novoLancamento.dataVencimento" type="date"
-                     [class.border-rose-300]="cadastroErrors['dataVencimento']"
-                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
-              <p *ngIf="cadastroErrors['dataVencimento']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['dataVencimento'] }}</p>
+                     placeholder="Digite a conta bancária" />
             </div>
             <div>
               <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Competência</label>
               <input [(ngModel)]="novoLancamento.dataCompetencia" type="month"
                      class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
+              <p *ngIf="cadastroErrors['dataCompetencia']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['dataCompetencia'] }}</p>
             </div>
             <div>
               <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Status inicial</label>
@@ -834,20 +842,6 @@
                      [class.border-rose-300]="cadastroErrors['dataQuitacao']"
                      class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
               <p *ngIf="cadastroErrors['dataQuitacao']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['dataQuitacao'] }}</p>
-            </div>
-            <div>
-              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Conta bancária</label>
-              <select [(ngModel)]="novoLancamento.contaOpcao" (ngModelChange)="onContaOpcaoChange()"
-                      class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100">
-                <option value="">Selecione uma conta (opcional)</option>
-                <option *ngFor="let conta of contasBancarias" [value]="conta.value" [hidden]="!conta.value">
-                  {{ conta.label }}
-                </option>
-                <option value="__manual__">Digitar manualmente</option>
-              </select>
-              <input *ngIf="novoLancamento.contaOpcao === '__manual__'" [(ngModel)]="novoLancamento.contaManual" type="text"
-                     class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-                     placeholder="Digite a conta bancária" />
             </div>
             <div class="md:col-span-2">
               <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Observação</label>

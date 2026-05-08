@@ -64,6 +64,12 @@ export interface ClienteCadastroListParams {
   sort?: string;
 }
 
+interface CnpjLookupResponse {
+  cnpj?: string;
+  razaoSocial?: string;
+  nomeFantasia?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ClienteCadastroService {
   private readonly base = `${API_CONFIG.BACKEND_API_URL}/api/cadastro/clientes`;
@@ -111,5 +117,10 @@ export class ClienteCadastroService {
 
   setBloqueado(id: number, bloqueado: boolean): Observable<ClienteCadastro> {
     return this.http.patch<ClienteCadastro>(`${this.base}/${id}/bloqueado`, { bloqueado });
+  }
+
+  consultarCnpj(cnpj: string): Observable<CnpjLookupResponse> {
+    const digits = (cnpj || '').replace(/\D/g, '');
+    return this.http.get<CnpjLookupResponse>(`${API_CONFIG.BACKEND_API_URL}/api/cadastro/cnpj/${digits}`);
   }
 }

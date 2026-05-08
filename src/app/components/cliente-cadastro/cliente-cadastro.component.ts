@@ -50,6 +50,9 @@ export class ClienteCadastroComponent implements OnInit {
   formResponsavel = '';
   formCpf = '';
   formBloqueado = false;
+  consultandoCnpj = false;
+  private ultimoCnpjConsultado = '';
+  private cnpjLookupTimer: ReturnType<typeof setTimeout> | null = null;
   private modalSnapshot = '';
 
   private readonly coresAvatar = [
@@ -80,11 +83,17 @@ export class ClienteCadastroComponent implements OnInit {
     this.formCpfCnpj = maskCpfCnpj(digits);
     if (digits.length === 11) this.formTipoPessoa = 'PF';
     if (digits.length === 14) this.formTipoPessoa = 'PJ';
+    if (digits.length === 14 && this.formTipoPessoa === 'PJ') {
+      this.agendarConsultaCnpj(digits);
+    }
   }
 
   onCpfCnpjBlur(): void {
     const digits = onlyDigits(this.formCpfCnpj);
     this.formCpfCnpj = maskCpfCnpj(digits);
+    if (digits.length === 14 && this.formTipoPessoa === 'PJ') {
+      this.consultarCnpjParaPreencher(digits);
+    }
   }
 
   onCelularInput(): void {
@@ -199,6 +208,12 @@ export class ClienteCadastroComponent implements OnInit {
     this.formResponsavel = '';
     this.formCpf = '';
     this.formBloqueado = false;
+    this.consultandoCnpj = false;
+    this.ultimoCnpjConsultado = '';
+    if (this.cnpjLookupTimer) {
+      clearTimeout(this.cnpjLookupTimer);
+      this.cnpjLookupTimer = null;
+    }
     this.atualizarSnapshotModal();
     this.modalAberto = true;
   }
@@ -217,6 +232,12 @@ export class ClienteCadastroComponent implements OnInit {
     this.formResponsavel = c.responsavel || '';
     this.formCpf = maskCpf(onlyDigits(c.cpf || ''));
     this.formBloqueado = !!c.bloqueado;
+    this.consultandoCnpj = false;
+    this.ultimoCnpjConsultado = onlyDigits(c.cpfCnpj || '');
+    if (this.cnpjLookupTimer) {
+      clearTimeout(this.cnpjLookupTimer);
+      this.cnpjLookupTimer = null;
+    }
     this.atualizarSnapshotModal();
     this.modalAberto = true;
   }
@@ -434,6 +455,43 @@ export class ClienteCadastroComponent implements OnInit {
   private csvEscapar(s: string): string {
     const t = (s || '').replace(/"/g, '""');
     return `"${t}"`;
+  }
+
+  private agendarConsultaCnpj(cnpjDigits: string): void {
+    if (this.cnpjLookupTimer) {
+      clearTimeout(this.cnpjLookupTimer);
+      this.cnpjLookupTimer = null;
+    }
+    this.cnpjLookupTimer = setTimeout(() => {
+      this.consultarCnpjParaPreencher(cnpjDigits);
+    }, 500);
+  }
+
+  private consultarCnpjParaPreencher(cnpjDigits: string): void {
+    if (cnpjDigits.length !== 14) {
+      return;
+    }
+    if (this.ultimoCnpjConsultado === cnpjDigits || this.consultandoCnpj) {
+      return;
+    }
+    this.consultandoCnpj = true;
+    this.api.consultarCnpj(cnpjDigits).subscribe({
+      next: (resp) => {
+        const razao = (resp?.razaoSocial || '').trim();
+        const fantasia = (resp?.nomeFantasia || '').trim();
+        if (razao) {
+          this.formRazaoSocial = razao;
+        }
+        if (fantasia) {
+          this.formNomeFantasia = fantasia;
+        }
+        this.ultimoCnpjConsultado = cnpjDigits;
+        this.consultandoCnpj = false;
+      },
+      error: () => {
+        this.consultandoCnpj = false;
+      }
+    });
   }
 
   onImportarArquivo(ev: Event): void {

@@ -1,9 +1,7 @@
 <ng-container *ngIf="!embedded">
-  <div class="min-h-full bg-[#f1f4f8]">
+  <div class="min-h-full bg-[#F8FAFC]">
     <div class="max-w-[1800px] mx-auto px-4 sm:px-6 py-6 space-y-5">
-      <section
-        class="bg-white border border-slate-200/70 rounded-2xl shadow-[0_2px_16px_-4px_rgba(15,23,42,0.08)] p-4 sm:p-6"
-      >
+      <section class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
         <ng-container *ngTemplateOutlet="corpoPlano"></ng-container>
       </section>
     </div>
@@ -14,44 +12,114 @@
   <ng-container *ngTemplateOutlet="corpoPlano"></ng-container>
 </div>
 
+<!-- Árvore recursiva: filhos de um nó (subcategorias) -->
+<ng-template
+  #arvoreFilhos
+  let-subs
+  let-ton="ton"
+  let-caminho="caminho"
+  let-raiz="raiz"
+>
+  <ul class="mt-1 space-y-0.5 border-l border-slate-200/90 pl-2.5 ml-1" *ngIf="subs?.length">
+    <li *ngFor="let n of subs" class="rounded-md py-0.5">
+      <div class="flex items-start justify-between gap-2 rounded-md px-1.5 py-1 hover:bg-white/80">
+        <span class="text-xs sm:text-sm text-slate-800 leading-snug break-words">{{ n.nome }}</span>
+        <div class="flex shrink-0 items-center gap-1">
+          <button
+            *ngIf="mostrarBotaoAdicionarNaArvore(caminho)"
+            type="button"
+            (click)="abrirNovoFilho(n, ton, caminho + ' › ' + n.nome)"
+            class="inline-flex h-6 w-6 items-center justify-center rounded-md border text-sm font-semibold shadow-sm transition"
+            [ngClass]="
+              ton === 'receita'
+                ? 'border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50'
+                : 'border-rose-200 bg-white text-rose-700 hover:bg-rose-50'
+            "
+            [attr.title]="tituloMaisDetalhe()"
+            [attr.aria-label]="'Novo detalhe abaixo de ' + n.nome"
+          >
+            +
+          </button>
+          <button
+            type="button"
+            (click)="abrirEditarNo(raiz, n, caminho)"
+            class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+            title="Editar"
+            [attr.aria-label]="'Editar ' + n.nome"
+          >
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L7.5 21H3v-4.5L16.732 3.732z"
+              />
+            </svg>
+          </button>
+          <button
+            type="button"
+            (click)="excluirNo(caminho, n)"
+            class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-rose-200 bg-rose-50 text-rose-600 shadow-sm transition-colors hover:bg-rose-100"
+            title="Excluir"
+            [attr.aria-label]="'Excluir ' + n.nome"
+          >
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <ng-container
+        *ngIf="n.children?.length"
+        [ngTemplateOutlet]="arvoreFilhos"
+        [ngTemplateOutletContext]="{
+          $implicit: n.children,
+          ton: ton,
+          caminho: caminho + ' › ' + n.nome,
+          raiz: raiz
+        }"
+      ></ng-container>
+    </li>
+  </ul>
+</ng-template>
+
 <ng-template #corpoPlano>
-  <div class="space-y-3">
+  <div class="space-y-4">
     <div *ngIf="!embedded" class="space-y-3">
-      <div>
+      <div class="border-b border-gray-100 pb-4">
         <h1 class="text-2xl font-semibold text-slate-900 tracking-tight">Plano de contas</h1>
+        <p class="mt-1 text-xs text-gray-500">Organize categorias e subcategorias no mesmo padrao visual do DFC.</p>
       </div>
     </div>
 
-    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-      <p class="text-xs text-slate-500 sm:text-sm">
-        Dica: use <strong class="text-slate-700">+</strong> para criar categoria e, na linha, subcategoria.
-      </p>
-      <details class="text-xs text-slate-500 sm:text-sm">
-        <summary class="cursor-pointer select-none text-slate-600 hover:text-slate-800">Saiba mais</summary>
-        <div class="mt-2 rounded-lg border border-slate-200/80 bg-slate-50/70 px-3 py-2.5 leading-relaxed">
-          Categorias e subcategorias seguem o mesmo padrão usado nas movimentações. Receita e Despesa ficam lado a lado para agilizar a montagem.
-        </div>
-      </details>
-    </div>
-
-    <p
-      *ngIf="erro"
-      class="text-sm text-red-700 bg-red-50/90 border border-red-200/60 rounded-lg px-3 py-2.5 shadow-sm"
-    >
-      {{ erro }}
+    <p class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs text-slate-500 leading-relaxed">
+      <span class="font-medium text-slate-600">Estrutura:</span>
+      <strong class="text-slate-700">Categoria</strong> (+ no título) →
+      <strong class="text-slate-700">Subcategoria</strong> (+ na categoria) →
+      <strong class="text-slate-700">Detalhe</strong> (+ só na subcategoria: imposto, taxa…). Em detalhe não há novo nível; use
+      <strong class="text-slate-700">editar</strong> para corrigir o nome.
     </p>
 
-    <div class="grid gap-4 lg:grid-cols-2">
+    <app-feedback-state
+      *ngIf="erro"
+      kind="error"
+      title="Não foi possível carregar o plano de contas"
+      [message]="erro"
+      actionLabel="Tentar novamente"
+      (action)="carregar()"
+    />
+
+    <div class="grid gap-3 lg:grid-cols-2">
       <!-- Receita -->
       <div
-        class="overflow-hidden rounded-2xl border border-emerald-200/70 bg-white shadow-[0_12px_32px_-20px_rgba(5,150,105,0.35)] ring-1 ring-emerald-100/80"
+        class="overflow-hidden rounded-xl border border-emerald-200/70 bg-white shadow-sm"
       >
         <div
-          class="flex items-center justify-between gap-3 border-b border-emerald-100 bg-gradient-to-r from-emerald-50/95 via-white to-teal-50/40 px-4 py-3.5"
+          class="flex items-center justify-between gap-3 border-b border-emerald-100 bg-emerald-50/60 px-4 py-3"
         >
           <div class="flex items-center gap-2.5 min-w-0">
             <span
-              class="inline-flex shrink-0 items-center rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-800"
+              class="inline-flex shrink-0 items-center rounded-md border border-emerald-200 bg-white px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-800"
               >Receita</span
             >
             <span class="truncate text-xs text-slate-500 hidden sm:inline">Entradas</span>
@@ -59,41 +127,60 @@
           <button
             type="button"
             (click)="abrirNovoParaTipo('receita')"
-            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-emerald-300 bg-white text-lg font-semibold leading-none text-emerald-700 shadow-sm transition hover:bg-emerald-50 hover:border-emerald-400"
-            title="Nova categoria de receita"
-            [attr.aria-label]="'Nova categoria de receita'"
+            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-emerald-300 bg-white text-lg font-semibold leading-none text-emerald-700 shadow-sm transition hover:bg-emerald-50 hover:border-emerald-400"
+            title="1º nível"
+            aria-label="Adicionar conta de 1º nível — receita"
           >
             +
           </button>
         </div>
-        <div class="max-h-[min(52vh,28rem)] overflow-y-auto p-3 sm:p-4 space-y-3">
-          <div *ngIf="carregando && porTipo('receita').length === 0" class="py-6 text-center text-sm text-slate-500">
-            Carregando…
-          </div>
+        <div class="max-h-[min(52vh,28rem)] overflow-y-auto space-y-3 p-3 sm:p-4">
+          <app-feedback-state
+            *ngIf="carregando && porTipo('receita').length === 0"
+            kind="loading"
+            title="Carregando contas de receita"
+            message="Aguarde enquanto atualizamos os dados."
+          />
           <ng-container *ngIf="!carregando || porTipo('receita').length > 0">
             <div
               *ngFor="let c of porTipo('receita')"
-              class="rounded-xl border border-slate-200/80 bg-slate-50/50 p-3 shadow-sm"
+              class="rounded-lg border border-slate-200/90 bg-slate-50/40 p-3 shadow-sm"
             >
               <div class="flex items-start justify-between gap-2">
                 <span class="font-semibold text-slate-900 text-sm leading-snug break-words">{{ c.nome }}</span>
                 <div class="flex shrink-0 items-center gap-1">
                   <button
                     type="button"
-                    (click)="abrirNovaSubcategoria(c)"
-                    class="flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 bg-white text-base font-medium text-emerald-700 transition hover:bg-emerald-50"
-                    title="Adicionar subcategoria"
-                    [attr.aria-label]="'Adicionar subcategoria em ' + c.nome"
+                    (click)="abrirNovoFilhoDaRaiz(c)"
+                    class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-emerald-200 bg-white text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-50"
+                    [attr.title]="tituloMaisSubcategoria()"
+                    [attr.aria-label]="'Nova subcategoria sob ' + c.nome"
                   >
                     +
                   </button>
                   <button
                     type="button"
-                    (click)="excluirCategoria(c)"
-                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-600 transition-colors hover:bg-rose-100"
-                    title="Excluir categoria"
+                    (click)="abrirEditarRaiz(c)"
+                    class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+                    title="Editar"
+                    [attr.aria-label]="'Editar ' + c.nome"
                   >
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L7.5 21H3v-4.5L16.732 3.732z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="excluirRaiz(c)"
+                    class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-rose-200 bg-rose-50 text-rose-600 shadow-sm transition-colors hover:bg-rose-100"
+                    title="Excluir ramo"
+                  >
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
@@ -104,34 +191,25 @@
                   </button>
                 </div>
               </div>
-              <div class="mt-2 flex flex-wrap gap-1.5">
-                <span
-                  *ngFor="let s of c.subcategorias"
-                  class="inline-flex items-center gap-1 rounded-md border border-emerald-100 bg-white px-2 py-0.5 text-xs text-slate-700"
-                >
-                  {{ s.nome }}
-                  <button
-                    type="button"
-                    class="text-rose-500 hover:text-rose-700"
-                    title="Remover subcategoria"
-                    (click)="excluirSubcategoria(c, s.id)"
-                    >×</button
-                  >
-                </span>
-                <span *ngIf="c.subcategorias.length === 0" class="text-xs italic text-slate-400">Sem subcategorias — use +</span>
-              </div>
+              <ng-container
+                *ngIf="c.subcategorias?.length"
+                [ngTemplateOutlet]="arvoreFilhos"
+                [ngTemplateOutletContext]="{ $implicit: c.subcategorias, ton: 'receita', caminho: c.nome, raiz: c }"
+              ></ng-container>
             </div>
-            <p *ngIf="!carregando && porTipo('receita').length === 0" class="rounded-lg border border-dashed border-emerald-200/80 bg-emerald-50/30 px-3 py-4 text-center text-sm text-slate-600">
-              Nenhuma categoria de receita ainda.
-              <span class="block mt-3">
+            <p
+              *ngIf="!carregando && porTipo('receita').length === 0"
+              class="rounded-lg border border-dashed border-emerald-200/80 bg-emerald-50/30 px-3 py-4 text-center text-sm text-slate-600"
+            >
+              Nenhuma conta.
+              <span class="block mt-2">
                 <button
                   type="button"
                   (click)="abrirNovoParaTipo('receita')"
                   class="inline-flex h-9 items-center justify-center rounded-lg bg-emerald-700 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-800"
-                  title="Criar primeira categoria de receita"
-                  [attr.aria-label]="'Criar primeira categoria de receita'"
+                  aria-label="Adicionar receita"
                 >
-                  Criar primeira categoria
+                  Adicionar
                 </button>
               </span>
             </p>
@@ -141,14 +219,14 @@
 
       <!-- Despesa -->
       <div
-        class="overflow-hidden rounded-2xl border border-rose-200/70 bg-white shadow-[0_12px_32px_-20px_rgba(225,29,72,0.28)] ring-1 ring-rose-100/80"
+        class="overflow-hidden rounded-xl border border-rose-200/70 bg-white shadow-sm"
       >
         <div
-          class="flex items-center justify-between gap-3 border-b border-rose-100 bg-gradient-to-r from-rose-50/95 via-white to-orange-50/30 px-4 py-3.5"
+          class="flex items-center justify-between gap-3 border-b border-rose-100 bg-rose-50/60 px-4 py-3"
         >
           <div class="flex items-center gap-2.5 min-w-0">
             <span
-              class="inline-flex shrink-0 items-center rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-rose-800"
+              class="inline-flex shrink-0 items-center rounded-md border border-rose-200 bg-white px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-rose-800"
               >Despesa</span
             >
             <span class="truncate text-xs text-slate-500 hidden sm:inline">Saídas</span>
@@ -156,41 +234,60 @@
           <button
             type="button"
             (click)="abrirNovoParaTipo('despesa')"
-            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-rose-300 bg-white text-lg font-semibold leading-none text-rose-700 shadow-sm transition hover:bg-rose-50 hover:border-rose-400"
-            title="Nova categoria de despesa"
-            [attr.aria-label]="'Nova categoria de despesa'"
+            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-rose-300 bg-white text-lg font-semibold leading-none text-rose-700 shadow-sm transition hover:bg-rose-50 hover:border-rose-400"
+            title="1º nível"
+            aria-label="Adicionar conta de 1º nível — despesa"
           >
             +
           </button>
         </div>
-        <div class="max-h-[min(52vh,28rem)] overflow-y-auto p-3 sm:p-4 space-y-3">
-          <div *ngIf="carregando && porTipo('despesa').length === 0" class="py-6 text-center text-sm text-slate-500">
-            Carregando…
-          </div>
+        <div class="max-h-[min(52vh,28rem)] overflow-y-auto space-y-3 p-3 sm:p-4">
+          <app-feedback-state
+            *ngIf="carregando && porTipo('despesa').length === 0"
+            kind="loading"
+            title="Carregando contas de despesa"
+            message="Aguarde enquanto atualizamos os dados."
+          />
           <ng-container *ngIf="!carregando || porTipo('despesa').length > 0">
             <div
               *ngFor="let c of porTipo('despesa')"
-              class="rounded-xl border border-slate-200/80 bg-slate-50/50 p-3 shadow-sm"
+              class="rounded-lg border border-slate-200/90 bg-slate-50/40 p-3 shadow-sm"
             >
               <div class="flex items-start justify-between gap-2">
                 <span class="font-semibold text-slate-900 text-sm leading-snug break-words">{{ c.nome }}</span>
                 <div class="flex shrink-0 items-center gap-1">
                   <button
                     type="button"
-                    (click)="abrirNovaSubcategoria(c)"
-                    class="flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 bg-white text-base font-medium text-rose-700 transition hover:bg-rose-50"
-                    title="Adicionar subcategoria"
-                    [attr.aria-label]="'Adicionar subcategoria em ' + c.nome"
+                    (click)="abrirNovoFilhoDaRaiz(c)"
+                    class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-rose-200 bg-white text-sm font-semibold text-rose-700 shadow-sm transition hover:bg-rose-50"
+                    [attr.title]="tituloMaisSubcategoria()"
+                    [attr.aria-label]="'Nova subcategoria sob ' + c.nome"
                   >
                     +
                   </button>
                   <button
                     type="button"
-                    (click)="excluirCategoria(c)"
-                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-600 transition-colors hover:bg-rose-100"
-                    title="Excluir categoria"
+                    (click)="abrirEditarRaiz(c)"
+                    class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+                    title="Editar"
+                    [attr.aria-label]="'Editar ' + c.nome"
                   >
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L7.5 21H3v-4.5L16.732 3.732z"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="excluirRaiz(c)"
+                    class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-rose-200 bg-rose-50 text-rose-600 shadow-sm transition-colors hover:bg-rose-100"
+                    title="Excluir ramo"
+                  >
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
@@ -201,34 +298,25 @@
                   </button>
                 </div>
               </div>
-              <div class="mt-2 flex flex-wrap gap-1.5">
-                <span
-                  *ngFor="let s of c.subcategorias"
-                  class="inline-flex items-center gap-1 rounded-md border border-rose-100 bg-white px-2 py-0.5 text-xs text-slate-700"
-                >
-                  {{ s.nome }}
-                  <button
-                    type="button"
-                    class="text-rose-500 hover:text-rose-700"
-                    title="Remover subcategoria"
-                    (click)="excluirSubcategoria(c, s.id)"
-                    >×</button
-                  >
-                </span>
-                <span *ngIf="c.subcategorias.length === 0" class="text-xs italic text-slate-400">Sem subcategorias — use +</span>
-              </div>
+              <ng-container
+                *ngIf="c.subcategorias?.length"
+                [ngTemplateOutlet]="arvoreFilhos"
+                [ngTemplateOutletContext]="{ $implicit: c.subcategorias, ton: 'despesa', caminho: c.nome, raiz: c }"
+              ></ng-container>
             </div>
-            <p *ngIf="!carregando && porTipo('despesa').length === 0" class="rounded-lg border border-dashed border-rose-200/80 bg-rose-50/30 px-3 py-4 text-center text-sm text-slate-600">
-              Nenhuma categoria de despesa ainda.
-              <span class="block mt-3">
+            <p
+              *ngIf="!carregando && porTipo('despesa').length === 0"
+              class="rounded-lg border border-dashed border-rose-200/80 bg-rose-50/30 px-3 py-4 text-center text-sm text-slate-600"
+            >
+              Nenhuma conta.
+              <span class="block mt-2">
                 <button
                   type="button"
                   (click)="abrirNovoParaTipo('despesa')"
                   class="inline-flex h-9 items-center justify-center rounded-lg bg-rose-700 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-800"
-                  title="Criar primeira categoria de despesa"
-                  [attr.aria-label]="'Criar primeira categoria de despesa'"
+                  aria-label="Adicionar despesa"
                 >
-                  Criar primeira categoria
+                  Adicionar
                 </button>
               </span>
             </p>
@@ -238,10 +326,10 @@
     </div>
 
     <div
-      class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-2 text-xs text-slate-600"
+      class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-slate-600"
     >
-      <span *ngIf="categorias.length" class="font-medium tabular-nums">Total: {{ categorias.length }} categorias</span>
-      <span *ngIf="!categorias.length && !carregando" class="text-slate-500">Nenhuma categoria.</span>
+      <span *ngIf="categorias.length" class="font-medium tabular-nums">{{ contarNos(categorias) }} contas</span>
+      <span *ngIf="!categorias.length && !carregando" class="text-slate-500">Vazio.</span>
       <label
         class="inline-flex h-8 cursor-pointer items-center rounded-lg border border-slate-200/80 bg-white px-3 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
         [class.ml-auto]="categorias.length === 0"
@@ -258,21 +346,13 @@
   class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-[6px]"
 >
   <div
-    class="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(15,23,42,0.25)] border border-slate-200/80 max-w-lg w-full p-6 space-y-5"
+    class="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(15,23,42,0.25)] border border-slate-200/80 max-w-lg w-full p-5 space-y-4"
     (click)="$event.stopPropagation()"
   >
     <div class="flex items-start justify-between gap-4">
       <div>
-        <h2 class="text-lg font-semibold text-slate-900 tracking-tight">
-          <ng-container *ngIf="modalModo === 'subcategoria'">Nova subcategoria</ng-container>
-          <ng-container *ngIf="modalModo === 'categoria'">Nova categoria — {{ tipoLabel(formTipo) }}</ng-container>
-        </h2>
-        <p class="text-sm text-slate-500 mt-1" *ngIf="modalModo === 'categoria'">
-          Informe o nome da categoria; a subcategoria é opcional neste passo.
-        </p>
-        <p class="text-sm text-slate-500 mt-1" *ngIf="modalModo === 'subcategoria'">
-          Em <strong class="text-slate-800">{{ formCategoria }}</strong> ({{ tipoLabel(formTipo) }}).
-        </p>
+        <h2 class="text-lg font-semibold text-slate-900 tracking-tight">{{ modalTitulo() }}</h2>
+        <p *ngIf="modalSubtitulo()" class="text-xs text-slate-500 mt-1 break-words">{{ modalSubtitulo() }}</p>
       </div>
       <button
         type="button"
@@ -284,47 +364,36 @@
       </button>
     </div>
     <div class="space-y-4">
-      <div *ngIf="modalModo === 'categoria'">
+      <div *ngIf="modalAcao === 'novo' && modalModo === 'raiz'">
         <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Tipo</label>
         <select [(ngModel)]="formTipo" class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm">
           <option value="despesa">Despesa</option>
           <option value="receita">Receita</option>
         </select>
       </div>
-      <div *ngIf="modalModo === 'subcategoria'">
+      <div *ngIf="modalAcao === 'novo' && modalModo === 'filho'">
         <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Tipo</label>
-        <div class="mt-1.5 flex h-10 items-center rounded-lg border border-slate-200/90 bg-slate-50 px-3.5 text-sm text-slate-700">
+        <div
+          class="mt-1.5 flex h-10 items-center rounded-lg border border-slate-200/90 bg-slate-50 px-3.5 text-sm text-slate-700"
+        >
+          {{ tipoLabel(formTipo) }}
+        </div>
+      </div>
+      <div *ngIf="modalAcao === 'editar'">
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Tipo</label>
+        <div
+          class="mt-1.5 flex h-10 items-center rounded-lg border border-slate-200/90 bg-slate-50 px-3.5 text-sm text-slate-700"
+        >
           {{ tipoLabel(formTipo) }}
         </div>
       </div>
       <div>
-        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Categoria</label>
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{{ rotuloCampoNome() }}</label>
         <input
-          *ngIf="modalModo === 'categoria'"
-          [(ngModel)]="formCategoria"
+          [(ngModel)]="formNomeNovo"
           class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-          placeholder="Ex.: Operacional, Comercial…"
-        />
-        <div
-          *ngIf="modalModo === 'subcategoria'"
-          class="mt-1.5 flex min-h-10 items-center rounded-lg border border-slate-200/90 bg-slate-50 px-3.5 text-sm font-medium text-slate-800"
-        >
-          {{ formCategoria }}
-        </div>
-      </div>
-      <div>
-        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{{
-          modalModo === 'subcategoria' ? 'Nome da subcategoria' : 'Subcategoria (opcional)'
-        }}</label>
-        <input
-          [(ngModel)]="formSubcategoria"
-          class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-          [placeholder]="modalModo === 'subcategoria' ? 'Ex.: Mensalidade, Aluguel…' : 'Pode ficar em branco e incluir depois com + na linha'"
         />
       </div>
-      <p class="text-xs text-slate-500" *ngIf="modalModo === 'categoria'">
-        Se já existir categoria com o mesmo nome neste tipo, a subcategoria será acrescentada nela.
-      </p>
     </div>
     <div class="flex justify-end gap-2 pt-1">
       <button
@@ -339,7 +408,7 @@
         (click)="salvar()"
         class="h-10 px-5 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 shadow-sm transition-colors"
       >
-        Salvar
+        {{ modalAcao === 'editar' ? 'Salvar alterações' : 'Salvar' }}
       </button>
     </div>
   </div>

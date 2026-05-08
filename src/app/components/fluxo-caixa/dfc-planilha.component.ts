@@ -5,7 +5,7 @@ import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-
 import { AuthService } from '../../services/auth.service';
 import { CompanySelectorService } from '../../services/company-selector.service';
 import { DfcResponse } from '../../services/erp-financeiro.service';
-import { mapBomControleDfcToPlanilha } from './dfc-bomcontrole-mapper';
+import { mapApiDfcToPlanilha } from './dfc-bomcontrole-mapper';
 import {
   DfcLinhaComputada,
   DfcPlanilhaLinha,
@@ -22,7 +22,7 @@ import {
 
 /**
  * Planilha DFC (layout títulos / itens / resultados).
- * No fluxo de caixa é alimentada por `gerarDFC` (Bom Controle) — não há segunda aba nem planilha “manual” separada.
+ * No fluxo de caixa é alimentada por `gerarDFC` (API interna) — não há segunda aba nem planilha “manual” separada.
  */
 @Component({
   standalone: true,
@@ -33,17 +33,17 @@ import {
 export class DfcPlanilhaComponent implements OnChanges {
   readonly monthsPt = MONTHS_PT;
 
-  @Input() bomControleDfc: DfcResponse | null = null;
+  @Input() dfcDados: DfcResponse | null = null;
   @Input() carregandoExterno = false;
   @Input() mesesSelecionados: string[] = [];
 
-  /** Ações da barra superior (integração com Bom Controle no container pai). */
+  /** Ações da barra superior (integração com API no container pai). */
   @Output() usarDfcPadrao = new EventEmitter<void>();
-  @Output() importarDoBomControle = new EventEmitter<void>();
+  @Output() atualizarDados = new EventEmitter<void>();
   @Output() filtrarMesAno = new EventEmitter<{ month: string; year: string }>();
 
   /** Quando true, valores vêm da API (sem recalcular hierarquia na planilha). */
-  fonteBomControle = false;
+  fonteApi = false;
 
   months: string[] = [];
   rows: DfcPlanilhaLinha[] = [];
@@ -73,7 +73,7 @@ export class DfcPlanilhaComponent implements OnChanges {
     return this.auth.hasRole('admin');
   }
 
-  /** Estrutura/valores só editáveis fora do modo Bom Controle (modo legado desativado no fluxo de caixa). */
+  /** Estrutura/valores só editáveis fora do modo API (modo legado desativado no fluxo de caixa). */
   get podeEditarPlanilha(): boolean {
     return this.isAdmin;
   }
@@ -83,7 +83,7 @@ export class DfcPlanilhaComponent implements OnChanges {
   }
 
   get computed(): DfcLinhaComputada[] {
-    if (this.fonteBomControle) {
+    if (this.fonteApi) {
       const base = computeDfcSheetFromApi(this.rows, this.months);
       const withResults = applyResultTitleSelections(base, this.rows, this.months);
       return rollupEmptyTitleValuesFromDescendants(withResults, this.months);
@@ -168,23 +168,23 @@ export class DfcPlanilhaComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (!changes['bomControleDfc'] && !changes['mesesSelecionados']) {
+    if (!changes['dfcDados'] && !changes['mesesSelecionados']) {
       return;
     }
-    if (changes['bomControleDfc']) {
-      const v = this.bomControleDfc;
+    if (changes['dfcDados']) {
+      const v = this.dfcDados;
       if (v) {
-        const { months, rows } = mapBomControleDfcToPlanilha(v);
+        const { months, rows } = mapApiDfcToPlanilha(v);
         this.months = months;
         this.rows = rows;
         this.colunasVisiveis = [...months];
-        this.fonteBomControle = true;
+        this.fonteApi = true;
         this.newMonth.apiMonth = this.months[0] ?? '';
       } else {
         this.months = [];
         this.rows = [];
         this.colunasVisiveis = [];
-        this.fonteBomControle = false;
+        this.fonteApi = false;
         this.newMonth.apiMonth = '';
       }
     }
@@ -304,8 +304,8 @@ export class DfcPlanilhaComponent implements OnChanges {
   handleAddMonth(): void {
     const monthYear = `${this.newMonth.month}/${String(this.newMonth.year).slice(-2)}`;
 
-    // No modo Bom Controle, "+ Mês" filtra o período para o mês/ano selecionado.
-    if (this.fonteBomControle) {
+    // No modo API, "+ Mês" filtra o período para o mês/ano selecionado.
+    if (this.fonteApi) {
       this.filtrarMesAno.emit({ month: this.newMonth.month, year: this.newMonth.year });
       this.showAddMonth = false;
       return;
@@ -465,7 +465,7 @@ export class DfcPlanilhaComponent implements OnChanges {
   }
 
   isAutoCalc(row: DfcLinhaComputada, orig: DfcPlanilhaLinha | undefined): boolean {
-    if (this.fonteBomControle) {
+    if (this.fonteApi) {
       return true;
     }
     if (!orig) {
@@ -498,7 +498,7 @@ export class DfcPlanilhaComponent implements OnChanges {
     return this.rows.filter((r) => r.type === 'title');
   }
 
-  /** Meses e estrutura vêm do Bom Controle — edição manual desligada. */
+  /** Meses e estrutura vêm da API — edição manual desligada. */
   get planilhaSomenteLeitura(): boolean {
     return !this.isAdmin;
   }
@@ -507,7 +507,7 @@ export class DfcPlanilhaComponent implements OnChanges {
     if (this.planilhaSomenteLeitura || !this.isAdmin) {
       return;
     }
-    // Modo edição legado (sem API Bom Controle): persistência opcional pode ser reativada aqui.
+    // Modo edição legado (sem API atual): persistência opcional pode ser reativada aqui.
   }
 
   private findMonthFromApi(target: string): string | null {

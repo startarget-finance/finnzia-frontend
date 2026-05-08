@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { Chart, registerables } from 'chart.js';
 import { Subject, takeUntil } from 'rxjs';
 import { ErpFinanceiroService, FiltrosMovimentacoes, ResumoFinanceiroResponse, MovimentacaoFinanceira } from '../../services/erp-financeiro.service';
+import { FeedbackStateComponent } from '../../shared/components/feedback-state/feedback-state.component';
 
 Chart.register(...registerables);
 
@@ -13,7 +14,7 @@ const PAGE_SIZE = 500;
 @Component({
   selector: 'app-relatorio',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, FeedbackStateComponent],
   templateUrl: './relatorio.component.html',
   styleUrls: ['./relatorio.component.scss']
 })
@@ -87,6 +88,7 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Movimentações reais agrupadas por data (YYYY-MM-DD)
   movimentacoesPorDia: Record<string, MovimentacaoFinanceira[]> = {};
+  private movimentacoesPeriodoBruto: MovimentacaoFinanceira[] = [];
 
   loadingGrafico = false;
   errorGrafico: string | null = null;
@@ -107,17 +109,11 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Opções para os selects
   empresas = [
-    { value: '', label: 'Todas as Empresas' },
-    { value: 'empresa1', label: 'Empresa Alpha Ltda' },
-    { value: 'empresa2', label: 'Beta Corporation' },
-    { value: 'empresa3', label: 'Gamma Solutions' }
+    { value: '', label: 'Todas as Empresas' }
   ];
 
   contas = [
-    { value: '', label: 'Todas as Contas' },
-    { value: 'conta1', label: 'Conta Corrente - Banco A' },
-    { value: 'conta2', label: 'Poupança - Banco A' },
-    { value: 'conta3', label: 'Conta Corrente - Banco B' }
+    { value: '', label: 'Todas as Contas' }
   ];
 
   tipos = [
@@ -128,17 +124,7 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
   ];
 
   categorias = [
-    { value: '', label: 'Todas as Categorias' },
-    { value: 'Operacional', label: 'Operacional' },
-    { value: 'Administrativo', label: 'Administrativo' },
-    { value: 'Comercial', label: 'Comercial' },
-    { value: 'Financeiro', label: 'Financeiro' },
-    { value: 'Marketing', label: 'Marketing' },
-    { value: 'RH', label: 'Recursos Humanos' },
-    { value: 'TI', label: 'Tecnologia da Informação' },
-    { value: 'Jurídico', label: 'Jurídico' },
-    { value: 'Vendas', label: 'Vendas' },
-    { value: 'Outros', label: 'Outros' }
+    { value: '', label: 'Todas as Categorias' }
   ];
 
   constructor(private erpFinanceiroService: ErpFinanceiroService) {}
@@ -146,6 +132,7 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit() {
     this.visibleMonth = new Date();
     this.buildCalendar();
+    this.carregarEmpresas();
     this.aplicarAtalhoPeriodo('mes');
   }
 
@@ -258,6 +245,8 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
         dataInicio: this.dataInicial,
         dataTermino: this.dataFinal,
         tipoData: 'DataVencimento',
+        tipo: this.mapearTipoFiltroBackend(),
+        categoria: this.filtros.categoria || undefined,
         itensPorPagina: PAGE_SIZE,
         numeroDaPagina: page
       };
@@ -272,7 +261,9 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
               page++;
               fetchPage();
             } else {
-              this.agregarDadosPorDia(allMovs);
+              this.movimentacoesPeriodoBruto = allMovs;
+              this.sincronizarOpcoesFiltrosComMovimentacoes(allMovs);
+              this.aplicarFiltrosNoGrafico();
               this.loadingGrafico = false;
             }
           },
@@ -311,6 +302,7 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private agregarDadosPorDia(movs: MovimentacaoFinanceira[]): void {
+    this.movimentacoesPorDia = {};
     const inicio = this.parseLocalDateStr(this.dataInicial);
     const fim = this.parseLocalDateStr(this.dataFinal);
     const isAnual = this.periodoGrafico === 'mensal';
@@ -549,14 +541,14 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
 
   selecionarDiaNoGrafico(dateStr: string): void {
     this.dataSelecionada = dateStr;
-    this.movimentacoesFiltradas = this.movimentacoesPorDia[dateStr] || [];
+    const movsDoDia = this.movimentacoesPorDia[dateStr] || [];
+    this.movimentacoesFiltradas = this.aplicarFiltrosLocais(movsDoDia);
   }
 
   setPeriodoGrafico(periodo: 'diario' | 'mensal'): void {
     this.periodoGrafico = periodo;
-    const todas = this.getTodasMovimentacoesDoPeriodo();
-    if (todas.length) {
-      this.agregarDadosPorDia(todas);
+    if (this.movimentacoesPeriodoBruto.length) {
+      this.aplicarFiltrosNoGrafico();
     } else {
       this.carregarDadosGrafico();
     }
@@ -614,7 +606,11 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
       .reduce((sum, m) => sum + (m.Valor ?? 0), 0);
   }
 
-  onFiltroChange(): void {}
+  onFiltroChange(): void {
+    const periodoAlvo = this.filtros.periodo === 'mensal' ? 'mensal' : 'diario';
+    this.periodoGrafico = periodoAlvo;
+    this.aplicarFiltrosNoGrafico();
+  }
 
   aplicarFiltrosManualmente(): void {
     this.onFiltroChange();
@@ -634,6 +630,107 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
   onPeriodoChange(periodo: 'diario' | 'mensal'): void {
     this.filtros.periodo = periodo;
     this.onFiltroChange();
+  }
+
+  private carregarEmpresas(): void {
+    this.erpFinanceiroService.listarEmpresas()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          const opts = (res?.empresas ?? [])
+            .filter(e => e && e.Id != null)
+            .map(e => ({ value: String(e.Id), label: e.Nome || `Empresa ${e.Id}` }));
+          this.empresas = [{ value: '', label: 'Todas as Empresas' }, ...opts];
+        },
+        error: () => {
+          // Mantém fallback sem quebrar a tela.
+          this.empresas = [{ value: '', label: 'Todas as Empresas' }];
+        }
+      });
+  }
+
+  private mapearTipoFiltroBackend(): 'receita' | 'despesa' | undefined {
+    if (this.filtros.tipo === 'RECEITA') return 'receita';
+    if (this.filtros.tipo === 'DESPESA') return 'despesa';
+    return undefined;
+  }
+
+  private aplicarFiltrosNoGrafico(): void {
+    const filtradas = this.aplicarFiltrosLocais(this.movimentacoesPeriodoBruto);
+    this.movimentacoesFiltradas = this.dataSelecionada
+      ? this.aplicarFiltrosLocais(this.movimentacoesPorDia[this.dataSelecionada] || [])
+      : [];
+    this.agregarDadosPorDia(filtradas);
+  }
+
+  private aplicarFiltrosLocais(movs: MovimentacaoFinanceira[]): MovimentacaoFinanceira[] {
+    return movs.filter((mov) => {
+      const tipoOk =
+        !this.filtros.tipo ||
+        (this.filtros.tipo === 'RECEITA' && !mov.Debito) ||
+        (this.filtros.tipo === 'DESPESA' && mov.Debito) ||
+        (this.filtros.tipo === 'RENEGOCIAÇÃO' &&
+          this.normalizarTexto(mov.NomeTipoMovimentacao || '').includes('renegoci'));
+
+      const categoriaOk =
+        !this.filtros.categoria ||
+        this.normalizarTexto(mov.NomeCategoriaFinanceira || '') === this.normalizarTexto(this.filtros.categoria);
+
+      const contaOk =
+        !this.filtros.conta ||
+        this.normalizarTexto(mov.NomeContaFinanceira || '') === this.normalizarTexto(this.filtros.conta) ||
+        String(mov.IdContaFinanceira || '') === this.filtros.conta;
+
+      const empresaOk =
+        !this.filtros.empresa ||
+        String(mov.IdEmpresa || '') === this.filtros.empresa ||
+        this.normalizarTexto(mov.NomeEmpresa || '') === this.normalizarTexto(this.filtros.empresa);
+
+      return tipoOk && categoriaOk && contaOk && empresaOk;
+    });
+  }
+
+  private sincronizarOpcoesFiltrosComMovimentacoes(movs: MovimentacaoFinanceira[]): void {
+    const categorias = Array.from(
+      new Set(
+        movs
+          .map((m) => (m.NomeCategoriaFinanceira || '').trim())
+          .filter((v) => v.length > 0)
+      )
+    ).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+    const contas = Array.from(
+      new Set(
+        movs
+          .map((m) => (m.NomeContaFinanceira || '').trim())
+          .filter((v) => v.length > 0)
+      )
+    ).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+    this.categorias = [
+      { value: '', label: 'Todas as Categorias' },
+      ...categorias.map((c) => ({ value: c, label: c }))
+    ];
+
+    this.contas = [
+      { value: '', label: 'Todas as Contas' },
+      ...contas.map((c) => ({ value: c, label: c }))
+    ];
+
+    if (this.filtros.categoria && !categorias.includes(this.filtros.categoria)) {
+      this.filtros.categoria = '';
+    }
+    if (this.filtros.conta && !contas.includes(this.filtros.conta)) {
+      this.filtros.conta = '';
+    }
+  }
+
+  private normalizarTexto(valor: string): string {
+    return (valor || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase();
   }
 
   getEmpresaLabel(empresaValue: string): string {

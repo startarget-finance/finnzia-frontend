@@ -108,6 +108,10 @@
             class="cursor-pointer rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/25">
             <option *ngFor="let e of empresas" [value]="e.value">{{ e.label }}</option>
           </select>
+          <select [ngModel]="filtros.conta" (ngModelChange)="filtros.conta=$event; onFiltroChange()"
+            class="cursor-pointer rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/25">
+            <option *ngFor="let c of contas" [value]="c.value">{{ c.label }}</option>
+          </select>
           <button type="button" (click)="limparFiltros()" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50">Limpar filtros</button>
         </div>
       </div>
@@ -266,21 +270,25 @@
           </div>
         </div>
         <p class="mb-3 text-xs text-slate-500">Clique em um dia ou mês no gráfico para ver as movimentações em um modal.</p>
-        <div *ngIf="errorGrafico" class="mb-4 rounded-xl border border-rose-200/80 bg-rose-50/90 p-3 text-sm text-rose-800">
-          {{ errorGrafico }}
+        <div *ngIf="errorGrafico" class="mb-4">
+          <app-feedback-state
+            kind="error"
+            title="Falha ao carregar o gráfico"
+            [message]="errorGrafico"
+            actionLabel="Tentar novamente"
+            (action)="carregarDadosGrafico()"
+          />
         </div>
         <div class="relative h-[26.25rem] overflow-hidden rounded-xl bg-slate-50/80 ring-1 ring-slate-200/60">
           <div class="absolute inset-0 cursor-pointer" title="Clique em um dia para ver as movimentações">
             <canvas id="receitaChart"></canvas>
           </div>
-          <div *ngIf="loadingGrafico" class="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-white/85 backdrop-blur-[2px]">
-            <div class="text-center text-slate-600">
-              <svg class="mx-auto mb-2 h-10 w-10 animate-spin text-violet-600" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Carregando dados do gráfico...
-            </div>
+          <div *ngIf="loadingGrafico" class="absolute inset-0 z-10 rounded-xl bg-white/85 p-4 backdrop-blur-[2px]">
+            <app-feedback-state
+              kind="loading"
+              title="Carregando dados do gráfico"
+              message="Estamos processando as movimentações do período."
+            />
           </div>
         </div>
       </div>
@@ -346,13 +354,12 @@
       </div>
       <!-- Body -->
       <div class="flex-1 overflow-hidden flex flex-col min-h-0">
-        <div *ngIf="movimentacoesFiltradas.length === 0" class="flex flex-1 items-center justify-center p-12 text-slate-500">
-          <div class="text-center">
-            <svg class="mx-auto mb-3 h-12 w-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-            </svg>
-            <p class="font-medium">Nenhuma movimentação neste dia.</p>
-          </div>
+        <div *ngIf="movimentacoesFiltradas.length === 0" class="flex flex-1 items-center justify-center p-8">
+          <app-feedback-state
+            kind="empty"
+            title="Nenhuma movimentação neste período"
+            message="Selecione outro dia/mês no gráfico ou ajuste os filtros."
+          />
         </div>
         <div *ngIf="movimentacoesFiltradas.length > 0" class="min-h-0 flex-1 overflow-auto">
           <table class="w-full text-sm">

@@ -44,6 +44,7 @@ export class ContaBancariaCadastroComponent implements OnInit {
   formConta = '';
   formTipo: TipoContaBancaria = 'CORRENTE';
   formSaldoInicial = 0;
+  formSaldoInicialInput = '0,00';
   formAtivo = true;
   instituicaoSelecionada = '';
   private modalSnapshot = '';
@@ -81,6 +82,7 @@ export class ContaBancariaCadastroComponent implements OnInit {
     'bg-rose-600',
     'bg-cyan-600'
   ];
+  private readonly maxSafeCents = BigInt(Number.MAX_SAFE_INTEGER);
 
   constructor(
     private readonly api: ContaBancariaCadastroService,
@@ -211,6 +213,7 @@ export class ContaBancariaCadastroComponent implements OnInit {
     this.formConta = '';
     this.formTipo = 'CORRENTE';
     this.formSaldoInicial = 0;
+    this.formSaldoInicialInput = this.formatarMoedaBr(this.formSaldoInicial);
     this.formAtivo = true;
     this.instituicaoSelecionada = '';
     this.atualizarSnapshotModal();
@@ -228,6 +231,7 @@ export class ContaBancariaCadastroComponent implements OnInit {
     this.formConta = c.conta === '0' && c.categoria === 'DINHEIRO' ? '' : c.conta;
     this.formTipo = c.tipo === 'POUPANCA' ? 'POUPANCA' : 'CORRENTE';
     this.formSaldoInicial = Number(c.saldoInicial ?? 0);
+    this.formSaldoInicialInput = this.formatarMoedaBr(this.formSaldoInicial);
     this.formAtivo = c.ativo !== false;
     this.instituicaoSelecionada = this.formInstituicao;
     this.atualizarSnapshotModal();
@@ -263,9 +267,27 @@ export class ContaBancariaCadastroComponent implements OnInit {
       formConta: this.formConta,
       formTipo: this.formTipo,
       formSaldoInicial: this.formSaldoInicial,
+      formSaldoInicialInput: this.formSaldoInicialInput,
       formAtivo: this.formAtivo,
       instituicaoSelecionada: this.instituicaoSelecionada
     });
+  }
+
+  onSaldoInicialInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.formSaldoInicialInput = this.aplicarMascaraMoedaBr(input.value);
+    const parse = this.parseMoedaBrSeguro(this.formSaldoInicialInput);
+    if (!parse.excedeLimite) {
+      this.formSaldoInicial = parse.valor;
+    }
+  }
+
+  onSaldoInicialBlur(): void {
+    const parse = this.parseMoedaBrSeguro(this.formSaldoInicialInput);
+    if (!parse.excedeLimite) {
+      this.formSaldoInicial = parse.valor;
+    }
+    this.formSaldoInicialInput = this.formatarMoedaBr(this.formSaldoInicial);
   }
 
   private atualizarSnapshotModal(): void {
@@ -295,6 +317,11 @@ export class ContaBancariaCadastroComponent implements OnInit {
     }
     const ag = this.formCategoria === 'BANCARIA' ? this.formAgencia.trim() : this.formAgencia.trim() || '0';
     const ct = this.formCategoria === 'BANCARIA' ? this.formConta.trim() : this.formConta.trim() || '0';
+    const saldo = this.parseMoedaBrSeguro(this.formSaldoInicialInput);
+    if (saldo.excedeLimite) {
+      this.erro = 'Saldo inicial muito alto para processamento seguro. Use até R$ 90.071.992.547.409,91.';
+      return;
+    }
     const body: ContaBancariaCadastroPayload = {
       nomeConta: this.formNomeConta.trim() || undefined,
       categoria: this.formCategoria,
@@ -303,7 +330,7 @@ export class ContaBancariaCadastroComponent implements OnInit {
       agencia: ag,
       conta: ct,
       tipo: this.formCategoria === 'BANCARIA' ? this.formTipo : undefined,
-      saldoInicial: Number(this.formSaldoInicial) || 0,
+      saldoInicial: saldo.valor,
       ativo: this.formAtivo,
       idEmpresas: [idEmpresaAtual]
     };
@@ -412,5 +439,37 @@ export class ContaBancariaCadastroComponent implements OnInit {
   inicial(nome: string | undefined): string {
     const t = (nome || '?').trim();
     return t ? t.charAt(0).toUpperCase() : '?';
+  }
+
+  private parseMoedaBrSeguro(valor: string): { valor: number; excedeLimite: boolean } {
+    const digits = (valor || '').replace(/\D/g, '');
+    if (!digits) {
+      return { valor: 0, excedeLimite: false };
+    }
+    const cents = BigInt(digits);
+    if (cents > this.maxSafeCents) {
+      return { valor: this.formSaldoInicial, excedeLimite: true };
+    }
+    return { valor: Number(cents) / 100, excedeLimite: false };
+  }
+
+  private formatarMoedaBr(valor: number): string {
+    const numero = Number.isFinite(valor) ? valor : 0;
+    return numero.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  private aplicarMascaraMoedaBr(valor: string): string {
+    const digits = (valor || '').replace(/\D/g, '');
+    if (!digits) {
+      return '0,00';
+    }
+    const normalizado = digits.replace(/^0+(?=\d)/, '');
+    const completo = normalizado.padStart(3, '0');
+    const inteiro = completo.slice(0, -2).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    const centavos = completo.slice(-2);
+    return `${inteiro},${centavos}`;
   }
 }

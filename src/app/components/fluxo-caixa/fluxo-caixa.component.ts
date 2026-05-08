@@ -50,7 +50,7 @@ export class FluxoCaixaComponent implements OnInit {
     this.carregarDfc();
   }
 
-  recarregarDfcDoBomControle(): void {
+  atualizarDfcAgora(): void {
     this.filtrosForm.patchValue({ forcarAtualizacao: true });
     this.carregarDfc();
   }

@@ -4,11 +4,25 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ErpFinanceiroService, MovimentacaoFinanceira, FiltrosMovimentacoes, ResumoFinanceiroResponse } from '../../services/erp-financeiro.service';
+import { FeedbackStateComponent } from '../../shared/components/feedback-state/feedback-state.component';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+interface LinhaExportacaoPagar {
+  Fornecedor: string;
+  Vencimento: string;
+  Pagamento: string;
+  Descricao: string;
+  Categoria: string;
+  Valor: string;
+  Status: string;
+}
 
 @Component({
   selector: 'app-contas-a-pagar',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, FeedbackStateComponent],
   templateUrl: './contas-a-pagar.component.html',
 })
 export class ContasAPagarComponent implements OnInit, OnDestroy {
@@ -132,8 +146,7 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
           this.processarResposta(response);
         },
         error: (err: any) => {
-          console.error('Erro ao carregar contas a pagar:', err);
-          this.error = err.error?.mensagem || 'Erro ao carregar contas a pagar';
+          this.error = this.obterMensagemErro(err, 'Não foi possível carregar contas a pagar.');
           this.loading = false;
         }
       });
@@ -512,10 +525,74 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
 
   // ===== Exportação =====
   exportarExcel(): void {
-    alert('Funcionalidade de exportação para Excel será implementada em breve');
+    const linhas = this.obterLinhasExportacao();
+    if (linhas.length === 0) return;
+    const worksheet = XLSX.utils.json_to_sheet(linhas);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'ContasPagar');
+    XLSX.writeFile(workbook, `contas-a-pagar_${this.getDataArquivo()}.xlsx`);
   }
 
   exportarPDF(): void {
-    alert('Funcionalidade de exportação para PDF será implementada em breve');
+    const linhas = this.obterLinhasExportacao();
+    if (linhas.length === 0) return;
+
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    doc.setFontSize(12);
+    doc.text('Contas a Pagar', 40, 36);
+    doc.setFontSize(9);
+    doc.text(`Periodo: ${this.formatDate(this.dataInicial)} a ${this.formatDate(this.dataFinal)}`, 40, 52);
+
+    autoTable(doc, {
+      startY: 64,
+      head: [[
+        'Fornecedor',
+        'Vencimento',
+        'Pagamento',
+        'Descricao',
+        'Categoria',
+        'Valor',
+        'Status',
+      ]],
+      body: linhas.map((l) => [
+        l.Fornecedor,
+        l.Vencimento,
+        l.Pagamento,
+        l.Descricao,
+        l.Categoria,
+        l.Valor,
+        l.Status,
+      ]),
+      styles: { fontSize: 8, cellPadding: 4 },
+      headStyles: { fillColor: [31, 41, 55] },
+    });
+
+    doc.save(`contas-a-pagar_${this.getDataArquivo()}.pdf`);
+  }
+
+  private obterLinhasExportacao(): LinhaExportacaoPagar[] {
+    return (this.contasFiltradas || []).map((conta) => ({
+      Fornecedor: conta.NomeClienteFornecedor || 'Fornecedor nao informado',
+      Vencimento: this.formatDate(conta.DataVencimento),
+      Pagamento: this.formatDate(conta.DataQuitacao) || '-',
+      Descricao: conta.Observacao || conta.Nome || '-',
+      Categoria: conta.NomeCategoriaFinanceira || '-',
+      Valor: this.formatCurrency(conta.Valor || 0),
+      Status: this.getStatusLabel(conta),
+    }));
+  }
+
+  private getDataArquivo(): string {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  private obterMensagemErro(err: unknown, fallback: string): string {
+    const errorAny = err as any;
+    return (
+      errorAny?.error?.mensagem ||
+      errorAny?.error?.message ||
+      errorAny?.message ||
+      fallback
+    );
   }
 }

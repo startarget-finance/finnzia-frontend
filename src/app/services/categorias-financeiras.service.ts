@@ -6,8 +6,9 @@ import { API_CONFIG } from '../config/api.config';
 export type TipoCategoriaFinanceira = 'receita' | 'despesa';
 
 export interface SubcategoriaFinanceira {
-  id: string;
+  id: number;
   nome: string;
+  children?: SubcategoriaFinanceira[];
 }
 
 export interface CategoriaFinanceira {
@@ -21,9 +22,13 @@ export interface CategoriaFinanceira {
 
 export interface SalvarCategoriaPayload {
   tipo: TipoCategoriaFinanceira;
-  nomeCategoria: string;
-  nomeSubcategoria?: string;
+  nome: string;
+  /** null ou omitido = raiz (1º nível). */
+  parentId?: number | null;
   idEmpresa: number;
+  /** Legado (import). */
+  nomeCategoria?: string;
+  nomeSubcategoria?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -41,22 +46,14 @@ export class CategoriasFinanceirasService {
     return this.http.post<CategoriaFinanceira[]>(this.base, payload);
   }
 
-  excluirCategoria(idEmpresa: number, idCategoria: string): Observable<CategoriaFinanceira[]> {
+  renomearNo(idEmpresa: number, nodeId: number, nome: string): Observable<CategoriaFinanceira[]> {
     const params = new HttpParams().set('idEmpresa', String(idEmpresa));
-    const idEnc = encodeURIComponent(idCategoria);
-    return this.http.delete<CategoriaFinanceira[]>(`${this.base}/${idEnc}`, { params });
+    return this.http.patch<CategoriaFinanceira[]>(`${this.base}/nos/${nodeId}`, { nome }, { params });
   }
 
-  excluirSubcategoria(
-    idEmpresa: number,
-    idCategoria: string,
-    idSubcategoria: string | number
-  ): Observable<CategoriaFinanceira[]> {
+  /** Exclui o nó (raiz ou qualquer nível) e toda a subárvore. */
+  excluirNo(idEmpresa: number, nodeId: number): Observable<CategoriaFinanceira[]> {
     const params = new HttpParams().set('idEmpresa', String(idEmpresa));
-    const idCatEnc = encodeURIComponent(idCategoria);
-    return this.http.delete<CategoriaFinanceira[]>(
-      `${this.base}/${idCatEnc}/subcategorias/${encodeURIComponent(String(idSubcategoria))}`,
-      { params }
-    );
+    return this.http.delete<CategoriaFinanceira[]>(`${this.base}/nos/${nodeId}`, { params });
   }
 }

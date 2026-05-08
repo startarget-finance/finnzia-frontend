@@ -18,6 +18,7 @@ import {
   TipoAnexoMovimentacao,
   AnexoMovimentacaoMetadado,
 } from '../../services/movimentacoes-anexos.service';
+import { FeedbackStateComponent } from '../../shared/components/feedback-state/feedback-state.component';
 
 type ExportGroupId =
   | 'identificacao'
@@ -44,7 +45,7 @@ interface ExportColumnDef {
 @Component({
   selector: 'app-movimentacoes',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, FeedbackStateComponent],
   templateUrl: './movimentacoes.component.html',
 })
 export class MovimentacoesComponent implements OnInit, OnDestroy {
@@ -341,7 +342,6 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     if (!empresaSelecionada) {
       // Incrementar contador e log com informação de empresas permitidas
       const empresasPermitidas = this.companySelectorService.obterEmpresasAtivas();
-      console.warn(`⚠️ Usuário não possui empresa selecionada, ${empresasPermitidas.length} empresa(s) disponível(is)`);
       
       // Se há empresas disponíveis, selecionar a primeira ou a padrão
       if (empresasPermitidas.length > 0) {
@@ -404,7 +404,6 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     this.visibleMonth = new Date(ano, parseInt(mes) - 1);
     this.buildCalendar();
     
-    console.log(`📅 Mês atual pré-preenchido: ${this.dataInicial} até ${this.dataFinal}`);
   }
 
   /**
@@ -456,15 +455,6 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       this.filtrosUI.textoPesquisa = textoPesquisa;
     }
 
-    console.log('🔗 Filtros aplicados via navegação:', {
-      dataInicial: this.dataInicial,
-      dataFinal: this.dataFinal,
-      tipo: this.filtrosUI.tipo,
-      status: this.filtrosUI.status,
-      categoria: this.filtrosUI.categoria,
-      conta: this.filtrosUI.conta,
-      textoPesquisa: this.filtrosUI.textoPesquisa,
-    });
 
     return true;
   }
@@ -641,6 +631,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
 
     if (!this.novoLancamento.descricao.trim()) {
       errors['descricao'] = 'Informe a descrição.';
+    } else if (this.novoLancamento.descricao.trim().length < 3) {
+      errors['descricao'] = 'A descrição precisa ter pelo menos 3 caracteres.';
     }
     if (!parceiroFinal.trim()) {
       errors['clienteFornecedor'] = 'Informe o cliente/fornecedor.';
@@ -648,8 +640,26 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     if (!this.novoLancamento.dataVencimento) {
       errors['dataVencimento'] = 'Informe a data de vencimento.';
     }
+    const dataVencimento = this.novoLancamento.dataVencimento ? this.parseLocalDateStr(this.novoLancamento.dataVencimento) : null;
+
+    const dataCompetencia = this.competenciaMesAnoParaData(this.novoLancamento.dataCompetencia);
+    if (this.novoLancamento.dataCompetencia && !dataCompetencia) {
+      errors['dataCompetencia'] = 'Competência inválida. Use o mês e ano.';
+    }
     if (this.novoLancamento.marcarComoQuitado && !this.novoLancamento.dataQuitacao) {
       errors['dataQuitacao'] = 'Informe a data de quitação/recebimento.';
+    } else if (this.novoLancamento.marcarComoQuitado && this.novoLancamento.dataQuitacao && dataVencimento) {
+      const dataQuitacao = this.parseLocalDateStr(this.novoLancamento.dataQuitacao);
+      if (dataQuitacao < dataVencimento) {
+        errors['dataQuitacao'] = 'A quitação/recebimento não pode ser anterior ao vencimento.';
+      }
+    }
+    if (dataCompetencia && dataVencimento) {
+      const compDate = this.parseLocalDateStr(dataCompetencia);
+      const deltaMeses = (dataVencimento.getFullYear() - compDate.getFullYear()) * 12 + (dataVencimento.getMonth() - compDate.getMonth());
+      if (Math.abs(deltaMeses) > 24) {
+        errors['dataCompetencia'] = 'Competência muito distante da data de vencimento.';
+      }
     }
     if (!categoriaFinal.trim()) {
       errors['categoria'] = 'Informe a categoria.';
@@ -717,7 +727,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
         await Swal.fire({
           icon: 'error',
           title: isEdicao ? 'Não foi possível salvar' : 'Não foi possível cadastrar',
-          text: err?.error?.mensagem || 'Tente novamente em instantes.',
+          text: this.obterMensagemErro(err, 'Não foi possível concluir a operação. Tente novamente em instantes.'),
           confirmButtonColor: '#dc2626',
         });
       }
@@ -974,8 +984,6 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       itensPorPagina: this.itensPorPagina
     };
 
-    console.log('🔍 Carregando movimentações do ERP com filtros:', filtros);
-    
     this.erpFinanceiroService.buscarMovimentacoes(filtros)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -983,8 +991,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
           this.processarRespostaErp(response);
         },
         error: (err: any) => {
-          console.error('Erro ao carregar movimentações do ERP:', err);
-          this.error = err.error?.mensagem || 'Erro ao carregar movimentações';
+          this.error = this.obterMensagemErro(err, 'Não foi possível carregar as movimentações.');
           this.loading = false;
         }
       });
@@ -1007,7 +1014,6 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     const cached = this.cacheMovimentacoes.get(chave);
     
     if (cached && (Date.now() - cached.timestamp) < this.CACHE_TTL) {
-      console.log('✅ Cache hit - usando dados em cache para evitar consumo redundante');
       return { data: cached.data, totais: cached.totais };
     }
     
@@ -1025,7 +1031,6 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       totais: { ...totais }
     });
     this.cacheKeyAtual = chave;
-    console.log('💾 Dados armazenados no cache (TTL: 5min)');
   }
 
   /**
@@ -1037,7 +1042,6 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       return []; // Sem cache, precisa buscar do servidor
     }
 
-    console.log('🔍 Busca local memoizada - filtrando', cached.data.length, 'itens em cache');
     
     let resultado = [...cached.data];
 
@@ -1069,7 +1073,6 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       resultado = resultado.filter(mov => !!(mov as any).DataQuitacao);
     }
 
-    console.log(`✅ Busca local concluída: ${resultado.length} itens encontrados`);
     return resultado;
   }
 
@@ -1092,7 +1095,6 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     
     // Se período não mudou e temos cache, busca localmente (sem requisição ao servidor)
     if (temCacheValido && !periodoMudou) {
-      console.log('🚀 Modo cache: aplicando filtros localmente sem requisição ao servidor');
       const resultadoLocal = this.buscarLocalMemoizada(filtros);
       this.movimentacoesFiltradasCompleta = resultadoLocal;
       // Aplica paginação local (slice será aplicado na exibição após ordenação)
@@ -1106,17 +1108,10 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       // Usa totais do cache
       const cached = this.obterCache();
       if (cached?.totais) {
-        console.log('💰 Totais restaurados do cache:', cached.totais);
         this.totalReceitasGeral = cached.totais.totalReceitas ?? 0;
         this.totalDespesasGeral = cached.totais.totalDespesas ?? 0;
         this.saldoLiquidoGeral = cached.totais.saldoLiquido ?? 0;
-        console.log('✅ Totais atribuídos do cache:', {
-          totalReceitasGeral: this.totalReceitasGeral,
-          totalDespesasGeral: this.totalDespesasGeral,
-          saldoLiquidoGeral: this.saldoLiquidoGeral
-        });
       } else {
-        console.warn('⚠️ Cache não tem totais, calculando localmente');
         // Se não tem totais no cache, calcula localmente
         let totalReceitas = 0;
         let totalDespesas = 0;
@@ -1137,7 +1132,6 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     }
 
     // Se período mudou ou não há cache, busca do servidor
-    console.log('🌐 Buscando do servidor (cache miss ou período alterado)');
     this.loading = true;
     this.error = null;
 
@@ -1151,8 +1145,6 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
         }
       : filtros;
 
-    console.log('🔍 Carregando movimentações do OMIE com filtros:', filtrosServidor);
-    
     this.omieService.pesquisarMovimentacoes(filtrosServidor)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -1161,18 +1153,15 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
           // Cache já é armazenado dentro de processarRespostaOmie
         },
         error: (err) => {
-          console.error('Erro ao carregar movimentações do OMIE:', err);
-          this.error = err.error?.mensagem || err.message || 'Erro ao carregar movimentações do OMIE';
+          this.error = this.obterMensagemErro(err, 'Não foi possível carregar as movimentações.');
           this.loading = false;
         }
       });
   }
 
   private processarRespostaErp(response: any): void {
-    console.log('✅ Resposta completa do ERP:', JSON.stringify(response, null, 2));
     this.movimentacoesFiltradasCompleta = [];
     this.movimentacoes = response.movimentacoes || [];
-    console.log(`📦 Itens recebidos: ${this.movimentacoes.length}`);
     
     // Obtém o total de itens da resposta
     if (response.total !== undefined && response.total !== null) {
@@ -1208,13 +1197,11 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   }
 
   private processarRespostaOmie(response: MovimentacoesOmieResponse): void {
-    console.log('✅ Resposta completa do OMIE:', JSON.stringify(response, null, 2));
     this.movimentacoesFiltradasCompleta = [];
     // Normaliza movimentações do OMIE para o formato esperado
     const movimentacoesOmie = response.movimentacoes || [];
     const movimentacoesNormalizadas = movimentacoesOmie.map(mov => this.normalizarMovimentacaoOmie(mov));
     
-    console.log(`📦 Itens recebidos do OMIE: ${movimentacoesNormalizadas.length}`);
     
     // Obtém o total de itens
     this.totalItens = response.total !== undefined ? response.total : movimentacoesNormalizadas.length;
@@ -1222,12 +1209,6 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     // Obtém totais agregados da resposta do backend (já calculados de todas as movimentações)
     // O backend agora retorna totalReceitas, totalDespesas e saldoLiquido
     const responseAny = response as any;
-    console.log('💰 Totais recebidos do backend:', {
-      totalReceitas: responseAny.totalReceitas,
-      totalDespesas: responseAny.totalDespesas,
-      saldoLiquido: responseAny.saldoLiquido
-    });
-    
     if (responseAny.totalReceitas !== undefined && responseAny.totalReceitas !== null) {
       this.totalReceitasGeral = Number(responseAny.totalReceitas);
       this.totalDespesasGeral = responseAny.totalDespesas !== undefined && responseAny.totalDespesas !== null 
@@ -1237,13 +1218,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
         : (this.totalReceitasGeral !== null && this.totalDespesasGeral !== null 
            ? this.totalReceitasGeral - this.totalDespesasGeral : 0);
       
-      console.log('✅ Totais atribuídos:', {
-        totalReceitasGeral: this.totalReceitasGeral,
-        totalDespesasGeral: this.totalDespesasGeral,
-        saldoLiquidoGeral: this.saldoLiquidoGeral
-      });
     } else {
-      console.warn('⚠️ Backend não retornou totais, calculando localmente');
       // Fallback: calcula apenas da página atual se backend não retornar os totais
       this.calcularTotaisOmie(movimentacoesOmie);
     }
@@ -1309,14 +1284,6 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
                                   mov['nome_fantasia_cliente_fornecedor'] || 
                                   mov['razao_social_cliente_fornecedor'] || 
                                   '';
-    
-    // Debug: verifica se o nome está presente
-    if (!nomeClienteFornecedor && mov['codigo_cliente_fornecedor']) {
-      console.debug('Movimentação sem nome de cliente/fornecedor:', {
-        codigo: mov['codigo_cliente_fornecedor'],
-        mov: mov
-      });
-    }
     
     // Extrai categoria (pode vir de categorias array ou campo direto)
     let categoria = mov['categoria'] || mov['codigo_categoria'] || 'Sem categoria';
@@ -1418,7 +1385,6 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     this.totalDespesasGeral = totalDespesas;
     this.saldoLiquidoGeral = totalReceitas - totalDespesas;
     
-    console.log(`💰 Totais OMIE: Receitas=${totalReceitas}, Despesas=${totalDespesas}, Saldo=${this.saldoLiquidoGeral}`);
   }
 
   private aplicarFiltrosUI(): void {
@@ -1841,7 +1807,6 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     if (periodoMudou) {
       this.cacheMovimentacoes.clear();
       this.cacheKeyAtual = '';
-      console.log('🗑️ Cache limpo - período limpo');
     }
     
     this.paginaAtual = 1;
@@ -2449,6 +2414,16 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     }).format(value);
+  }
+
+  private obterMensagemErro(err: unknown, fallback: string): string {
+    const errorAny = err as any;
+    return (
+      errorAny?.error?.mensagem ||
+      errorAny?.error?.message ||
+      errorAny?.message ||
+      fallback
+    );
   }
 
 }

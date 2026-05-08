@@ -4,11 +4,25 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ErpFinanceiroService, MovimentacaoFinanceira, FiltrosMovimentacoes } from '../../services/erp-financeiro.service';
+import { FeedbackStateComponent } from '../../shared/components/feedback-state/feedback-state.component';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+interface LinhaExportacaoReceber {
+  Cliente: string;
+  Vencimento: string;
+  Recebimento: string;
+  Descricao: string;
+  Categoria: string;
+  Valor: string;
+  Status: string;
+}
 
 @Component({
   selector: 'app-contas-a-receber',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, FeedbackStateComponent],
   templateUrl: './contas-a-receber.component.html',
 })
 export class ContasAReceberComponent implements OnInit, OnDestroy {
@@ -108,8 +122,6 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
       itensPorPagina: this.itensPorPagina
     };
 
-    console.log('🔍 Carregando contas a receber (Bom Controle) com filtros:', filtros);
-    
     this.erpFinanceiroService.buscarMovimentacoes(filtros)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
@@ -117,8 +129,7 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
           this.processarResposta(response);
         },
         error: (err: any) => {
-          console.error('Erro ao carregar contas a receber:', err);
-          this.error = err.error?.mensagem || 'Erro ao carregar contas a receber';
+          this.error = this.obterMensagemErro(err, 'Não foi possível carregar contas a receber.');
           this.loading = false;
         }
       });
@@ -486,10 +497,74 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
 
   // ===== Exportação =====
   exportarExcel(): void {
-    alert('Funcionalidade de exportação para Excel será implementada em breve');
+    const linhas = this.obterLinhasExportacao();
+    if (linhas.length === 0) return;
+    const worksheet = XLSX.utils.json_to_sheet(linhas);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'ContasReceber');
+    XLSX.writeFile(workbook, `contas-a-receber_${this.getDataArquivo()}.xlsx`);
   }
 
   exportarPDF(): void {
-    alert('Funcionalidade de exportação para PDF será implementada em breve');
+    const linhas = this.obterLinhasExportacao();
+    if (linhas.length === 0) return;
+
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+    doc.setFontSize(12);
+    doc.text('Contas a Receber', 40, 36);
+    doc.setFontSize(9);
+    doc.text(`Periodo: ${this.formatDate(this.dataInicial)} a ${this.formatDate(this.dataFinal)}`, 40, 52);
+
+    autoTable(doc, {
+      startY: 64,
+      head: [[
+        'Cliente',
+        'Vencimento',
+        'Recebimento',
+        'Descricao',
+        'Categoria',
+        'Valor',
+        'Status',
+      ]],
+      body: linhas.map((l) => [
+        l.Cliente,
+        l.Vencimento,
+        l.Recebimento,
+        l.Descricao,
+        l.Categoria,
+        l.Valor,
+        l.Status,
+      ]),
+      styles: { fontSize: 8, cellPadding: 4 },
+      headStyles: { fillColor: [31, 41, 55] },
+    });
+
+    doc.save(`contas-a-receber_${this.getDataArquivo()}.pdf`);
+  }
+
+  private obterLinhasExportacao(): LinhaExportacaoReceber[] {
+    return (this.contasFiltradas || []).map((conta) => ({
+      Cliente: conta.NomeClienteFornecedor || 'Cliente nao informado',
+      Vencimento: this.formatDate(conta.DataVencimento),
+      Recebimento: this.formatDate(conta.DataQuitacao) || '-',
+      Descricao: conta.Observacao || conta.Nome || '-',
+      Categoria: conta.NomeCategoriaFinanceira || '-',
+      Valor: this.formatCurrency(conta.Valor || 0),
+      Status: this.getStatusLabel(conta),
+    }));
+  }
+
+  private getDataArquivo(): string {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  private obterMensagemErro(err: unknown, fallback: string): string {
+    const errorAny = err as any;
+    return (
+      errorAny?.error?.mensagem ||
+      errorAny?.error?.message ||
+      errorAny?.message ||
+      fallback
+    );
   }
 }

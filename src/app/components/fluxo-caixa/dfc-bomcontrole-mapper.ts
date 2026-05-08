@@ -36,9 +36,9 @@ function mapLinhaBc(linha: DfcLinha): { type: DfcPlanilhaLinha['type']; sign: '+
 }
 
 /**
- * Converte a resposta de `gerarDFC` (Bom Controle) no modelo da planilha DFC (títulos, itens, resultados).
+ * Converte a resposta de `gerarDFC` (API interna) no modelo da planilha DFC (títulos, itens, resultados).
  */
-export function mapBomControleDfcToPlanilha(res: DfcResponse): { months: string[]; rows: DfcPlanilhaLinha[] } {
+export function mapApiDfcToPlanilha(res: DfcResponse): { months: string[]; rows: DfcPlanilhaLinha[] } {
   const months = sortDfcMonths([...(res.meses ?? [])]);
   const linhas = res.linhas ?? [];
   const rows: DfcPlanilhaLinha[] = linhas.map((linha: DfcLinha, idx: number) => {

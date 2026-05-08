@@ -297,6 +297,31 @@
       </button>
     </div>
     <div class="space-y-4">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">CPF/CNPJ *</label>
+          <input
+            [(ngModel)]="formCpfCnpj"
+            (ngModelChange)="onCpfCnpjInput()"
+            (blur)="onCpfCnpjBlur()"
+            inputmode="numeric"
+            autocomplete="off"
+            class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            placeholder="000.000.000-00 ou 00.000.000/0000-00"
+          />
+          <p *ngIf="consultandoCnpj" class="mt-1 text-[11px] text-emerald-700">Consultando CNPJ e preenchendo dados...</p>
+        </div>
+        <div>
+          <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Tipo</label>
+          <select
+            [(ngModel)]="formTipoPessoa"
+            class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm bg-white text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          >
+            <option value="PJ">PJ</option>
+            <option value="PF">PF</option>
+          </select>
+        </div>
+      </div>
       <div>
         <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Razão social / nome *</label>
         <input
@@ -310,30 +335,6 @@
           [(ngModel)]="formNomeFantasia"
           class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
         />
-      </div>
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">CPF/CNPJ</label>
-          <input
-            [(ngModel)]="formCpfCnpj"
-            (ngModelChange)="onCpfCnpjInput()"
-            (blur)="onCpfCnpjBlur()"
-            inputmode="numeric"
-            autocomplete="off"
-            class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-            placeholder="000.000.000-00 ou 00.000.000/0000-00"
-          />
-        </div>
-        <div>
-          <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Tipo</label>
-          <select
-            [(ngModel)]="formTipoPessoa"
-            class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm bg-white text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-          >
-            <option value="PJ">PJ</option>
-            <option value="PF">PF</option>
-          </select>
-        </div>
       </div>
       <div>
         <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Classificação (1–5)</label>

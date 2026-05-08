@@ -382,7 +382,7 @@ export class ContratosComponent implements OnInit, OnDestroy {
     if (!total) return 0;
     return page * size + 1;
   }
-
+  
   rangeEnd(page: number, size: number, total: number): number {
     if (!total) return 0;
     return Math.min((page + 1) * size, total);

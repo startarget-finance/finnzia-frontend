@@ -160,7 +160,7 @@ export function computeDfcSheet(rows: DfcPlanilhaLinha[], months: string[]): Dfc
   return c;
 }
 
-/** Exibe exatamente os valores vindos da API (Bom Controle), sem recalcular hierarquia na planilha. */
+/** Exibe exatamente os valores vindos da API, sem recalcular hierarquia na planilha. */
 export function computeDfcSheetFromApi(rows: DfcPlanilhaLinha[], months: string[]): DfcLinhaComputada[] {
   return rows.map((r) => {
     const _val: Record<string, number> = {};
