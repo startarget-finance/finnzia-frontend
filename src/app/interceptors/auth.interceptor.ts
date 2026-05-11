@@ -2,14 +2,12 @@ import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
-import { AuthService } from '../services/auth.service';
 
 /**
  * Interceptor para adicionar token JWT em todas as requisições
  * e tratar erros de autenticação (401, 403)
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
   const router = inject(Router);
 
   // Não adicionar token para webhooks externos (como Clint)
@@ -22,8 +20,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req);
   }
 
-  // Obter token do localStorage
-  const token = authService.getToken();
+  // Lê token direto da sessão da aba para evitar acoplamento cíclico
+  // entre AuthService -> HttpClient -> Interceptor -> AuthService no bootstrap.
+  const token =
+    typeof window !== 'undefined' && window.sessionStorage
+      ? window.sessionStorage.getItem('authToken')
+      : null;
 
   // Adicionar token no header se existir
   if (token) {
@@ -41,7 +43,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       // Ignorar se for a própria requisição de login (credenciais inválidas não são sessão expirada)
       const isLoginRequest = req.url.includes('/api/auth/login');
       if (error.status === 401 && !isLoginRequest) {
-        authService.logout();
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          window.sessionStorage.removeItem('authToken');
+          window.sessionStorage.removeItem('userData');
+          window.sessionStorage.removeItem('rememberMe');
+          window.sessionStorage.removeItem('empresa_selecionada');
+          window.sessionStorage.removeItem('empresas_permitidas');
+        }
         router.navigate(['/login'], { 
           queryParams: { 
             expired: 'true',
@@ -51,7 +59,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       // Se erro 403 (Forbidden), redirecionar para dashboard apenas se já estiver autenticado
-      if (error.status === 403 && authService.getToken()) {
+      if (error.status === 403 && token) {
         router.navigate(['/dashboard'], { 
           queryParams: { 
             forbidden: 'true',
