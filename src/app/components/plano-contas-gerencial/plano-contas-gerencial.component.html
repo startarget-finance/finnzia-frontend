@@ -109,6 +109,15 @@
       (action)="carregar()"
     />
 
+    <app-feedback-state
+      *ngIf="planoVazioSucesso"
+      kind="empty"
+      title="Nenhuma conta no plano ainda"
+      message="Isso é normal no início. Crie a primeira categoria de receita ou despesa com os botões + nos blocos abaixo, ou use Importar com um arquivo JSON."
+      actionLabel="Nova despesa"
+      (action)="comecarComDespesa()"
+    />
+
     <div class="grid gap-3 lg:grid-cols-2">
       <!-- Receita -->
       <div
@@ -198,7 +207,7 @@
               ></ng-container>
             </div>
             <p
-              *ngIf="!carregando && porTipo('receita').length === 0"
+              *ngIf="!carregando && porTipo('receita').length === 0 && categorias.length > 0"
               class="rounded-lg border border-dashed border-emerald-200/80 bg-emerald-50/30 px-3 py-4 text-center text-sm text-slate-600"
             >
               Nenhuma conta.
@@ -305,7 +314,7 @@
               ></ng-container>
             </div>
             <p
-              *ngIf="!carregando && porTipo('despesa').length === 0"
+              *ngIf="!carregando && porTipo('despesa').length === 0 && categorias.length > 0"
               class="rounded-lg border border-dashed border-rose-200/80 bg-rose-50/30 px-3 py-4 text-center text-sm text-slate-600"
             >
               Nenhuma conta.
@@ -329,7 +338,7 @@
       class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-slate-600"
     >
       <span *ngIf="categorias.length" class="font-medium tabular-nums">{{ contarNos(categorias) }} contas</span>
-      <span *ngIf="!categorias.length && !carregando" class="text-slate-500">Vazio.</span>
+      <span *ngIf="planoVazioSucesso" class="text-slate-500">Nenhuma conta cadastrada.</span>
       <label
         class="inline-flex h-8 cursor-pointer items-center rounded-lg border border-slate-200/80 bg-white px-3 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
         [class.ml-auto]="categorias.length === 0"

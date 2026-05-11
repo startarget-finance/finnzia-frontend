@@ -75,6 +75,20 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  /** Lista carregada com sucesso e sem nenhuma conta (evita confundir com erro de API). */
+  get planoVazioSucesso(): boolean {
+    if (this.carregando || this.erro) return false;
+    if ((this.categorias?.length ?? 0) > 0) return false;
+    if (!this.authService.isAuthenticated() || !this.authService.getToken()) return false;
+    const idEmpresa = this.idEmpresaContexto();
+    if (idEmpresa == null || idEmpresa <= 0) return false;
+    return true;
+  }
+
+  comecarComDespesa(): void {
+    this.abrirNovoParaTipo('despesa');
+  }
+
   carregar(): void {
     this.erro = null;
     if (!this.authService.isAuthenticated() || !this.authService.getToken()) {
