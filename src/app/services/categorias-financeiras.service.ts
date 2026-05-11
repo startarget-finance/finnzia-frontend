@@ -46,14 +46,20 @@ export class CategoriasFinanceirasService {
     return this.http.post<CategoriaFinanceira[]>(this.base, payload);
   }
 
-  renomearNo(idEmpresa: number, nodeId: number, nome: string): Observable<CategoriaFinanceira[]> {
-    const params = new HttpParams().set('idEmpresa', String(idEmpresa));
+  renomearNo(idEmpresa: number | null, nodeId: number, nome: string): Observable<CategoriaFinanceira[]> {
+    let params = new HttpParams();
+    if (idEmpresa != null && idEmpresa > 0) {
+      params = params.set('idEmpresa', String(idEmpresa));
+    }
     return this.http.patch<CategoriaFinanceira[]>(`${this.base}/nos/${nodeId}`, { nome }, { params });
   }
 
   /** Exclui o nó (raiz ou qualquer nível) e toda a subárvore. */
-  excluirNo(idEmpresa: number, nodeId: number): Observable<CategoriaFinanceira[]> {
-    const params = new HttpParams().set('idEmpresa', String(idEmpresa));
+  excluirNo(idEmpresa: number | null, nodeId: number): Observable<CategoriaFinanceira[]> {
+    let params = new HttpParams();
+    if (idEmpresa != null && idEmpresa > 0) {
+      params = params.set('idEmpresa', String(idEmpresa));
+    }
     return this.http.delete<CategoriaFinanceira[]>(`${this.base}/nos/${nodeId}`, { params });
   }
 }

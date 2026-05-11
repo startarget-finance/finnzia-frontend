@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
@@ -12,6 +13,7 @@ import {
   TipoCategoriaFinanceira,
 } from '../../services/categorias-financeiras.service';
 import { AuthService } from '../../services/auth.service';
+import { extractHttpErrorBodyMessage } from '../../services/error.service';
 import { buildDeleteConfirmOptions, confirmUnsavedChanges } from '../../utils/sweet-alerts';
 import { FeedbackStateComponent } from '../../shared/components/feedback-state/feedback-state.component';
 
@@ -111,11 +113,12 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
         this.resumoTotal.emit(this.contarNos(this.categorias));
         this.carregando = false;
       },
-      error: (e) => {
+      error: (e: HttpErrorResponse) => {
         this.carregando = false;
         this.categorias = [];
         this.resumoTotal.emit(0);
-        this.erro = e.error?.mensagem || 'Não foi possível carregar categorias.';
+        this.erro =
+          extractHttpErrorBodyMessage(e.error) || 'Não foi possível carregar categorias.';
       },
     });
   }
@@ -297,9 +300,9 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
             this.formEditarId = null;
             this.carregando = false;
           },
-          error: (e) => {
+          error: (e: HttpErrorResponse) => {
             this.carregando = false;
-            this.erro = e.error?.mensagem || 'Não foi possível salvar.';
+            this.erro = extractHttpErrorBodyMessage(e.error) || 'Não foi possível salvar.';
           },
         });
       return;
@@ -334,9 +337,9 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
           this.formEditarId = null;
           this.carregando = false;
         },
-        error: (e) => {
+        error: (e: HttpErrorResponse) => {
           this.carregando = false;
-          this.erro = e.error?.mensagem || 'Não foi possível salvar.';
+          this.erro = extractHttpErrorBodyMessage(e.error) || 'Não foi possível salvar.';
         },
       });
   }
@@ -365,18 +368,17 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
 
   private async excluirNoPorId(nodeId: number): Promise<void> {
     const idEmpresaAtual = this.idEmpresaContexto();
-    if (!idEmpresaAtual) return;
     this.erro = null;
     this.carregando = true;
-    this.categoriasApi.excluirNo(idEmpresaAtual, nodeId).pipe(takeUntil(this.destroy$)).subscribe({
+    this.categoriasApi.excluirNo(idEmpresaAtual ?? null, nodeId).pipe(takeUntil(this.destroy$)).subscribe({
       next: (lista) => {
         this.categorias = lista || [];
         this.resumoTotal.emit(this.contarNos(this.categorias));
         this.carregando = false;
       },
-      error: (e) => {
+      error: (e: HttpErrorResponse) => {
         this.carregando = false;
-        this.erro = e.error?.mensagem || 'Não foi possível excluir.';
+        this.erro = extractHttpErrorBodyMessage(e.error) || 'Não foi possível excluir.';
       },
     });
   }

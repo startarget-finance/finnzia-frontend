@@ -9,6 +9,39 @@ export interface ErrorMessage {
   timestamp: Date;
 }
 
+/**
+ * Extrai texto legível do corpo de erro HTTP (API interna, Spring Boot, RFC 7807).
+ */
+export function extractHttpErrorBodyMessage(backendError: unknown): string | undefined {
+  if (backendError == null) return undefined;
+  if (typeof backendError === 'string') {
+    const t = backendError.trim();
+    return t.length > 0 ? t : undefined;
+  }
+  if (typeof backendError !== 'object') return undefined;
+  const o = backendError as Record<string, unknown>;
+  const pick = (key: string): string | undefined => {
+    const v = o[key];
+    return typeof v === 'string' && v.trim().length > 0 ? v.trim() : undefined;
+  };
+  for (const key of ['mensagem', 'message', 'detail', 'error', 'title']) {
+    const s = pick(key);
+    if (s) return s;
+  }
+  const errors = o['errors'];
+  if (Array.isArray(errors) && errors.length > 0) {
+    const first = errors[0];
+    if (first && typeof first === 'object') {
+      const row = first as Record<string, unknown>;
+      const d = row['defaultMessage'];
+      if (typeof d === 'string' && d.trim()) return d.trim();
+      const m = row['message'];
+      if (typeof m === 'string' && m.trim()) return m.trim();
+    }
+  }
+  return undefined;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -22,15 +55,8 @@ export class ErrorService {
   handleError(error: HttpErrorResponse): void {
     let errorMessage: ErrorMessage;
 
-    const extractBackendText = (backendError: unknown): string | undefined => {
-      if (!backendError || typeof backendError !== 'object') return undefined;
-      const o = backendError as Record<string, unknown>;
-      const m = o['message'];
-      const msgPt = o['mensagem'];
-      if (typeof m === 'string' && m.trim()) return m;
-      if (typeof msgPt === 'string' && msgPt.trim()) return msgPt;
-      return undefined;
-    };
+    const extractBackendText = (backendError: unknown): string | undefined =>
+      extractHttpErrorBodyMessage(backendError);
 
     if (error.error instanceof ErrorEvent) {
       // Erro do lado do cliente
