@@ -22,6 +22,16 @@ export class ErrorService {
   handleError(error: HttpErrorResponse): void {
     let errorMessage: ErrorMessage;
 
+    const extractBackendText = (backendError: unknown): string | undefined => {
+      if (!backendError || typeof backendError !== 'object') return undefined;
+      const o = backendError as Record<string, unknown>;
+      const m = o['message'];
+      const msgPt = o['mensagem'];
+      if (typeof m === 'string' && m.trim()) return m;
+      if (typeof msgPt === 'string' && msgPt.trim()) return msgPt;
+      return undefined;
+    };
+
     if (error.error instanceof ErrorEvent) {
       // Erro do lado do cliente
       errorMessage = {
@@ -33,12 +43,14 @@ export class ErrorService {
       // Erro do servidor
       const status = error.status;
       const backendError = error.error;
+      const backendText = extractBackendText(backendError);
 
       // Mensagens personalizadas por status
       switch (status) {
         case 400:
           errorMessage = {
-            message: backendError?.message || 'Dados inválidos. Verifique os campos e tente novamente.',
+            message:
+              backendText || 'Dados inválidos. Verifique os campos e tente novamente.',
             code: 'BAD_REQUEST',
             status: 400,
             timestamp: new Date()
@@ -70,7 +82,7 @@ export class ErrorService {
           break;
         case 409:
           errorMessage = {
-            message: backendError?.message || 'Conflito. Este recurso já existe.',
+            message: backendText || 'Conflito. Este recurso já existe.',
             code: 'CONFLICT',
             status: 409,
             timestamp: new Date()
@@ -78,7 +90,7 @@ export class ErrorService {
           break;
         case 422:
           errorMessage = {
-            message: backendError?.message || 'Dados inválidos. Verifique os campos.',
+            message: backendText || 'Dados inválidos. Verifique os campos.',
             code: 'UNPROCESSABLE_ENTITY',
             status: 422,
             timestamp: new Date()
@@ -102,7 +114,7 @@ export class ErrorService {
           break;
         default:
           errorMessage = {
-            message: backendError?.message || 'Erro inesperado. Tente novamente.',
+            message: backendText || 'Erro inesperado. Tente novamente.',
             code: 'UNKNOWN_ERROR',
             status: status,
             timestamp: new Date()
