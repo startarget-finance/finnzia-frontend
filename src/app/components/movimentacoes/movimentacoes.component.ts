@@ -1,13 +1,14 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit, OnDestroy, Inject, ViewChild, ElementRef } from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
-import { ErpFinanceiroService, MovimentacaoFinanceira, FiltrosMovimentacoes } from '../../services/erp-financeiro.service';
+import { Subject, takeUntil, map, filter, observeOn, asyncScheduler, debounceTime, distinctUntilChanged } from 'rxjs';
+import { ErpFinanceiroService, MovimentacaoFinanceira, FiltrosMovimentacoes, CriarMovimentacaoPayload } from '../../services/erp-financeiro.service';
 import { ContaBancariaCadastroService } from '../../services/conta-bancaria-cadastro.service';
 import { ClienteCadastroService } from '../../services/cliente-cadastro.service';
 import { FornecedorCadastroService } from '../../services/fornecedor-cadastro.service';
+import { FuncionarioCadastroService, FuncionarioCadastro } from '../../services/funcionario-cadastro.service';
 import { OmieService, MovimentacaoOmie, MovimentacoesOmieResponse, FiltrosMovimentacoesOmie } from '../../services/omie.service';
 import { CompanySelectorService } from '../../services/company-selector.service';
 import { CategoriasFinanceirasService, TipoCategoriaFinanceira } from '../../services/categorias-financeiras.service';
@@ -35,6 +36,39 @@ type ExportGroupId =
 
 type ExportFormat = 'csv' | 'xlsx';
 
+interface CadastroAnexoPendente {
+  tipo: TipoAnexoMovimentacao;
+  file: File;
+}
+
+/** Linha da grade Produtos / Serviços (nova venda — contas a receber). */
+interface CadastroLinhaVendaProduto {
+  id: string;
+  tipoItem: 'produto' | 'servico';
+  codigo: string;
+  nome: string;
+  tabela: string;
+  descricao: string;
+  quantidade: number;
+  unitario: string;
+  desconto: string;
+}
+
+interface CadastroRateioLinhaOutras {
+  categoriaOpcao: string;
+  categoriaManual: string;
+  percentual: string;
+}
+
+interface CadastroContatoReceita {
+  id: string;
+  nome: string;
+  email: string;
+  telefone: string;
+}
+
+type ReceitaCadastroFluxo = 'venda' | 'outras' | 'contrato' | 'aporte';
+
 interface ExportColumnDef {
   id: string;
   label: string;
@@ -49,6 +83,9 @@ interface ExportColumnDef {
   templateUrl: './movimentacoes.component.html',
 })
 export class MovimentacoesComponent implements OnInit, OnDestroy {
+  @ViewChild('menuCriarReceita', { read: ElementRef }) menuCriarReceitaRef?: ElementRef<HTMLElement>;
+  @ViewChild('menuCriarDespesa', { read: ElementRef }) menuCriarDespesaRef?: ElementRef<HTMLElement>;
+
   mostrarModalExportacao = false;
   abaExportacaoAtiva: ExportGroupId = 'identificacao';
   exportFormat: ExportFormat = 'xlsx';
@@ -61,7 +98,56 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   editandoMovimentacaoId: string | null = null;
   salvandoCadastro = false;
   cadastroSnapshot = '';
+  /** metadata_json carregado na edição (preservado no PUT se o JSON não for remontado). */
+  metadataJsonSnapshotEdicao: string | null = null;
+  /** Metadados da fila de anexos (evita serializar `File` no snapshot de alterações). */
+  cadastroAnexosPendentes: CadastroAnexoPendente[] = [];
+  cadastroAnexoTipoSelecionado: TipoAnexoMovimentacao = 'comprovante';
   cadastroErrors: Record<string, string> = {};
+  /** Aba ativa no cadastro estilo Bom Controle (nova despesa). */
+  cadastroAbaBc: 'dados' | 'repetir' | 'anexos' = 'dados';
+  /** Abas estilo “Nova venda” (nova receita). */
+  cadastroAbaVenda: 'vendedor' | 'produtos' | 'contrato' | 'pagamento' | 'observacao' | 'anexos' = 'vendedor';
+  /** Opções 1x … 36x para condição de parcelamento na nova venda. */
+  readonly vendaOpcoesNumeroParcelas = Array.from({ length: 36 }, (_, i) => i + 1);
+  /** Subfluxo ao cadastrar receita (menu Criar). */
+  receitaCadastroFluxo: ReceitaCadastroFluxo = 'venda';
+  /** Abas “Outras receitas” / “Contrato”. */
+  cadastroAbaOutras: 'dados' | 'informacoes' | 'repetir' | 'faturamento' | 'contato' | 'anexos' = 'dados';
+  /** Abas “Aporte financeiro”. */
+  cadastroAbaAporte: 'dados' | 'anexos' = 'dados';
+  readonly contatosReceitaPorPagina = 5;
+  mostrarMenuCriarReceita = false;
+  mostrarMenuCriarDespesa = false;
+  /** Cadastro BC: transferência entre contas (sem fornecedor). */
+  cadastroBcTransferencia = false;
+  readonly tipoMovimentoDespesaOpcoes: ReadonlyArray<{
+    id: 'fornecedor' | 'funcionario' | 'impostos';
+    label: string;
+  }> = [
+    { id: 'fornecedor', label: 'Fornecedor' },
+    { id: 'funcionario', label: 'Funcionário' },
+    { id: 'impostos', label: 'Impostos' },
+  ];
+  readonly formasPagamentoCadastro: string[] = [
+    'Dinheiro',
+    'PIX',
+    'Transferência',
+    'Boleto',
+    'Cartão de crédito',
+    'Cartão de débito',
+    'Cheque',
+    'Outros',
+  ];
+  /** Forma da transferência (aba BC “Transferência”). */
+  readonly formasTransferenciaCadastro: string[] = [
+    'TED',
+    'DOC',
+    'PIX',
+    'Transferência entre contas',
+    'Cheque',
+    'Outros',
+  ];
   novoLancamento: {
     tipo: 'receita' | 'despesa';
     descricao: string;
@@ -79,6 +165,54 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     categoriaManual: string;
     contaOpcao: string;
     contaManual: string;
+    /** Conta destino (somente fluxo transferência BC). */
+    bcTransferDestinoContaOpcao: string;
+    bcTransferDestinoContaManual: string;
+    /** nenhuma | semanal | quinzenal | mensal | bimestral | trimestral | semestral | anual */
+    recorrenciaFrequencia: string;
+    recorrenciaQuantidade: number;
+    tipoMovimentoDespesa: 'fornecedor' | 'funcionario' | 'impostos';
+    formaPagamento: string;
+    tipoValor: 'definitivo' | 'estimado';
+    etiqueta: string;
+    numeroDocumento: string;
+    desconto: string;
+    acrescimo: string;
+    /** Aba Repetir (BC): espelha recorrência ativa. */
+    contaSeRepete: boolean;
+    /** BC: com prazo = informa quantidade de parcelas; sem prazo = série longa (até 120). */
+    prazoParaAcabar: boolean;
+    /** BC anexos: replicar metadados em todas as parcelas da série. */
+    anexosEmTodasParcelas: boolean;
+    /** BC anexos: quando não for em todas, qual parcela (1-based) recebe os arquivos. */
+    anexoParcelaNumero: number;
+    /** Nova venda (receita): empresa do contexto da venda (id como string). */
+    vendaEmpresaOpcao: string;
+    vendaVendedorNome: string;
+    vendaDataVenda: string;
+    vendaPrevisaoEntrega: string;
+    vendaEnderecoCliente: string;
+    vendaLinhasProduto: CadastroLinhaVendaProduto[];
+    vendaContratoRef: string;
+    vendaEmitirBoleto: boolean;
+    vendaContaBoletoOpcao: string;
+    vendaGerarPix: boolean;
+    vendaContaPixOpcao: string;
+    vendaTipoPagamento: 'a_vista' | 'parcelado';
+    vendaCondicaoParcelas: number;
+    vendaPeriodo: string;
+    vendaObservacaoParcelas: string;
+    vendaDescontoGlobal: string;
+    outrasDepartamento: string;
+    outrasInfoComplementar: string;
+    outrasRateioLinhas: CadastroRateioLinhaOutras[];
+    outrasContatos: CadastroContatoReceita[];
+    outrasContatoPagina: number;
+    outrasContatoDraftNome: string;
+    outrasContatoDraftEmail: string;
+    outrasContatoDraftTelefone: string;
+    outrasFaturamentoData: string;
+    outrasFaturamentoEnviado: boolean;
   } = this.criarEstadoInicialCadastro('despesa');
 
   // UI: Date Range Picker
@@ -207,6 +341,20 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       pillIdle:
         'border-slate-200/90 bg-white text-slate-600 hover:border-amber-200 hover:bg-amber-50/50 hover:text-amber-950',
     },
+    {
+      id: 'outros',
+      labelCurto: 'Out.',
+      labelCompleto: 'Outros',
+      iconSlug: 'fi-rr-folder',
+      btnFilled:
+        'border-slate-600 bg-slate-100 text-slate-900 shadow-sm ring-2 ring-slate-300/50',
+      btnEmpty:
+        'border-slate-300/90 bg-white text-slate-600 hover:border-slate-400 hover:bg-slate-50/50 hover:text-slate-800',
+      pillSelected:
+        'border-slate-500 bg-slate-100 text-slate-900 ring-2 ring-slate-300/40 shadow-sm',
+      pillIdle:
+        'border-slate-200/90 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50/40 hover:text-slate-800',
+    },
   ];
 
   /**
@@ -243,6 +391,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   categoriasCadastroTipo: Array<{ value: string; label: string }> = [];
   clientesCadastro: Array<{ value: string; label: string }> = [];
   fornecedoresCadastro: Array<{ value: string; label: string }> = [];
+  funcionariosCadastro: FuncionarioCadastro[] = [];
   parceirosCadastroTipo: Array<{ value: string; label: string }> = [];
   contasBancarias: Array<{ value: string, label: string }> = [
     { value: '', label: 'Todas as contas' }
@@ -291,8 +440,10 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     { id: 'anexoNF', label: 'Tem nota fiscal', groupId: 'anexos', getter: (m) => this.temAnexo(m, 'nota_fiscal') ? 'Sim' : 'Não' },
     { id: 'anexoBoleto', label: 'Tem boleto', groupId: 'anexos', getter: (m) => this.temAnexo(m, 'boleto') ? 'Sim' : 'Não' },
     { id: 'anexoFatura', label: 'Tem fatura', groupId: 'anexos', getter: (m) => this.temAnexo(m, 'fatura') ? 'Sim' : 'Não' },
+    { id: 'anexoOutros', label: 'Tem anexo (outros)', groupId: 'anexos', getter: (m) => this.temAnexo(m, 'outros') ? 'Sim' : 'Não' },
     { id: 'formaPagto', label: 'Forma pagamento', groupId: 'origem', getter: (m) => m.NomeFormaPagamento || '' },
     { id: 'tipoMov', label: 'Tipo movimentação', groupId: 'origem', getter: (m) => m.NomeTipoMovimentacao || '' },
+    { id: 'departamento', label: 'Departamento', groupId: 'classificacao', getter: (m) => (m as any).Departamento || '' },
     { id: 'empresa', label: 'Empresa', groupId: 'origem', getter: (m) => m.NomeEmpresa || '' },
     { id: 'origemDados', label: 'Fonte dados', groupId: 'origem', getter: () => this.fonteDados },
     { id: 'observacao', label: 'Observação', groupId: 'auditoria', getter: (m) => m.Observacao || '' },
@@ -302,6 +453,40 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   private textoPesquisaSubject = new Subject<string>();
+  /** Evita vários timeouts de deep link quando o Router emite queryParamMap mais de uma vez. */
+  private deepLinkCadastroTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Evita abrir o modal duas vezes na mesma rajada (antes de limpar a URL). */
+  private processandoDeepLinkCadastro = false;
+
+  /** Fecha menus “Criar receita/despesa” ao clicar fora (capture: mousedown). @HostListener não aceita `{ capture: true }` neste toolchain. */
+  private readonly fecharMenusDropMousedownCapture = (ev: Event): void => {
+    const mev = ev as MouseEvent;
+    if (mev.button !== 0) {
+      return;
+    }
+    const t = mev.target as Node | null;
+    if (!t) {
+      return;
+    }
+    const path =
+      typeof mev.composedPath === 'function' ? (mev.composedPath() as EventTarget[]) : [];
+    const dentro = (host: HTMLElement | undefined) => {
+      if (!host) {
+        return false;
+      }
+      if (path.length) {
+        return path.includes(host);
+      }
+      return host.contains(t);
+    };
+
+    if (this.mostrarMenuCriarReceita && !dentro(this.menuCriarReceitaRef?.nativeElement)) {
+      this.mostrarMenuCriarReceita = false;
+    }
+    if (this.mostrarMenuCriarDespesa && !dentro(this.menuCriarDespesaRef?.nativeElement)) {
+      this.mostrarMenuCriarDespesa = false;
+    }
+  };
 
   constructor(
     private erpFinanceiroService: ErpFinanceiroService,
@@ -311,8 +496,11 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     private contaBancariaCadastroService: ContaBancariaCadastroService,
     private clienteCadastroService: ClienteCadastroService,
     private fornecedorCadastroService: FornecedorCadastroService,
+    private funcionarioCadastroService: FuncionarioCadastroService,
     private categoriasFinanceirasService: CategoriasFinanceirasService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private router: Router,
+    @Inject(DOCUMENT) private readonly document: Document
   ) {
     this.visibleMonth = new Date();
     this.buildCalendar();
@@ -322,7 +510,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
               debounceTime(500),
               distinctUntilChanged(),
               takeUntil(this.destroy$)
-            ).subscribe(texto => {
+            ).subscribe((texto: string) => {
               this.filtrosUI.textoPesquisa = texto;
               this.paginaAtual = 1; // Volta para primeira página ao pesquisar
               this.carregarMovimentacoes();
@@ -330,6 +518,9 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.document.addEventListener('mousedown', this.fecharMenusDropMousedownCapture, true);
+    this.inscreverDeepLinkCadastroPorQueryParams();
+
     const possuiFiltrosNavegacao = this.aplicarFiltrosDeNavegacao();
     if (!possuiFiltrosNavegacao) {
       // Pré-preencher com mês atual automaticamente
@@ -348,7 +539,11 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
         this.companySelectorService.selecionarEmpresaPadrao();
         // Tentar carregar novamente após seleção
         setTimeout(() => {
+          this.carregarMapaNomesContasCadastro();
+          this.carregarCategoriasCadastroPorEmpresa();
+          this.carregarParceirosCadastroPorEmpresa();
           this.carregarMovimentacoes();
+          this.agendarDeepLinkCadastroDesdeUrl();
         }, 100);
         return;
       }
@@ -375,11 +570,14 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
         this.carregarCategoriasCadastroPorEmpresa();
         this.carregarParceirosCadastroPorEmpresa();
       });
-
-    this.abrirCadastroViaQueryParam();
   }
 
   ngOnDestroy(): void {
+    this.document.removeEventListener('mousedown', this.fecharMenusDropMousedownCapture, true);
+    if (this.deepLinkCadastroTimer != null) {
+      clearTimeout(this.deepLinkCadastroTimer);
+      this.deepLinkCadastroTimer = null;
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -459,11 +657,125 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     return true;
   }
 
-  private abrirCadastroViaQueryParam(): void {
-    const novo = this.route.snapshot.queryParamMap.get('novo');
-    if (novo === 'receita' || novo === 'despesa') {
-      this.abrirModalCadastro(novo);
+  /**
+   * Abre cadastro a partir de ?novo= / ?fluxo= / ?movimento= sem disparar várias vezes (Router costuma emitir queryParamMap em rajada).
+   */
+  private inscreverDeepLinkCadastroPorQueryParams(): void {
+    this.route.queryParamMap
+      .pipe(
+        map((qm) => ({
+          novo: (qm.get('novo') ?? '').trim(),
+          fluxo: (qm.get('fluxo') ?? '').toLowerCase().trim(),
+          movimento: (qm.get('movimento') ?? '').toLowerCase().trim(),
+        })),
+        filter((k) => k.novo === 'receita' || k.novo === 'despesa'),
+        observeOn(asyncScheduler),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        if (this.processandoDeepLinkCadastro) {
+          return;
+        }
+        if (!this.companySelectorService.obterEmpresaSelecionada()) {
+          return;
+        }
+        const qm = this.route.snapshot.queryParamMap;
+        const novo = (qm.get('novo') ?? '').trim();
+        if (novo !== 'receita' && novo !== 'despesa') {
+          return;
+        }
+        this.processandoDeepLinkCadastro = true;
+        try {
+          this.abrirCadastroDesdeQueryParamMap(qm);
+          void this.limparDeepLinkCadastroNaUrl().finally(() => {
+            this.processandoDeepLinkCadastro = false;
+          });
+        } catch {
+          this.processandoDeepLinkCadastro = false;
+        }
+      });
+  }
+
+  /** Fluxo “selecionou empresa padrão” — abre deep link uma vez após carregar listas. */
+  private agendarDeepLinkCadastroDesdeUrl(): void {
+    if (this.deepLinkCadastroTimer != null) {
+      clearTimeout(this.deepLinkCadastroTimer);
     }
+    this.deepLinkCadastroTimer = setTimeout(() => {
+      this.deepLinkCadastroTimer = null;
+      const qm = this.route.snapshot.queryParamMap;
+      const novo = (qm.get('novo') ?? '').trim();
+      if (novo !== 'receita' && novo !== 'despesa') {
+        return;
+      }
+      if (!this.companySelectorService.obterEmpresaSelecionada()) {
+        return;
+      }
+      if (this.processandoDeepLinkCadastro) {
+        return;
+      }
+      this.processandoDeepLinkCadastro = true;
+      try {
+        this.abrirCadastroDesdeQueryParamMap(qm);
+        void this.limparDeepLinkCadastroNaUrl().finally(() => {
+          this.processandoDeepLinkCadastro = false;
+        });
+      } catch {
+        this.processandoDeepLinkCadastro = false;
+      }
+    }, 0);
+  }
+
+  private limparDeepLinkCadastroNaUrl(): Promise<boolean> {
+    const qm = this.route.snapshot.queryParamMap;
+    if (!qm.get('novo') && !qm.get('fluxo') && !qm.get('movimento')) {
+      return Promise.resolve(true);
+    }
+    return this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { novo: null, fluxo: null, movimento: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  private abrirCadastroDesdeQueryParamMap(qm: ParamMap): void {
+    const novo = (qm.get('novo') ?? '').trim();
+    const fluxoRaw = (qm.get('fluxo') || '').toLowerCase().trim();
+    const movimentoRaw = (qm.get('movimento') || '').toLowerCase().trim();
+    const fluxoMap: Record<string, ReceitaCadastroFluxo> = {
+      venda: 'venda',
+      outras: 'outras',
+      contrato: 'contrato',
+      aporte: 'aporte',
+    };
+    const despesaMovimentoMap: Record<string, 'fornecedor' | 'funcionario' | 'impostos' | 'transferencia'> = {
+      fornecedor: 'fornecedor',
+      funcionario: 'funcionario',
+      impostos: 'impostos',
+      transferencia: 'transferencia',
+    };
+    if (novo === 'receita') {
+      const fluxo = fluxoMap[fluxoRaw];
+      this.abrirModalCadastro('receita', fluxo);
+    } else if (novo === 'despesa') {
+      const mov = despesaMovimentoMap[movimentoRaw];
+      this.abrirModalCadastro('despesa', undefined, mov);
+    }
+  }
+
+  private criarLinhaVendaProdutoPadrao(): CadastroLinhaVendaProduto {
+    return {
+      id: `lp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      tipoItem: 'produto',
+      codigo: '',
+      nome: '',
+      tabela: '',
+      descricao: '',
+      quantidade: 1,
+      unitario: '0,00',
+      desconto: '0,00',
+    };
   }
 
   private criarEstadoInicialCadastro(tipo: 'receita' | 'despesa') {
@@ -485,17 +797,101 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       categoriaManual: '',
       contaOpcao: '',
       contaManual: '',
+      bcTransferDestinoContaOpcao: '',
+      bcTransferDestinoContaManual: '',
+      recorrenciaFrequencia: 'nenhuma',
+      recorrenciaQuantidade: 1,
+      tipoMovimentoDespesa: 'fornecedor' as const,
+      formaPagamento: tipo === 'receita' ? '' : 'Dinheiro',
+      tipoValor: 'definitivo' as const,
+      etiqueta: '',
+      numeroDocumento: '',
+      desconto: '0,00',
+      acrescimo: '0,00',
+      contaSeRepete: false,
+      prazoParaAcabar: true,
+      anexosEmTodasParcelas: false,
+      anexoParcelaNumero: 1,
+      vendaEmpresaOpcao: '',
+      vendaVendedorNome: '',
+      vendaDataVenda: hoje,
+      vendaPrevisaoEntrega: '',
+      vendaEnderecoCliente: '',
+      vendaLinhasProduto: [this.criarLinhaVendaProdutoPadrao()],
+      vendaContratoRef: '',
+      vendaEmitirBoleto: false,
+      vendaContaBoletoOpcao: '',
+      vendaGerarPix: false,
+      vendaContaPixOpcao: '',
+      vendaTipoPagamento: 'parcelado' as const,
+      vendaCondicaoParcelas: 1,
+      vendaPeriodo: 'mensal',
+      vendaObservacaoParcelas: '',
+      vendaDescontoGlobal: '0,00',
+      outrasDepartamento: '',
+      outrasInfoComplementar: '',
+      outrasRateioLinhas: [] as CadastroRateioLinhaOutras[],
+      outrasContatos: [] as CadastroContatoReceita[],
+      outrasContatoPagina: 1,
+      outrasContatoDraftNome: '',
+      outrasContatoDraftEmail: '',
+      outrasContatoDraftTelefone: '',
+      outrasFaturamentoData: '',
+      outrasFaturamentoEnviado: false,
     };
   }
 
-  abrirModalCadastro(tipo: 'receita' | 'despesa'): void {
+  abrirModalCadastro(
+    tipo: 'receita' | 'despesa',
+    receitaFluxo?: ReceitaCadastroFluxo,
+    despesaInicio?: 'fornecedor' | 'funcionario' | 'impostos' | 'transferencia'
+  ): void {
     this.cadastroModo = 'novo';
     this.editandoMovimentacaoId = null;
+    this.cadastroAbaBc = 'dados';
+    this.cadastroAbaVenda = 'vendedor';
+    this.cadastroAbaOutras = 'dados';
+    this.cadastroAbaAporte = 'dados';
+    this.mostrarMenuCriarReceita = false;
+    this.mostrarMenuCriarDespesa = false;
+    this.cadastroBcTransferencia = false;
+    this.metadataJsonSnapshotEdicao = null;
+    this.receitaCadastroFluxo = tipo === 'receita' ? receitaFluxo ?? 'venda' : 'venda';
     this.novoLancamento = this.criarEstadoInicialCadastro(tipo);
+    if (tipo === 'despesa') {
+      if (despesaInicio === 'transferencia') {
+        this.cadastroBcTransferencia = true;
+        this.novoLancamento.tipoMovimentoDespesa = 'fornecedor';
+        this.novoLancamento.formaPagamento = '';
+        this.novoLancamento.contaSeRepete = false;
+        this.novoLancamento.recorrenciaFrequencia = 'nenhuma';
+        this.novoLancamento.recorrenciaQuantidade = 1;
+        this.atualizarOpcoesParceiroCadastro('despesa', 'fornecedor');
+      } else if (despesaInicio === 'fornecedor' || despesaInicio === 'funcionario' || despesaInicio === 'impostos') {
+        this.onTipoMovimentoDespesaBc(despesaInicio);
+      }
+    }
+    if (tipo === 'receita') {
+      const emps = this.companySelectorService.obterEmpresasAtivas();
+      const idSel = this.companySelectorService.obterIdEmpresaSelecionada();
+      if (emps.length === 1) {
+        this.novoLancamento.vendaEmpresaOpcao = String(emps[0].idEmpresa);
+      } else if (idSel != null) {
+        this.novoLancamento.vendaEmpresaOpcao = String(idSel);
+      }
+      if (this.receitaCadastroFluxo === 'venda') {
+        this.sincronizarRecorrenciaDaVendaReceita();
+        this.sincronizarValorCampoComTotaisVenda();
+      }
+    }
     this.cadastroErrors = {};
+    this.cadastroAnexosPendentes = [];
     this.mostrarModalCadastro = true;
     this.atualizarOpcoesCategoriaCadastro(tipo);
-    this.atualizarOpcoesParceiroCadastro(tipo);
+    this.atualizarOpcoesParceiroCadastro(
+      tipo,
+      tipo === 'despesa' ? this.novoLancamento.tipoMovimentoDespesa : 'fornecedor'
+    );
     this.atualizarSnapshotCadastro();
   }
 
@@ -504,9 +900,15 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     if (!id) {
       return;
     }
+    this.receitaCadastroFluxo = 'venda';
+    const metaEx = (mov as any).MetadataJson;
+    this.cadastroBcTransferencia = false;
+    this.metadataJsonSnapshotEdicao =
+      metaEx != null && String(metaEx).trim() !== '' ? String(metaEx).trim() : null;
     this.cadastroModo = 'editar';
     this.editandoMovimentacaoId = id;
     this.cadastroErrors = {};
+    this.cadastroAnexosPendentes = [];
 
     const tipo: 'receita' | 'despesa' = mov.Debito ? 'despesa' : 'receita';
     const hoje = this.dateToStr(new Date());
@@ -515,19 +917,37 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     const catEscolha = this.resolverOpcaoOuManual(this.categoriasCadastroTipo, catNome);
     const contaNome = (mov.NomeContaFinanceira || '').trim();
     const contaEscolha = this.resolverOpcaoOuManual(this.contasBancarias, contaNome);
-    this.atualizarOpcoesParceiroCadastro(tipo);
-    const parceiroNome = (
-      mov.NomeClienteFornecedor ||
-      mov.NomeFantasiaClienteFornecedor ||
-      mov.RazaoSocialClienteFornecedor ||
-      ''
-    ).toString().trim();
-    const parceiroEscolha = this.resolverOpcaoOuManual(this.parceirosCadastroTipo, parceiroNome);
+
+    const ntm = ((mov.NomeTipoMovimentacao || '') as string).toLowerCase();
+    let tipoMovDesp: 'fornecedor' | 'funcionario' | 'impostos' = 'fornecedor';
+    if (ntm.includes('funcion')) {
+      tipoMovDesp = 'funcionario';
+    } else if (ntm.includes('impost')) {
+      tipoMovDesp = 'impostos';
+    }
+
+    this.atualizarOpcoesParceiroCadastro(tipo, tipoMovDesp);
+
+    const idFuncMov = (mov as any).IdFuncionario as number | undefined;
+    let parceiroEscolha: { opcao: string; manual: string };
+    if (tipo === 'despesa' && idFuncMov != null && Number(idFuncMov) > 0) {
+      parceiroEscolha = { opcao: `__func__:${Number(idFuncMov)}`, manual: '' };
+    } else {
+      const parceiroNome = (
+        mov.NomeClienteFornecedor ||
+        mov.NomeFantasiaClienteFornecedor ||
+        mov.RazaoSocialClienteFornecedor ||
+        ''
+      ).toString().trim();
+      parceiroEscolha = this.resolverOpcaoOuManual(this.parceirosCadastroTipo, parceiroNome);
+    }
 
     const venc = this.normalizarDataParaInput(mov.DataVencimento);
     const comp = this.normalizarDataParaInput(mov.DataCompetencia) || venc;
     const quit = this.normalizarDataParaInput(mov.DataQuitacao);
     const temQuit = !!quit;
+
+    const formaPg = (mov.NomeFormaPagamento || '').trim() || 'Dinheiro';
 
     this.novoLancamento = {
       tipo,
@@ -546,6 +966,47 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       categoriaManual: catEscolha.manual,
       contaOpcao: contaEscolha.opcao,
       contaManual: contaEscolha.manual,
+      bcTransferDestinoContaOpcao: '',
+      bcTransferDestinoContaManual: '',
+      recorrenciaFrequencia: 'nenhuma',
+      recorrenciaQuantidade: 1,
+      tipoMovimentoDespesa: tipoMovDesp,
+      formaPagamento: formaPg,
+      tipoValor: 'definitivo',
+      etiqueta: '',
+      numeroDocumento: '',
+      desconto: '0,00',
+      acrescimo: '0,00',
+      contaSeRepete: false,
+      prazoParaAcabar: true,
+      anexosEmTodasParcelas: false,
+      anexoParcelaNumero: 1,
+      vendaEmpresaOpcao: '',
+      vendaVendedorNome: '',
+      vendaDataVenda: venc || hoje,
+      vendaPrevisaoEntrega: '',
+      vendaEnderecoCliente: '',
+      vendaLinhasProduto: [this.criarLinhaVendaProdutoPadrao()],
+      vendaContratoRef: '',
+      vendaEmitirBoleto: false,
+      vendaContaBoletoOpcao: '',
+      vendaGerarPix: false,
+      vendaContaPixOpcao: '',
+      vendaTipoPagamento: 'parcelado',
+      vendaCondicaoParcelas: 1,
+      vendaPeriodo: 'mensal',
+      vendaObservacaoParcelas: '',
+      vendaDescontoGlobal: '0,00',
+      outrasDepartamento: (mov as any).Departamento ? String((mov as any).Departamento).trim() : '',
+      outrasInfoComplementar: '',
+      outrasRateioLinhas: [] as CadastroRateioLinhaOutras[],
+      outrasContatos: [] as CadastroContatoReceita[],
+      outrasContatoPagina: 1,
+      outrasContatoDraftNome: '',
+      outrasContatoDraftEmail: '',
+      outrasContatoDraftTelefone: '',
+      outrasFaturamentoData: '',
+      outrasFaturamentoEnviado: false,
     };
 
     this.mostrarModalCadastro = true;
@@ -586,14 +1047,22 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   async fecharModalCadastro(force = false): Promise<void> {
     if (force) {
       this.mostrarModalCadastro = false;
+      this.mostrarMenuCriarReceita = false;
+      this.mostrarMenuCriarDespesa = false;
+      this.cadastroBcTransferencia = false;
       this.cadastroModo = 'novo';
       this.editandoMovimentacaoId = null;
+      this.cadastroAnexosPendentes = [];
       return;
     }
     if (!this.temAlteracoesCadastro()) {
       this.mostrarModalCadastro = false;
+      this.mostrarMenuCriarReceita = false;
+      this.mostrarMenuCriarDespesa = false;
+      this.cadastroBcTransferencia = false;
       this.cadastroModo = 'novo';
       this.editandoMovimentacaoId = null;
+      this.cadastroAnexosPendentes = [];
       return;
     }
     const confirmacao = await Swal.fire({
@@ -609,33 +1078,83 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     });
     if (confirmacao.isConfirmed) {
       this.mostrarModalCadastro = false;
+      this.mostrarMenuCriarReceita = false;
+      this.mostrarMenuCriarDespesa = false;
+      this.cadastroBcTransferencia = false;
       this.cadastroModo = 'novo';
       this.editandoMovimentacaoId = null;
+      this.cadastroAnexosPendentes = [];
     }
   }
 
   private atualizarSnapshotCadastro(): void {
-    this.cadastroSnapshot = JSON.stringify(this.novoLancamento);
+    this.cadastroSnapshot = this.serializarEstadoCadastro();
   }
 
   private temAlteracoesCadastro(): boolean {
-    return JSON.stringify(this.novoLancamento) !== this.cadastroSnapshot;
+    return this.serializarEstadoCadastro() !== this.cadastroSnapshot;
+  }
+
+  private serializarEstadoCadastro(): string {
+    const anexosMeta = this.cadastroAnexosPendentes.map((a) => ({
+      tipo: a.tipo,
+      nome: a.file.name,
+      bytes: a.file.size,
+    }));
+    return JSON.stringify({ ...this.novoLancamento, _anexosPendentes: anexosMeta });
   }
 
   private validarCadastroLancamento(): boolean {
     const errors: Record<string, string> = {};
+    if (this.modalEstiloNovaVendaReceita) {
+      this.sincronizarRecorrenciaDaVendaReceita();
+      this.sincronizarValorCampoComTotaisVenda();
+    }
     const valorBruto = String(this.novoLancamento.valor ?? '').trim();
     const valorNumerico = this.parseValorBr(valorBruto);
     const categoriaFinal = this.obterCategoriaFinalCadastro();
     const parceiroFinal = this.obterClienteFornecedorFinalCadastro();
 
+    const podeDescricaoOpcionalVenda =
+      this.modalEstiloNovaVendaReceita && this.cadastroValorBrutoItensVenda() > 0;
+    const podeDescricaoOpcionalAporte = this.modalEstiloReceitaAporte;
+    const podeDescricaoOpcionalTransfer =
+      this.modalEstiloBomControleDespesa && this.cadastroBcTransferencia;
     if (!this.novoLancamento.descricao.trim()) {
-      errors['descricao'] = 'Informe a descrição.';
+      if (!podeDescricaoOpcionalVenda && !podeDescricaoOpcionalAporte && !podeDescricaoOpcionalTransfer) {
+        errors['descricao'] = 'Informe a descrição.';
+      }
     } else if (this.novoLancamento.descricao.trim().length < 3) {
-      errors['descricao'] = 'A descrição precisa ter pelo menos 3 caracteres.';
+      if (!podeDescricaoOpcionalAporte && !podeDescricaoOpcionalTransfer) {
+        errors['descricao'] = 'A descrição precisa ter pelo menos 3 caracteres.';
+      }
     }
     if (!parceiroFinal.trim()) {
-      errors['clienteFornecedor'] = 'Informe o cliente/fornecedor.';
+      const isFunc =
+        this.novoLancamento.tipo === 'despesa' && this.novoLancamento.tipoMovimentoDespesa === 'funcionario';
+      const aporteSemCliente = this.modalEstiloReceitaAporte;
+      if (!aporteSemCliente) {
+        errors['clienteFornecedor'] = isFunc
+          ? 'Informe o funcionário.'
+          : this.novoLancamento.tipo === 'despesa'
+            ? 'Informe o fornecedor ou favorecido.'
+            : 'Informe o cliente.';
+      }
+    }
+    if (this.modalEstiloNovaVendaReceita) {
+      const emps = this.companySelectorService.obterEmpresasAtivas();
+      if (emps.length > 1 && !String(this.novoLancamento.vendaEmpresaOpcao || '').trim()) {
+        errors['vendaEmpresa'] = 'Selecione a empresa.';
+      }
+      if (!String(this.novoLancamento.vendaDataVenda || '').trim()) {
+        errors['vendaDataVenda'] = 'Informe a data da venda.';
+      }
+      if (!(this.novoLancamento.formaPagamento || '').trim()) {
+        errors['formaPagamento'] = 'Selecione a forma de pagamento.';
+      }
+      if (this.cadastroValorBrutoItensVenda() <= 0) {
+        errors['valor'] = 'Inclua produtos ou serviços com quantidade e valor unitário.';
+      }
     }
     if (!this.novoLancamento.dataVencimento) {
       errors['dataVencimento'] = 'Informe a data de vencimento.';
@@ -664,8 +1183,105 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     if (!categoriaFinal.trim()) {
       errors['categoria'] = 'Informe a categoria.';
     }
+    if (this.modalEstiloBomControleDespesa && this.cadastroBcTransferencia) {
+      const origOk = this.contaBcSelecionadaValida(
+        this.novoLancamento.contaOpcao,
+        this.novoLancamento.contaManual
+      );
+      const destOk = this.contaBcSelecionadaValida(
+        this.novoLancamento.bcTransferDestinoContaOpcao,
+        this.novoLancamento.bcTransferDestinoContaManual
+      );
+      if (!origOk) {
+        errors['contaOrigem'] = 'Selecione a conta de origem.';
+      }
+      if (!destOk) {
+        errors['bcTransferDestino'] = 'Selecione a conta de destino.';
+      }
+      if (!(this.novoLancamento.formaPagamento || '').trim()) {
+        errors['formaPagamento'] = 'Selecione a forma da transferência.';
+      }
+      if (origOk && destOk && this.contasTransferenciaOrigemDestinoMesma()) {
+        errors['bcTransferDestino'] = 'A conta de destino deve ser diferente da origem.';
+      }
+    }
+    if (this.modalEstiloReceitaOutrasContrato) {
+      const linhas = this.novoLancamento.outrasRateioLinhas || [];
+      if (linhas.length > 0) {
+        let incompleto = false;
+        for (const l of linhas) {
+          const nome = this.obterNomeCategoriaRateioLinha(l);
+          const p = this.parseValorBr(String(l.percentual || '').trim());
+          if (!nome || !Number.isFinite(p) || p <= 0) {
+            incompleto = true;
+            break;
+          }
+        }
+        if (incompleto) {
+          errors['outrasRateio'] = 'Preencha categoria e percentual em todas as linhas do rateio, ou remova linhas vazias.';
+        } else {
+          const soma = this.cadastroSomaPercentualRateioOutras();
+          if (Math.abs(soma - 100) > 0.05) {
+            errors['outrasRateio'] = `A soma dos percentuais do rateio deve ser 100% (atual: ${soma.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%).`;
+          }
+        }
+      }
+    }
     if (!this.novoLancamento.valor || !Number.isFinite(valorNumerico) || valorNumerico <= 0) {
-      errors['valor'] = 'Informe um valor maior que zero.';
+      if (!this.modalEstiloNovaVendaReceita) {
+        errors['valor'] = 'Informe um valor maior que zero.';
+      } else if (!errors['valor']) {
+        errors['valor'] = 'O valor líquido da venda deve ser maior que zero (ajuste descontos ou itens).';
+      }
+    }
+    if (this.modalEstiloBomControleDespesa || this.modalEstiloReceitaOutrasContrato || this.modalEstiloReceitaAporte) {
+      const liq = this.cadastroValorLiquidoNumerico();
+      if (Number.isFinite(valorNumerico) && valorNumerico > 0 && liq <= 0) {
+        errors['valor'] = 'O valor líquido (bruto − desconto + acréscimo) deve ser maior que zero.';
+      }
+    }
+    if (this.cadastroModo === 'novo') {
+      const freq = (this.novoLancamento.recorrenciaFrequencia || 'nenhuma').toLowerCase();
+      const qRaw = Number(this.novoLancamento.recorrenciaQuantidade);
+      const qty = Number.isFinite(qRaw) ? Math.floor(qRaw) : 1;
+      const repeteBc =
+        (this.modalEstiloBomControleDespesa || this.modalEstiloReceitaOutrasContrato) &&
+        this.novoLancamento.contaSeRepete;
+
+      if (this.novoLancamento.marcarComoQuitado && (repeteBc || freq !== 'nenhuma' || qty > 1)) {
+        errors['recorrencia'] =
+          'Recorrência não pode ser usada junto com “quitado/recebido no cadastro”. Desmarque um dos dois.';
+      }
+      if (!this.novoLancamento.marcarComoQuitado) {
+        if (repeteBc) {
+          if (freq === 'nenhuma') {
+            errors['recorrenciaFrequencia'] = 'Selecione o período da recorrência.';
+          }
+          if (this.novoLancamento.prazoParaAcabar && freq !== 'nenhuma' && qty < 2) {
+            errors['recorrenciaQuantidade'] = 'Informe pelo menos 2 parcelas quando há prazo para acabar.';
+          }
+          if (this.novoLancamento.prazoParaAcabar && qty > 120) {
+            errors['recorrenciaQuantidade'] = 'Máximo de 120 parcelas por série.';
+          }
+          if (this.novoLancamento.prazoParaAcabar && qty < 1) {
+            errors['recorrenciaQuantidade'] = 'Número de parcelas inválido.';
+          }
+        } else {
+          if (freq !== 'nenhuma' && qty < 2) {
+            errors['recorrenciaQuantidade'] = 'Informe pelo menos 2 parcelas para usar recorrência.';
+          }
+          if (freq === 'nenhuma' && qty > 1) {
+            errors['recorrenciaFrequencia'] =
+              'Selecione a frequência ou deixe o número de parcelas em 1 para um lançamento único.';
+          }
+          if (qty > 120) {
+            errors['recorrenciaQuantidade'] = 'Máximo de 120 parcelas por série.';
+          }
+          if (qty < 1) {
+            errors['recorrenciaQuantidade'] = 'Número de parcelas inválido.';
+          }
+        }
+      }
     }
     this.cadastroErrors = errors;
     return Object.keys(errors).length === 0;
@@ -682,43 +1298,188 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       return;
     }
 
+    let metadataJsonPayload: string | undefined;
+    try {
+      metadataJsonPayload = await this.montarMetadataJsonParaSalvar();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Não foi possível preparar os arquivos para envio.';
+      await Swal.fire({
+        icon: 'error',
+        title: 'Anexos / metadados',
+        text: msg,
+        confirmButtonColor: '#dc2626',
+      });
+      return;
+    }
+    if (
+      this.cadastroModo === 'editar' &&
+      (metadataJsonPayload == null || metadataJsonPayload === '') &&
+      this.metadataJsonSnapshotEdicao
+    ) {
+      metadataJsonPayload = this.metadataJsonSnapshotEdicao;
+    }
+
     const valorBruto = String(this.novoLancamento.valor ?? '').trim();
     const valorNumerico = this.parseValorBr(valorBruto);
+    const usaLiquidoBc =
+      this.modalEstiloBomControleDespesa ||
+      this.modalEstiloReceitaOutrasContrato ||
+      this.modalEstiloReceitaAporte;
+    const valorApi = usaLiquidoBc
+      ? Math.max(0.01, this.cadastroValorLiquidoNumerico())
+      : this.modalEstiloNovaVendaReceita
+        ? Math.max(0.01, this.cadastroValorLiquidoNovaVendaNumerico())
+        : valorNumerico;
     const categoriaFinal = this.obterCategoriaFinalCadastro();
     const contaFinal = this.obterContaFinalCadastro();
     const clienteFornecedorFinal = this.obterClienteFornecedorFinalCadastro();
-    const payload = {
+    let nomeSalvar = this.novoLancamento.descricao.trim();
+    if (!nomeSalvar && this.modalEstiloNovaVendaReceita) {
+      nomeSalvar = clienteFornecedorFinal ? `Venda — ${clienteFornecedorFinal}` : 'Venda';
+    }
+    if (!nomeSalvar && this.modalEstiloReceitaOutrasContrato) {
+      nomeSalvar = this.receitaCadastroFluxo === 'contrato' ? 'Contrato — receita' : 'Outras receitas';
+    }
+    if (!nomeSalvar && this.modalEstiloReceitaAporte) {
+      nomeSalvar = 'Aporte financeiro';
+    }
+    if (!nomeSalvar && this.cadastroBcTransferencia && this.modalEstiloBomControleDespesa) {
+      nomeSalvar = 'Transferência entre contas';
+    }
+    const payload: CriarMovimentacaoPayload = {
       debito: this.novoLancamento.tipo === 'despesa',
       dataVencimento: this.novoLancamento.dataVencimento,
       dataCompetencia: this.competenciaMesAnoParaData(this.novoLancamento.dataCompetencia) || this.novoLancamento.dataVencimento,
       dataQuitacao: this.novoLancamento.marcarComoQuitado
         ? (this.novoLancamento.dataQuitacao || this.novoLancamento.dataVencimento)
         : undefined,
-      valor: valorNumerico,
-      nome: this.novoLancamento.descricao.trim(),
-      observacao: this.novoLancamento.observacao.trim() || undefined,
+      valor: valorApi,
+      nome: nomeSalvar,
+      observacao: this.montarObservacaoParaSalvar() || undefined,
       nomeCategoriaFinanceira: categoriaFinal,
       nomeContaFinanceira: contaFinal || undefined,
       nomeClienteFornecedor: clienteFornecedorFinal || undefined,
     };
+    if (this.modalEstiloReceitaOutrasContrato || this.modalEstiloReceitaAporte) {
+      const dep = (this.novoLancamento.outrasDepartamento || '').trim();
+      if (dep) {
+        payload.departamento = dep;
+      }
+      const rj = this.montarRateioJsonOutras();
+      if (rj) {
+        payload.rateioJson = rj;
+      }
+    }
+    if (metadataJsonPayload) {
+      payload.metadataJson = metadataJsonPayload;
+    }
+
+    const forma = (this.novoLancamento.formaPagamento || '').trim();
+    if (forma) {
+      payload.nomeFormaPagamento = forma;
+    }
+    if (payload.debito) {
+      if (this.cadastroBcTransferencia && this.modalEstiloBomControleDespesa) {
+        payload.tipoMovimentoDespesa = 'TRANSFERENCIA';
+      } else {
+        payload.tipoMovimentoDespesa = (this.novoLancamento.tipoMovimentoDespesa || 'fornecedor').toUpperCase();
+      }
+    }
+
+    const idFunc = this.obterIdFuncionarioPayload();
+    if (idFunc != null) {
+      payload.idFuncionario = idFunc;
+    }
 
     const isEdicao = this.cadastroModo === 'editar' && this.editandoMovimentacaoId;
+    if (!isEdicao && !this.novoLancamento.marcarComoQuitado) {
+      const freq = (this.novoLancamento.recorrenciaFrequencia || 'nenhuma').toLowerCase();
+      const qRaw = Number(this.novoLancamento.recorrenciaQuantidade);
+      let qty = Number.isFinite(qRaw) ? Math.floor(qRaw) : 1;
+      const repeteBc =
+        (this.modalEstiloBomControleDespesa || this.modalEstiloReceitaOutrasContrato) &&
+        this.novoLancamento.contaSeRepete;
+
+      if (repeteBc && freq !== 'nenhuma') {
+        const qSerie = this.novoLancamento.prazoParaAcabar
+          ? Math.max(2, Math.min(120, qty < 2 ? 12 : qty))
+          : 120;
+        payload.recorrenciaFrequencia = freq.toUpperCase();
+        payload.recorrenciaQuantidade = qSerie;
+      } else if (!repeteBc && freq !== 'nenhuma') {
+        qty = Math.max(2, Math.min(120, qty < 2 ? 12 : qty));
+        payload.recorrenciaFrequencia = freq.toUpperCase();
+        payload.recorrenciaQuantidade = qty;
+      }
+    }
+
     this.salvandoCadastro = true;
     const req$ = isEdicao
       ? this.erpFinanceiroService.atualizarMovimentacao(this.editandoMovimentacaoId!, payload)
       : this.erpFinanceiroService.criarMovimentacao(payload);
 
     req$.pipe(takeUntil(this.destroy$)).subscribe({
-      next: async () => {
+      next: async (res: { totalCadastrados?: number; movimentacoes?: unknown[]; mensagem?: string; movimentacao?: any }) => {
         this.salvandoCadastro = false;
+        const aplicarAnexosLocais = (ids: string[]) => {
+          const emp = this.empresaIdAtual();
+          const pendentes = this.cadastroAnexosPendentes;
+          if (!pendentes.length || !ids.length) {
+            return;
+          }
+          for (const mid of ids) {
+            if (!mid) continue;
+            for (const a of pendentes) {
+              this.movimentacoesAnexosService.salvarAnexo(emp, mid, a.tipo, a.file);
+            }
+          }
+        };
+        let idsMovs: string[] = [];
+        if (isEdicao) {
+          idsMovs = [this.editandoMovimentacaoId!];
+        } else if (Array.isArray(res?.movimentacoes)) {
+          idsMovs = res.movimentacoes!
+            .map((m: any) => String(m?.IdMovimentacaoFinanceiraParcela ?? '').trim())
+            .filter(Boolean);
+        } else if (res?.movimentacao) {
+          const id = String(res.movimentacao?.IdMovimentacaoFinanceiraParcela ?? '').trim();
+          if (id) idsMovs = [id];
+        }
+        let idsAnexo = idsMovs;
+        if (
+          !isEdicao &&
+          idsMovs.length > 1 &&
+          !this.novoLancamento.anexosEmTodasParcelas &&
+          this.cadastroAnexosPendentes.length > 0
+        ) {
+          const maxP = idsMovs.length;
+          const p = Math.max(1, Math.min(maxP, Math.floor(Number(this.novoLancamento.anexoParcelaNumero) || 1)));
+          idsAnexo = [idsMovs[p - 1]].filter(Boolean);
+        }
+        const enviouBinarioNoBackend = !!(metadataJsonPayload && metadataJsonPayload.includes('conteudoBase64'));
+        if (!enviouBinarioNoBackend) {
+          aplicarAnexosLocais(idsAnexo);
+        }
+        this.cadastroAnexosPendentes = [];
         this.fecharModalCadastro(true);
         this.carregarMovimentacoes();
+        const totalNovo =
+          !isEdicao && typeof res?.totalCadastrados === 'number'
+            ? res.totalCadastrados
+            : !isEdicao && Array.isArray(res?.movimentacoes)
+              ? res.movimentacoes!.length
+              : 1;
+        const textoSucesso =
+          !isEdicao && totalNovo > 1
+            ? res?.mensagem ||
+              `${totalNovo} parcelas foram cadastradas com sucesso (mesmo valor e descrição, vencimentos conforme a recorrência).`
+            : isEdicao
+              ? 'O lançamento foi atualizado com sucesso.'
+              : res?.mensagem || 'A movimentação foi criada com sucesso.';
         await Swal.fire({
           icon: 'success',
           title: isEdicao ? 'Alterações salvas' : 'Cadastro realizado',
-          text: isEdicao
-            ? 'O lançamento foi atualizado com sucesso.'
-            : 'A movimentação foi criada com sucesso.',
+          text: textoSucesso,
           confirmButtonColor: '#16a34a',
         });
       },
@@ -746,7 +1507,10 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
 
   onTipoLancamentoChange(): void {
     this.atualizarOpcoesCategoriaCadastro(this.novoLancamento.tipo);
-    this.atualizarOpcoesParceiroCadastro(this.novoLancamento.tipo);
+    this.atualizarOpcoesParceiroCadastro(
+      this.novoLancamento.tipo,
+      this.novoLancamento.tipo === 'despesa' ? this.novoLancamento.tipoMovimentoDespesa : 'fornecedor'
+    );
     this.novoLancamento.categoriaOpcao = '';
     this.novoLancamento.categoriaManual = '';
     this.novoLancamento.clienteFornecedorOpcao = '';
@@ -759,10 +1523,837 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     }
   }
 
+  onBcTransferDestinoContaOpcaoChange(): void {
+    if (this.novoLancamento.bcTransferDestinoContaOpcao !== '__manual__') {
+      this.novoLancamento.bcTransferDestinoContaManual = '';
+    }
+  }
+
   onClienteFornecedorOpcaoChange(): void {
     if (this.novoLancamento.clienteFornecedorOpcao !== '__manual__') {
       this.novoLancamento.clienteFornecedorManual = '';
     }
+  }
+
+  onRecorrenciaFrequenciaChange(): void {
+    const f = (this.novoLancamento.recorrenciaFrequencia || 'nenhuma').toLowerCase();
+    if (this.modalEstiloBomControleDespesa || this.modalEstiloReceitaOutrasContrato) {
+      this.novoLancamento.contaSeRepete = f !== 'nenhuma';
+    }
+    if (f === 'nenhuma') {
+      this.novoLancamento.recorrenciaQuantidade = 1;
+    } else if (!Number.isFinite(this.novoLancamento.recorrenciaQuantidade) || this.novoLancamento.recorrenciaQuantidade < 2) {
+      this.novoLancamento.recorrenciaQuantidade = 12;
+    }
+    delete this.cadastroErrors['recorrenciaFrequencia'];
+    delete this.cadastroErrors['recorrenciaQuantidade'];
+    delete this.cadastroErrors['recorrencia'];
+  }
+
+  /** Ordem dos tipos de anexo na aba BC (Fatura, Comprovante, NF, Boleto, Outros). */
+  get tiposAnexoListaOrdemBc() {
+    const ordem: TipoAnexoMovimentacao[] = ['fatura', 'comprovante', 'nota_fiscal', 'boleto', 'outros'];
+    return ordem
+      .map((id) => this.tiposAnexoLista.find((t) => t.id === id))
+      .filter((x): x is (typeof this.tiposAnexoLista)[number] => !!x);
+  }
+
+  cadastroAvisoValorBcRepetir(): boolean {
+    const wideReceita =
+      this.modalEstiloReceitaOutrasContrato && this.novoLancamento.contaSeRepete;
+    if (!this.modalEstiloBomControleDespesa && !wideReceita) {
+      return false;
+    }
+    const valorBruto = String(this.novoLancamento.valor ?? '').trim();
+    const valorNumerico = this.parseValorBr(valorBruto);
+    const liq = this.cadastroValorLiquidoNumerico();
+    return (
+      !valorBruto ||
+      !Number.isFinite(valorNumerico) ||
+      valorNumerico <= 0 ||
+      !Number.isFinite(liq) ||
+      liq <= 0
+    );
+  }
+
+  cadastroParcelaAnexoMax(): number {
+    if (this.modalEstiloNovaVendaReceita) {
+      const freq = (this.novoLancamento.recorrenciaFrequencia || 'nenhuma').toLowerCase();
+      if (freq === 'nenhuma') {
+        return 1;
+      }
+      return Math.max(2, Math.min(120, Math.floor(Number(this.novoLancamento.recorrenciaQuantidade)) || 2));
+    }
+    const parceladoBc = this.modalEstiloBomControleDespesa && this.novoLancamento.contaSeRepete;
+    const parceladoOutras = this.modalEstiloReceitaOutrasContrato && this.novoLancamento.contaSeRepete;
+    if (!parceladoBc && !parceladoOutras) {
+      return 1;
+    }
+    const freq = (this.novoLancamento.recorrenciaFrequencia || 'nenhuma').toLowerCase();
+    if (freq === 'nenhuma') {
+      return 1;
+    }
+    if (this.novoLancamento.prazoParaAcabar) {
+      return Math.max(2, Math.min(120, Math.floor(Number(this.novoLancamento.recorrenciaQuantidade)) || 2));
+    }
+    return 120;
+  }
+
+  setCadastroContaSeRepete(sim: boolean): void {
+    this.novoLancamento.contaSeRepete = sim;
+    if (!sim) {
+      this.novoLancamento.recorrenciaFrequencia = 'nenhuma';
+      this.novoLancamento.recorrenciaQuantidade = 1;
+    } else {
+      if (this.novoLancamento.recorrenciaFrequencia === 'nenhuma') {
+        this.novoLancamento.recorrenciaFrequencia = 'mensal';
+      }
+      if (!this.novoLancamento.prazoParaAcabar) {
+        this.novoLancamento.recorrenciaQuantidade = 120;
+      } else if (!Number.isFinite(this.novoLancamento.recorrenciaQuantidade) || this.novoLancamento.recorrenciaQuantidade < 2) {
+        this.novoLancamento.recorrenciaQuantidade = 12;
+      }
+    }
+    this.novoLancamento.anexoParcelaNumero = 1;
+    delete this.cadastroErrors['recorrenciaFrequencia'];
+    delete this.cadastroErrors['recorrenciaQuantidade'];
+    delete this.cadastroErrors['recorrencia'];
+  }
+
+  setCadastroPrazoParaAcabar(sim: boolean): void {
+    this.novoLancamento.prazoParaAcabar = sim;
+    if (!sim && this.novoLancamento.contaSeRepete) {
+      this.novoLancamento.recorrenciaQuantidade = 120;
+    } else if (sim && this.novoLancamento.contaSeRepete) {
+      if (!Number.isFinite(this.novoLancamento.recorrenciaQuantidade) || this.novoLancamento.recorrenciaQuantidade < 2) {
+        this.novoLancamento.recorrenciaQuantidade = 4;
+      }
+      if (this.novoLancamento.recorrenciaQuantidade > 120) {
+        this.novoLancamento.recorrenciaQuantidade = 120;
+      }
+    }
+    this.novoLancamento.anexoParcelaNumero = Math.min(
+      this.novoLancamento.anexoParcelaNumero,
+      this.cadastroParcelaAnexoMax()
+    );
+  }
+
+  setCadastroAnexosTodasParcelas(sim: boolean): void {
+    this.novoLancamento.anexosEmTodasParcelas = sim;
+  }
+
+  cadastroToggleSimNaoClasse(ativo: boolean): string {
+    return ativo
+      ? 'bg-white text-slate-900 shadow-md shadow-slate-900/10 ring-2 ring-teal-500/35'
+      : 'text-slate-600 hover:bg-white/80 hover:text-slate-900';
+  }
+
+  get modalEstiloBomControleDespesa(): boolean {
+    return this.cadastroModo === 'novo' && this.novoLancamento.tipo === 'despesa';
+  }
+
+  /** Modal largo (BC ou receitas com fluxo guiado). */
+  get modalCadastroLargo(): boolean {
+    return (
+      this.modalEstiloBomControleDespesa ||
+      this.modalEstiloNovaVendaReceita ||
+      this.modalEstiloReceitaOutrasContrato ||
+      this.modalEstiloReceitaAporte
+    );
+  }
+
+  /** Modal “Nova venda” (abas) para nova conta a receber — apenas fluxo Venda. */
+  get modalEstiloNovaVendaReceita(): boolean {
+    return this.cadastroModo === 'novo' && this.novoLancamento.tipo === 'receita' && this.receitaCadastroFluxo === 'venda';
+  }
+
+  /** Outras receitas ou Contrato (abas estendidas). */
+  get modalEstiloReceitaOutrasContrato(): boolean {
+    return (
+      this.cadastroModo === 'novo' &&
+      this.novoLancamento.tipo === 'receita' &&
+      (this.receitaCadastroFluxo === 'outras' || this.receitaCadastroFluxo === 'contrato')
+    );
+  }
+
+  get modalEstiloReceitaAporte(): boolean {
+    return this.cadastroModo === 'novo' && this.novoLancamento.tipo === 'receita' && this.receitaCadastroFluxo === 'aporte';
+  }
+
+  /** Edição ou cadastro compacto (sem modais “premium”). */
+  get modalCadastroFormularioSimples(): boolean {
+    return this.cadastroModo === 'editar';
+  }
+
+  selecionarCadastroAbaVenda(aba: 'vendedor' | 'produtos' | 'contrato' | 'pagamento' | 'observacao' | 'anexos'): void {
+    this.cadastroAbaVenda = aba;
+  }
+
+  cadastroAbaVendaAtiva(
+    aba: 'vendedor' | 'produtos' | 'contrato' | 'pagamento' | 'observacao' | 'anexos'
+  ): boolean {
+    return this.cadastroAbaVenda === aba;
+  }
+
+  cadastroTituloNovaVenda(): string {
+    return 'Nova conta a receber';
+  }
+
+  cadastroTituloReceitaFluxo(): string {
+    if (this.receitaCadastroFluxo === 'outras') {
+      return 'Outras receitas';
+    }
+    if (this.receitaCadastroFluxo === 'contrato') {
+      return 'Contrato — receita';
+    }
+    if (this.receitaCadastroFluxo === 'aporte') {
+      return 'Aporte financeiro';
+    }
+    return 'Nova conta a receber';
+  }
+
+  selecionarCadastroAbaOutras(aba: typeof this.cadastroAbaOutras): void {
+    this.cadastroAbaOutras = aba;
+  }
+
+  cadastroAbaOutrasAtiva(aba: typeof this.cadastroAbaOutras): boolean {
+    return this.cadastroAbaOutras === aba;
+  }
+
+  selecionarCadastroAbaAporte(aba: typeof this.cadastroAbaAporte): void {
+    this.cadastroAbaAporte = aba;
+  }
+
+  cadastroAbaAporteAtiva(aba: typeof this.cadastroAbaAporte): boolean {
+    return this.cadastroAbaAporte === aba;
+  }
+
+  private criarLinhaRateioOutrasPadrao(): CadastroRateioLinhaOutras {
+    return {
+      categoriaOpcao: '',
+      categoriaManual: '',
+      percentual: '',
+    };
+  }
+
+  adicionarLinhaRateioOutras(): void {
+    const linhas = [...(this.novoLancamento.outrasRateioLinhas || [])];
+    linhas.push(this.criarLinhaRateioOutrasPadrao());
+    this.novoLancamento.outrasRateioLinhas = linhas;
+  }
+
+  removerLinhaRateioOutras(index: number): void {
+    const linhas = [...(this.novoLancamento.outrasRateioLinhas || [])];
+    linhas.splice(index, 1);
+    this.novoLancamento.outrasRateioLinhas = linhas;
+    delete this.cadastroErrors['outrasRateio'];
+  }
+
+  onRateioCategoriaOpcaoChange(index: number, valor: string): void {
+    const linhas = [...(this.novoLancamento.outrasRateioLinhas || [])];
+    if (!linhas[index]) {
+      return;
+    }
+    linhas[index] = {
+      ...linhas[index],
+      categoriaOpcao: valor,
+      categoriaManual: valor === '__manual__' ? linhas[index].categoriaManual : '',
+    };
+    this.novoLancamento.outrasRateioLinhas = linhas;
+    delete this.cadastroErrors['outrasRateio'];
+  }
+
+  onRateioPercentualInput(index: number, val: string): void {
+    const linhas = [...(this.novoLancamento.outrasRateioLinhas || [])];
+    if (!linhas[index]) {
+      return;
+    }
+    linhas[index] = { ...linhas[index], percentual: this.formatarValorBrEmDigitacao(val) };
+    this.novoLancamento.outrasRateioLinhas = linhas;
+    delete this.cadastroErrors['outrasRateio'];
+  }
+
+  cadastroSomaPercentualRateioOutras(): number {
+    let t = 0;
+    for (const l of this.novoLancamento.outrasRateioLinhas || []) {
+      const n = this.parseValorBr(String(l.percentual || '').trim().replace('%', ''));
+      if (Number.isFinite(n) && n > 0) {
+        t += n;
+      }
+    }
+    return Math.round(t * 100) / 100;
+  }
+
+  private obterNomeCategoriaRateioLinha(linha: CadastroRateioLinhaOutras): string {
+    if (linha.categoriaOpcao === '__manual__') {
+      return (linha.categoriaManual || '').trim();
+    }
+    const id = (linha.categoriaOpcao || '').trim();
+    if (!id) {
+      return '';
+    }
+    const op = this.categoriasCadastroTipo.find((c) => c.value === id);
+    return (op?.label || '').trim();
+  }
+
+  private montarRateioJsonOutras(): string | undefined {
+    const linhas = (this.novoLancamento.outrasRateioLinhas || []).filter((l) => {
+      const nome = this.obterNomeCategoriaRateioLinha(l);
+      const p = this.parseValorBr(String(l.percentual || '').trim());
+      return nome.length > 0 && Number.isFinite(p) && p > 0;
+    });
+    if (!linhas.length) {
+      return undefined;
+    }
+    const payload = linhas.map((l) => ({
+      categoria: this.obterNomeCategoriaRateioLinha(l),
+      percentual: this.parseValorBr(String(l.percentual || '').trim()),
+    }));
+    return JSON.stringify(payload);
+  }
+
+  adicionarContatoReceitaDaFila(): void {
+    const nome = (this.novoLancamento.outrasContatoDraftNome || '').trim();
+    if (!nome) {
+      return;
+    }
+    const c: CadastroContatoReceita = {
+      id: `ct-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      nome,
+      email: (this.novoLancamento.outrasContatoDraftEmail || '').trim(),
+      telefone: (this.novoLancamento.outrasContatoDraftTelefone || '').trim(),
+    };
+    this.novoLancamento.outrasContatos = [...(this.novoLancamento.outrasContatos || []), c];
+    this.novoLancamento.outrasContatoDraftNome = '';
+    this.novoLancamento.outrasContatoDraftEmail = '';
+    this.novoLancamento.outrasContatoDraftTelefone = '';
+    const total = this.novoLancamento.outrasContatos.length;
+    const ultimaPag = Math.max(1, Math.ceil(total / this.contatosReceitaPorPagina));
+    this.novoLancamento.outrasContatoPagina = ultimaPag;
+  }
+
+  removerContatoReceita(indexGlobal: number): void {
+    const arr = [...(this.novoLancamento.outrasContatos || [])];
+    if (indexGlobal < 0 || indexGlobal >= arr.length) {
+      return;
+    }
+    arr.splice(indexGlobal, 1);
+    this.novoLancamento.outrasContatos = arr;
+    const maxPag = Math.max(1, Math.ceil(arr.length / this.contatosReceitaPorPagina) || 1);
+    if (this.novoLancamento.outrasContatoPagina > maxPag) {
+      this.novoLancamento.outrasContatoPagina = maxPag;
+    }
+  }
+
+  contatosReceitaSlicePagina(): CadastroContatoReceita[] {
+    const arr = this.novoLancamento.outrasContatos || [];
+    const p = Math.max(1, Math.floor(this.novoLancamento.outrasContatoPagina) || 1);
+    const start = (p - 1) * this.contatosReceitaPorPagina;
+    return arr.slice(start, start + this.contatosReceitaPorPagina);
+  }
+
+  contatosReceitaIndiceBasePagina(): number {
+    const p = Math.max(1, Math.floor(this.novoLancamento.outrasContatoPagina) || 1);
+    return (p - 1) * this.contatosReceitaPorPagina;
+  }
+
+  contatosReceitaTotalPaginas(): number {
+    const n = (this.novoLancamento.outrasContatos || []).length;
+    return Math.max(1, Math.ceil(n / this.contatosReceitaPorPagina));
+  }
+
+  /** Parcelamento com mais de uma parcela (anexos / série). */
+  parcelamentoVendaAtivo(): boolean {
+    if (!this.modalEstiloNovaVendaReceita) {
+      return false;
+    }
+    const f = (this.novoLancamento.recorrenciaFrequencia || 'nenhuma').toLowerCase();
+    const q = Math.floor(Number(this.novoLancamento.recorrenciaQuantidade) || 1);
+    return f !== 'nenhuma' && q > 1;
+  }
+
+  totalLiquidoLinhaVenda(linha: CadastroLinhaVendaProduto): number {
+    const q = Math.max(0, Number(linha.quantidade) || 0);
+    const u = this.parseValorBr(String(linha.unitario || '').trim()) || 0;
+    const d = this.parseValorBr(String(linha.desconto || '0').trim()) || 0;
+    const raw = q * u - d;
+    return Math.max(0, Math.round(raw * 100) / 100);
+  }
+
+  cadastroSubtotalProdutosVenda(): number {
+    let t = 0;
+    for (const l of this.novoLancamento.vendaLinhasProduto || []) {
+      if (l.tipoItem === 'produto') {
+        t += this.totalLiquidoLinhaVenda(l);
+      }
+    }
+    return Math.round(t * 100) / 100;
+  }
+
+  cadastroSubtotalServicosVenda(): number {
+    let t = 0;
+    for (const l of this.novoLancamento.vendaLinhasProduto || []) {
+      if (l.tipoItem === 'servico') {
+        t += this.totalLiquidoLinhaVenda(l);
+      }
+    }
+    return Math.round(t * 100) / 100;
+  }
+
+  cadastroValorBrutoItensVenda(): number {
+    return Math.round((this.cadastroSubtotalProdutosVenda() + this.cadastroSubtotalServicosVenda()) * 100) / 100;
+  }
+
+  cadastroValorLiquidoNovaVendaNumerico(): number {
+    const bruto = this.cadastroValorBrutoItensVenda();
+    const dg = this.parseValorBr(String(this.novoLancamento.vendaDescontoGlobal || '0').trim()) || 0;
+    return Math.max(0, Math.round((bruto - dg) * 100) / 100);
+  }
+
+  cadastroValorLiquidoNovaVendaFormatado(): string {
+    return this.cadastroValorLiquidoNovaVendaNumerico().toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+
+  sincronizarValorCampoComTotaisVenda(): void {
+    if (!this.modalEstiloNovaVendaReceita) {
+      return;
+    }
+    const liq = this.cadastroValorLiquidoNovaVendaNumerico();
+    this.novoLancamento.valor = liq > 0 ? this.valorNumericoParaInputBr(liq) : '';
+  }
+
+  sincronizarRecorrenciaDaVendaReceita(): void {
+    if (!this.modalEstiloNovaVendaReceita) {
+      return;
+    }
+    const tipoPag = this.novoLancamento.vendaTipoPagamento;
+    const n = Math.max(1, Math.min(120, Math.floor(Number(this.novoLancamento.vendaCondicaoParcelas) || 1)));
+    const per = (this.novoLancamento.vendaPeriodo || 'mensal').toLowerCase();
+    if (tipoPag === 'a_vista' || n <= 1) {
+      this.novoLancamento.recorrenciaFrequencia = 'nenhuma';
+      this.novoLancamento.recorrenciaQuantidade = 1;
+    } else {
+      this.novoLancamento.recorrenciaFrequencia = per;
+      this.novoLancamento.recorrenciaQuantidade = Math.max(2, n);
+    }
+  }
+
+  onVendaDataVendaChange(): void {
+    const d = (this.novoLancamento.vendaDataVenda || '').trim();
+    if (d.length >= 10) {
+      this.novoLancamento.dataCompetencia = this.competenciaMesAnoDeData(d);
+    }
+  }
+
+  onVendaDescontoGlobalInput(val: string): void {
+    this.novoLancamento.vendaDescontoGlobal = this.formatarValorBrEmDigitacao(val);
+    this.sincronizarValorCampoComTotaisVenda();
+  }
+
+  onVendaPagamentoCamposChange(): void {
+    if (this.novoLancamento.vendaTipoPagamento === 'a_vista') {
+      this.novoLancamento.vendaCondicaoParcelas = 1;
+    }
+    this.sincronizarRecorrenciaDaVendaReceita();
+  }
+
+  adicionarLinhaVendaProduto(): void {
+    const linhas = [...(this.novoLancamento.vendaLinhasProduto || [])];
+    linhas.push(this.criarLinhaVendaProdutoPadrao());
+    this.novoLancamento.vendaLinhasProduto = linhas;
+    this.sincronizarValorCampoComTotaisVenda();
+  }
+
+  removerLinhaVendaProduto(index: number): void {
+    const linhas = [...(this.novoLancamento.vendaLinhasProduto || [])];
+    if (linhas.length <= 1) {
+      return;
+    }
+    linhas.splice(index, 1);
+    this.novoLancamento.vendaLinhasProduto = linhas;
+    this.sincronizarValorCampoComTotaisVenda();
+  }
+
+  onVendaLinhaCampoChange(): void {
+    this.sincronizarValorCampoComTotaisVenda();
+  }
+
+  onVendaLinhaUnitario(index: number, val: string): void {
+    const linhas = [...(this.novoLancamento.vendaLinhasProduto || [])];
+    if (!linhas[index]) {
+      return;
+    }
+    linhas[index] = { ...linhas[index], unitario: this.formatarValorBrEmDigitacao(val) };
+    this.novoLancamento.vendaLinhasProduto = linhas;
+    this.sincronizarValorCampoComTotaisVenda();
+  }
+
+  onVendaLinhaDesconto(index: number, val: string): void {
+    const linhas = [...(this.novoLancamento.vendaLinhasProduto || [])];
+    if (!linhas[index]) {
+      return;
+    }
+    linhas[index] = { ...linhas[index], desconto: this.formatarValorBrEmDigitacao(val) };
+    this.novoLancamento.vendaLinhasProduto = linhas;
+    this.sincronizarValorCampoComTotaisVenda();
+  }
+
+  empresasOpcoesVenda(): Array<{ value: string; label: string }> {
+    return this.companySelectorService.obterEmpresasAtivas().map((e) => ({
+      value: String(e.idEmpresa),
+      label: (e.nomeEmpresa || '').trim() || `Empresa #${e.idEmpresa}`,
+    }));
+  }
+
+  selecionarCadastroAbaBc(aba: 'dados' | 'repetir' | 'anexos'): void {
+    if (this.cadastroBcTransferencia && aba === 'repetir') {
+      this.cadastroAbaBc = 'dados';
+      return;
+    }
+    this.cadastroAbaBc = aba;
+  }
+
+  cadastroAbaBcAtiva(aba: 'dados' | 'repetir' | 'anexos'): boolean {
+    return this.cadastroAbaBc === aba;
+  }
+
+  cadastroLabelParceiroBc(): string {
+    const t = this.novoLancamento.tipoMovimentoDespesa;
+    if (t === 'funcionario') return 'Funcionário';
+    if (t === 'impostos') return 'Favorecido (órgão/receita)';
+    return 'Fornecedor';
+  }
+
+  cadastroTituloBc(): string {
+    if (this.cadastroBcTransferencia) {
+      return 'Transferência';
+    }
+    const t = this.novoLancamento.tipoMovimentoDespesa;
+    if (t === 'funcionario') return 'Despesa com funcionário';
+    if (t === 'impostos') return 'Despesa (impostos)';
+    return 'Despesa com fornecedor';
+  }
+
+  onTipoMovimentoDespesaBc(id: 'fornecedor' | 'funcionario' | 'impostos'): void {
+    this.novoLancamento.tipoMovimentoDespesa = id;
+    this.novoLancamento.clienteFornecedorOpcao = '';
+    this.novoLancamento.clienteFornecedorManual = '';
+    this.atualizarOpcoesParceiroCadastro('despesa', id);
+  }
+
+  onInputCadastroAnexo(ev: Event): void {
+    const input = ev.target as HTMLInputElement;
+    const files = input.files;
+    if (!files?.length) {
+      return;
+    }
+    for (let i = 0; i < files.length; i++) {
+      const f = files.item(i);
+      if (f) {
+        this.cadastroAnexosPendentes.push({ tipo: this.cadastroAnexoTipoSelecionado, file: f });
+      }
+    }
+    input.value = '';
+  }
+
+  removerAnexoPendenteCadastro(index: number): void {
+    this.cadastroAnexosPendentes = this.cadastroAnexosPendentes.filter((_, j) => j !== index);
+  }
+
+  cadastroValorLiquidoNumerico(): number {
+    const bruto = this.parseValorBr(String(this.novoLancamento.valor ?? '').trim());
+    if (!Number.isFinite(bruto) || bruto < 0) return 0;
+    const usaBc =
+      this.modalEstiloBomControleDespesa ||
+      this.modalEstiloReceitaOutrasContrato ||
+      this.modalEstiloReceitaAporte;
+    if (!usaBc) {
+      return bruto;
+    }
+    const des = this.parseValorBr(String(this.novoLancamento.desconto ?? '0').trim()) || 0;
+    const acr = this.parseValorBr(String(this.novoLancamento.acrescimo ?? '0').trim()) || 0;
+    return Math.round((bruto - des + acr) * 100) / 100;
+  }
+
+  cadastroValorLiquidoFormatado(): string {
+    const n = this.cadastroValorLiquidoNumerico();
+    return n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  onDescontoBc(ev: string): void {
+    this.novoLancamento.desconto = this.formatarValorBrEmDigitacao(ev);
+  }
+
+  onAcrescimoBc(ev: string): void {
+    this.novoLancamento.acrescimo = this.formatarValorBrEmDigitacao(ev);
+  }
+
+  private montarObservacaoParaSalvar(): string {
+    let o = (this.novoLancamento.observacao || '').trim();
+    if (this.modalEstiloNovaVendaReceita) {
+      const extras: string[] = [];
+      const idEmp = (this.novoLancamento.vendaEmpresaOpcao || '').trim();
+      if (idEmp) {
+        extras.push(`Empresa (id): ${idEmp}`);
+      }
+      const vend = (this.novoLancamento.vendaVendedorNome || '').trim();
+      if (vend) {
+        extras.push(`Vendedor: ${vend}`);
+      }
+      const dv = (this.novoLancamento.vendaDataVenda || '').trim();
+      if (dv) {
+        extras.push(`Data venda: ${dv}`);
+      }
+      const pe = (this.novoLancamento.vendaPrevisaoEntrega || '').trim();
+      if (pe) {
+        extras.push(`Previsão entrega: ${pe}`);
+      }
+      const end = (this.novoLancamento.vendaEnderecoCliente || '').trim();
+      if (end) {
+        extras.push(`Endereço cliente: ${end}`);
+      }
+      const ctr = (this.novoLancamento.vendaContratoRef || '').trim();
+      if (ctr) {
+        extras.push(`Contrato: ${ctr}`);
+      }
+      if (this.novoLancamento.vendaEmitirBoleto) {
+        extras.push('Emitir boleto: Sim');
+        const cb = (this.novoLancamento.vendaContaBoletoOpcao || '').trim();
+        if (cb) {
+          extras.push(`Conta boleto: ${cb}`);
+        }
+      }
+      if (this.novoLancamento.vendaGerarPix) {
+        extras.push('Gerar Pix QR: Sim');
+        const cp = (this.novoLancamento.vendaContaPixOpcao || '').trim();
+        if (cp) {
+          extras.push(`Conta Pix: ${cp}`);
+        }
+      }
+      const op = (this.novoLancamento.vendaObservacaoParcelas || '').trim();
+      if (op) {
+        extras.push(`Obs. parcelas: ${op}`);
+      }
+      const linhasJson = JSON.stringify(
+        (this.novoLancamento.vendaLinhasProduto || []).map((l) => ({
+          tipo: l.tipoItem,
+          codigo: l.codigo,
+          nome: l.nome,
+          tabela: l.tabela,
+          descricao: l.descricao,
+          qtd: l.quantidade,
+          unit: l.unitario,
+          desc: l.desconto,
+          total: this.totalLiquidoLinhaVenda(l),
+        }))
+      );
+      extras.push(`Itens: ${linhasJson}`);
+      const bloco = extras.length ? `[Nova venda]\n${extras.join('\n')}` : '';
+      if (!bloco) {
+        return o;
+      }
+      return o ? `${o}\n\n${bloco}` : bloco;
+    }
+    if (this.modalEstiloReceitaOutrasContrato || this.modalEstiloReceitaAporte) {
+      const extras: string[] = [];
+      extras.push(`Fluxo receita: ${this.receitaCadastroFluxo}`);
+      const dep = (this.novoLancamento.outrasDepartamento || '').trim();
+      if (dep) {
+        extras.push(`Departamento: ${dep}`);
+      }
+      const inf = (this.novoLancamento.outrasInfoComplementar || '').trim();
+      if (inf) {
+        extras.push(`Informações complementares: ${inf}`);
+      }
+      const rj = this.montarRateioJsonOutras();
+      if (rj) {
+        extras.push(`Rateio: ${rj}`);
+      }
+      if (this.modalEstiloReceitaOutrasContrato && (this.novoLancamento.outrasContatos || []).length > 0) {
+        extras.push(`Contatos: ${JSON.stringify(this.novoLancamento.outrasContatos)}`);
+      }
+      if (this.modalEstiloReceitaOutrasContrato) {
+        const fd = (this.novoLancamento.outrasFaturamentoData || '').trim();
+        if (fd) {
+          extras.push(`Faturamento (data referência): ${fd}`);
+        }
+        if (this.novoLancamento.outrasFaturamentoEnviado) {
+          extras.push('Faturamento: enviado ao cliente (flag)');
+        }
+      }
+      const bloco = extras.length ? `[Receita — ${this.cadastroTituloReceitaFluxo()}]\n${extras.join('\n')}` : '';
+      if (!bloco) {
+        return o;
+      }
+      return o ? `${o}\n\n${bloco}` : bloco;
+    }
+    if (!this.modalEstiloBomControleDespesa) {
+      return o;
+    }
+    const meta: string[] = [];
+    const e = (this.novoLancamento.etiqueta || '').trim();
+    const d = (this.novoLancamento.numeroDocumento || '').trim();
+    if (e) meta.push('Etiqueta: ' + e);
+    if (d) meta.push('Documento nº: ' + d);
+    const bruto = this.parseValorBr(String(this.novoLancamento.valor || '').trim()) || 0;
+    const des = this.parseValorBr(String(this.novoLancamento.desconto || '0').trim()) || 0;
+    const acr = this.parseValorBr(String(this.novoLancamento.acrescimo || '0').trim()) || 0;
+    if (des > 0 || acr > 0) {
+      meta.push(
+        `Valor bruto R$ ${bruto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}; desconto R$ ${des.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}; acréscimo R$ ${acr.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      );
+    }
+    if (this.novoLancamento.tipoValor === 'estimado') {
+      meta.push('Tipo valor: Estimado');
+    }
+    if (meta.length === 0) {
+      return o;
+    }
+    const linhaMeta = meta.join(' | ');
+    return o ? `${o}\n${linhaMeta}` : linhaMeta;
+  }
+
+  private arquivoParaBase64(file: File): Promise<string> {
+    const max = 950_000;
+    if (file.size > max) {
+      return Promise.reject(
+        new Error(`Arquivo "${file.name}" é grande demais para envio no cadastro (máx. ~${Math.round(max / 1024)} KB).`)
+      );
+    }
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => {
+        const s = String(r.result || '');
+        const i = s.indexOf(',');
+        resolve(i >= 0 ? s.slice(i + 1) : s);
+      };
+      r.onerror = () => reject(r.error || new Error('Falha ao ler o arquivo.'));
+      r.readAsDataURL(file);
+    });
+  }
+
+  /** Inclui bytes Base64 no metadata quando é lançamento único ou anexos replicados em todas as parcelas. */
+  private incluirAnexosBinariosNoMetadataSalvar(): boolean {
+    const freq = (this.novoLancamento.recorrenciaFrequencia || 'nenhuma').toLowerCase();
+    const qRaw = Number(this.novoLancamento.recorrenciaQuantidade);
+    const qty = Number.isFinite(qRaw) ? Math.floor(qRaw) : 1;
+    const multiParcela = freq !== 'nenhuma' && qty > 1;
+    if (!multiParcela) {
+      return true;
+    }
+    if (this.novoLancamento.anexosEmTodasParcelas) {
+      return true;
+    }
+    if (this.modalEstiloNovaVendaReceita && this.parcelamentoVendaAtivo()) {
+      return false;
+    }
+    if (
+      (this.modalEstiloBomControleDespesa || this.modalEstiloReceitaOutrasContrato) &&
+      this.novoLancamento.contaSeRepete
+    ) {
+      return false;
+    }
+    return !multiParcela;
+  }
+
+  /**
+   * JSON persistido em bc_movimentacoes.metadata_json (anexos, fluxo, contatos, itens de venda, etc.).
+   */
+  private async montarMetadataJsonParaSalvar(): Promise<string | undefined> {
+    if (this.cadastroModo === 'editar') {
+      return undefined;
+    }
+    const m: Record<string, unknown> = {};
+    if (this.modalEstiloNovaVendaReceita) {
+      m['fluxoReceita'] = 'venda';
+      const idEmp = (this.novoLancamento.vendaEmpresaOpcao || '').trim();
+      if (idEmp) {
+        m['vendaEmpresaOpcao'] = idEmp;
+      }
+      m['itensVenda'] = (this.novoLancamento.vendaLinhasProduto || []).map((l) => ({
+        tipo: l.tipoItem,
+        codigo: l.codigo,
+        nome: l.nome,
+        tabela: l.tabela,
+        descricao: l.descricao,
+        qtd: l.quantidade,
+        unit: l.unitario,
+        desc: l.desconto,
+        total: this.totalLiquidoLinhaVenda(l),
+      }));
+    } else if (this.modalEstiloReceitaOutrasContrato) {
+      m['fluxoReceita'] = this.receitaCadastroFluxo;
+      const dep = (this.novoLancamento.outrasDepartamento || '').trim();
+      if (dep) {
+        m['departamento'] = dep;
+      }
+      const inf = (this.novoLancamento.outrasInfoComplementar || '').trim();
+      if (inf) {
+        m['infoComplementar'] = inf;
+      }
+      const rj = this.montarRateioJsonOutras();
+      if (rj) {
+        m['rateio'] = JSON.parse(rj);
+      }
+      if ((this.novoLancamento.outrasContatos || []).length > 0) {
+        m['contatos'] = this.novoLancamento.outrasContatos;
+      }
+      m['faturamento'] = {
+        data: (this.novoLancamento.outrasFaturamentoData || '').trim(),
+        enviado: !!this.novoLancamento.outrasFaturamentoEnviado,
+      };
+    } else if (this.modalEstiloReceitaAporte) {
+      m['fluxoReceita'] = 'aporte';
+    } else if (this.modalEstiloBomControleDespesa) {
+      if (this.cadastroBcTransferencia) {
+        m['fluxoDespesa'] = 'transferencia';
+        m['contaOrigemOpcao'] = (this.novoLancamento.contaOpcao || '').trim() || undefined;
+        m['contaOrigemLabel'] = this.obterContaFinalCadastro() || undefined;
+        m['contaDestinoOpcao'] = (this.novoLancamento.bcTransferDestinoContaOpcao || '').trim() || undefined;
+        m['contaDestinoLabel'] = this.obterContaDestinoBcFinal() || undefined;
+        m['formaTransferencia'] = (this.novoLancamento.formaPagamento || '').trim() || undefined;
+        m['transferido'] = !!this.novoLancamento.marcarComoQuitado;
+      } else {
+        m['fluxoDespesa'] = 'bom_controle';
+        m['tipoMovimentoDespesa'] = this.novoLancamento.tipoMovimentoDespesa;
+        m['etiqueta'] = (this.novoLancamento.etiqueta || '').trim() || undefined;
+        m['numeroDocumento'] = (this.novoLancamento.numeroDocumento || '').trim() || undefined;
+        m['tipoValor'] = this.novoLancamento.tipoValor;
+      }
+    }
+
+    const comBin = this.incluirAnexosBinariosNoMetadataSalvar();
+    if (this.cadastroAnexosPendentes.length > 0) {
+      const anexos: unknown[] = [];
+      for (const p of this.cadastroAnexosPendentes) {
+        if (comBin) {
+          const b64 = await this.arquivoParaBase64(p.file);
+          anexos.push({
+            tipo: p.tipo,
+            nomeArquivo: p.file.name,
+            mimeType: p.file.type || undefined,
+            tamanhoBytes: p.file.size,
+            conteudoBase64: b64,
+          });
+        } else {
+          anexos.push({
+            tipo: p.tipo,
+            nomeArquivo: p.file.name,
+            mimeType: p.file.type || undefined,
+            tamanhoBytes: p.file.size,
+          });
+        }
+      }
+      m['anexos'] = anexos;
+    }
+
+    if (Object.keys(m).length === 0) {
+      return undefined;
+    }
+    return JSON.stringify(m);
   }
 
   onToggleMarcarComoQuitado(): void {
@@ -771,6 +2362,9 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       delete this.cadastroErrors['dataQuitacao'];
       return;
     }
+    this.novoLancamento.recorrenciaFrequencia = 'nenhuma';
+    this.novoLancamento.recorrenciaQuantidade = 1;
+    this.novoLancamento.contaSeRepete = false;
     if (!this.novoLancamento.dataQuitacao) {
       this.novoLancamento.dataQuitacao = this.novoLancamento.dataVencimento || this.dateToStr(new Date());
     }
@@ -784,10 +2378,39 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   }
 
   private obterClienteFornecedorFinalCadastro(): string {
-    if (this.novoLancamento.clienteFornecedorOpcao === '__manual__') {
+    if (this.cadastroBcTransferencia && this.modalEstiloBomControleDespesa) {
+      return 'Transferência interna';
+    }
+    const opcao = this.novoLancamento.clienteFornecedorOpcao;
+    if (opcao?.startsWith('__func__:')) {
+      const id = Number(opcao.slice('__func__:'.length));
+      if (Number.isFinite(id)) {
+        const f = this.funcionariosCadastro.find((x) => x.id === id);
+        if (f) {
+          return ((f.nomeCompleto || '').trim() || `Funcionário #${id}`).trim();
+        }
+      }
+      return '';
+    }
+    if (opcao === '__manual__') {
       return this.novoLancamento.clienteFornecedorManual.trim();
     }
-    return this.novoLancamento.clienteFornecedorOpcao.trim();
+    return (opcao || '').trim();
+  }
+
+  private obterIdFuncionarioPayload(): number | undefined {
+    if (this.novoLancamento.tipo !== 'despesa') {
+      return undefined;
+    }
+    if (this.novoLancamento.tipoMovimentoDespesa !== 'funcionario') {
+      return undefined;
+    }
+    const opcao = this.novoLancamento.clienteFornecedorOpcao;
+    if (!opcao?.startsWith('__func__:')) {
+      return undefined;
+    }
+    const id = Number(opcao.slice('__func__:'.length));
+    return Number.isFinite(id) && id > 0 ? id : undefined;
   }
 
   private carregarCategoriasCadastroPorEmpresa(): void {
@@ -832,6 +2455,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     if (!idEmp) {
       this.clientesCadastro = [];
       this.fornecedoresCadastro = [];
+      this.funcionariosCadastro = [];
       this.parceirosCadastroTipo = [];
       return;
     }
@@ -847,11 +2471,17 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
               return nome ? { value: nome, label: nome } : null;
             })
             .filter((x): x is { value: string; label: string } => !!x);
-          this.atualizarOpcoesParceiroCadastro(this.novoLancamento.tipo);
+          this.atualizarOpcoesParceiroCadastro(
+            this.novoLancamento.tipo,
+            this.novoLancamento.tipo === 'despesa' ? this.novoLancamento.tipoMovimentoDespesa : 'fornecedor'
+          );
         },
         error: () => {
           this.clientesCadastro = [];
-          this.atualizarOpcoesParceiroCadastro(this.novoLancamento.tipo);
+          this.atualizarOpcoesParceiroCadastro(
+            this.novoLancamento.tipo,
+            this.novoLancamento.tipo === 'despesa' ? this.novoLancamento.tipoMovimentoDespesa : 'fornecedor'
+          );
         },
       });
 
@@ -866,17 +2496,61 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
               return nome ? { value: nome, label: nome } : null;
             })
             .filter((x): x is { value: string; label: string } => !!x);
-          this.atualizarOpcoesParceiroCadastro(this.novoLancamento.tipo);
+          this.atualizarOpcoesParceiroCadastro(
+            this.novoLancamento.tipo,
+            this.novoLancamento.tipo === 'despesa' ? this.novoLancamento.tipoMovimentoDespesa : 'fornecedor'
+          );
         },
         error: () => {
           this.fornecedoresCadastro = [];
-          this.atualizarOpcoesParceiroCadastro(this.novoLancamento.tipo);
+          this.atualizarOpcoesParceiroCadastro(
+            this.novoLancamento.tipo,
+            this.novoLancamento.tipo === 'despesa' ? this.novoLancamento.tipoMovimentoDespesa : 'fornecedor'
+          );
+        },
+      });
+
+    this.funcionarioCadastroService
+      .listar({ idEmpresa: idEmp, ativo: true, page: 0, size: 500, sort: 'nomeCompleto,asc' })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (page) => {
+          this.funcionariosCadastro = page.content || [];
+          this.atualizarOpcoesParceiroCadastro(
+            this.novoLancamento.tipo,
+            this.novoLancamento.tipo === 'despesa' ? this.novoLancamento.tipoMovimentoDespesa : 'fornecedor'
+          );
+        },
+        error: () => {
+          this.funcionariosCadastro = [];
+          this.atualizarOpcoesParceiroCadastro(
+            this.novoLancamento.tipo,
+            this.novoLancamento.tipo === 'despesa' ? this.novoLancamento.tipoMovimentoDespesa : 'fornecedor'
+          );
         },
       });
   }
 
-  private atualizarOpcoesParceiroCadastro(tipo: 'receita' | 'despesa'): void {
-    this.parceirosCadastroTipo = (tipo === 'despesa' ? this.fornecedoresCadastro : this.clientesCadastro)
+  private atualizarOpcoesParceiroCadastro(
+    tipo: 'receita' | 'despesa',
+    despesaParceiroModo: 'fornecedor' | 'funcionario' | 'impostos' = 'fornecedor'
+  ): void {
+    if (tipo === 'receita') {
+      this.parceirosCadastroTipo = this.clientesCadastro
+        .slice()
+        .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
+      return;
+    }
+    if (despesaParceiroModo === 'funcionario') {
+      this.parceirosCadastroTipo = this.funcionariosCadastro
+        .map((f) => {
+          const label = (f.nomeCompleto || '').trim() || `Funcionário #${f.id}`;
+          return { value: `__func__:${f.id}`, label };
+        })
+        .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
+      return;
+    }
+    this.parceirosCadastroTipo = this.fornecedoresCadastro
       .slice()
       .sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
   }
@@ -890,6 +2564,40 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       return '';
     }
     return this.rotuloContaPorId.get(contaId) || this.novoLancamento.contaManual.trim() || '';
+  }
+
+  private obterContaDestinoBcFinal(): string {
+    if (this.novoLancamento.bcTransferDestinoContaOpcao === '__manual__') {
+      return (this.novoLancamento.bcTransferDestinoContaManual || '').trim();
+    }
+    const id = (this.novoLancamento.bcTransferDestinoContaOpcao || '').trim();
+    if (!id) {
+      return '';
+    }
+    return this.rotuloContaPorId.get(id) || (this.novoLancamento.bcTransferDestinoContaManual || '').trim() || '';
+  }
+
+  private contaBcSelecionadaValida(opcao: string, manual: string): boolean {
+    const o = (opcao || '').trim();
+    if (!o) {
+      return false;
+    }
+    if (o === '__manual__') {
+      return !!(manual || '').trim();
+    }
+    return true;
+  }
+
+  private contasTransferenciaOrigemDestinoMesma(): boolean {
+    const o = (this.novoLancamento.contaOpcao || '').trim();
+    const d = (this.novoLancamento.bcTransferDestinoContaOpcao || '').trim();
+    if (!o || !d) {
+      return false;
+    }
+    if (o === '__manual__' && d === '__manual__') {
+      return (this.novoLancamento.contaManual || '').trim() === (this.novoLancamento.bcTransferDestinoContaManual || '').trim();
+    }
+    return o === d;
   }
 
   private competenciaMesAnoParaData(valor: string): string {

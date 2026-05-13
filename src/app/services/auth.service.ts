@@ -122,6 +122,61 @@ export class AuthService {
     }
   }
 
+  /**
+   * Login com Google (JWT `id_token` do botão GSI).
+   */
+  async loginWithGoogle(
+    idToken: string
+  ): Promise<{ success: boolean; timeout?: boolean; backendMessage?: string }> {
+    if (API_CONFIG.USE_BACKEND_MOCK_AUTH) {
+      return { success: false, backendMessage: 'Login Google não está disponível no modo mock.' };
+    }
+    try {
+      this.companySelectorService.limparSessao();
+      type LoginApiResponse = {
+        token: string;
+        usuario: {
+          email: string;
+          name: string;
+          role: string;
+          loginTime: string;
+          permissions?: { [key: string]: boolean };
+        };
+      };
+      const url = `${API_CONFIG.BACKEND_API_URL}/api/auth/google`;
+      const apiResponse = await firstValueFrom(
+        this.http.post<LoginApiResponse>(url, { idToken }).pipe(timeout(75000))
+      );
+      const mappedUser: User = {
+        email: apiResponse.usuario.email,
+        name: apiResponse.usuario.name,
+        role: this.normalizeRole(apiResponse.usuario.role),
+        loginTime: apiResponse.usuario.loginTime,
+        permissions: this.mapPermissionsFromBackend(apiResponse.usuario.permissions),
+      };
+      this.setUserSession(mappedUser, apiResponse.token);
+      return { success: true };
+    } catch (error: unknown) {
+      if (error instanceof TimeoutError) {
+        return { success: false, timeout: true };
+      }
+      let backendMessage: string | undefined;
+      if (error instanceof HttpErrorResponse) {
+        const body = error.error;
+        if (typeof body === 'string' && body.length > 0) {
+          backendMessage = body;
+        } else if (body && typeof body === 'object' && body !== null && 'message' in body) {
+          const m = (body as { message?: unknown }).message;
+          if (typeof m === 'string' && m.length > 0) {
+            backendMessage = m;
+          }
+        }
+      }
+      console.error('Erro no login Google:', error);
+      return { success: false, backendMessage };
+    }
+  }
+
   private logDicaPrimeiroAdminSeLocalhost(): void {
     if (typeof window === 'undefined') {
       return;
@@ -471,12 +526,25 @@ export class AuthService {
   }
 
   /**
-   * Redefine senha usando token
+   * Redefine senha usando o token do link **ou** e-mail + código de 6 dígitos do e-mail.
    */
-  async resetPassword(token: string, novaSenha: string): Promise<boolean> {
+  async resetPassword(
+    novaSenha: string,
+    opts: { token?: string; email?: string; codigo?: string }
+  ): Promise<boolean> {
     try {
       const url = `${API_CONFIG.BACKEND_API_URL}/api/auth/reset-password`;
-      await firstValueFrom(this.http.post(url, { token, novaSenha }));
+      const body: Record<string, string> = { novaSenha };
+      if (opts.token) {
+        body['token'] = opts.token;
+      }
+      if (opts.email) {
+        body['email'] = opts.email.trim().toLowerCase();
+      }
+      if (opts.codigo) {
+        body['codigo'] = opts.codigo.trim();
+      }
+      await firstValueFrom(this.http.post(url, body));
       return true;
     } catch (error) {
       console.error('Erro ao redefinir senha:', error);

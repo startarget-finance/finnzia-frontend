@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-export type TipoAnexoMovimentacao = 'fatura' | 'boleto' | 'nota_fiscal' | 'comprovante';
+export type TipoAnexoMovimentacao = 'fatura' | 'boleto' | 'nota_fiscal' | 'comprovante' | 'outros';
 
 export interface AnexoMovimentacaoMetadado {
   nomeArquivo: string;

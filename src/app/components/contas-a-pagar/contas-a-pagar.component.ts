@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
+import { Component, OnInit, OnDestroy, Inject, ViewChild, ElementRef } from '@angular/core';
+import { CommonModule, DOCUMENT, Location } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -26,6 +26,10 @@ interface LinhaExportacaoPagar {
   templateUrl: './contas-a-pagar.component.html',
 })
 export class ContasAPagarComponent implements OnInit, OnDestroy {
+  @ViewChild('menuCriarDespesa', { read: ElementRef }) menuCriarDespesaRef?: ElementRef<HTMLElement>;
+
+  mostrarMenuCriarDespesa = false;
+
   // UI: Date Range Picker
   mostrarRangePicker: boolean = false;
   visibleMonth: Date = new Date();
@@ -72,9 +76,28 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private textoPesquisaSubject = new Subject<string>();
 
+  private readonly fecharMenuDespesaMousedownCapture = (ev: Event): void => {
+    const mev = ev as MouseEvent;
+    if (mev.button !== 0 || !this.mostrarMenuCriarDespesa) {
+      return;
+    }
+    const t = mev.target as Node | null;
+    if (!t) {
+      return;
+    }
+    const host = this.menuCriarDespesaRef?.nativeElement;
+    const path =
+      typeof mev.composedPath === 'function' ? (mev.composedPath() as EventTarget[]) : [];
+    const dentro = host && (path.length ? path.includes(host) : host.contains(t));
+    if (!dentro) {
+      this.mostrarMenuCriarDespesa = false;
+    }
+  };
+
   constructor(
     private erpFinanceiroService: ErpFinanceiroService,
-    public location: Location
+    public location: Location,
+    @Inject(DOCUMENT) private readonly document: Document
   ) {
     this.visibleMonth = new Date();
     this.buildCalendar();
@@ -92,6 +115,7 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.document.addEventListener('mousedown', this.fecharMenuDespesaMousedownCapture, true);
     if (!this.dataInicial || !this.dataFinal) {
       this.preencherMesAtual();
     }
@@ -99,6 +123,7 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.document.removeEventListener('mousedown', this.fecharMenuDespesaMousedownCapture, true);
     this.destroy$.next();
     this.destroy$.complete();
   }

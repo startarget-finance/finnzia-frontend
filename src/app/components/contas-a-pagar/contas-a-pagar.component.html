@@ -17,16 +17,67 @@
       
       <!-- Actions -->
       <div class="flex items-center gap-3">
-        <a
-          [routerLink]="'/movimentacoes'"
-          [queryParams]="{ tipo: 'despesa', status: 'pendente', novo: 'despesa' }"
-          class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-rose-700 shadow-sm"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-          </svg>
-          Cadastrar conta a pagar
-        </a>
+        <div class="relative z-30" #menuCriarDespesa>
+          <button
+            type="button"
+            (click)="mostrarMenuCriarDespesa = !mostrarMenuCriarDespesa; $event.stopPropagation()"
+            class="inline-flex items-center gap-2 rounded-xl border border-rose-300 bg-white px-3.5 py-2 text-sm font-semibold text-rose-700 transition-colors hover:bg-rose-50"
+          >
+            <i class="fi fi-rr-plus text-[0.85rem] leading-none" aria-hidden="true"></i>
+            Criar despesa
+            <i class="fi fi-rr-angle-small-down text-[0.75rem] leading-none opacity-80" aria-hidden="true"></i>
+          </button>
+          <div
+            *ngIf="mostrarMenuCriarDespesa"
+            (click)="$event.stopPropagation()"
+            class="absolute right-0 top-full z-[100] mt-2 w-72 rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-xl shadow-slate-900/25"
+            role="menu"
+          >
+            <p class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-rose-600/90">Despesas</p>
+            <a
+              routerLink="/movimentacoes"
+              [queryParams]="{ tipo: 'despesa', status: 'pendente', novo: 'despesa', movimento: 'fornecedor' }"
+              (click)="mostrarMenuCriarDespesa = false"
+              role="menuitem"
+              class="flex w-full items-center gap-2 px-3 py-2.5 text-left font-medium text-slate-800 hover:bg-rose-50"
+            >
+              <i class="fi fi-rr-building text-rose-600" aria-hidden="true"></i>
+              Com fornecedor
+            </a>
+            <a
+              routerLink="/movimentacoes"
+              [queryParams]="{ tipo: 'despesa', status: 'pendente', novo: 'despesa', movimento: 'funcionario' }"
+              (click)="mostrarMenuCriarDespesa = false"
+              role="menuitem"
+              class="flex w-full items-center gap-2 px-3 py-2.5 text-left font-medium text-slate-800 hover:bg-rose-50"
+            >
+              <i class="fi fi-rr-user text-rose-600" aria-hidden="true"></i>
+              Com funcionário
+            </a>
+            <a
+              routerLink="/movimentacoes"
+              [queryParams]="{ tipo: 'despesa', status: 'pendente', novo: 'despesa', movimento: 'impostos' }"
+              (click)="mostrarMenuCriarDespesa = false"
+              role="menuitem"
+              class="flex w-full items-center gap-2 px-3 py-2.5 text-left font-medium text-slate-800 hover:bg-rose-50"
+            >
+              <i class="fi fi-rr-bank text-rose-600" aria-hidden="true"></i>
+              Impostos
+            </a>
+            <div class="my-1 border-t border-slate-100"></div>
+            <p class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-500">Outros lançamentos</p>
+            <a
+              routerLink="/movimentacoes"
+              [queryParams]="{ tipo: 'despesa', status: 'pendente', novo: 'despesa', movimento: 'transferencia' }"
+              (click)="mostrarMenuCriarDespesa = false"
+              role="menuitem"
+              class="flex w-full items-center gap-2 px-3 py-2.5 text-left font-medium text-slate-800 hover:bg-slate-50"
+            >
+              <i class="fi fi-rr-exchange text-slate-600" aria-hidden="true"></i>
+              Transferência
+            </a>
+          </div>
+        </div>
         <button type="button" 
                 (click)="exportarExcel()"
                 [disabled]="loading"

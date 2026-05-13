@@ -32,6 +32,10 @@ export interface MovimentacaoFinanceira {
   NomeFantasiaClienteFornecedor?: string;
   RazaoSocialClienteFornecedor?: string;
   CodigoClienteFornecedor?: string | number;
+  Departamento?: string;
+  RateioJson?: string;
+  MetadataJson?: string;
+  IdFuncionario?: number;
   Valores?: Array<{
     Despesa: boolean;
     Categoria: string;
@@ -220,6 +224,18 @@ export interface CriarMovimentacaoPayload {
   nomeCategoriaFinanceira: string;
   nomeContaFinanceira?: string;
   nomeClienteFornecedor?: string;
+  /** SEMANAL, QUINZENAL, MENSAL, BIMESTRAL, TRIMESTRAL, SEMESTRAL, ANUAL — omitir com lançamento único. */
+  recorrenciaFrequencia?: string;
+  /** Total de parcelas da série (≥2) quando há recorrência. */
+  recorrenciaQuantidade?: number;
+  nomeFormaPagamento?: string;
+  /** FORNECEDOR | FUNCIONARIO | IMPOSTOS */
+  tipoMovimentoDespesa?: string;
+  departamento?: string;
+  rateioJson?: string;
+  /** JSON com fluxo de cadastro, anexos, rateio etc. (API aceita até ~4MB). */
+  metadataJson?: string;
+  idFuncionario?: number;
 }
 
 export type HistoricoMovimentacaoAcao = 'CRIACAO' | 'EDICAO';

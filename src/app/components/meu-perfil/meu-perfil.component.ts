@@ -25,12 +25,14 @@ export class MeuPerfilComponent implements OnInit {
   formSenha = {
     senhaAtual: '',
     novaSenha: '',
-    confirmarSenha: ''
+    confirmarSenha: '',
+    codigo: ''
   };
   
   // Estados
   editandoPerfil: boolean = false;
   alterandoSenha: boolean = false;
+  enviandoCodigoSenha: boolean = false;
   mensagemSucesso: string | null = null;
   erro: string | null = null;
 
@@ -129,7 +131,8 @@ export class MeuPerfilComponent implements OnInit {
     this.formSenha = {
       senhaAtual: '',
       novaSenha: '',
-      confirmarSenha: ''
+      confirmarSenha: '',
+      codigo: ''
     };
     this.erro = null;
     this.mensagemSucesso = null;
@@ -143,8 +146,29 @@ export class MeuPerfilComponent implements OnInit {
     this.formSenha = {
       senhaAtual: '',
       novaSenha: '',
-      confirmarSenha: ''
+      confirmarSenha: '',
+      codigo: ''
     };
+  }
+
+  enviarCodigoAlteracaoSenha() {
+    this.erro = null;
+    this.mensagemSucesso = null;
+    this.enviandoCodigoSenha = true;
+    this.usuarioService.solicitarCodigoAlteracaoSenha().subscribe({
+      next: () => {
+        this.enviandoCodigoSenha = false;
+        this.mensagemSucesso =
+          'Enviamos um código de 6 dígitos para seu e-mail. Ele vale 15 minutos. Informe-o abaixo ao salvar.';
+        setTimeout(() => (this.mensagemSucesso = null), 8000);
+      },
+      error: (error) => {
+        this.enviandoCodigoSenha = false;
+        this.erro =
+          error.error?.message ||
+          'Não foi possível enviar o código. Verifique se o e-mail está configurado no servidor.';
+      }
+    });
   }
 
   /**
@@ -154,6 +178,12 @@ export class MeuPerfilComponent implements OnInit {
     // Validações
     if (!this.formSenha.senhaAtual || !this.formSenha.novaSenha || !this.formSenha.confirmarSenha) {
       this.erro = 'Preencha todos os campos.';
+      return;
+    }
+
+    const cod = (this.formSenha.codigo || '').trim();
+    if (!/^\d{6}$/.test(cod)) {
+      this.erro = 'Informe o código de 6 dígitos enviado por e-mail. Use o botão Enviar código por e-mail antes.';
       return;
     }
 
@@ -173,16 +203,16 @@ export class MeuPerfilComponent implements OnInit {
     }
 
     this.loadingService.setLoading(true);
-    this.usuarioService.alterarMinhaSenha(
-      this.formSenha.senhaAtual,
-      this.formSenha.novaSenha
-    ).subscribe({
+    this.usuarioService
+      .alterarMinhaSenha(this.formSenha.senhaAtual, this.formSenha.novaSenha, cod)
+      .subscribe({
       next: () => {
         this.alterandoSenha = false;
         this.formSenha = {
           senhaAtual: '',
           novaSenha: '',
-          confirmarSenha: ''
+          confirmarSenha: '',
+          codigo: ''
         };
         this.mensagemSucesso = 'Senha alterada com sucesso!';
         this.loadingService.setLoading(false);

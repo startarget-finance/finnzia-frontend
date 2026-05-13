@@ -134,6 +134,18 @@
         </div>
       </form>
 
+      <ng-container *ngIf="googleClientId">
+        <div class="relative py-6">
+          <div class="absolute inset-0 flex items-center pointer-events-none" aria-hidden="true">
+            <div class="w-full border-t border-slate-700/70"></div>
+          </div>
+          <div class="relative flex justify-center text-[11px] font-bold uppercase tracking-[0.2em]">
+            <span class="bg-slate-900/70 px-3 text-slate-500">ou continue com</span>
+          </div>
+        </div>
+        <div #googleSignInButton class="flex justify-center w-full [&>div]:w-full [&>div]:flex [&>div]:justify-center min-h-[44px]"></div>
+      </ng-container>
+
     </div>
   </div>
 </div>

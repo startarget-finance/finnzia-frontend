@@ -189,11 +189,21 @@ export class UsuarioService {
   /**
    * Altera a senha do usuário logado
    */
-  alterarMinhaSenha(senhaAtual: string, novaSenha: string): Observable<void> {
+  alterarMinhaSenha(senhaAtual: string, novaSenha: string, codigo: string): Observable<void> {
     return this.http.put<void>(`${this.baseUrl}/me/senha`, {
       senhaAtual,
-      novaSenha
+      novaSenha,
+      codigo
     }, {
+      headers: this.getAuthHeaders()
+    });
+  }
+
+  /**
+   * Solicita código por e-mail para alterar senha (Meu perfil).
+   */
+  solicitarCodigoAlteracaoSenha(): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/me/senha/solicitar-codigo`, {}, {
       headers: this.getAuthHeaders()
     });
   }

@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule, Location } from '@angular/common';
+import { Component, OnInit, OnDestroy, Inject, ViewChild, ElementRef } from '@angular/core';
+import { CommonModule, DOCUMENT, Location } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
@@ -10,7 +10,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 interface LinhaExportacaoReceber {
-  Cliente: string;
+  'Cliente / origem': string;
   Vencimento: string;
   Recebimento: string;
   Descricao: string;
@@ -26,6 +26,11 @@ interface LinhaExportacaoReceber {
   templateUrl: './contas-a-receber.component.html',
 })
 export class ContasAReceberComponent implements OnInit, OnDestroy {
+  @ViewChild('menuCriarReceita', { read: ElementRef }) menuCriarReceitaRef?: ElementRef<HTMLElement>;
+
+  /** Mesmo menu de “Criar receita” da tela Movimentações (navega para o cadastro com fluxo). */
+  mostrarMenuCriarReceita = false;
+
   // UI: Date Range Picker
   mostrarRangePicker: boolean = false;
   visibleMonth: Date = new Date();
@@ -72,9 +77,28 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   private textoPesquisaSubject = new Subject<string>();
 
+  private readonly fecharMenuReceitaMousedownCapture = (ev: Event): void => {
+    const mev = ev as MouseEvent;
+    if (mev.button !== 0 || !this.mostrarMenuCriarReceita) {
+      return;
+    }
+    const t = mev.target as Node | null;
+    if (!t) {
+      return;
+    }
+    const host = this.menuCriarReceitaRef?.nativeElement;
+    const path =
+      typeof mev.composedPath === 'function' ? (mev.composedPath() as EventTarget[]) : [];
+    const dentro = host && (path.length ? path.includes(host) : host.contains(t));
+    if (!dentro) {
+      this.mostrarMenuCriarReceita = false;
+    }
+  };
+
   constructor(
     private erpFinanceiroService: ErpFinanceiroService,
-    public location: Location
+    public location: Location,
+    @Inject(DOCUMENT) private readonly document: Document
   ) {
     this.visibleMonth = new Date();
     this.buildCalendar();
@@ -92,6 +116,7 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.document.addEventListener('mousedown', this.fecharMenuReceitaMousedownCapture, true);
     if (!this.dataInicial || !this.dataFinal) {
       this.preencherMesAtual();
     }
@@ -99,6 +124,7 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.document.removeEventListener('mousedown', this.fecharMenuReceitaMousedownCapture, true);
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -466,6 +492,42 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   }
 
+  /**
+   * Cliente só faz sentido quando há terceiro (venda, contrato etc.).
+   * Aporte financeiro é interno à empresa (contexto já definido pelo login).
+   */
+  rotuloClienteContaReceber(conta: MovimentacaoFinanceira): string {
+    const nome = [conta.NomeClienteFornecedor, conta.NomeFantasiaClienteFornecedor, conta.RazaoSocialClienteFornecedor]
+      .map((x) => (x != null ? String(x).trim() : ''))
+      .find((t) => t.length > 0);
+    if (nome) {
+      return nome;
+    }
+    if (this.isAporteFinanceiroConta(conta)) {
+      return 'Aporte financeiro';
+    }
+    return 'Cliente não informado';
+  }
+
+  private isAporteFinanceiroConta(conta: MovimentacaoFinanceira): boolean {
+    if (conta.Debito) {
+      return false;
+    }
+    const metaRaw = conta.MetadataJson;
+    if (metaRaw && String(metaRaw).trim()) {
+      try {
+        const o = JSON.parse(String(metaRaw)) as { fluxoReceita?: string };
+        if (o?.fluxoReceita === 'aporte') {
+          return true;
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    const blob = `${conta.Nome || ''} ${conta.Observacao || ''}`.toLowerCase();
+    return blob.includes('aporte financeiro') || blob.includes('fluxo receita: aporte');
+  }
+
   getMaxItemPagina(): number {
     return Math.min(this.paginaAtual * this.itensPorPagina, this.totalItens);
   }
@@ -518,7 +580,7 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
     autoTable(doc, {
       startY: 64,
       head: [[
-        'Cliente',
+        'Cliente / origem',
         'Vencimento',
         'Recebimento',
         'Descricao',
@@ -527,7 +589,7 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
         'Status',
       ]],
       body: linhas.map((l) => [
-        l.Cliente,
+        l['Cliente / origem'],
         l.Vencimento,
         l.Recebimento,
         l.Descricao,
@@ -544,7 +606,7 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
 
   private obterLinhasExportacao(): LinhaExportacaoReceber[] {
     return (this.contasFiltradas || []).map((conta) => ({
-      Cliente: conta.NomeClienteFornecedor || 'Cliente nao informado',
+      'Cliente / origem': this.rotuloClienteContaReceber(conta),
       Vencimento: this.formatDate(conta.DataVencimento),
       Recebimento: this.formatDate(conta.DataQuitacao) || '-',
       Descricao: conta.Observacao || conta.Nome || '-',

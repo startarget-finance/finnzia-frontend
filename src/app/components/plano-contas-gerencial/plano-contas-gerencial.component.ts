@@ -16,6 +16,7 @@ import { AuthService } from '../../services/auth.service';
 import { extractHttpErrorBodyMessage } from '../../services/error.service';
 import { buildDeleteConfirmOptions, confirmUnsavedChanges } from '../../utils/sweet-alerts';
 import { FeedbackStateComponent } from '../../shared/components/feedback-state/feedback-state.component';
+import { PLANO_CONTAS_PADRAO_BOM_CONTROLE } from '../../data/plano-contas-padrao-bom-controle';
 
 @Component({
   selector: 'app-plano-contas-gerencial',
@@ -55,6 +56,8 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
   formNivelAlvo = 1;
   private modalSnapshot = '';
   private readonly destroy$ = new Subject<void>();
+  /** Evita abrir o SweetAlert de oferta duas vezes no mesmo ciclo de vida do componente. */
+  private ofertaPlanoPadraoAgendada = false;
 
   constructor(
     private readonly categoriasApi: CategoriasFinanceirasService,
@@ -68,6 +71,7 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
       this.carregar();
     });
     this.companySelector.empresaSelecionada$.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.ofertaPlanoPadraoAgendada = false;
       this.carregar();
     });
   }
@@ -85,10 +89,6 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
     const idEmpresa = this.idEmpresaContexto();
     if (idEmpresa == null || idEmpresa <= 0) return false;
     return true;
-  }
-
-  comecarComDespesa(): void {
-    this.abrirNovoParaTipo('despesa');
   }
 
   carregar(): void {
@@ -110,8 +110,10 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
     this.categoriasApi.listar(idEmpresaAtual).pipe(takeUntil(this.destroy$)).subscribe({
       next: (lista) => {
         this.categorias = lista || [];
+        this.limparExpansaoPlano();
         this.resumoTotal.emit(this.contarNos(this.categorias));
         this.carregando = false;
+        this.agendarOfertaPlanoPadraoSeVazio();
       },
       error: (e: HttpErrorResponse) => {
         this.carregando = false;
@@ -141,6 +143,97 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
 
   porTipo(tipo: TipoCategoriaFinanceira): CategoriaFinanceira[] {
     return (this.categorias || []).filter((c) => c.tipo === tipo);
+  }
+
+  /** `r:id` ou `n:raiz|caminhoPai|noId` — ausente na map = expandido (padrão). */
+  private readonly expansaoPlano = new Map<string, boolean>();
+
+  chaveRaizPlano(c: CategoriaFinanceira): string {
+    return `r:${String(c.id)}`;
+  }
+
+  chaveNoPlano(raiz: CategoriaFinanceira, caminhoPai: string, no: SubcategoriaFinanceira): string {
+    return `n:${String(raiz.id)}:${caminhoPai}:n${String(no.id)}`;
+  }
+
+  raizTemSubcategorias(c: CategoriaFinanceira): boolean {
+    return (c.subcategorias?.length ?? 0) > 0;
+  }
+
+  noTemSubnos(no: SubcategoriaFinanceira): boolean {
+    return (no.children?.length ?? 0) > 0;
+  }
+
+  /** Com filhos: ausente ou `true` = aberto; `false` = fechado. */
+  planoNoExpandido(chave: string, temFilhos: boolean): boolean {
+    if (!temFilhos) {
+      return false;
+    }
+    if (!this.expansaoPlano.has(chave)) {
+      return true;
+    }
+    return this.expansaoPlano.get(chave) === true;
+  }
+
+  alternarExpansaoPlano(chave: string, temFilhos: boolean): void {
+    if (!temFilhos) {
+      return;
+    }
+    const aberto = this.planoNoExpandido(chave, true);
+    this.expansaoPlano.set(chave, !aberto);
+  }
+
+  expandirColunaPlano(tipo: TipoCategoriaFinanceira): void {
+    for (const c of this.porTipo(tipo)) {
+      if (this.raizTemSubcategorias(c)) {
+        this.expansaoPlano.set(this.chaveRaizPlano(c), true);
+      }
+      this.aplicarExpansaoEmSubarvore(c, c.nome, true);
+    }
+  }
+
+  recolherColunaPlano(tipo: TipoCategoriaFinanceira): void {
+    for (const c of this.porTipo(tipo)) {
+      if (this.raizTemSubcategorias(c)) {
+        this.expansaoPlano.set(this.chaveRaizPlano(c), false);
+      }
+      this.aplicarExpansaoEmSubarvore(c, c.nome, false);
+    }
+  }
+
+  private aplicarExpansaoEmSubarvore(
+    raiz: CategoriaFinanceira,
+    caminhoPai: string,
+    aberto: boolean
+  ): void {
+    for (const s of raiz.subcategorias || []) {
+      if (this.noTemSubnos(s)) {
+        this.expansaoPlano.set(this.chaveNoPlano(raiz, caminhoPai, s), aberto);
+      }
+      if (s.children?.length) {
+        this.aplicarExpansaoEmChildren(raiz, caminhoPai + ' › ' + s.nome, s.children, aberto);
+      }
+    }
+  }
+
+  private aplicarExpansaoEmChildren(
+    raiz: CategoriaFinanceira,
+    caminhoPai: string,
+    filhos: SubcategoriaFinanceira[],
+    aberto: boolean
+  ): void {
+    for (const s of filhos || []) {
+      if (this.noTemSubnos(s)) {
+        this.expansaoPlano.set(this.chaveNoPlano(raiz, caminhoPai, s), aberto);
+      }
+      if (s.children?.length) {
+        this.aplicarExpansaoEmChildren(raiz, caminhoPai + ' › ' + s.nome, s.children, aberto);
+      }
+    }
+  }
+
+  private limparExpansaoPlano(): void {
+    this.expansaoPlano.clear();
   }
 
   abrirNovoParaTipo(tipo: TipoCategoriaFinanceira): void {
@@ -493,11 +586,19 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
     reader.readAsText(file);
   }
 
-  private importarLote(idEmpresaAtual: number, items: unknown[]): void {
+  private importarLote(idEmpresaAtual: number, items: unknown[], onCompleto?: () => void): void {
     const itens = [...items];
+    if (itens.length === 0) {
+      onCompleto?.();
+      this.carregar();
+      return;
+    }
+    this.carregando = true;
     const next = (): void => {
       const item = itens.shift();
       if (!item) {
+        this.carregando = false;
+        onCompleto?.();
         this.carregar();
         return;
       }
@@ -605,7 +706,9 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
       const rootId = this.parseIdRaiz(c.id);
       if (rootId == null) continue;
       if (rootId === parentId) {
-        const hit = (c.subcategorias || []).find((s) => s.nome === nomeFilho);
+        const hit = (c.subcategorias || []).find(
+          (s) => s.nome.toLowerCase() === nomeFilho.toLowerCase()
+        );
         return hit?.id ?? null;
       }
       const deep = this.findChildUnderSubs(c.subcategorias, parentId, nomeFilho);
@@ -621,7 +724,9 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
   ): number | null {
     for (const s of subs || []) {
       if (s.id === parentId) {
-        const hit = (s.children || []).find((ch) => ch.nome === nomeFilho);
+        const hit = (s.children || []).find(
+          (ch) => ch.nome.toLowerCase() === nomeFilho.toLowerCase()
+        );
         return hit?.id ?? null;
       }
       const deep = this.findChildUnderSubs(s.children, parentId, nomeFilho);
@@ -637,5 +742,74 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
     }
     const primeiraAtiva = this.companySelector.obterEmpresasAtivas()[0];
     return primeiraAtiva?.idEmpresa ?? null;
+  }
+
+  private chaveSessaoOfertaPlanoPadrao(idEmpresa: number): string {
+    return `finnzia_oferta_plano_padrao_${idEmpresa}`;
+  }
+
+  /** Pergunta automático vs manual (fluxo semelhante ao Bom Controle) quando o plano está vazio. */
+  private agendarOfertaPlanoPadraoSeVazio(): void {
+    if (this.ofertaPlanoPadraoAgendada) {
+      return;
+    }
+    if (!this.planoVazioSucesso) {
+      return;
+    }
+    const id = this.idEmpresaContexto();
+    if (id == null || id <= 0) {
+      return;
+    }
+    if (sessionStorage.getItem(this.chaveSessaoOfertaPlanoPadrao(id))) {
+      return;
+    }
+    this.ofertaPlanoPadraoAgendada = true;
+    setTimeout(() => void this.dialogoPreencherPlanoPadrao(), 0);
+  }
+
+  private async dialogoPreencherPlanoPadrao(): Promise<void> {
+    const id = this.idEmpresaContexto();
+    if (id == null || id <= 0 || !this.planoVazioSucesso) {
+      return;
+    }
+    const res = await Swal.fire({
+      title: 'Plano de contas vazio',
+      html:
+        'Deseja <strong>preencher as categorias financeiras padrão automaticamente</strong> (modelo de gestão)?<br><br>' +
+        'Você pode editar ou excluir depois. Se preferir cadastrar tudo sozinho, escolha <strong>Manual</strong>.',
+      icon: 'question',
+      confirmButtonText: 'Automático',
+      denyButtonText: 'Manual',
+      showDenyButton: true,
+      cancelButtonText: 'Agora não',
+      showCancelButton: true,
+      focusCancel: true,
+    });
+    if (res.isConfirmed) {
+      this.aplicarPlanoContasPadraoBomControle();
+      return;
+    }
+    sessionStorage.setItem(this.chaveSessaoOfertaPlanoPadrao(id), '1');
+  }
+
+  /** Botão na área vazia ou ação direta do usuário. */
+  aplicarPlanoContasPadraoBomControle(): void {
+    const id = this.idEmpresaContexto();
+    if (id == null || id <= 0) {
+      this.erro = 'Selecione uma empresa para aplicar o plano padrão.';
+      return;
+    }
+    this.erro = null;
+    const copia = [...PLANO_CONTAS_PADRAO_BOM_CONTROLE];
+    this.importarLote(id, copia, () => {
+      sessionStorage.setItem(this.chaveSessaoOfertaPlanoPadrao(id), 'aplicado');
+      void Swal.fire({
+        icon: 'success',
+        title: 'Categorias padrão criadas',
+        text: 'Ajuste nomes e níveis conforme a sua operação.',
+        timer: 2800,
+        showConfirmButton: false,
+      });
+    });
   }
 }

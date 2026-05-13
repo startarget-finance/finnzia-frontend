@@ -17,16 +17,66 @@
       
       <!-- Actions -->
       <div class="flex items-center gap-3">
-        <a
-          [routerLink]="'/movimentacoes'"
-          [queryParams]="{ tipo: 'receita', status: 'pendente', novo: 'receita' }"
-          class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-emerald-700 shadow-sm"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-          </svg>
-          Cadastrar conta a receber
-        </a>
+        <div class="relative z-30" #menuCriarReceita>
+          <button
+            type="button"
+            (click)="mostrarMenuCriarReceita = !mostrarMenuCriarReceita; $event.stopPropagation()"
+            class="inline-flex items-center gap-2 rounded-xl border border-emerald-300 bg-white px-3.5 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-50"
+          >
+            <i class="fi fi-rr-plus text-[0.85rem] leading-none" aria-hidden="true"></i>
+            Criar receita
+            <i class="fi fi-rr-angle-small-down text-[0.75rem] leading-none opacity-80" aria-hidden="true"></i>
+          </button>
+          <div
+            *ngIf="mostrarMenuCriarReceita"
+            (click)="$event.stopPropagation()"
+            class="absolute right-0 top-full z-[100] mt-2 w-64 rounded-xl border border-slate-200 bg-white py-1 text-sm shadow-xl shadow-slate-900/25"
+            role="menu"
+          >
+            <a
+              routerLink="/movimentacoes"
+              [queryParams]="{ tipo: 'receita', status: 'pendente', novo: 'receita', fluxo: 'venda' }"
+              (click)="mostrarMenuCriarReceita = false"
+              role="menuitem"
+              class="flex w-full items-center gap-2 px-3 py-2.5 text-left font-medium text-slate-800 hover:bg-emerald-50"
+            >
+              <i class="fi fi-rr-shopping-cart text-emerald-600" aria-hidden="true"></i>
+              Venda
+            </a>
+            <a
+              routerLink="/movimentacoes"
+              [queryParams]="{ tipo: 'receita', status: 'pendente', novo: 'receita', fluxo: 'contrato' }"
+              (click)="mostrarMenuCriarReceita = false"
+              role="menuitem"
+              class="flex w-full items-center gap-2 px-3 py-2.5 text-left font-medium text-slate-800 hover:bg-emerald-50"
+            >
+              <i class="fi fi-rr-document text-emerald-600" aria-hidden="true"></i>
+              Contrato
+            </a>
+            <a
+              routerLink="/movimentacoes"
+              [queryParams]="{ tipo: 'receita', status: 'pendente', novo: 'receita', fluxo: 'outras' }"
+              (click)="mostrarMenuCriarReceita = false"
+              role="menuitem"
+              class="flex w-full items-center gap-2 px-3 py-2.5 text-left font-medium text-slate-800 hover:bg-emerald-50"
+            >
+              <i class="fi fi-rr-coins text-emerald-600" aria-hidden="true"></i>
+              Outras receitas
+            </a>
+            <div class="my-1 border-t border-slate-100"></div>
+            <p class="px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">Outros lançamentos</p>
+            <a
+              routerLink="/movimentacoes"
+              [queryParams]="{ tipo: 'receita', status: 'pendente', novo: 'receita', fluxo: 'aporte' }"
+              (click)="mostrarMenuCriarReceita = false"
+              role="menuitem"
+              class="flex w-full items-center gap-2 px-3 py-2.5 text-left font-medium text-slate-800 hover:bg-emerald-50"
+            >
+              <i class="fi fi-rr-chart-histogram text-emerald-600" aria-hidden="true"></i>
+              Aporte financeiro
+            </a>
+          </div>
+        </div>
         <button type="button" 
                 (click)="exportarExcel()"
                 [disabled]="loading"
@@ -269,7 +319,7 @@
           <table class="w-full divide-y divide-gray-200 table-fixed">
             <thead class="bg-gray-50/50">
               <tr>
-                <th scope="col" class="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-1/4">Cliente</th>
+                <th scope="col" class="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-1/4">Cliente / origem</th>
                 <th scope="col" class="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32">Vencimento</th>
                 <th scope="col" class="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32">Recebimento</th>
                 <th scope="col" class="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Descrição/Doc</th>
@@ -280,14 +330,20 @@
             <tbody class="divide-y divide-gray-100 bg-white">
               <tr *ngFor="let conta of contasFiltradas" class="hover:bg-gray-50/80 transition-colors duration-150 group">
                 
-                <!-- Cliente -->
+                <!-- Cliente (ou rótulo para receitas sem terceiro, ex.: aporte) -->
                 <td class="px-4 py-4 text-sm align-top">
                   <div class="flex flex-col">
-                    <span class="font-semibold text-gray-900 line-clamp-2" [title]="conta.NomeClienteFornecedor">
-                      {{ conta.NomeClienteFornecedor || 'Cliente não informado' }}
+                    <span class="font-semibold text-gray-900 line-clamp-2" [title]="rotuloClienteContaReceber(conta)">
+                      {{ rotuloClienteContaReceber(conta) }}
                     </span>
                     <span class="text-xs text-gray-500 mt-0.5">
-                      Cód: {{ conta.CodigoClienteFornecedor || '-' }}
+                      Cód:
+                      {{
+                        conta.CodigoClienteFornecedor != null &&
+                        ('' + conta.CodigoClienteFornecedor).trim() !== ''
+                          ? conta.CodigoClienteFornecedor
+                          : '—'
+                      }}
                     </span>
                   </div>
                 </td>

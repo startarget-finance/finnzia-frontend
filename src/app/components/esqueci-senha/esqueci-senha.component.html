@@ -1,20 +1,22 @@
-<div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-  <div class="max-w-md w-full space-y-10">
-    <!-- Logo e Título (padrão do Login) -->
-    <div class="text-center space-y-3">
-      <div class="mx-auto flex items-center justify-center">
-        <img src="assets/images/finnzialogo.png" alt="Finnzia" class="h-16 w-auto shadow-2xl">
-      </div>
-      <div class="space-y-2">
-        <h2 class="text-3xl font-bold text-white tracking-tight">
-          {{ etapa === 'solicitar' ? 'Recuperar acesso' : 'Definir nova senha' }}
-        </h2>
-        <p class="text-sm text-gray-400 font-medium">
-          {{ etapa === 'solicitar'
-            ? 'Informe seu email corporativo para receber as instruções.'
-            : 'Crie uma nova senha para acessar sua conta.' }}
-        </p>
-      </div>
+<div class="min-h-screen bg-[#020617] bg-[radial-gradient(circle_at_top,_#1e293b_0,_transparent_55%),radial-gradient(circle_at_bottom,_#020617_0,_#020617_55%)] flex items-center justify-center py-10 px-4 sm:px-6 lg:px-8">
+  <div class="w-full max-w-md space-y-8">
+    <!-- Logo — mesmo markup/classes do login -->
+    <div class="text-center mb-8 sm:mb-10">
+      <img
+        src="assets/images/finzzialogo.png"
+        alt="Finzzia"
+        class="mx-auto h-24 sm:h-28 w-auto max-w-[520px] sm:max-w-[640px] object-contain transform scale-[1.9] sm:scale-[2.6]"
+      >
+    </div>
+    <div class="text-center space-y-2">
+      <h2 class="text-3xl font-bold text-white tracking-tight">
+        {{ etapa === 'solicitar' ? 'Recuperar acesso' : 'Definir nova senha' }}
+      </h2>
+      <p class="text-sm text-gray-400 font-medium">
+        {{ etapa === 'solicitar'
+          ? 'Informe seu email corporativo para receber as instruções.'
+          : 'Crie uma nova senha para acessar sua conta.' }}
+      </p>
     </div>
 
     <!-- Card Principal -->
@@ -59,7 +61,11 @@
           </button>
         </form>
 
-        <div class="mt-6 text-center">
+        <div class="mt-6 text-center space-y-3">
+          <button *ngIf="emailEnviado" type="button" (click)="irParaResetComCodigo()"
+            class="block w-full text-sm font-semibold text-gray-900 py-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">
+            Já recebi o e-mail — informar código
+          </button>
           <button (click)="voltarParaLogin()" class="text-sm font-semibold text-gray-900 hover:text-black transition-colors">
             Voltar para o login
           </button>
@@ -69,23 +75,62 @@
       <!-- Formulário de Reset -->
       <div *ngIf="etapa === 'resetar'">
         <form (ngSubmit)="redefinirSenha()" class="space-y-6">
-          <div *ngIf="!formReset.token">
-            <label class="block text-sm font-semibold text-gray-900 mb-2.5">Token</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.866-3.582 7-8 7h16c-4.418 0-8-3.134-8-7zm0 0V7a4 4 0 10-8 0v4"></path>
-                </svg>
-              </div>
+          <div *ngIf="formReset.token" class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+            Link de recuperação reconhecido. Defina sua nova senha abaixo ou use o código de 6 dígitos do e-mail em vez do link.
+          </div>
+
+          <div *ngIf="!formReset.token" class="space-y-4">
+            <p class="text-sm text-gray-600 font-medium">Informe o mesmo e-mail e o código de 6 dígitos enviados para sua caixa de entrada.</p>
+            <div>
+              <label class="block text-sm font-semibold text-gray-900 mb-2.5">E-mail</label>
+              <input
+                type="email"
+                [(ngModel)]="formReset.email"
+                name="resetEmail"
+                placeholder="nome@empresa.com"
+                autocomplete="email"
+                class="block w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-gray-900 text-sm font-medium">
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-900 mb-2.5">Código (6 dígitos)</label>
               <input
                 type="text"
-                [(ngModel)]="formReset.token"
-                name="token"
-                placeholder="Cole o token recebido por email"
-                required
-                class="block w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 focus:bg-white transition-all duration-200 text-gray-900 placeholder-gray-500 text-sm font-medium">
+                inputmode="numeric"
+                maxlength="6"
+                pattern="[0-9]*"
+                [(ngModel)]="formReset.codigo"
+                name="codigo"
+                placeholder="000000"
+                autocomplete="one-time-code"
+                class="block w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-gray-900 text-sm font-medium tracking-[0.35em] font-mono text-center text-lg">
             </div>
-            <p class="mt-2 text-xs text-gray-500 font-medium">O token foi enviado por email ou está na URL</p>
+          </div>
+
+          <div *ngIf="formReset.token" class="border-t border-gray-100 pt-4">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Ou use o código do e-mail</p>
+            <div class="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-1.5">E-mail</label>
+                <input
+                  type="email"
+                  [(ngModel)]="formReset.email"
+                  name="resetEmailAlt"
+                  placeholder="mesmo do cadastro"
+                  class="block w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-700 mb-1.5">Código</label>
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="6"
+                  [(ngModel)]="formReset.codigo"
+                  name="codigoAlt"
+                  placeholder="6 dígitos"
+                  class="block w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-mono text-center tracking-widest">
+              </div>
+            </div>
+            <p class="mt-2 text-xs text-gray-500">Se preencher e-mail e código, o link acima será ignorado.</p>
           </div>
 
           <div>

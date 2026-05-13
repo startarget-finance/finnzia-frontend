@@ -1,6 +1,8 @@
 // Configuração da API - Opções gratuitas
 // Escolha uma das opções abaixo:
 
+import { environment } from '../../environments/environment';
+
 export const API_CONFIG = {
   // OPÇÃO 1: Hugging Face (GRATUITA)
   HUGGINGFACE_API_KEY: 'hf_your_token_here', // Configure seu token aqui
@@ -50,6 +52,12 @@ export const API_CONFIG = {
 
   // Flag para usar login mockado no front (false = usar backend real)
   USE_BACKEND_MOCK_AUTH: false,
+
+  /**
+   * Client ID OAuth 2.0 (Web). Em produção: defina GOOGLE_OAUTH_CLIENT_ID no build.
+   * Em desenvolvimento local: veja `src/environments/environment.development.ts` (ou a mesma env).
+   */
+  GOOGLE_OAUTH_CLIENT_ID: environment.googleOAuthClientId.trim(),
 
   // ===========================
   // CLINT - INTEGRAÇÃO WEBHOOK

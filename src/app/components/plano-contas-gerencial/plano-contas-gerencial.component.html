@@ -1,104 +1,252 @@
 <ng-container *ngIf="!embedded">
-  <div class="min-h-full bg-[#F8FAFC]">
-    <div class="max-w-[1800px] mx-auto px-4 sm:px-6 py-6 space-y-5">
-      <section class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
+  <div class="min-h-full bg-gradient-to-b from-slate-50 via-white to-slate-50/80">
+    <div class="mx-auto max-w-[1800px] space-y-5 px-4 py-6 sm:px-6">
+      <section
+        class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-[0_8px_30px_-18px_rgba(15,23,42,0.12)] backdrop-blur-sm sm:p-6"
+      >
         <ng-container *ngTemplateOutlet="corpoPlano"></ng-container>
       </section>
     </div>
   </div>
 </ng-container>
 
-<div *ngIf="embedded" class="space-y-3">
+<div *ngIf="embedded" class="space-y-4">
   <ng-container *ngTemplateOutlet="corpoPlano"></ng-container>
 </div>
 
-<!-- Árvore recursiva: filhos de um nó (subcategorias) -->
-<ng-template
-  #arvoreFilhos
-  let-subs
-  let-ton="ton"
-  let-caminho="caminho"
-  let-raiz="raiz"
->
-  <ul class="mt-1 space-y-0.5 border-l border-slate-200/90 pl-2.5 ml-1" *ngIf="subs?.length">
-    <li *ngFor="let n of subs" class="rounded-md py-0.5">
-      <div class="flex items-start justify-between gap-2 rounded-md px-1.5 py-1 hover:bg-white/80">
-        <span class="text-xs sm:text-sm text-slate-800 leading-snug break-words">{{ n.nome }}</span>
-        <div class="flex shrink-0 items-center gap-1">
+<!-- Ícones SVG reutilizáveis (referência visual única) -->
+<ng-template #icoChevron>
+  <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+  </svg>
+</ng-template>
+
+<ng-template #icoMoeda let-classe="classe">
+  <svg
+    [ngClass]="classe || 'h-5 w-5 text-slate-500'"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+    />
+  </svg>
+</ng-template>
+
+<ng-template #icoMais>
+  <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" d="M12 5v14M5 12h14" />
+  </svg>
+</ng-template>
+
+<ng-template #icoLapis>
+  <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L7.5 21H3v-4.5L16.732 3.732z"
+    />
+  </svg>
+</ng-template>
+
+<ng-template #icoLixeira>
+  <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+    />
+  </svg>
+</ng-template>
+
+<!-- Subárvore -->
+<ng-template #arvoreFilhos let-subs let-ton="ton" let-caminho="caminho" let-raiz="raiz">
+  <ul class="mt-0 space-y-0 border-l-2 border-slate-200/80 pl-3 sm:pl-4" *ngIf="subs?.length">
+    <li *ngFor="let n of subs" class="border-b border-slate-100/90 last:border-0">
+      <div class="flex min-h-[3rem] items-stretch gap-1 sm:gap-2">
+        <div class="flex w-9 shrink-0 items-center justify-center pt-0.5">
+          <button
+            *ngIf="noTemSubnos(n)"
+            type="button"
+            class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-white hover:text-slate-800"
+            (click)="alternarExpansaoPlano(chaveNoPlano(raiz, caminho, n), true); $event.stopPropagation()"
+            [attr.aria-expanded]="planoNoExpandido(chaveNoPlano(raiz, caminho, n), true)"
+            [attr.aria-label]="
+              (planoNoExpandido(chaveNoPlano(raiz, caminho, n), true) ? 'Recolher' : 'Expandir') + ' filhos de ' + n.nome
+            "
+            title="Mostrar ou ocultar itens abaixo"
+          >
+            <span
+              class="inline-flex transition-transform duration-200"
+              [class.rotate-90]="planoNoExpandido(chaveNoPlano(raiz, caminho, n), true)"
+            >
+              <ng-container *ngTemplateOutlet="icoChevron"></ng-container>
+            </span>
+          </button>
+          <span *ngIf="!noTemSubnos(n)" class="h-8 w-8" aria-hidden="true"></span>
+        </div>
+        <button
+          *ngIf="noTemSubnos(n)"
+          type="button"
+          class="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg py-1.5 pl-1 pr-2 text-left transition-colors hover:bg-white/90"
+          (click)="alternarExpansaoPlano(chaveNoPlano(raiz, caminho, n), true)"
+          title="Clique para expandir ou recolher"
+        >
+          <span
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 ring-1 ring-slate-200/80"
+          >
+            <ng-container *ngTemplateOutlet="icoMoeda; context: { classe: 'h-4 w-4 text-slate-500' }"></ng-container>
+          </span>
+          <span class="min-w-0 flex-1 text-sm font-medium leading-snug text-slate-800">{{ n.nome }}</span>
+        </button>
+        <div
+          *ngIf="!noTemSubnos(n)"
+          class="flex min-w-0 flex-1 items-center gap-2 rounded-lg py-1.5 pl-1 pr-2"
+        >
+          <span
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 ring-1 ring-slate-200/80"
+          >
+            <ng-container *ngTemplateOutlet="icoMoeda; context: { classe: 'h-4 w-4 text-slate-500' }"></ng-container>
+          </span>
+          <span class="min-w-0 flex-1 text-sm font-medium leading-snug text-slate-800">{{ n.nome }}</span>
+        </div>
+        <div class="flex shrink-0 items-center gap-0.5 self-center pr-0.5 sm:gap-1" (click)="$event.stopPropagation()">
           <button
             *ngIf="mostrarBotaoAdicionarNaArvore(caminho)"
             type="button"
             (click)="abrirNovoFilho(n, ton, caminho + ' › ' + n.nome)"
-            class="inline-flex h-6 w-6 items-center justify-center rounded-md border text-sm font-semibold shadow-sm transition"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm transition"
             [ngClass]="
               ton === 'receita'
                 ? 'border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50'
                 : 'border-rose-200 bg-white text-rose-700 hover:bg-rose-50'
             "
             [attr.title]="tituloMaisDetalhe()"
-            [attr.aria-label]="'Novo detalhe abaixo de ' + n.nome"
+            [attr.aria-label]="'Adicionar abaixo de ' + n.nome"
           >
-            +
+            <ng-container *ngTemplateOutlet="icoMais"></ng-container>
           </button>
           <button
             type="button"
             (click)="abrirEditarNo(raiz, n, caminho)"
-            class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
-            title="Editar"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50"
+            title="Editar nome"
             [attr.aria-label]="'Editar ' + n.nome"
           >
-            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L7.5 21H3v-4.5L16.732 3.732z"
-              />
-            </svg>
+            <ng-container *ngTemplateOutlet="icoLapis"></ng-container>
           </button>
           <button
             type="button"
             (click)="excluirNo(caminho, n)"
-            class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-rose-200 bg-rose-50 text-rose-600 shadow-sm transition-colors hover:bg-rose-100"
-            title="Excluir"
+            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-rose-200/90 bg-rose-50 text-rose-600 shadow-sm transition hover:bg-rose-100"
+            title="Excluir este item e descendentes"
             [attr.aria-label]="'Excluir ' + n.nome"
           >
-            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <ng-container *ngTemplateOutlet="icoLixeira"></ng-container>
           </button>
         </div>
       </div>
-      <ng-container
-        *ngIf="n.children?.length"
-        [ngTemplateOutlet]="arvoreFilhos"
-        [ngTemplateOutletContext]="{
-          $implicit: n.children,
-          ton: ton,
-          caminho: caminho + ' › ' + n.nome,
-          raiz: raiz
-        }"
-      ></ng-container>
+      <div
+        *ngIf="noTemSubnos(n) && planoNoExpandido(chaveNoPlano(raiz, caminho, n), true)"
+        class="bg-slate-50/30 pb-1 pl-1"
+      >
+        <ng-container
+          [ngTemplateOutlet]="arvoreFilhos"
+          [ngTemplateOutletContext]="{
+            $implicit: n.children,
+            ton: ton,
+            caminho: caminho + ' › ' + n.nome,
+            raiz: raiz
+          }"
+        ></ng-container>
+      </div>
     </li>
   </ul>
 </ng-template>
 
+<ng-template #acoesRaiz let-c="c" let-ton="ton">
+  <div class="flex shrink-0 items-center gap-0.5 sm:gap-1" (click)="$event.stopPropagation()">
+    <button
+      type="button"
+      (click)="abrirNovoFilhoDaRaiz(c)"
+      class="inline-flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm transition"
+      [ngClass]="
+        ton === 'receita'
+          ? 'border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50'
+          : 'border-rose-200 bg-white text-rose-700 hover:bg-rose-50'
+      "
+      [attr.title]="tituloMaisSubcategoria()"
+      [attr.aria-label]="'Nova subcategoria em ' + c.nome"
+    >
+      <ng-container *ngTemplateOutlet="icoMais"></ng-container>
+    </button>
+    <button
+      type="button"
+      (click)="abrirEditarRaiz(c)"
+      class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50"
+      title="Editar nome da categoria"
+      [attr.aria-label]="'Editar ' + c.nome"
+    >
+      <ng-container *ngTemplateOutlet="icoLapis"></ng-container>
+    </button>
+    <button
+      type="button"
+      (click)="excluirRaiz(c)"
+      class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-rose-200/90 bg-rose-50 text-rose-600 shadow-sm transition hover:bg-rose-100"
+      title="Excluir categoria e tudo abaixo"
+      aria-label="Excluir ramo"
+    >
+      <ng-container *ngTemplateOutlet="icoLixeira"></ng-container>
+    </button>
+  </div>
+</ng-template>
+
 <ng-template #corpoPlano>
-  <div class="space-y-4">
-    <div *ngIf="!embedded" class="space-y-3">
-      <div class="border-b border-gray-100 pb-4">
-        <h1 class="text-2xl font-semibold text-slate-900 tracking-tight">Plano de contas</h1>
-        <p class="mt-1 text-xs text-gray-500">Organize categorias e subcategorias no mesmo padrao visual do DFC.</p>
+  <div class="space-y-5">
+    <div
+      *ngIf="!embedded"
+      class="flex flex-col gap-2 border-b border-slate-100 pb-5 sm:flex-row sm:items-start sm:justify-between"
+    >
+      <div>
+        <h1 class="text-2xl font-semibold tracking-tight text-slate-900">Plano de contas gerencial</h1>
+        <p class="mt-1.5 max-w-2xl text-sm leading-relaxed text-slate-500">
+          Clique no <strong class="font-medium text-slate-700">nome</strong> ou na
+          <strong class="font-medium text-slate-700">seta</strong> para mostrar ou ocultar subitens. Os botões à direita
+          não recolhem o grupo.
+        </p>
       </div>
     </div>
 
-    <p class="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-xs text-slate-500 leading-relaxed">
-      <span class="font-medium text-slate-600">Estrutura:</span>
-      <strong class="text-slate-700">Categoria</strong> (+ no título) →
-      <strong class="text-slate-700">Subcategoria</strong> (+ na categoria) →
-      <strong class="text-slate-700">Detalhe</strong> (+ só na subcategoria: imposto, taxa…). Em detalhe não há novo nível; use
-      <strong class="text-slate-700">editar</strong> para corrigir o nome.
-    </p>
+    <div
+      class="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-xl border border-slate-200/70 bg-slate-50/70 px-4 py-3 text-xs text-slate-600"
+    >
+      <span class="inline-flex items-center gap-2 font-medium text-slate-700">
+        <span class="flex h-6 min-w-[1.5rem] items-center justify-center rounded-md bg-white px-1.5 text-[10px] font-bold text-slate-500 ring-1 ring-slate-200"
+          >1</span
+        >
+        Categoria
+      </span>
+      <span class="text-slate-300">→</span>
+      <span class="inline-flex items-center gap-2 font-medium text-slate-700">
+        <span class="flex h-6 min-w-[1.5rem] items-center justify-center rounded-md bg-white px-1.5 text-[10px] font-bold text-slate-500 ring-1 ring-slate-200"
+          >2</span
+        >
+        Subcategoria
+      </span>
+      <span class="text-slate-300">→</span>
+      <span class="inline-flex items-center gap-2 font-medium text-slate-700">
+        <span class="flex h-6 min-w-[1.5rem] items-center justify-center rounded-md bg-white px-1.5 text-[10px] font-bold text-slate-500 ring-1 ring-slate-200"
+          >3</span
+        >
+        Detalhe
+        <span class="font-normal text-slate-400">(sem novos níveis)</span>
+      </span>
+    </div>
 
     <app-feedback-state
       *ngIf="erro"
@@ -113,238 +261,320 @@
       *ngIf="planoVazioSucesso"
       kind="empty"
       title="Nenhuma conta no plano ainda"
-      message="Isso é normal no início. Crie a primeira categoria de receita ou despesa com os botões + nos blocos abaixo, ou use Importar com um arquivo JSON."
-      actionLabel="Nova despesa"
-      (action)="comecarComDespesa()"
+      message="Carregue o modelo sugerido, importe JSON ou crie com o + em cada coluna."
     />
+    <div *ngIf="planoVazioSucesso" class="flex flex-wrap gap-2">
+      <button
+        type="button"
+        (click)="aplicarPlanoContasPadraoBomControle()"
+        class="inline-flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-900 shadow-sm transition hover:bg-emerald-100"
+      >
+        Preencher categorias padrão
+      </button>
+    </div>
 
-    <div class="grid gap-3 lg:grid-cols-2">
-      <!-- Receita -->
+    <div class="grid gap-5 lg:grid-cols-2">
+      <!-- Receitas -->
       <div
-        class="overflow-hidden rounded-xl border border-emerald-200/70 bg-white shadow-sm"
+        class="flex min-h-[min(60vh,32rem)] flex-col overflow-hidden rounded-2xl border border-emerald-200/70 bg-white shadow-md ring-1 ring-emerald-900/[0.05]"
       >
         <div
-          class="flex items-center justify-between gap-3 border-b border-emerald-100 bg-emerald-50/60 px-4 py-3"
+          class="flex flex-wrap items-center justify-between gap-3 border-b border-emerald-100/90 bg-gradient-to-r from-emerald-50 to-white px-4 py-3.5 sm:px-5"
         >
-          <div class="flex items-center gap-2.5 min-w-0">
-            <span
-              class="inline-flex shrink-0 items-center rounded-md border border-emerald-200 bg-white px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-emerald-800"
-              >Receita</span
-            >
-            <span class="truncate text-xs text-slate-500 hidden sm:inline">Entradas</span>
+          <div class="min-w-0 flex-1">
+            <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-emerald-900">Receitas</p>
+            <p class="mt-0.5 text-xs text-slate-500">Entradas</p>
           </div>
-          <button
-            type="button"
-            (click)="abrirNovoParaTipo('receita')"
-            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-emerald-300 bg-white text-lg font-semibold leading-none text-emerald-700 shadow-sm transition hover:bg-emerald-50 hover:border-emerald-400"
-            title="1º nível"
-            aria-label="Adicionar conta de 1º nível — receita"
-          >
-            +
-          </button>
-        </div>
-        <div class="max-h-[min(52vh,28rem)] overflow-y-auto space-y-3 p-3 sm:p-4">
-          <app-feedback-state
-            *ngIf="carregando && porTipo('receita').length === 0"
-            kind="loading"
-            title="Carregando contas de receita"
-            message="Aguarde enquanto atualizamos os dados."
-          />
-          <ng-container *ngIf="!carregando || porTipo('receita').length > 0">
-            <div
-              *ngFor="let c of porTipo('receita')"
-              class="rounded-lg border border-slate-200/90 bg-slate-50/40 p-3 shadow-sm"
+          <div class="flex flex-wrap items-center justify-end gap-1.5">
+            <button
+              type="button"
+              *ngIf="porTipo('receita').length"
+              (click)="expandirColunaPlano('receita')"
+              class="rounded-lg border border-emerald-200/80 bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-emerald-800 shadow-sm transition hover:bg-emerald-50"
             >
-              <div class="flex items-start justify-between gap-2">
-                <span class="font-semibold text-slate-900 text-sm leading-snug break-words">{{ c.nome }}</span>
-                <div class="flex shrink-0 items-center gap-1">
-                  <button
-                    type="button"
-                    (click)="abrirNovoFilhoDaRaiz(c)"
-                    class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-emerald-200 bg-white text-sm font-semibold text-emerald-700 shadow-sm transition hover:bg-emerald-50"
-                    [attr.title]="tituloMaisSubcategoria()"
-                    [attr.aria-label]="'Nova subcategoria sob ' + c.nome"
+              Expandir
+            </button>
+            <button
+              type="button"
+              *ngIf="porTipo('receita').length"
+              (click)="recolherColunaPlano('receita')"
+              class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600 shadow-sm transition hover:bg-slate-50"
+            >
+              Recolher
+            </button>
+            <button
+              type="button"
+              (click)="abrirNovoParaTipo('receita')"
+              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-300 bg-emerald-600 text-white shadow-sm transition hover:bg-emerald-700"
+              title="Nova categoria (nível 1)"
+              aria-label="Nova categoria de receita"
+            >
+              <ng-container *ngTemplateOutlet="icoMais"></ng-container>
+            </button>
+          </div>
+        </div>
+        <div class="flex flex-1 flex-col overflow-hidden bg-slate-50/20">
+          <div
+            *ngIf="porTipo('receita').length"
+            class="grid grid-cols-[auto_1fr_auto] items-center gap-2 border-b border-slate-200/80 bg-white/90 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 sm:px-4"
+          >
+            <span class="w-9"></span>
+            <span class="pl-1">Conta</span>
+            <span class="w-[108px] text-center">Ações</span>
+          </div>
+          <div class="max-h-[min(52vh,26rem)] flex-1 overflow-y-auto p-3 sm:p-4">
+            <app-feedback-state
+              *ngIf="carregando && porTipo('receita').length === 0"
+              kind="loading"
+              title="Carregando receitas"
+              message="Aguarde."
+            />
+            <ng-container *ngIf="!carregando || porTipo('receita').length > 0">
+              <div class="space-y-3">
+                <div
+                  *ngFor="let c of porTipo('receita')"
+                  class="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm"
+                >
+                  <div
+                    class="flex items-center gap-2 border-l-[4px] border-l-emerald-500 py-2.5 pl-2 pr-2 sm:gap-3 sm:pl-3 sm:pr-3"
                   >
-                    +
-                  </button>
-                  <button
-                    type="button"
-                    (click)="abrirEditarRaiz(c)"
-                    class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
-                    title="Editar"
-                    [attr.aria-label]="'Editar ' + c.nome"
+                    <div class="flex w-9 shrink-0 items-center justify-center">
+                      <button
+                        *ngIf="raizTemSubcategorias(c)"
+                        type="button"
+                        class="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-emerald-50 hover:text-slate-900"
+                        (click)="alternarExpansaoPlano(chaveRaizPlano(c), true); $event.stopPropagation()"
+                        [attr.aria-expanded]="planoNoExpandido(chaveRaizPlano(c), true)"
+                        [attr.aria-label]="
+                          (planoNoExpandido(chaveRaizPlano(c), true) ? 'Recolher' : 'Expandir') + ' ' + c.nome
+                        "
+                        title="Mostrar ou ocultar subcategorias"
+                      >
+                        <span
+                          class="inline-flex transition-transform duration-200"
+                          [class.rotate-90]="planoNoExpandido(chaveRaizPlano(c), true)"
+                        >
+                          <ng-container *ngTemplateOutlet="icoChevron"></ng-container>
+                        </span>
+                      </button>
+                      <span *ngIf="!raizTemSubcategorias(c)" class="h-9 w-9" aria-hidden="true"></span>
+                    </div>
+                    <button
+                      *ngIf="raizTemSubcategorias(c)"
+                      type="button"
+                      class="flex min-w-0 flex-1 items-center gap-2 rounded-lg py-1 text-left transition hover:bg-emerald-50/50"
+                      (click)="alternarExpansaoPlano(chaveRaizPlano(c), true)"
+                    >
+                      <span
+                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/80"
+                      >
+                        <ng-container *ngTemplateOutlet="icoMoeda; context: { classe: 'h-5 w-5 text-emerald-700' }"></ng-container>
+                      </span>
+                      <span class="text-sm font-semibold leading-snug text-slate-900 sm:text-base">{{ c.nome }}</span>
+                    </button>
+                    <div *ngIf="!raizTemSubcategorias(c)" class="flex min-w-0 flex-1 items-center gap-2 py-1">
+                      <span
+                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/80"
+                      >
+                        <ng-container *ngTemplateOutlet="icoMoeda; context: { classe: 'h-5 w-5 text-emerald-700' }"></ng-container>
+                      </span>
+                      <span class="text-sm font-semibold leading-snug text-slate-900 sm:text-base">{{ c.nome }}</span>
+                    </div>
+                    <ng-container *ngTemplateOutlet="acoesRaiz; context: { c: c, ton: 'receita' }"></ng-container>
+                  </div>
+                  <div
+                    *ngIf="raizTemSubcategorias(c) && planoNoExpandido(chaveRaizPlano(c), true)"
+                    class="border-t border-slate-100 bg-slate-50/50 px-2 py-2 sm:px-3"
                   >
-                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L7.5 21H3v-4.5L16.732 3.732z"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    (click)="excluirRaiz(c)"
-                    class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-rose-200 bg-rose-50 text-rose-600 shadow-sm transition-colors hover:bg-rose-100"
-                    title="Excluir ramo"
-                  >
-                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                  </button>
+                    <ng-container
+                      [ngTemplateOutlet]="arvoreFilhos"
+                      [ngTemplateOutletContext]="{ $implicit: c.subcategorias, ton: 'receita', caminho: c.nome, raiz: c }"
+                    ></ng-container>
+                  </div>
                 </div>
               </div>
-              <ng-container
-                *ngIf="c.subcategorias?.length"
-                [ngTemplateOutlet]="arvoreFilhos"
-                [ngTemplateOutletContext]="{ $implicit: c.subcategorias, ton: 'receita', caminho: c.nome, raiz: c }"
-              ></ng-container>
-            </div>
-            <p
-              *ngIf="!carregando && porTipo('receita').length === 0 && categorias.length > 0"
-              class="rounded-lg border border-dashed border-emerald-200/80 bg-emerald-50/30 px-3 py-4 text-center text-sm text-slate-600"
-            >
-              Nenhuma conta.
-              <span class="block mt-2">
-                <button
-                  type="button"
-                  (click)="abrirNovoParaTipo('receita')"
-                  class="inline-flex h-9 items-center justify-center rounded-lg bg-emerald-700 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-800"
-                  aria-label="Adicionar receita"
-                >
-                  Adicionar
-                </button>
-              </span>
-            </p>
-          </ng-container>
+              <p
+                *ngIf="!carregando && porTipo('receita').length === 0 && categorias.length > 0"
+                class="rounded-xl border border-dashed border-emerald-200/90 bg-emerald-50/25 px-4 py-8 text-center text-sm text-slate-600"
+              >
+                Nenhuma receita cadastrada.
+                <span class="mt-3 block">
+                  <button
+                    type="button"
+                    (click)="abrirNovoParaTipo('receita')"
+                    class="inline-flex h-10 items-center justify-center rounded-xl bg-emerald-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                  >
+                    Nova categoria
+                  </button>
+                </span>
+              </p>
+            </ng-container>
+          </div>
         </div>
       </div>
 
-      <!-- Despesa -->
+      <!-- Despesas -->
       <div
-        class="overflow-hidden rounded-xl border border-rose-200/70 bg-white shadow-sm"
+        class="flex min-h-[min(60vh,32rem)] flex-col overflow-hidden rounded-2xl border border-rose-200/70 bg-white shadow-md ring-1 ring-rose-900/[0.05]"
       >
         <div
-          class="flex items-center justify-between gap-3 border-b border-rose-100 bg-rose-50/60 px-4 py-3"
+          class="flex flex-wrap items-center justify-between gap-3 border-b border-rose-100/90 bg-gradient-to-r from-rose-50 to-white px-4 py-3.5 sm:px-5"
         >
-          <div class="flex items-center gap-2.5 min-w-0">
-            <span
-              class="inline-flex shrink-0 items-center rounded-md border border-rose-200 bg-white px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.12em] text-rose-800"
-              >Despesa</span
-            >
-            <span class="truncate text-xs text-slate-500 hidden sm:inline">Saídas</span>
+          <div class="min-w-0 flex-1">
+            <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-rose-950">Despesas</p>
+            <p class="mt-0.5 text-xs text-slate-500">Saídas</p>
           </div>
-          <button
-            type="button"
-            (click)="abrirNovoParaTipo('despesa')"
-            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-rose-300 bg-white text-lg font-semibold leading-none text-rose-700 shadow-sm transition hover:bg-rose-50 hover:border-rose-400"
-            title="1º nível"
-            aria-label="Adicionar conta de 1º nível — despesa"
-          >
-            +
-          </button>
-        </div>
-        <div class="max-h-[min(52vh,28rem)] overflow-y-auto space-y-3 p-3 sm:p-4">
-          <app-feedback-state
-            *ngIf="carregando && porTipo('despesa').length === 0"
-            kind="loading"
-            title="Carregando contas de despesa"
-            message="Aguarde enquanto atualizamos os dados."
-          />
-          <ng-container *ngIf="!carregando || porTipo('despesa').length > 0">
-            <div
-              *ngFor="let c of porTipo('despesa')"
-              class="rounded-lg border border-slate-200/90 bg-slate-50/40 p-3 shadow-sm"
+          <div class="flex flex-wrap items-center justify-end gap-1.5">
+            <button
+              type="button"
+              *ngIf="porTipo('despesa').length"
+              (click)="expandirColunaPlano('despesa')"
+              class="rounded-lg border border-rose-200/80 bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-rose-900 shadow-sm transition hover:bg-rose-50"
             >
-              <div class="flex items-start justify-between gap-2">
-                <span class="font-semibold text-slate-900 text-sm leading-snug break-words">{{ c.nome }}</span>
-                <div class="flex shrink-0 items-center gap-1">
-                  <button
-                    type="button"
-                    (click)="abrirNovoFilhoDaRaiz(c)"
-                    class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-rose-200 bg-white text-sm font-semibold text-rose-700 shadow-sm transition hover:bg-rose-50"
-                    [attr.title]="tituloMaisSubcategoria()"
-                    [attr.aria-label]="'Nova subcategoria sob ' + c.nome"
+              Expandir
+            </button>
+            <button
+              type="button"
+              *ngIf="porTipo('despesa').length"
+              (click)="recolherColunaPlano('despesa')"
+              class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600 shadow-sm transition hover:bg-slate-50"
+            >
+              Recolher
+            </button>
+            <button
+              type="button"
+              (click)="abrirNovoParaTipo('despesa')"
+              class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-rose-300 bg-rose-600 text-white shadow-sm transition hover:bg-rose-700"
+              title="Nova categoria (nível 1)"
+              aria-label="Nova categoria de despesa"
+            >
+              <ng-container *ngTemplateOutlet="icoMais"></ng-container>
+            </button>
+          </div>
+        </div>
+        <div class="flex flex-1 flex-col overflow-hidden bg-slate-50/20">
+          <div
+            *ngIf="porTipo('despesa').length"
+            class="grid grid-cols-[auto_1fr_auto] items-center gap-2 border-b border-slate-200/80 bg-white/90 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 sm:px-4"
+          >
+            <span class="w-9"></span>
+            <span class="pl-1">Conta</span>
+            <span class="w-[108px] text-center">Ações</span>
+          </div>
+          <div class="max-h-[min(52vh,26rem)] flex-1 overflow-y-auto p-3 sm:p-4">
+            <app-feedback-state
+              *ngIf="carregando && porTipo('despesa').length === 0"
+              kind="loading"
+              title="Carregando despesas"
+              message="Aguarde."
+            />
+            <ng-container *ngIf="!carregando || porTipo('despesa').length > 0">
+              <div class="space-y-3">
+                <div
+                  *ngFor="let c of porTipo('despesa')"
+                  class="overflow-hidden rounded-xl border border-slate-200/90 bg-white shadow-sm"
+                >
+                  <div
+                    class="flex items-center gap-2 border-l-[4px] border-l-rose-500 py-2.5 pl-2 pr-2 sm:gap-3 sm:pl-3 sm:pr-3"
                   >
-                    +
-                  </button>
-                  <button
-                    type="button"
-                    (click)="abrirEditarRaiz(c)"
-                    class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
-                    title="Editar"
-                    [attr.aria-label]="'Editar ' + c.nome"
+                    <div class="flex w-9 shrink-0 items-center justify-center">
+                      <button
+                        *ngIf="raizTemSubcategorias(c)"
+                        type="button"
+                        class="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-rose-50 hover:text-slate-900"
+                        (click)="alternarExpansaoPlano(chaveRaizPlano(c), true); $event.stopPropagation()"
+                        [attr.aria-expanded]="planoNoExpandido(chaveRaizPlano(c), true)"
+                        [attr.aria-label]="
+                          (planoNoExpandido(chaveRaizPlano(c), true) ? 'Recolher' : 'Expandir') + ' ' + c.nome
+                        "
+                        title="Mostrar ou ocultar subcategorias"
+                      >
+                        <span
+                          class="inline-flex transition-transform duration-200"
+                          [class.rotate-90]="planoNoExpandido(chaveRaizPlano(c), true)"
+                        >
+                          <ng-container *ngTemplateOutlet="icoChevron"></ng-container>
+                        </span>
+                      </button>
+                      <span *ngIf="!raizTemSubcategorias(c)" class="h-9 w-9" aria-hidden="true"></span>
+                    </div>
+                    <button
+                      *ngIf="raizTemSubcategorias(c)"
+                      type="button"
+                      class="flex min-w-0 flex-1 items-center gap-2 rounded-lg py-1 text-left transition hover:bg-rose-50/50"
+                      (click)="alternarExpansaoPlano(chaveRaizPlano(c), true)"
+                    >
+                      <span
+                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-700 ring-1 ring-rose-200/80"
+                      >
+                        <ng-container *ngTemplateOutlet="icoMoeda; context: { classe: 'h-5 w-5 text-rose-700' }"></ng-container>
+                      </span>
+                      <span class="text-sm font-semibold leading-snug text-slate-900 sm:text-base">{{ c.nome }}</span>
+                    </button>
+                    <div *ngIf="!raizTemSubcategorias(c)" class="flex min-w-0 flex-1 items-center gap-2 py-1">
+                      <span
+                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-700 ring-1 ring-rose-200/80"
+                      >
+                        <ng-container *ngTemplateOutlet="icoMoeda; context: { classe: 'h-5 w-5 text-rose-700' }"></ng-container>
+                      </span>
+                      <span class="text-sm font-semibold leading-snug text-slate-900 sm:text-base">{{ c.nome }}</span>
+                    </div>
+                    <ng-container *ngTemplateOutlet="acoesRaiz; context: { c: c, ton: 'despesa' }"></ng-container>
+                  </div>
+                  <div
+                    *ngIf="raizTemSubcategorias(c) && planoNoExpandido(chaveRaizPlano(c), true)"
+                    class="border-t border-slate-100 bg-slate-50/50 px-2 py-2 sm:px-3"
                   >
-                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L7.5 21H3v-4.5L16.732 3.732z"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    type="button"
-                    (click)="excluirRaiz(c)"
-                    class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-rose-200 bg-rose-50 text-rose-600 shadow-sm transition-colors hover:bg-rose-100"
-                    title="Excluir ramo"
-                  >
-                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                      />
-                    </svg>
-                  </button>
+                    <ng-container
+                      [ngTemplateOutlet]="arvoreFilhos"
+                      [ngTemplateOutletContext]="{ $implicit: c.subcategorias, ton: 'despesa', caminho: c.nome, raiz: c }"
+                    ></ng-container>
+                  </div>
                 </div>
               </div>
-              <ng-container
-                *ngIf="c.subcategorias?.length"
-                [ngTemplateOutlet]="arvoreFilhos"
-                [ngTemplateOutletContext]="{ $implicit: c.subcategorias, ton: 'despesa', caminho: c.nome, raiz: c }"
-              ></ng-container>
-            </div>
-            <p
-              *ngIf="!carregando && porTipo('despesa').length === 0 && categorias.length > 0"
-              class="rounded-lg border border-dashed border-rose-200/80 bg-rose-50/30 px-3 py-4 text-center text-sm text-slate-600"
-            >
-              Nenhuma conta.
-              <span class="block mt-2">
-                <button
-                  type="button"
-                  (click)="abrirNovoParaTipo('despesa')"
-                  class="inline-flex h-9 items-center justify-center rounded-lg bg-rose-700 px-4 text-xs font-semibold text-white shadow-sm transition hover:bg-rose-800"
-                  aria-label="Adicionar despesa"
-                >
-                  Adicionar
-                </button>
-              </span>
-            </p>
-          </ng-container>
+              <p
+                *ngIf="!carregando && porTipo('despesa').length === 0 && categorias.length > 0"
+                class="rounded-xl border border-dashed border-rose-200/90 bg-rose-50/25 px-4 py-8 text-center text-sm text-slate-600"
+              >
+                Nenhuma despesa cadastrada.
+                <span class="mt-3 block">
+                  <button
+                    type="button"
+                    (click)="abrirNovoParaTipo('despesa')"
+                    class="inline-flex h-10 items-center justify-center rounded-xl bg-rose-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700"
+                  >
+                    Nova categoria
+                  </button>
+                </span>
+              </p>
+            </ng-container>
+          </div>
         </div>
       </div>
     </div>
 
     <div
-      class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-slate-600"
+      class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-slate-50/80 px-4 py-3 text-xs text-slate-600"
     >
-      <span *ngIf="categorias.length" class="font-medium tabular-nums">{{ contarNos(categorias) }} contas</span>
-      <span *ngIf="planoVazioSucesso" class="text-slate-500">Nenhuma conta cadastrada.</span>
+      <div class="flex flex-wrap items-center gap-2">
+        <span *ngIf="categorias.length" class="font-semibold tabular-nums text-slate-800"
+          >{{ contarNos(categorias) }} contas</span
+        >
+        <span *ngIf="planoVazioSucesso" class="text-slate-500">Plano vazio nesta empresa.</span>
+      </div>
       <label
-        class="inline-flex h-8 cursor-pointer items-center rounded-lg border border-slate-200/80 bg-white px-3 text-xs font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
-        [class.ml-auto]="categorias.length === 0"
+        class="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
       >
+        <svg class="h-3.5 w-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+          />
+        </svg>
         <input type="file" accept=".json,application/json" class="hidden" (change)="onImportarArquivo($event)" />
-        Importar
+        Importar JSON
       </label>
     </div>
   </div>
@@ -352,30 +582,32 @@
 
 <div
   *ngIf="modalAberto"
-  class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-[6px]"
+  class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-[8px]"
 >
   <div
-    class="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(15,23,42,0.25)] border border-slate-200/80 max-w-lg w-full p-5 space-y-4"
+    class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-slate-200/90 bg-white p-5 shadow-2xl sm:p-6"
     (click)="$event.stopPropagation()"
   >
     <div class="flex items-start justify-between gap-4">
       <div>
-        <h2 class="text-lg font-semibold text-slate-900 tracking-tight">{{ modalTitulo() }}</h2>
-        <p *ngIf="modalSubtitulo()" class="text-xs text-slate-500 mt-1 break-words">{{ modalSubtitulo() }}</p>
+        <h2 class="text-lg font-semibold tracking-tight text-slate-900">{{ modalTitulo() }}</h2>
+        <p *ngIf="modalSubtitulo()" class="mt-1 break-words text-xs text-slate-500">{{ modalSubtitulo() }}</p>
       </div>
       <button
         type="button"
-        class="shrink-0 h-9 w-9 rounded-lg border border-slate-200/80 text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors"
+        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
         (click)="fecharModal()"
-        [attr.aria-label]="'Fechar'"
+        aria-label="Fechar"
       >
-        ✕
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
       </button>
     </div>
-    <div class="space-y-4">
+    <div class="mt-5 space-y-4">
       <div *ngIf="modalAcao === 'novo' && modalModo === 'raiz'">
         <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Tipo</label>
-        <select [(ngModel)]="formTipo" class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm">
+        <select [(ngModel)]="formTipo" class="mt-1.5 h-10 w-full rounded-lg border border-slate-200/90 px-3.5 text-sm">
           <option value="despesa">Despesa</option>
           <option value="receita">Receita</option>
         </select>
@@ -400,22 +632,22 @@
         <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{{ rotuloCampoNome() }}</label>
         <input
           [(ngModel)]="formNomeNovo"
-          class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+          class="mt-1.5 h-10 w-full rounded-lg border border-slate-200/90 px-3.5 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
         />
       </div>
     </div>
-    <div class="flex justify-end gap-2 pt-1">
+    <div class="mt-6 flex justify-end gap-2 border-t border-slate-100 pt-4">
       <button
         type="button"
         (click)="fecharModal()"
-        class="h-10 px-4 rounded-lg border border-slate-200/80 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        class="h-10 rounded-lg border border-slate-200/80 px-4 text-sm font-medium text-slate-700 hover:bg-slate-50"
       >
         Cancelar
       </button>
       <button
         type="button"
         (click)="salvar()"
-        class="h-10 px-5 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 shadow-sm transition-colors"
+        class="h-10 rounded-lg bg-emerald-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
       >
         {{ modalAcao === 'editar' ? 'Salvar alterações' : 'Salvar' }}
       </button>
