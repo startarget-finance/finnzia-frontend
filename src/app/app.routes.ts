@@ -101,6 +101,12 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'open-finance',
+    loadComponent: () =>
+      import('./components/pluggy-open-finance/pluggy-open-finance.component').then(m => m.PluggyOpenFinanceComponent),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'fatura-cartao',
     loadComponent: () => import('./components/fatura-cartao/fatura-cartao.component').then(m => m.FaturaCartaoComponent),
     canActivate: [AuthGuard]

@@ -3205,6 +3205,11 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     return `local_${mov.DataVencimento}_${mov.Debito ? 'D' : 'R'}_${mov.Valor}_${nome}`;
   }
 
+  /** Lançamentos vindos da sincronização Pluggy (prefixo no id interno). */
+  origemOpenFinance(mov: MovimentacaoFinanceira): boolean {
+    return this.idMovimentacao(mov).toLowerCase().startsWith('pluggy:');
+  }
+
   empresaIdAtual(): number | null {
     return this.companySelectorService.obterEmpresaSelecionada()?.idEmpresa ?? null;
   }

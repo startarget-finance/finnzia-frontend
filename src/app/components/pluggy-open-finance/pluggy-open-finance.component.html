@@ -1,0 +1,175 @@
+<section class="min-h-full bg-gradient-to-b from-slate-50 via-white to-slate-100/80 pb-16 font-sans text-slate-900 antialiased">
+  <div class="mx-auto max-w-5xl space-y-8 px-4 py-8 sm:px-6 lg:px-8">
+    <!-- Hero -->
+    <div
+      class="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_8px_30px_-12px_rgba(15,23,42,0.12)] sm:p-8"
+    >
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute inset-0 bg-[radial-gradient(680px_circle_at_0%_-30%,rgba(124,58,237,0.09),transparent_55%),radial-gradient(560px_circle_at_100%_0%,rgba(13,148,136,0.07),transparent_48%)]"
+      ></div>
+      <div class="relative z-[1] space-y-5">
+        <div class="flex items-center gap-2">
+          <span
+            class="inline-flex h-2 w-2 shrink-0 rounded-full bg-gradient-to-br from-violet-500 to-teal-500 shadow-sm shadow-violet-500/40"
+            aria-hidden="true"
+          ></span>
+          <p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-700">finzzia · Open Finance</p>
+        </div>
+        <div class="space-y-2">
+          <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-[1.65rem] sm:leading-tight">
+            Conectar e importar extratos
+          </h1>
+          <p class="max-w-2xl text-sm leading-relaxed text-slate-600">
+            Integração Pluggy: conexão segura com a instituição, importação para o mesmo cadastro de
+            <strong class="font-semibold text-slate-800">Movimentações</strong> e aprovação em
+            <a
+              routerLink="/conciliacao-ofx"
+              class="font-semibold text-violet-700 underline decoration-violet-300 decoration-2 underline-offset-[3px] transition hover:text-violet-900"
+              >Conciliação de extratos</a
+            >.
+          </p>
+        </div>
+        <ol class="grid gap-3 sm:grid-cols-3">
+          <li
+            class="rounded-2xl border border-slate-200/90 bg-slate-50/90 px-4 py-3.5 text-xs leading-relaxed text-slate-600 shadow-sm"
+          >
+            <span class="mb-1.5 flex items-center gap-2 font-semibold text-slate-800">
+              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-violet-100 text-[10px] text-violet-800"
+                >1</span
+              >
+              Conectar
+            </span>
+            Abra o widget Pluggy e conclua o login no banco (sandbox: user-ok / password-ok / MFA 123456 quando pedido).
+          </li>
+          <li
+            class="rounded-2xl border border-slate-200/90 bg-slate-50/90 px-4 py-3.5 text-xs leading-relaxed text-slate-600 shadow-sm"
+          >
+            <span class="mb-1.5 flex items-center gap-2 font-semibold text-slate-800">
+              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-violet-100 text-[10px] text-violet-800"
+                >2</span
+              >
+              Sincronizar
+            </span>
+            Empresa pelo menu do finzzia, período e conta opcional; importe o extrato para o sistema.
+          </li>
+          <li
+            class="rounded-2xl border border-slate-200/90 bg-slate-50/90 px-4 py-3.5 text-xs leading-relaxed text-slate-600 shadow-sm"
+          >
+            <span class="mb-1.5 flex items-center gap-2 font-semibold text-slate-800">
+              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-violet-100 text-[10px] text-violet-800"
+                >3</span
+              >
+              Aprovar
+            </span>
+            Na conciliação, filtre por <strong class="font-semibold text-slate-700">Open Finance (Pluggy)</strong> e
+            aprove o lote como no OFX.
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <div
+      *ngIf="!carregandoStatus && !pluggyConfigurado"
+      class="rounded-2xl border border-amber-200/90 bg-gradient-to-br from-amber-50 to-amber-50/40 px-4 py-3.5 text-sm leading-relaxed text-amber-950 shadow-sm"
+    >
+      O backend ainda não está com Pluggy habilitado. Configure
+      <code class="rounded-md border border-amber-200/80 bg-white/90 px-1.5 py-0.5 text-[13px] text-amber-950"
+        >PLUGGY_ENABLED=true</code
+      >,
+      <code class="rounded-md border border-amber-200/80 bg-white/90 px-1.5 py-0.5 text-[13px] text-amber-950"
+        >PLUGGY_CLIENT_ID</code
+      >
+      e
+      <code class="rounded-md border border-amber-200/80 bg-white/90 px-1.5 py-0.5 text-[13px] text-amber-950"
+        >PLUGGY_CLIENT_SECRET</code
+      >
+      e reinicie a API.
+    </div>
+
+    <!-- Ações: hierarquia visual única -->
+    <div class="pof-toolbar">
+      <button
+        type="button"
+        (click)="abrirPluggyConnect()"
+        [disabled]="abrindoWidget || carregandoStatus || !pluggyConfigurado"
+        class="pof-btn pof-btn--primary"
+      >
+        {{ abrindoWidget ? 'Abrindo…' : 'Conectar conta (Pluggy)' }}
+      </button>
+      <span class="hidden h-6 w-px shrink-0 bg-slate-200 sm:block" aria-hidden="true"></span>
+      <button
+        type="button"
+        (click)="recarregarConexoes()"
+        [disabled]="carregandoConexoes"
+        class="pof-btn pof-btn--secondary"
+      >
+        Atualizar lista
+      </button>
+      <a routerLink="/conciliacao-ofx" class="pof-btn pof-btn--secondary">Ir para conciliação</a>
+      <a routerLink="/movimentacoes" class="pof-btn pof-btn--secondary">Ver movimentações</a>
+    </div>
+
+    <section *ngIf="pluggyConfigurado" class="pof-card">
+      <div class="pof-card__head">
+        <h2 class="pof-card__title">Parâmetros da importação</h2>
+        <p class="pof-card__subtitle">
+          Empresa definida no menu do finzzia. Sem datas = últimos 90 dias na Pluggy. Conta opcional vincula ao cadastro
+          bancário.
+        </p>
+      </div>
+      <div class="grid gap-5 px-4 py-5 sm:grid-cols-2 sm:px-6 sm:py-6">
+        <label class="pof-field">
+          <span class="pof-field__label">Data início</span>
+          <input type="date" [(ngModel)]="syncDataInicio" class="pof-input" />
+        </label>
+        <label class="pof-field">
+          <span class="pof-field__label">Data fim</span>
+          <input type="date" [(ngModel)]="syncDataFim" class="pof-input" />
+        </label>
+        <label class="pof-field sm:col-span-2">
+          <span class="pof-field__label">Conta cadastrada (opcional)</span>
+          <select [(ngModel)]="contaSyncId" class="pof-select">
+            <option value="">— Não vincular —</option>
+            <option *ngFor="let c of contasParaSync" [value]="c.id">{{ labelConta(c) }}</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="pof-card">
+      <div class="pof-card__head">
+        <h2 class="pof-card__title">Conexões do seu usuário</h2>
+        <p class="pof-card__subtitle">Contas vinculadas após sucesso no widget Pluggy. Sincronize o extrato quando precisar.</p>
+      </div>
+      <div class="px-4 py-5 sm:px-6 sm:py-6">
+        <p *ngIf="carregandoConexoes" class="text-sm font-medium text-slate-500">Carregando conexões…</p>
+        <p *ngIf="!carregandoConexoes && conexoes.length === 0" class="text-sm text-slate-600">
+          Nenhuma conexão ainda. Use <strong class="font-semibold text-slate-800">Conectar conta (Pluggy)</strong> acima.
+        </p>
+        <ul *ngIf="!carregandoConexoes && conexoes.length > 0" class="flex flex-col gap-3">
+          <li *ngFor="let c of conexoes" class="pof-connection">
+            <div class="min-w-0 flex-1">
+              <p class="pof-connection__title">
+                {{ c.connectorName || c.connectorId || 'Instituição conectada' }}
+              </p>
+              <div class="pof-connection__meta">
+                <span class="pof-badge">{{ c.status || 'Sem status' }}</span>
+                <span *ngIf="c.dataCriacao">Conectado em {{ c.dataCriacao | date : 'short' }}</span>
+              </div>
+              <p class="pof-connection__id"><span>ID do item</span>{{ c.pluggyItemId }}</p>
+            </div>
+            <button
+              type="button"
+              (click)="sincronizarConexao(c)"
+              [disabled]="syncingConexaoId === c.id || !pluggyConfigurado"
+              class="pof-btn pof-btn--ghost shrink-0 self-stretch sm:self-center"
+            >
+              {{ syncingConexaoId === c.id ? 'Sincronizando…' : 'Sincronizar extrato' }}
+            </button>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</section>

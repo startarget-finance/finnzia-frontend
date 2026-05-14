@@ -1,69 +1,86 @@
 /**
- * Estrutura compatível com `PlanoContasGerencialComponent.importarLote`:
- * raízes com `children` ou itens legados `{ tipo, nome }`.
- * Inspiração: plano gerencial típico (receitas / despesas) de sistemas como o Bom Controle.
+ * Plano de contas gerencial padrão (finzzia) — receitas / despesas em árvore.
+ * Formato compatível com `PlanoContasGerencialComponent.importarLote`:
+ * raízes `{ tipo, nome, children? }` com `children` opcionais e aninhamento recursivo.
  */
 export const PLANO_CONTAS_PADRAO_BOM_CONTROLE: unknown[] = [
-  // —— Receitas (cada item = categoria raiz) ——
-  { tipo: 'receita', nome: 'Ajuste de caixa' },
-  { tipo: 'receita', nome: 'Aplicações financeiras' },
-  { tipo: 'receita', nome: 'Aporte financeiro' },
-  { tipo: 'receita', nome: 'Venda de produto' },
-  { tipo: 'receita', nome: 'Venda de serviço' },
-  // —— Despesas (árvore) ——
-  { tipo: 'despesa', nome: 'Ajuste de caixa' },
+  // —— Receitas / Entradas ——
   {
-    tipo: 'despesa',
-    nome: 'Despesas bancárias',
-    children: [{ nome: 'Adm bancária' }, { nome: 'DOC' }],
+    tipo: 'receita',
+    nome: '1. RECEITA OPERACIONAL TOTAL',
+    children: [{ nome: 'Vendas' }],
   },
   {
-    tipo: 'despesa',
-    nome: 'Despesas de funcionamento',
+    tipo: 'receita',
+    nome: 'ENTRADAS NÃO OPERACIONAIS',
     children: [
-      { nome: 'Aluguel de imóveis' },
-      { nome: 'Cartório' },
-      { nome: 'Conta de água' },
-      { nome: 'Correio' },
-      { nome: 'Energia' },
-      { nome: 'Internet' },
-      { nome: 'Licença ou aluguel de softwares' },
-      { nome: 'Limpeza' },
-      { nome: 'Material de escritório' },
-      { nome: 'Telefonia' },
+      { nome: 'Aporte Financeiro' },
+      { nome: 'Juros Inadimplentes' },
+      { nome: 'Aporte Sócios' },
+      { nome: 'Rendimentos Financeiros' },
+    ],
+  },
+
+  // —— Despesas / Saídas ——
+  {
+    tipo: 'despesa',
+    nome: '2. CUSTOS VARIÁVEIS',
+    children: [
+      { nome: 'Comissões' },
+      { nome: 'Devolução Cliente' },
+      { nome: 'Taxas Cobranças' },
+      { nome: 'Tributos - Simples Nacional' },
     ],
   },
   {
     tipo: 'despesa',
-    nome: 'Funcionário',
+    nome: '3. DESPESAS OPERACIONAIS (FIXAS)',
     children: [
-      { nome: '13º salário' },
-      { nome: 'Assistência médica' },
-      { nome: 'Cursos e treinamentos' },
-      { nome: 'Exames pré e demissionais' },
-      { nome: 'FGTS' },
-      { nome: 'Horas extras' },
-      { nome: 'INSS' },
-      { nome: 'Premiação' },
-      { nome: 'Rescisões trabalhistas' },
-      { nome: 'Salário' },
-      { nome: 'Vale alimentação' },
-      { nome: 'Vale transporte' },
+      {
+        nome: 'Administrativas',
+        children: [
+          { nome: 'Adm - Advocacia' },
+          { nome: 'Adm - Aluguel' },
+          { nome: 'Adm - Certificado Digital' },
+          { nome: 'Adm - Conselho' },
+          { nome: 'Adm - Contabilidade' },
+          { nome: 'Adm - Energia Elétrica' },
+          { nome: 'Adm - IPTU' },
+          { nome: 'Adm - Internet/Telefone' },
+          { nome: 'Adm - Limpeza' },
+          { nome: 'Adm - Sistemas' },
+        ],
+      },
+      {
+        nome: 'Recursos Humanos',
+        children: [
+          { nome: 'Folha - Copa e Cozinha' },
+          { nome: 'Folha - Honorários (PJ)' },
+          { nome: 'Folha - INSS' },
+          { nome: 'Folha - Pró-labore/Retirada Sócios' },
+          { nome: 'Folha - Salários (CLT)' },
+        ],
+      },
     ],
   },
-  { tipo: 'despesa', nome: 'Honorários advocatícios' },
   {
     tipo: 'despesa',
-    nome: 'Impostos',
-    children: [{ nome: 'Alvará' }, { nome: 'IPTU' }, { nome: 'PIS' }],
+    nome: '4. DESPESAS ESTRATÉGICAS',
+    children: [
+      { nome: 'Cursos e Especializações' },
+      { nome: 'Marketing e Publicidade' },
+      { nome: 'Marketing e Publicidade - Google ADS' },
+      { nome: 'Marketing e Publicidade - Meta ADS' },
+    ],
   },
   {
     tipo: 'despesa',
-    nome: 'Investimentos',
-    children: [
-      { nome: 'Ações de marketing e publicidade' },
-      { nome: 'Confraternizações' },
-      { nome: 'Reformas' },
-    ],
+    nome: '5. ATIVIDADES DE INVESTIMENTO/MANUTENÇÃO',
+    children: [{ nome: 'Móveis e Equipamentos' }, { nome: 'Reformas e Manutenção' }],
+  },
+  {
+    tipo: 'despesa',
+    nome: '6. ATIVIDADES FINANCEIRAS',
+    children: [{ nome: 'Despesas Bancárias' }, { nome: 'Distribuição Lucro' }, { nome: 'Juros e Multas' }],
   },
 ];

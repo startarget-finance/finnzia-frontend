@@ -8,8 +8,17 @@
             <i class="fi fi-rr-file-import text-[1.35rem] leading-none text-white" aria-hidden="true"></i>
           </div>
           <div>
-            <h1 class="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Conciliação OFX</h1>
-            <p class="mt-0.5 text-sm text-slate-500">Pré-aprovação e histórico de importações bancárias (sem conciliação automática)</p>
+            <h1 class="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Conciliação de extratos</h1>
+            <p class="mt-0.5 max-w-2xl text-sm text-slate-500">
+              OFX e Open Finance (Pluggy) no <span class="font-semibold text-slate-700">finzzia</span>. Pré-aprovação dos
+              lançamentos importados — sem conciliação automática com o banco.
+            </p>
+            <p class="mt-2 text-xs text-slate-500">
+              <a routerLink="/open-finance" class="font-medium text-violet-600 underline hover:text-violet-700"
+                >Open Finance</a
+              >
+              · importe via arquivo na área abaixo
+            </p>
           </div>
         </div>
       </div>
@@ -31,6 +40,11 @@
           Os lançamentos importados usam o <span class="font-medium text-slate-700">nome do cadastro</span> e o vínculo
           com a conta. O identificador que veio no arquivo (número da conta no OFX) fica na observação quando for diferente
           do nome exibido.
+        </p>
+        <p class="mt-2 text-[11px] leading-relaxed text-slate-500">
+          Lotes <strong class="text-slate-700">Open Finance (Pluggy)</strong> aparecem aqui também — use o filtro
+          &quot;Tipo&quot; ou importe em
+          <a routerLink="/open-finance" class="font-medium text-violet-600 underline">Open Finance</a>.
         </p>
       </div>
       <div *ngIf="contasParaImportacao.length === 0" class="mb-4 rounded-xl border border-amber-200/90 bg-amber-50/90 px-4 py-2.5 text-xs text-amber-900">
@@ -77,6 +91,7 @@
               <option value="">Todos</option>
               <option value="MANUAL">Manual</option>
               <option value="AUTOMATICO">Automático</option>
+              <option value="PLUGGY">Open Finance (Pluggy)</option>
             </select>
           </div>
           <div>
@@ -146,9 +161,11 @@
             </tr>
             <tr *ngFor="let item of itensFiltrados" class="hover:bg-slate-50/70">
               <td class="px-3 py-3">
-                <span class="rounded-md px-2 py-1 text-xs font-semibold"
-                      [ngClass]="item.tipo === 'AUTOMATICO' ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-700'">
-                  {{ item.tipo || '-' }}
+                <span
+                  class="rounded-md px-2 py-1 text-xs font-semibold"
+                  [ngClass]="badgeClassTipoImportacao(item)"
+                >
+                  {{ labelTipoImportacao(item) }}
                 </span>
               </td>
               <td class="px-3 py-3">

@@ -319,6 +319,20 @@ export class ConciliacaoOfxComponent implements OnInit, OnDestroy {
     return d.toLocaleString('pt-BR');
   }
 
+  /** Badge na grade: OFX manual/automático vs Open Finance (Pluggy). */
+  labelTipoImportacao(item: ConciliacaoOfxItem): string {
+    const t = (item.tipo || '').toUpperCase();
+    if (t === 'PLUGGY') return 'Open Finance';
+    return item.tipo || '—';
+  }
+
+  badgeClassTipoImportacao(item: ConciliacaoOfxItem): string {
+    const t = (item.tipo || '').toUpperCase();
+    if (t === 'PLUGGY') return 'bg-violet-100 text-violet-800 ring-1 ring-violet-200/80';
+    if (t === 'AUTOMATICO') return 'bg-sky-100 text-sky-700';
+    return 'bg-slate-100 text-slate-700';
+  }
+
   isLoteSemNovosLancamentos(item: ConciliacaoOfxItem): boolean {
     const total = item.total ?? 0;
     const ignoradas = item.ignoradas ?? 0;

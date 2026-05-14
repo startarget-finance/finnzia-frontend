@@ -510,7 +510,17 @@
                 
                 <!-- Descrição -->
                 <td class="w-[28%] px-3 py-3.5 align-middle text-sm font-medium text-slate-900">
-                  <div class="line-clamp-1 break-words" [title]="formatarDescricaoResumida(mov.Nome)">{{ formatarDescricaoResumida(mov.Nome) }}</div>
+                  <div class="flex min-w-0 items-center gap-2">
+                    <span
+                      *ngIf="origemOpenFinance(mov)"
+                      class="shrink-0 rounded-md border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-800"
+                      title="Importado via Open Finance (Pluggy) no finzzia"
+                      >Open Finance</span
+                    >
+                    <div class="line-clamp-1 min-w-0 break-words" [title]="(mov.Nome || '').trim() || '—'">
+                      {{ formatarDescricaoResumida(mov.Nome) }}
+                    </div>
+                  </div>
                 </td>
                 
                 <!-- Cliente/Fornecedor -->

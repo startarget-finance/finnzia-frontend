@@ -9,6 +9,29 @@ export interface ErrorMessage {
   timestamp: Date;
 }
 
+const MSG_CONEXAO_INTERROMPIDA =
+  'A comunicação com o servidor caiu no meio da resposta (reinício da API, timeout ou rede). Tente de novo; se persistir, confira o console do backend.';
+
+/** Indica texto de socket/rede, não mensagem de validação de negócio da API. */
+export function looksLikeNetworkInfrastructureMessage(text: string | undefined | null): boolean {
+  if (text == null || typeof text !== 'string') return false;
+  const t = text.trim().toLowerCase();
+  if (!t) return false;
+  return (
+    t.includes('connection reset') ||
+    t.includes('econnreset') ||
+    t.includes('broken pipe') ||
+    t.includes('socket hang up') ||
+    t.includes('socket hung up') ||
+    t.includes('enetunreach') ||
+    t.includes('etimedout') ||
+    t.includes('eai_again') ||
+    t.includes('net::err_') ||
+    t.includes('failed to fetch') ||
+    t.includes('network error')
+  );
+}
+
 /**
  * Extrai texto legível do corpo de erro HTTP (API interna, Spring Boot, RFC 7807).
  */
@@ -16,7 +39,9 @@ export function extractHttpErrorBodyMessage(backendError: unknown): string | und
   if (backendError == null) return undefined;
   if (typeof backendError === 'string') {
     const t = backendError.trim();
-    return t.length > 0 ? t : undefined;
+    if (!t.length) return undefined;
+    if (looksLikeNetworkInfrastructureMessage(t)) return undefined;
+    return t;
   }
   if (typeof backendError !== 'object') return undefined;
   const o = backendError as Record<string, unknown>;
@@ -24,9 +49,20 @@ export function extractHttpErrorBodyMessage(backendError: unknown): string | und
     const v = o[key];
     return typeof v === 'string' && v.trim().length > 0 ? v.trim() : undefined;
   };
-  for (const key of ['mensagem', 'message', 'detail', 'error', 'title']) {
+  /** Corpo padrão do Spring Boot sem {@code mensagem} — o campo {@code error} costuma ser só "Bad Request". */
+  const springDefaultShape =
+    typeof o['status'] === 'number' &&
+    (typeof o['path'] === 'string' || typeof o['instance'] === 'string');
+  const isGenericReason = (s: string) =>
+    /^(Bad Request|Unauthorized|Forbidden|Not Found|Method Not Allowed|Internal Server Error)$/i.test(s);
+  for (const key of ['mensagem', 'detail', 'message', 'title', 'error']) {
     const s = pick(key);
-    if (s) return s;
+    if (!s) continue;
+    if (looksLikeNetworkInfrastructureMessage(s)) continue;
+    if (springDefaultShape && (key === 'error' || key === 'message' || key === 'title') && isGenericReason(s)) {
+      continue;
+    }
+    return s;
   }
   const errors = o['errors'];
   if (Array.isArray(errors) && errors.length > 0) {
@@ -70,14 +106,18 @@ export class ErrorService {
       const status = error.status;
       const backendError = error.error;
       const backendText = extractBackendText(backendError);
+      const rawString = typeof backendError === 'string' ? backendError.trim() : '';
+      const infraRaw =
+        rawString.length > 0 && looksLikeNetworkInfrastructureMessage(rawString);
 
       // Mensagens personalizadas por status
       switch (status) {
         case 400:
           errorMessage = {
-            message:
-              backendText || 'Dados inválidos. Verifique os campos e tente novamente.',
-            code: 'BAD_REQUEST',
+            message: infraRaw
+              ? MSG_CONEXAO_INTERROMPIDA
+              : backendText || 'Dados inválidos. Verifique os campos e tente novamente.',
+            code: infraRaw ? 'NETWORK_INTERRUPTED' : 'BAD_REQUEST',
             status: 400,
             timestamp: new Date()
           };

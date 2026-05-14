@@ -11,4 +11,6 @@ export const environment = {
     typeof process !== 'undefined' && process.env['GOOGLE_OAUTH_CLIENT_ID']
       ? String(process.env['GOOGLE_OAUTH_CLIENT_ID']).trim()
       : LOCAL_GOOGLE_OAUTH_CLIENT_ID_FALLBACK,
+  /** Dev: mostrar conector Sandbox Pluggy no widget. */
+  pluggyIncludeSandbox: true,
 };

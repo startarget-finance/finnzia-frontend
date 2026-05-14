@@ -1,0 +1,264 @@
+:host {
+  display: block;
+}
+
+/* ——— Botões (hierarquia clara: primário / secundário / fantasma) ——— */
+.pof-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: 2.75rem;
+  padding: 0.625rem 1.125rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    filter 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.pof-btn:focus-visible {
+  outline: 2px solid rgb(139 92 246);
+  outline-offset: 2px;
+}
+
+.pof-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pof-btn--primary {
+  border: none;
+  color: #fff;
+  background: linear-gradient(115deg, #7c3aed 0%, #6d28d9 45%, #0d9488 100%);
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.06),
+    0 4px 16px -2px rgb(124 58 237 / 0.35);
+}
+
+.pof-btn--primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.08),
+    0 6px 20px -2px rgb(124 58 237 / 0.4);
+}
+
+.pof-btn--secondary {
+  border: 1px solid rgb(226 232 240);
+  color: rgb(51 65 85);
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+.pof-btn--secondary:hover:not(:disabled) {
+  border-color: rgb(203 213 225);
+  background: rgb(248 250 252);
+  color: rgb(15 23 42);
+}
+
+.pof-btn--ghost {
+  border: 1px solid rgb(237 233 254);
+  color: rgb(91 33 182);
+  background: rgb(245 243 255 / 0.85);
+  box-shadow: none;
+}
+
+.pof-btn--ghost:hover:not(:disabled) {
+  border-color: rgb(196 181 253);
+  background: rgb(237 233 254);
+  color: rgb(76 29 149);
+}
+
+/* ——— Cartões de seção ——— */
+.pof-card {
+  overflow: hidden;
+  border-radius: 1.25rem;
+  border: 1px solid rgb(226 232 240 / 0.9);
+  background: #fff;
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 8px 24px -8px rgb(15 23 42 / 0.08);
+}
+
+.pof-card__head {
+  border-bottom: 1px solid rgb(241 245 249);
+  background: linear-gradient(180deg, rgb(248 250 252) 0%, rgb(255 255 255) 100%);
+  padding: 1rem 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .pof-card__head {
+    padding: 1rem 1.5rem;
+  }
+}
+
+.pof-card__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: rgb(15 23 42);
+}
+
+.pof-card__subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: rgb(100 116 139);
+}
+
+/* ——— Campos de formulário ——— */
+.pof-field {
+  display: block;
+}
+
+.pof-field__label {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgb(71 85 105);
+}
+
+.pof-input,
+.pof-select {
+  width: 100%;
+  border-radius: 0.625rem;
+  border: 1px solid rgb(226 232 240);
+  background: #fff;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: rgb(15 23 42);
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.pof-input:hover,
+.pof-select:hover {
+  border-color: rgb(203 213 225);
+}
+
+.pof-input:focus,
+.pof-select:focus {
+  outline: none;
+  border-color: rgb(167 139 250);
+  box-shadow: 0 0 0 3px rgb(167 139 250 / 0.22);
+}
+
+.pof-select {
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  background-size: 1rem;
+  padding-right: 2.25rem;
+}
+
+/* ——— Linha de conexão ——— */
+.pof-connection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.125rem 1.25rem;
+  border-radius: 1rem;
+  border: 1px solid rgb(241 245 249);
+  background: rgb(248 250 252 / 0.65);
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.pof-connection:hover {
+  border-color: rgb(226 232 240);
+  background: rgb(255 255 255 / 0.95);
+  box-shadow: 0 2px 12px rgb(15 23 42 / 0.05);
+}
+
+@media (min-width: 640px) {
+  .pof-connection {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+  }
+}
+
+.pof-connection__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: rgb(15 23 42);
+  line-height: 1.35;
+}
+
+.pof-connection__meta {
+  margin: 0.375rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: rgb(100 116 139);
+}
+
+.pof-badge {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  border-radius: 9999px;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: rgb(91 33 182);
+  background: rgb(237 233 254);
+  border: 1px solid rgb(221 214 254);
+}
+
+.pof-connection__id {
+  margin: 0.625rem 0 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  color: rgb(148 163 184);
+  word-break: break-all;
+}
+
+.pof-connection__id span {
+  font-weight: 600;
+  color: rgb(148 163 184);
+  margin-right: 0.35rem;
+}
+
+.pof-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem;
+  border-radius: 1rem;
+  border: 1px solid rgb(226 232 240 / 0.85);
+  background: rgb(255 255 255 / 0.9);
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.04);
+}
+
+@media (min-width: 640px) {
+  .pof-toolbar {
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+}
