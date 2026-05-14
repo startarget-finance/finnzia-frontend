@@ -33,6 +33,11 @@ export class AppComponent implements OnInit, OnDestroy {
     return this.authService.getCurrentUser()?.role === 'admin';
   }
 
+  /** Conta administrador: menu reduzido (visão geral + gerenciar acessos). */
+  painelAdminSomente(): boolean {
+    return this.authService.hasRole('admin');
+  }
+
   /**
    * Retorna o nome do usuário atual
    */
@@ -98,57 +103,103 @@ export class AppComponent implements OnInit, OnDestroy {
 
   // Métodos específicos para cada módulo
   canAccessDashboard(): boolean {
+    if (this.painelAdminSomente()) {
+      return true;
+    }
     return this.hasPermission('dashboard');
   }
 
+  canAccessGerenciarAcessos(): boolean {
+    if (this.painelAdminSomente()) {
+      return true;
+    }
+    return this.hasPermission('gerenciar-acessos');
+  }
+
   canAccessRotina(): boolean {
+    if (this.painelAdminSomente()) {
+      return false;
+    }
     return this.hasPermission('dashboard');
   }
 
   canAccessRelatorio(): boolean {
+    if (this.painelAdminSomente()) {
+      return false;
+    }
     return this.hasPermission('relatorio');
   }
 
   canAccessMovimentacoes(): boolean {
+    if (this.painelAdminSomente()) {
+      return false;
+    }
     return this.hasPermission('movimentacoes');
   }
 
   canAccessConciliacaoOfx(): boolean {
+    if (this.painelAdminSomente()) {
+      return false;
+    }
+    return this.hasPermission('movimentacoes');
+  }
+
+  canAccessPluggyOpenFinance(): boolean {
+    if (this.painelAdminSomente()) {
+      return false;
+    }
     return this.hasPermission('movimentacoes');
   }
 
   canAccessFaturaCartao(): boolean {
+    if (this.painelAdminSomente()) {
+      return false;
+    }
     return this.hasPermission('movimentacoes');
   }
 
   canAccessFluxoCaixa(): boolean {
+    if (this.painelAdminSomente()) {
+      return false;
+    }
     return this.hasPermission('fluxo-caixa');
   }
 
   canAccessContratos(): boolean {
+    if (this.painelAdminSomente()) {
+      return false;
+    }
     return this.hasPermission('contratos');
   }
 
   /** Frente comercial: receitas em Movimentações. Quem tem movimentacoes ou contratos enxerga o atalho. */
   canAccessFrenteCaixaComercial(): boolean {
+    if (this.painelAdminSomente()) {
+      return false;
+    }
     return this.hasPermission('movimentacoes') || this.hasPermission('contratos');
   }
 
   /** Parametrização operacional usada por Financeiro/DFC. */
   canAccessParametrizacao(): boolean {
+    if (this.painelAdminSomente()) {
+      return false;
+    }
     return this.hasPermission('fluxo-caixa');
   }
 
   canAccessChat(): boolean {
+    if (this.painelAdminSomente()) {
+      return false;
+    }
     return this.hasPermission('chat');
   }
 
   canAccessAssinatura(): boolean {
+    if (this.painelAdminSomente()) {
+      return false;
+    }
     return this.hasPermission('assinatura');
-  }
-
-  canAccessGerenciarAcessos(): boolean {
-    return this.hasPermission('gerenciar-acessos');
   }
 
   onSidebarMouseEnter(): void {

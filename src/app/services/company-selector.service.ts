@@ -173,6 +173,16 @@ export class CompanySelectorService {
   }
 
   /**
+   * Nome amigável já conhecido no app (vínculo usuário–empresa / sessão), sem exigir `ativo`.
+   * Útil para painel admin onde o ERP pode devolver só "Empresa 1".
+   */
+  obterNomeEmpresaCadastrado(idEmpresa: number): string | null {
+    const e = this.empresasPermitidas.value.find((x) => x.idEmpresa === idEmpresa);
+    const n = e?.nomeEmpresa?.trim();
+    return n || null;
+  }
+
+  /**
    * Define se está carregando
    */
   setCarregando(carregando: boolean): void {

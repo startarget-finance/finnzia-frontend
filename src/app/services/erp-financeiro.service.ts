@@ -367,6 +367,18 @@ export class ErpFinanceiroService {
     });
   }
 
+  /** Resumo financeiro forçando contexto de empresa (ex.: painel admin multi-empresa). */
+  obterResumoFinanceiroParaEmpresa(idEmpresa: number, filtros: FiltrosMovimentacoes = {}): Observable<ResumoFinanceiroResponse> {
+    let params = new HttpParams();
+    if (filtros.dataInicio) params = params.set('dataInicio', filtros.dataInicio);
+    if (filtros.dataTermino) params = params.set('dataTermino', filtros.dataTermino);
+    const headers = this.getHeaders().set('X-Empresa-Id', String(idEmpresa));
+    return this.http.get<ResumoFinanceiroResponse>(`${this.apiUrl}/resumo-financeiro`, {
+      headers,
+      params
+    });
+  }
+
   gerarDFC(filtros: DfcFiltros): Observable<DfcResponse> {
     const params = new HttpParams()
       .set('dataInicio', filtros.dataInicio)

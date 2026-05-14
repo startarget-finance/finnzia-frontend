@@ -52,7 +52,8 @@ export class LoginComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit(): void {
     if (this.authService.isAuthenticated()) {
-      this.router.navigate(['/gerenciar-acessos']);
+      const destino = this.authService.hasRole('admin') ? '/dashboard' : '/rotina';
+      void this.router.navigate([destino]);
       return;
     }
 
@@ -150,7 +151,8 @@ export class LoginComponent implements OnInit, OnDestroy, AfterViewInit {
     try {
       const result = await this.authService.loginWithGoogle(credential);
       if (result.success) {
-        this.router.navigate(['/gerenciar-acessos']);
+        const destino = this.authService.hasRole('admin') ? '/dashboard' : '/rotina';
+        void this.router.navigate([destino]);
       } else if (result.timeout) {
         this.errorMessage =
           'Não foi possível conectar no momento. Tente novamente em alguns segundos.';
@@ -207,7 +209,8 @@ export class LoginComponent implements OnInit, OnDestroy, AfterViewInit {
       );
 
       if (result.success) {
-        this.router.navigate(['/gerenciar-acessos']);
+        const destino = this.authService.hasRole('admin') ? '/dashboard' : '/rotina';
+        void this.router.navigate([destino]);
       } else if (result.timeout) {
         this.errorMessage =
           'Não foi possível conectar no momento. Tente novamente em alguns segundos.';

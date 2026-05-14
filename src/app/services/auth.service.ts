@@ -477,9 +477,12 @@ export class AuthService {
     const user = this.getCurrentUser();
     if (!user) return false;
     
-    // Admin pode acessar tudo
-    if (this.normalizeRole(user.role) === 'admin') return true;
-    
+    /** Conta administrador: apenas visão consolidada e gestão de usuários/acessos. */
+    if (this.normalizeRole(user.role) === 'admin') {
+      const rotasAdmin = new Set(['dashboard', 'gerenciar-acessos', 'meu-perfil']);
+      return rotasAdmin.has(route);
+    }
+
     const map: Record<string, keyof NonNullable<User['permissions']>> = {
       'dashboard': 'dashboard',
       'rotina': 'dashboard',

@@ -3,13 +3,22 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
-import { Subscription } from 'rxjs';
+import { Subscription, firstValueFrom } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { DadosFinanceiros } from '../../models/dados-financeiros.model';
 import { ErpFinanceiroService, ResumoFinanceiroResponse, FiltrosMovimentacoes } from '../../services/erp-financeiro.service';
 import { CompanySelectorService } from '../../services/company-selector.service';
+import { AuthService } from '../../services/auth.service';
 
 Chart.register(...registerables);
+
+interface AdminEmpresaResumoLinha {
+  idEmpresa: number;
+  nome: string;
+  carregando: boolean;
+  erro?: string;
+  resumo?: ResumoFinanceiroResponse;
+}
 
 @Component({
   selector: 'app-dashboard',
@@ -18,8 +27,18 @@ Chart.register(...registerables);
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent implements OnInit, OnDestroy {
+  /** Conta administrador: substitui o dashboard operacional por visão multi-empresa. */
+  painelAdmin = false;
+  adminEmpresas: AdminEmpresaResumoLinha[] = [];
+  adminCarregandoLista = false;
+  adminErroLista: string | null = null;
+  /** Mês de referência dos números (mês corrente), ex.: "Maio de 2026". */
+  adminMesReferenciaLabel = '';
+
   private resumoSubscription?: Subscription;
   private empresaSubscription?: Subscription;
+  /** Reaplica nomes do cadastro quando a lista do seletor chega (corrige "Empresa 1" do ERP). */
+  private adminNomesCadastroSub?: Subscription;
   resumoFonteDados: string | null = null;
   resumoCarregando: boolean = false;
   receitaChart: Chart | null = null;
@@ -98,10 +117,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
     private erpFinanceiroService: ErpFinanceiroService,
-    private companySelectorService: CompanySelectorService
+    private companySelectorService: CompanySelectorService,
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
+    this.painelAdmin = this.authService.hasRole('admin');
+    if (this.painelAdmin) {
+      this.adminNomesCadastroSub = this.companySelectorService.empresasPermitidas$.subscribe(() => {
+        if (this.adminEmpresas.length > 0) {
+          this.aplicarNomesCadastroNasLinhasAdmin();
+        }
+      });
+      void this.carregarPainelAdmin();
+      return;
+    }
     this.inicializarFiltros();
     this.onTipoFiltroAlterado();
     this.visibleMonth = this.dataInicial ? this.parseLocalDateStr(this.dataInicial) : new Date();
@@ -113,6 +143,148 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  private periodoMesAtual(): { dataInicio: string; dataTermino: string } {
+    const hoje = new Date();
+    const y = hoje.getFullYear();
+    const m = hoje.getMonth();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const dataInicio = `${y}-${pad(m + 1)}-01`;
+    const ultimo = new Date(y, m + 1, 0).getDate();
+    const dataTermino = `${y}-${pad(m + 1)}-${pad(ultimo)}`;
+    return { dataInicio, dataTermino };
+  }
+
+  /** Quando o ERP manda nome genérico ("Empresa 1"), mostramos ícone em vez de iniciais "E1". */
+  painelAdminUsarIconeEmpresa(nome: string): boolean {
+    const t = (nome || '').trim();
+    if (!t || t === 'Nome não cadastrado no ERP') return true;
+    return /^empresa\s*\d+$/i.test(t);
+  }
+
+  /** Iniciais para avatar no painel admin (até 2 letras). */
+  iniciaisPainelAdmin(nome: string): string {
+    const parts = nome.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '—';
+    if (parts.length === 1) {
+      const w = parts[0];
+      return w.length >= 2 ? w.substring(0, 2).toUpperCase() : w.charAt(0).toUpperCase();
+    }
+    return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+  }
+
+  private nomeListaEmpresaDaRow(row: unknown): string {
+    const r = row as Record<string, unknown>;
+    const keys = [
+      'Nome',
+      'nome',
+      'RazaoSocial',
+      'razaoSocial',
+      'NomeFantasia',
+      'nomeFantasia',
+      'descricao',
+      'Descricao',
+    ];
+    for (const k of keys) {
+      const v = r[k];
+      if (typeof v === 'string') {
+        const t = v.trim();
+        if (t) return t;
+      }
+    }
+    return '';
+  }
+
+  private aplicarNomesCadastroNasLinhasAdmin(): void {
+    this.adminEmpresas = this.adminEmpresas.map((linha) => {
+      const doCadastro = this.companySelectorService.obterNomeEmpresaCadastrado(linha.idEmpresa)?.trim();
+      if (!doCadastro) {
+        return linha;
+      }
+      const atual = (linha.nome || '').trim();
+      const erpGenerico = /^empresa\s*\d+$/i.test(atual);
+      const semNome =
+        !atual || atual === 'Nome não cadastrado no ERP' || erpGenerico;
+      if (semNome) {
+        return { ...linha, nome: doCadastro };
+      }
+      return linha;
+    });
+  }
+
+  private mensagemErroAdminResumo(err: unknown): string {
+    const e = err as { error?: { mensagem?: string } };
+    const m = e?.error?.mensagem;
+    if (typeof m === 'string' && m.trim()) {
+      return m.trim();
+    }
+    return 'Não foi possível carregar o resumo desta empresa.';
+  }
+
+  private async carregarPainelAdmin(): Promise<void> {
+    this.adminErroLista = null;
+    this.adminCarregandoLista = true;
+    this.adminEmpresas = [];
+    const hojeRef = new Date();
+    const refMes = new Date(hojeRef.getFullYear(), hojeRef.getMonth(), 1);
+    const mesStr = refMes.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    this.adminMesReferenciaLabel = mesStr.charAt(0).toUpperCase() + mesStr.slice(1);
+    try {
+      const lista = await firstValueFrom(this.erpFinanceiroService.listarEmpresas());
+      const raw = lista?.empresas ?? [];
+      const { dataInicio, dataTermino } = this.periodoMesAtual();
+      const linhas: AdminEmpresaResumoLinha[] = raw
+        .map((row) => {
+          const idEmpresa = Number((row as { Id?: number; id?: number }).Id ?? (row as { id?: number }).id) || 0;
+          const nomeLista = this.nomeListaEmpresaDaRow(row).trim();
+          const nomeCadastro = this.companySelectorService.obterNomeEmpresaCadastrado(idEmpresa)?.trim() ?? '';
+          const erpGenerico = /^empresa\s*\d+$/i.test(nomeLista);
+
+          let nome = nomeCadastro;
+          if (!nome && nomeLista && !erpGenerico) {
+            nome = nomeLista;
+          }
+          if (!nome && nomeLista) {
+            nome = nomeLista;
+          }
+          if (!nome) {
+            nome = 'Nome não cadastrado no ERP';
+          }
+          return { idEmpresa, nome, carregando: true };
+        })
+        .filter((r) => r.idEmpresa > 0);
+      if (linhas.length === 0) {
+        this.adminErroLista = 'Nenhuma empresa retornada pelo ERP para montar o painel.';
+        return;
+      }
+      this.adminEmpresas = linhas;
+      this.aplicarNomesCadastroNasLinhasAdmin();
+      this.adminCarregandoLista = false;
+      for (let i = 0; i < this.adminEmpresas.length; i++) {
+        const row = this.adminEmpresas[i];
+        try {
+          const resumo = await firstValueFrom(
+            this.erpFinanceiroService.obterResumoFinanceiroParaEmpresa(row.idEmpresa, {
+              dataInicio,
+              dataTermino,
+            })
+          );
+          this.adminEmpresas = this.adminEmpresas.map((x, j) =>
+            j === i ? { ...x, resumo, carregando: false } : x
+          );
+        } catch (err) {
+          const msg = this.mensagemErroAdminResumo(err);
+          this.adminEmpresas = this.adminEmpresas.map((x, j) =>
+            j === i ? { ...x, erro: msg, carregando: false } : x
+          );
+        }
+      }
+    } catch {
+      this.adminErroLista = 'Não foi possível listar as empresas do ERP.';
+    } finally {
+      this.adminCarregandoLista = false;
+    }
+  }
+
   ngOnDestroy() {
     if (this.receitaChart) {
       this.receitaChart.destroy();
@@ -122,6 +294,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
     this.resumoSubscription?.unsubscribe();
     this.empresaSubscription?.unsubscribe();
+    this.adminNomesCadastroSub?.unsubscribe();
   }
 
   // ===== Date Range Picker Helpers =====
