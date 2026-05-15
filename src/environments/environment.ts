@@ -7,7 +7,6 @@ export const environment = {
     typeof process !== 'undefined' && process.env['GOOGLE_OAUTH_CLIENT_ID']
       ? String(process.env['GOOGLE_OAUTH_CLIENT_ID']).trim()
       : '',
-  /** Pluggy Connect: exibir conectores Sandbox no widget (desligue em produção se quiser só contas reais). */
-  pluggyIncludeSandbox:
-    typeof process !== 'undefined' && process.env['PLUGGY_INCLUDE_SANDBOX'] === 'true',
+  /** Produção: nunca incluir conector Sandbox no widget. */
+  pluggyIncludeSandbox: false,
 };

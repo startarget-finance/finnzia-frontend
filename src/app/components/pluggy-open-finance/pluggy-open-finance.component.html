@@ -40,7 +40,9 @@
               >
               Conectar
             </span>
-            Abra o widget Pluggy e conclua o login no banco (sandbox: user-ok / password-ok / MFA 123456 quando pedido).
+            Abra o widget Pluggy e conclua o login no banco<ng-container *ngIf="isDev || pluggyIncludeSandboxWidget"
+              > (sandbox: user-ok / password-ok / MFA 123456 quando pedido)</ng-container
+            >.
           </li>
           <li
             class="rounded-2xl border border-slate-200/90 bg-slate-50/90 px-4 py-3.5 text-xs leading-relaxed text-slate-600 shadow-sm"
@@ -67,6 +69,18 @@
           </li>
         </ol>
       </div>
+    </div>
+
+    <div
+      *ngIf="!carregandoStatus && pluggyConfigurado && (pluggySandboxBackend || pluggyIncludeSandboxWidget)"
+      class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3.5 text-sm leading-relaxed text-red-950 shadow-sm"
+    >
+      <strong>Modo demo Pluggy.</strong> O widget mostra “Aplicação demo” porque as credenciais são de
+      <strong>Development/Sandbox</strong> no painel Pluggy ou
+      <code class="rounded bg-white/80 px-1">PLUGGY_SANDBOX=true</code> no backend. Em produção: Client ID/Secret da aba
+      <strong>Production</strong> no
+      <a href="https://dashboard.pluggy.ai" target="_blank" rel="noopener" class="font-semibold underline">dashboard Pluggy</a>,
+      <code class="rounded bg-white/80 px-1">PLUGGY_SANDBOX=false</code> no Render e redeploy da API.
     </div>
 
     <div

@@ -98,10 +98,16 @@ function extrairItemPluggyOnSuccess(payload: unknown): {
   styleUrls: ['./pluggy-open-finance.component.scss'],
 })
 export class PluggyOpenFinanceComponent implements OnInit, OnDestroy {
+  readonly isDev = !environment.production;
+  /** Dev local ou flag vinda do backend (PLUGGY_INCLUDE_SANDBOX no Render). */
+  pluggyIncludeSandboxWidget = environment.pluggyIncludeSandbox;
+
   carregandoStatus = true;
   carregandoConexoes = true;
   abrindoWidget = false;
   pluggyConfigurado = false;
+  /** Backend com PLUGGY_SANDBOX=true ou credenciais Development no dashboard Pluggy. */
+  pluggySandboxBackend = false;
   conexoes: PluggyConexao[] = [];
 
   /** Sincronização: últimos 90 dias no backend se datas vazias. */
@@ -127,8 +133,17 @@ export class PluggyOpenFinanceComponent implements OnInit, OnDestroy {
         finalize(() => (this.carregandoStatus = false))
       )
       .subscribe({
-        next: (s) => (this.pluggyConfigurado = !!s?.configured),
-        error: () => (this.pluggyConfigurado = false),
+        next: (s) => {
+          this.pluggyConfigurado = !!s?.configured;
+          this.pluggySandboxBackend = !!s?.sandboxMode;
+          this.pluggyIncludeSandboxWidget =
+            this.isDev || environment.pluggyIncludeSandbox || !!s?.includeSandbox;
+        },
+        error: () => {
+          this.pluggyConfigurado = false;
+          this.pluggySandboxBackend = false;
+          this.pluggyIncludeSandboxWidget = this.isDev || environment.pluggyIncludeSandbox;
+        },
       });
     this.recarregarConexoes();
     this.companySelector.empresaSelecionada$.pipe(takeUntil(this.destroy$)).subscribe(() => {
@@ -323,7 +338,7 @@ export class PluggyOpenFinanceComponent implements OnInit, OnDestroy {
               this.abrindoWidget = false;
             },
           };
-          if (environment.pluggyIncludeSandbox) {
+          if (this.pluggyIncludeSandboxWidget) {
             opts['includeSandbox'] = true;
           }
           const widget = new Ctor(opts);

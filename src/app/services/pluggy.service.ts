@@ -8,6 +8,10 @@ import { CompanySelectorService } from './company-selector.service';
 
 export interface PluggyStatus {
   configured: boolean;
+  /** true = credenciais Development/Sandbox no backend (widget Pluggy em modo demo). */
+  sandboxMode?: boolean;
+  /** true = incluir conector Sandbox no widget (PLUGGY_INCLUDE_SANDBOX no backend). */
+  includeSandbox?: boolean;
 }
 
 export interface PluggyConnectTokenResponse {
