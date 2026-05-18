@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ComparacaoServicosComponent } from '../comparacao-servicos/comparacao-servicos.component';
 import { GoogleSheetsService } from '../../services/google-sheets.service';
+import { API_CONFIG } from '../../config/api.config';
 
 @Component({
   standalone: true,
@@ -15,6 +16,7 @@ export class LandingComponent implements OnInit, AfterViewInit {
   /** Número WhatsApp Finzzia (DDI + DDD + número, só dígitos) */
   readonly whatsappNumber = '554991984101';
   readonly emailPlaceholderDiagnostico = 'nome@empresa.com.br';
+  readonly googleSheetsWebAppUrl = API_CONFIG.GOOGLE_SHEETS_WEB_APP_URL?.trim() ?? '';
 
   readonly opcoesSegmentoDiagnostico = [
     { value: '', label: 'Selecione o ramo de atuação' },
@@ -451,12 +453,21 @@ export class LandingComponent implements OnInit, AfterViewInit {
       })
       .subscribe({
         next: result => {
-          this.salvandoDiagnostico = false;
           if (result.success) {
             this.diagnosticoEnviado = true;
-            this.router.navigate(['/obrigado']);
+            const irParaObrigado = () => {
+              this.salvandoDiagnostico = false;
+              this.router.navigate(['/obrigado']);
+            };
+            // No celular, aguarda o POST no iframe terminar antes de trocar de página
+            if (this.googleSheetsService.isMobileDevice()) {
+              setTimeout(irParaObrigado, 400);
+            } else {
+              irParaObrigado();
+            }
             return;
           }
+          this.salvandoDiagnostico = false;
           this.diagnosticoErro =
             'Não foi possível registrar seu contato. Tente novamente ou fale pelo WhatsApp.';
         },
