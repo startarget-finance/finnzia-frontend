@@ -8,6 +8,7 @@ import {
   ClienteCadastroPayload,
   ClienteCadastroService
 } from '../../services/cliente-cadastro.service';
+import { CepLookupService } from '../../services/cep-lookup.service';
 import { maskBrPhone, maskCep, maskCpf, maskCpfCnpj, onlyDigits } from '../../utils/input-masks';
 import { buildDeleteConfirmOptions, confirmUnsavedChanges } from '../../utils/sweet-alerts';
 
@@ -51,8 +52,12 @@ export class ClienteCadastroComponent implements OnInit {
   formCpf = '';
   formBloqueado = false;
   consultandoCnpj = false;
+  consultandoCep = false;
+  statusConsultaCep: string | null = null;
   private ultimoCnpjConsultado = '';
+  private ultimoCepConsultado = '';
   private cnpjLookupTimer: ReturnType<typeof setTimeout> | null = null;
+  private cepLookupTimer: ReturnType<typeof setTimeout> | null = null;
   private modalSnapshot = '';
 
   private readonly coresAvatar = [
@@ -66,7 +71,8 @@ export class ClienteCadastroComponent implements OnInit {
 
   constructor(
     private readonly api: ClienteCadastroService,
-    private readonly companySelector: CompanySelectorService
+    private readonly companySelector: CompanySelectorService,
+    private readonly cepLookup: CepLookupService
   ) {}
 
   ngOnInit(): void {
@@ -109,11 +115,18 @@ export class ClienteCadastroComponent implements OnInit {
   onCepInput(): void {
     const digits = onlyDigits(this.formCep);
     this.formCep = maskCep(digits);
+    this.statusConsultaCep = null;
+    if (digits.length === 8) {
+      this.agendarConsultaCep(digits);
+    }
   }
 
   onCepBlur(): void {
     const digits = onlyDigits(this.formCep);
     this.formCep = maskCep(digits);
+    if (digits.length === 8) {
+      this.consultarCepParaPreencher(digits);
+    }
   }
 
   onCpfContatoInput(): void {
@@ -209,10 +222,17 @@ export class ClienteCadastroComponent implements OnInit {
     this.formCpf = '';
     this.formBloqueado = false;
     this.consultandoCnpj = false;
+    this.consultandoCep = false;
+    this.statusConsultaCep = null;
     this.ultimoCnpjConsultado = '';
+    this.ultimoCepConsultado = '';
     if (this.cnpjLookupTimer) {
       clearTimeout(this.cnpjLookupTimer);
       this.cnpjLookupTimer = null;
+    }
+    if (this.cepLookupTimer) {
+      clearTimeout(this.cepLookupTimer);
+      this.cepLookupTimer = null;
     }
     this.atualizarSnapshotModal();
     this.modalAberto = true;
@@ -233,10 +253,17 @@ export class ClienteCadastroComponent implements OnInit {
     this.formCpf = maskCpf(onlyDigits(c.cpf || ''));
     this.formBloqueado = !!c.bloqueado;
     this.consultandoCnpj = false;
+    this.consultandoCep = false;
+    this.statusConsultaCep = null;
     this.ultimoCnpjConsultado = onlyDigits(c.cpfCnpj || '');
+    this.ultimoCepConsultado = onlyDigits(c.cep || '');
     if (this.cnpjLookupTimer) {
       clearTimeout(this.cnpjLookupTimer);
       this.cnpjLookupTimer = null;
+    }
+    if (this.cepLookupTimer) {
+      clearTimeout(this.cepLookupTimer);
+      this.cepLookupTimer = null;
     }
     this.atualizarSnapshotModal();
     this.modalAberto = true;
@@ -465,6 +492,46 @@ export class ClienteCadastroComponent implements OnInit {
     this.cnpjLookupTimer = setTimeout(() => {
       this.consultarCnpjParaPreencher(cnpjDigits);
     }, 500);
+  }
+
+  private agendarConsultaCep(cepDigits: string): void {
+    if (this.cepLookupTimer) {
+      clearTimeout(this.cepLookupTimer);
+      this.cepLookupTimer = null;
+    }
+    this.cepLookupTimer = setTimeout(() => {
+      this.consultarCepParaPreencher(cepDigits);
+    }, 400);
+  }
+
+  private consultarCepParaPreencher(cepDigits: string): void {
+    if (cepDigits.length !== 8) {
+      return;
+    }
+    if (this.ultimoCepConsultado === cepDigits || this.consultandoCep) {
+      return;
+    }
+    this.consultandoCep = true;
+    this.statusConsultaCep = null;
+    this.cepLookup.consultar(cepDigits).subscribe({
+      next: (resp) => {
+        this.consultandoCep = false;
+        if (!resp) {
+          this.statusConsultaCep = 'CEP não encontrado.';
+          return;
+        }
+        this.formCep = maskCep(resp.cep);
+        if (resp.enderecoFormatado) {
+          this.formEndereco = resp.enderecoFormatado;
+        }
+        this.ultimoCepConsultado = cepDigits;
+        this.statusConsultaCep = 'Endereço preenchido automaticamente.';
+      },
+      error: () => {
+        this.consultandoCep = false;
+        this.statusConsultaCep = 'Não foi possível consultar o CEP agora.';
+      }
+    });
   }
 
   private consultarCnpjParaPreencher(cnpjDigits: string): void {

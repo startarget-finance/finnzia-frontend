@@ -15,7 +15,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (
     req.url.includes('functions-api.clint.digital') ||
     req.url.includes('clint.digital') ||
-    req.url.includes('brasilapi.com.br')
+    req.url.includes('brasilapi.com.br') ||
+    req.url.includes('viacep.com.br')
   ) {
     return next(req);
   }
