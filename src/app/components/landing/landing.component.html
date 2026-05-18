@@ -1123,24 +1123,5 @@
       </div>
     </div>
   </footer>
-
-  <!-- Envio Google Sheets (formulário no DOM — necessário no mobile) -->
-  <iframe
-    id="google-sheets-iframe"
-    name="google-sheets-iframe"
-    title="Envio diagnóstico"
-    tabindex="-1"
-    aria-hidden="true"
-    class="fixed -left-[9999px] top-0 h-px w-px border-0 opacity-0 invisible"
-  ></iframe>
-  <form
-    id="google-sheets-form"
-    method="POST"
-    [attr.action]="googleSheetsWebAppUrl"
-    target="google-sheets-iframe"
-    enctype="application/x-www-form-urlencoded"
-    aria-hidden="true"
-    class="fixed -left-[9999px] top-0 h-px w-px opacity-0 invisible"
-  ></form>
 </div>
 

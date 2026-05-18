@@ -3,8 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { ComparacaoServicosComponent } from '../comparacao-servicos/comparacao-servicos.component';
-import { GoogleSheetsService } from '../../services/google-sheets.service';
-import { API_CONFIG } from '../../config/api.config';
+import { DiagnosticoLeadService } from '../../services/diagnostico-lead.service';
 
 @Component({
   standalone: true,
@@ -16,8 +15,6 @@ export class LandingComponent implements OnInit, AfterViewInit {
   /** Número WhatsApp Finzzia (DDI + DDD + número, só dígitos) */
   readonly whatsappNumber = '554991984101';
   readonly emailPlaceholderDiagnostico = 'nome@empresa.com.br';
-  readonly googleSheetsWebAppUrl = API_CONFIG.GOOGLE_SHEETS_WEB_APP_URL?.trim() ?? '';
-
   readonly opcoesSegmentoDiagnostico = [
     { value: '', label: 'Selecione o ramo de atuação' },
     { value: 'Agência de marketing ou publicidade', label: 'Agência de marketing ou publicidade' },
@@ -126,7 +123,7 @@ export class LandingComponent implements OnInit, AfterViewInit {
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private googleSheetsService: GoogleSheetsService
+    private diagnosticoLeadService: DiagnosticoLeadService
   ) {}
 
   ngOnInit(): void {
@@ -441,7 +438,7 @@ export class LandingComponent implements OnInit, AfterViewInit {
 
     this.salvandoDiagnostico = true;
 
-    this.googleSheetsService
+    this.diagnosticoLeadService
       .salvarDiagnostico({
         nome,
         email,
@@ -453,21 +450,12 @@ export class LandingComponent implements OnInit, AfterViewInit {
       })
       .subscribe({
         next: result => {
+          this.salvandoDiagnostico = false;
           if (result.success) {
             this.diagnosticoEnviado = true;
-            const irParaObrigado = () => {
-              this.salvandoDiagnostico = false;
-              this.router.navigate(['/obrigado']);
-            };
-            // No celular, aguarda o POST no iframe terminar antes de trocar de página
-            if (this.googleSheetsService.isMobileDevice()) {
-              setTimeout(irParaObrigado, 400);
-            } else {
-              irParaObrigado();
-            }
+            this.router.navigate(['/obrigado']);
             return;
           }
-          this.salvandoDiagnostico = false;
           this.diagnosticoErro =
             'Não foi possível registrar seu contato. Tente novamente ou fale pelo WhatsApp.';
         },

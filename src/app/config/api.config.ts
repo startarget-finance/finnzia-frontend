@@ -67,21 +67,20 @@ export const API_CONFIG = {
   CLINT_WEBHOOK_URL: 'https://functions-api.clint.digital/endpoints/integration/webhook/1a4381ef-bc1a-4a6f-81a9-8ce684649adb',
 
   // ===========================
-  // GOOGLE SHEETS - INTEGRAÇÃO
+  // DIAGNÓSTICO LANDING → PIPEDREAM → GOOGLE SHEETS
   // ===========================
-  // Planilha: Diagnósticos Finzzia
-  // https://docs.google.com/spreadsheets/d/1FF9d21qYL2niqEZiVMg8FoBWnig30hqFZKpt6rcaNc0/
-  // Script de deploy: finnzia-frontend/scripts/google-apps-script-diagnostico.gs
-  GOOGLE_SHEETS_SPREADSHEET_ID: '1FF9d21qYL2niqEZiVMg8FoBWnig30hqFZKpt6rcaNc0',
-  GOOGLE_SHEETS_SHEET_GID: '1670473388',
-  // URL do Google Apps Script Web App para salvar diagnósticos
-  GOOGLE_SHEETS_WEB_APP_URL: (() => {
-    // Pode ser configurado via variável de ambiente
-    if (typeof process !== 'undefined' && process.env['GOOGLE_SHEETS_WEB_APP_URL']) {
-      return process.env['GOOGLE_SHEETS_WEB_APP_URL'];
+  // Planilha destino: https://docs.google.com/spreadsheets/d/1FF9d21qYL2niqEZiVMg8FoBWnig30hqFZKpt6rcaNc0/
+  //
+  // No Pipedream: HTTP trigger (POST) → Google Sheets "Add Row"
+  // Campos do body JSON: dataHora, nome, email, telefone, segmento, faturamento, contexto, origem
+  //
+  // Cole a URL do webhook (ex: https://eoixxxx.m.pipedream.net) em PIPEDREAM_DIAGNOSTICO_WEBHOOK_URL
+  // ou defina a env PIPEDREAM_DIAGNOSTICO_WEBHOOK_URL no build/deploy.
+  PIPEDREAM_DIAGNOSTICO_WEBHOOK_URL: (() => {
+    if (typeof process !== 'undefined' && process.env['PIPEDREAM_DIAGNOSTICO_WEBHOOK_URL']) {
+      return String(process.env['PIPEDREAM_DIAGNOSTICO_WEBHOOK_URL']).trim();
     }
-    // URL do Google Apps Script configurada
-    return 'https://script.google.com/macros/s/AKfycbzzaeEpB7exFpSgQPdpLoe1nnjXag4tM2Gg58B-K1oSznDHYmFnkmiTwAaMtJkomW42/exec';
+    return 'https://eoxqsyt3z2sogtx.m.pipedream.net';
   })(),
 
   // ===========================
