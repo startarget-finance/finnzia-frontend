@@ -1,20 +1,67 @@
-import { Component, OnInit, AfterViewInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
-import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { API_CONFIG } from '../../config/api.config';
 import { ComparacaoServicosComponent } from '../comparacao-servicos/comparacao-servicos.component';
+import { GoogleSheetsService } from '../../services/google-sheets.service';
 
 @Component({
   standalone: true,
   selector: 'app-landing',
-  imports: [CommonModule, ComparacaoServicosComponent],
+  imports: [CommonModule, FormsModule, ComparacaoServicosComponent],
   templateUrl: './landing.component.html'
 })
-export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
-  diagnosticoEmbedUrlSeguro: SafeResourceUrl | null = null;
+export class LandingComponent implements OnInit, AfterViewInit {
+  /** Número WhatsApp Finzzia (DDI + DDD + número, só dígitos) */
+  readonly whatsappNumber = '554991984101';
+  readonly emailPlaceholderDiagnostico = 'nome@empresa.com.br';
 
-  private readonly onDiagnosticoEmbedMessageBound = this.onDiagnosticoEmbedMessage.bind(this);
+  readonly opcoesSegmentoDiagnostico = [
+    { value: '', label: 'Selecione o ramo de atuação' },
+    { value: 'Agência de marketing ou publicidade', label: 'Agência de marketing ou publicidade' },
+    { value: 'Restaurante, bar ou setor de alimentação', label: 'Restaurante, bar ou setor de alimentação' },
+    { value: 'Empresa de prestação de serviços', label: 'Empresa de prestação de serviços' },
+    { value: 'Outro segmento empresarial', label: 'Outro segmento empresarial' }
+  ];
+
+  readonly opcoesFaturamentoDiagnostico = [
+    { value: '', label: 'Faturamento médio mensal estimado' },
+    { value: 'Até R$ 50.000', label: 'Até R$ 50.000' },
+    { value: 'Entre R$ 50.001 e R$ 100.000', label: 'Entre R$ 50.001 e R$ 100.000' },
+    { value: 'Entre R$ 100.001 e R$ 300.000', label: 'Entre R$ 100.001 e R$ 300.000' },
+    { value: 'Acima de R$ 300.000', label: 'Acima de R$ 300.000' }
+  ];
+
+  readonly opcoesContextoDiagnostico = [
+    { value: '', label: 'Principal desafio financeiro hoje' },
+    { value: 'Gestão do fluxo de caixa imprevisível', label: 'Gestão do fluxo de caixa imprevisível' },
+    { value: 'Mistura das finanças empresariais com pessoais', label: 'Mistura das finanças empresariais com pessoais' },
+    { value: 'Alta inadimplência de clientes', label: 'Alta inadimplência de clientes' },
+    { value: 'Falta de tempo para realizar a gestão financeira', label: 'Falta de tempo para realizar a gestão financeira' },
+    { value: 'Não sabe por onde começar a organizar as finanças', label: 'Não sabe por onde começar a organizar as finanças' },
+    { value: 'Outro', label: 'Outro' }
+  ];
+
+  formDiagnostico = {
+    nome: '',
+    email: '',
+    telefone: '',
+    segmento: '',
+    faturamento: '',
+    contexto: ''
+  };
+
+  diagnosticoEnviado = false;
+  salvandoDiagnostico = false;
+  diagnosticoErro: string | null = null;
+  diagnosticoCampoErro:
+    | 'nome'
+    | 'email'
+    | 'telefone'
+    | 'segmento'
+    | 'faturamento'
+    | 'contexto'
+    | null = null;
 
   // Segmento atual (para mostrar apenas uma seção)
   segmentoAtual: string | null = null;
@@ -77,49 +124,13 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private sanitizer: DomSanitizer,
-    @Inject(PLATFORM_ID) private platformId: object
+    private googleSheetsService: GoogleSheetsService
   ) {}
-
-  /** URL do embed (Typeform / Responde.ai / etc.) quando configurada em api.config.ts */
-  get diagnosticoEmbedConfigurado(): boolean {
-    const raw = API_CONFIG.LANDING_DIAGNOSTICO_EMBED_URL?.trim() ?? '';
-    return raw.length > 0;
-  }
-
-  /** URL com parâmetros opcionais (ex.: segmento da rota) para mapear em campos ocultos no provedor */
-  get diagnosticoEmbedUrlAbrirNovaAba(): string {
-    return this.montarUrlDiagnosticoEmbed();
-  }
-
-  private montarUrlDiagnosticoEmbed(): string {
-    const base = API_CONFIG.LANDING_DIAGNOSTICO_EMBED_URL?.trim() ?? '';
-    if (!base) {
-      return '';
-    }
-    const params = new URLSearchParams();
-    if (this.segmentoAtual) {
-      params.set('segmento', this.segmentoAtual);
-      params.set('utm_source', 'finnzia-landing');
-    }
-    const q = params.toString();
-    if (!q) {
-      return base;
-    }
-    const sep = base.includes('?') ? '&' : '?';
-    return `${base}${sep}${q}`;
-  }
-
-  private atualizarDiagnosticoEmbedSeguro(): void {
-    const full = this.montarUrlDiagnosticoEmbed();
-    this.diagnosticoEmbedUrlSeguro =
-      full.length > 0 ? this.sanitizer.bypassSecurityTrustResourceUrl(full) : null;
-  }
 
   ngOnInit(): void {
     this.apenasDiagnostico = this.route.snapshot.data['apenasDiagnostico'] || false;
     this.segmentoAtual = this.route.snapshot.data['segmento'] || null;
-    this.atualizarDiagnosticoEmbedSeguro();
+    this.prefillSegmentoDiagnostico();
 
     if (this.segmentoAtual && !this.apenasDiagnostico) {
       setTimeout(() => {
@@ -388,75 +399,154 @@ export class LandingComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  enviarDiagnostico(event?: Event): void {
+    event?.preventDefault();
+    this.diagnosticoErro = null;
+    this.diagnosticoCampoErro = null;
+
+    const nome = this.formDiagnostico.nome.trim();
+    const email = this.formDiagnostico.email.trim().toLowerCase();
+    const telefone = this.formDiagnostico.telefone.trim();
+    const segmento = this.formDiagnostico.segmento.trim();
+    const faturamento = this.formDiagnostico.faturamento.trim();
+    const contexto = this.formDiagnostico.contexto.trim();
+    const telefoneDigitos = telefone.replace(/\D/g, '');
+
+    if (!nome) {
+      this.definirErroDiagnostico('nome', 'Por favor, informe seu nome.');
+      return;
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      this.definirErroDiagnostico('email', 'Digite um e-mail corporativo válido para contato.');
+      return;
+    }
+    if (telefoneDigitos.length < 10) {
+      this.definirErroDiagnostico('telefone', 'Informe um telefone ou WhatsApp válido para contato.');
+      return;
+    }
+    if (!segmento) {
+      this.definirErroDiagnostico('segmento', 'Selecione o ramo de atuação da sua empresa.');
+      return;
+    }
+    if (!faturamento) {
+      this.definirErroDiagnostico('faturamento', 'Selecione o faturamento médio mensal estimado.');
+      return;
+    }
+    if (!contexto) {
+      this.definirErroDiagnostico('contexto', 'Selecione o principal desafio financeiro.');
+      return;
+    }
+
+    this.salvandoDiagnostico = true;
+
+    this.googleSheetsService
+      .salvarDiagnostico({
+        nome,
+        email,
+        telefone,
+        segmento,
+        faturamento,
+        contexto,
+        origem: 'Landing Page - Diagnóstico'
+      })
+      .subscribe({
+        next: result => {
+          this.salvandoDiagnostico = false;
+          if (result.success) {
+            this.diagnosticoEnviado = true;
+            this.router.navigate(['/obrigado']);
+            return;
+          }
+          this.diagnosticoErro =
+            'Não foi possível registrar seu contato. Tente novamente ou fale pelo WhatsApp.';
+        },
+        error: () => {
+          this.salvandoDiagnostico = false;
+          this.diagnosticoErro =
+            'Erro ao enviar. Tente novamente ou fale pelo WhatsApp.';
+        }
+      });
+  }
+
+  private prefillSegmentoDiagnostico(): void {
+    if (!this.segmentoAtual || this.formDiagnostico.segmento) {
+      return;
+    }
+    const mapa: Record<string, string> = {
+      restaurantes: 'Restaurante, bar ou setor de alimentação',
+      prestadores: 'Empresa de prestação de serviços',
+      agencias: 'Agência de marketing ou publicidade'
+    };
+    this.formDiagnostico.segmento = mapa[this.segmentoAtual] ?? '';
+  }
+
+  private definirErroDiagnostico(
+    campo: NonNullable<typeof this.diagnosticoCampoErro>,
+    mensagem: string
+  ): void {
+    this.diagnosticoCampoErro = campo;
+    this.diagnosticoErro = mensagem;
+  }
+
+  limparErroDiagnostico(campo: NonNullable<typeof this.diagnosticoCampoErro>): void {
+    if (this.diagnosticoCampoErro === campo) {
+      this.diagnosticoCampoErro = null;
+      this.diagnosticoErro = null;
+    }
+  }
+
+  diagCampoInvalido(campo: NonNullable<typeof this.diagnosticoCampoErro>): boolean {
+    return this.diagnosticoCampoErro === campo;
+  }
+
+  diagFieldClasses(campo: NonNullable<typeof this.diagnosticoCampoErro>): string {
+    const base =
+      'w-full h-12 px-4 rounded-xl border bg-slate-950/70 text-white text-sm transition focus:outline-none focus:ring-2 focus:ring-emerald-500/25 focus:border-emerald-500/70';
+    const placeholder = 'placeholder:text-slate-500';
+    const selectExtra = 'appearance-none cursor-pointer';
+    const err = this.diagnosticoCampoErro === campo;
+    const border = err ? 'border-red-400/70 ring-2 ring-red-500/20' : 'border-slate-700/80';
+    const isSelect = campo === 'segmento' || campo === 'faturamento' || campo === 'contexto';
+    return `${base} ${isSelect ? selectExtra : placeholder} ${border}`;
+  }
+
+  formatarTelefoneDiagnostico(): void {
+    const digitos = this.formDiagnostico.telefone.replace(/\D/g, '').slice(0, 11);
+    if (digitos.length <= 2) {
+      this.formDiagnostico.telefone = digitos;
+      return;
+    }
+    if (digitos.length <= 6) {
+      this.formDiagnostico.telefone = `(${digitos.slice(0, 2)}) ${digitos.slice(2)}`;
+      return;
+    }
+    if (digitos.length <= 10) {
+      this.formDiagnostico.telefone = `(${digitos.slice(0, 2)}) ${digitos.slice(2, 6)}-${digitos.slice(6)}`;
+      return;
+    }
+    this.formDiagnostico.telefone = `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7)}`;
+  }
+
+  getWhatsAppUrl(mensagem?: string): string {
+    const texto =
+      mensagem?.trim() ||
+      'Olá! Gostaria de saber mais sobre a Finzzia e o diagnóstico financeiro.';
+    return `https://wa.me/${this.whatsappNumber}?text=${encodeURIComponent(texto)}`;
+  }
+
+  getWhatsAppUrlAposFormulario(): string {
+    const { nome, email, telefone, segmento, faturamento, contexto } = this.formDiagnostico;
+    const msg =
+      `Olá! Meu nome é ${nome.trim()}, e-mail ${email.trim()}, telefone ${telefone.trim()}.` +
+      ` Segmento: ${segmento}. Faturamento: ${faturamento}. Desafio: ${contexto}.` +
+      ` Vim pela landing e quero o diagnóstico financeiro.`;
+    return this.getWhatsAppUrl(msg);
+  }
+
   playingVideos: { [key: string]: boolean } = {};
 
   ngAfterViewInit(): void {
     this.setupVideoPosters();
-    if (isPlatformBrowser(this.platformId) && this.diagnosticoEmbedConfigurado) {
-      window.addEventListener('message', this.onDiagnosticoEmbedMessageBound);
-    }
-  }
-
-  ngOnDestroy(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      window.removeEventListener('message', this.onDiagnosticoEmbedMessageBound);
-    }
-  }
-
-  /**
-   * Typeform (e embeds compatíveis) enviam postMessage ao concluir o formulário.
-   * Redireciona para /obrigado sem depender só do redirect configurado no provedor.
-   */
-  private onDiagnosticoEmbedMessage(event: MessageEvent): void {
-    if (!this.isTrustedTypeformOrigin(event.origin)) {
-      return;
-    }
-    if (!this.isFormSubmitEmbedMessage(event.data)) {
-      return;
-    }
-    this.router.navigate(['/obrigado']);
-  }
-
-  private isTrustedTypeformOrigin(origin: string): boolean {
-    if (!origin || typeof origin !== 'string') {
-      return false;
-    }
-    try {
-      const host = new URL(origin).hostname;
-      return host === 'form.typeform.com' || host.endsWith('.typeform.com');
-    } catch {
-      return false;
-    }
-  }
-
-  private isFormSubmitEmbedMessage(raw: unknown): boolean {
-    let data: unknown = raw;
-    if (typeof raw === 'string') {
-      const s = raw.trim();
-      if (s === 'form-submit' || s === 'TF_SUBMIT') {
-        return true;
-      }
-      if (!s.startsWith('{')) {
-        return false;
-      }
-      try {
-        data = JSON.parse(s) as unknown;
-      } catch {
-        return s.includes('form-submit');
-      }
-    }
-    if (!data || typeof data !== 'object') {
-      return false;
-    }
-    const o = data as Record<string, unknown>;
-    const type = o['type'];
-    if (type === 'form-submit' || type === 'TF_SUBMIT' || type === 'form-submit-success') {
-      return true;
-    }
-    if (o['event'] === 'form-submit') {
-      return true;
-    }
-    return false;
   }
 
   setupVideoPosters(): void {

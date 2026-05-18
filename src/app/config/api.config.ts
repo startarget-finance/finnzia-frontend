@@ -69,6 +69,11 @@ export const API_CONFIG = {
   // ===========================
   // GOOGLE SHEETS - INTEGRAÇÃO
   // ===========================
+  // Planilha: Diagnósticos Finzzia
+  // https://docs.google.com/spreadsheets/d/1FF9d21qYL2niqEZiVMg8FoBWnig30hqFZKpt6rcaNc0/
+  // Script de deploy: finnzia-frontend/scripts/google-apps-script-diagnostico.gs
+  GOOGLE_SHEETS_SPREADSHEET_ID: '1FF9d21qYL2niqEZiVMg8FoBWnig30hqFZKpt6rcaNc0',
+  GOOGLE_SHEETS_SHEET_GID: '1670473388',
   // URL do Google Apps Script Web App para salvar diagnósticos
   GOOGLE_SHEETS_WEB_APP_URL: (() => {
     // Pode ser configurado via variável de ambiente
