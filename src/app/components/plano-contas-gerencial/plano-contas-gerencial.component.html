@@ -209,7 +209,52 @@
 <ng-template #corpoPlano>
   <div class="space-y-5">
     <div
-      *ngIf="!embedded"
+      *ngIf="modoTemplateSistema"
+      class="flex flex-col gap-4 rounded-2xl border border-violet-200/70 bg-gradient-to-br from-violet-50/80 to-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <div class="min-w-0">
+        <p class="text-xs font-semibold uppercase tracking-[0.12em] text-violet-700">Modelo do sistema</p>
+        <p class="mt-1 text-sm text-slate-600" *ngIf="templateMetaAtualizacao">{{ templateMetaAtualizacao }}</p>
+        <p class="mt-1 text-xs text-slate-500">
+          <strong>{{ contarNos(categorias) }}</strong> contas no rascunho · alterações só valem após
+          <strong class="text-slate-700">Publicar no servidor</strong>
+        </p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <label
+          class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+        >
+          <input type="file" accept=".json,application/json" class="sr-only" (change)="onImportarArquivo($event)" />
+          Importar JSON
+        </label>
+        <button
+          type="button"
+          (click)="aplicarModeloEmbutidoLocal()"
+          class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-950 hover:bg-amber-100"
+        >
+          Modelo embutido
+        </button>
+        <button
+          type="button"
+          (click)="restaurarTemplateEmbutido()"
+          [disabled]="templateSalvando"
+          class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+        >
+          Restaurar no servidor
+        </button>
+        <button
+          type="button"
+          (click)="salvarTemplateNoServidor()"
+          [disabled]="templateSalvando || carregando"
+          class="rounded-xl bg-gradient-to-r from-violet-600 to-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-md disabled:opacity-50"
+        >
+          {{ templateSalvando ? 'Publicando…' : 'Publicar no servidor' }}
+        </button>
+      </div>
+    </div>
+
+    <div
+      *ngIf="!embedded && !modoTemplateSistema"
       class="flex flex-col gap-2 border-b border-slate-100 pb-5 sm:flex-row sm:items-start sm:justify-between"
     >
       <div>
@@ -249,6 +294,13 @@
     </div>
 
     <app-feedback-state
+      *ngIf="carregando && modoTemplateSistema"
+      kind="empty"
+      title="Carregando modelo"
+      message="Aguarde um instante…"
+    />
+
+    <app-feedback-state
       *ngIf="erro"
       kind="error"
       title="Não foi possível carregar o plano de contas"
@@ -258,12 +310,12 @@
     />
 
     <app-feedback-state
-      *ngIf="planoVazioSucesso"
+      *ngIf="planoVazioSucesso && !modoTemplateSistema"
       kind="empty"
       title="Nenhuma conta no plano ainda"
       message="Carregue o modelo sugerido, importe JSON ou crie com o + em cada coluna."
     />
-    <div *ngIf="planoVazioSucesso" class="flex flex-wrap gap-2">
+    <div *ngIf="planoVazioSucesso && !modoTemplateSistema" class="flex flex-wrap gap-2">
       <button
         type="button"
         (click)="aplicarPlanoContasPadraoBomControle()"
@@ -273,7 +325,29 @@
       </button>
     </div>
 
-    <div class="grid gap-5 lg:grid-cols-2">
+    <app-feedback-state
+      *ngIf="planoVazioSucesso && modoTemplateSistema"
+      kind="empty"
+      title="Modelo vazio"
+      message="Carregue o modelo embutido, importe um JSON ou crie categorias com o + nas colunas Receitas e Despesas."
+    />
+    <div *ngIf="planoVazioSucesso && modoTemplateSistema" class="flex flex-wrap gap-2">
+      <button
+        type="button"
+        (click)="aplicarModeloEmbutidoLocal()"
+        class="inline-flex items-center gap-2 rounded-xl border border-violet-300 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-900 shadow-sm hover:bg-violet-100"
+      >
+        Carregar modelo embutido
+      </button>
+      <label
+        class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+      >
+        <input type="file" accept=".json,application/json" class="sr-only" (change)="onImportarArquivo($event)" />
+        Importar JSON
+      </label>
+    </div>
+
+    <div *ngIf="!carregando" class="grid gap-5 lg:grid-cols-2">
       <!-- Receitas -->
       <div
         class="flex min-h-[min(60vh,32rem)] flex-col overflow-hidden rounded-2xl border border-emerald-200/70 bg-white shadow-md ring-1 ring-emerald-900/[0.05]"

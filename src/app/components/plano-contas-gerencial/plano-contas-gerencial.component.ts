@@ -17,6 +17,17 @@ import { extractHttpErrorBodyMessage } from '../../services/error.service';
 import { buildDeleteConfirmOptions, confirmUnsavedChanges } from '../../utils/sweet-alerts';
 import { FeedbackStateComponent } from '../../shared/components/feedback-state/feedback-state.component';
 import { PLANO_CONTAS_PADRAO_BOM_CONTROLE } from '../../data/plano-contas-padrao-bom-controle';
+import { PlanoContasPadraoService } from '../../services/plano-contas-padrao.service';
+import {
+  adicionarFilho,
+  adicionarRaiz,
+  excluirNoNaArvore,
+  parseArvoreJsonParaCategorias,
+  parseIdRaizUtil,
+  proximoIdTemporario,
+  renomearNoNaArvore,
+  serializarCategoriasParaJson,
+} from '../../utils/plano-contas-padrao-tree.util';
 
 @Component({
   selector: 'app-plano-contas-gerencial',
@@ -27,7 +38,15 @@ import { PLANO_CONTAS_PADRAO_BOM_CONTROLE } from '../../data/plano-contas-padrao
 export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
   /** Quando true, usado dentro da Parametrização — sem moldura de página inteira. */
   @Input() embedded = false;
+  /** Admin: edita o modelo global (memória + salvar no servidor), sem API por empresa. */
+  @Input() modoTemplateSistema = false;
   @Output() resumoTotal = new EventEmitter<number>();
+
+  templateMetaAtualizacao = '';
+  templateUsandoEmbutido = false;
+  templateSalvando = false;
+  private templateRaizSeq = 1;
+  private templateNoId = 1000;
 
   carregando = false;
   erro: string | null = null;
@@ -62,10 +81,15 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
   constructor(
     private readonly categoriasApi: CategoriasFinanceirasService,
     private readonly companySelector: CompanySelectorService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    private readonly planoContasPadrao: PlanoContasPadraoService
   ) {}
 
   ngOnInit(): void {
+    if (this.modoTemplateSistema) {
+      this.carregarTemplateSistema();
+      return;
+    }
     this.companySelector.empresasPermitidas$.pipe(takeUntil(this.destroy$)).subscribe((list) => {
       this.empresasDisponiveis = (list || []).filter((e) => e.ativo && e.idEmpresa);
       this.carregar();
@@ -85,6 +109,7 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
   get planoVazioSucesso(): boolean {
     if (this.carregando || this.erro) return false;
     if ((this.categorias?.length ?? 0) > 0) return false;
+    if (this.modoTemplateSistema) return true;
     if (!this.authService.isAuthenticated() || !this.authService.getToken()) return false;
     const idEmpresa = this.idEmpresaContexto();
     if (idEmpresa == null || idEmpresa <= 0) return false;
@@ -92,6 +117,10 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
   }
 
   carregar(): void {
+    if (this.modoTemplateSistema) {
+      this.carregarTemplateSistema();
+      return;
+    }
     this.erro = null;
     if (!this.authService.isAuthenticated() || !this.authService.getToken()) {
       this.carregando = false;
@@ -372,6 +401,10 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
       this.erro = 'Informe o nome.';
       return;
     }
+    if (this.modoTemplateSistema) {
+      this.salvarTemplateLocal(nome);
+      return;
+    }
     const idEmpresaAtual = this.idEmpresaContexto();
     if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
       this.erro = 'Não foi possível identificar a empresa ativa.';
@@ -460,6 +493,16 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
   }
 
   private async excluirNoPorId(nodeId: number): Promise<void> {
+    if (this.modoTemplateSistema) {
+      this.erro = null;
+      if (!excluirNoNaArvore(this.categorias, nodeId)) {
+        this.erro = 'Não foi possível excluir este item.';
+        return;
+      }
+      this.categorias = [...this.categorias];
+      this.resumoTotal.emit(this.contarNos(this.categorias));
+      return;
+    }
     const idEmpresaAtual = this.idEmpresaContexto();
     this.erro = null;
     this.carregando = true;
@@ -560,6 +603,27 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
   }
 
   onImportarArquivo(ev: Event): void {
+    if (this.modoTemplateSistema) {
+      const input = ev.target as HTMLInputElement;
+      const file = input.files?.[0];
+      input.value = '';
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const arr = JSON.parse(String(reader.result || ''));
+          if (!Array.isArray(arr)) throw new Error('array');
+          this.categorias = parseArvoreJsonParaCategorias(arr);
+          this.syncTemplateIdCounters();
+          this.resumoTotal.emit(this.contarNos(this.categorias));
+          this.erro = null;
+        } catch {
+          this.erro = 'Arquivo JSON inválido para o plano padrão.';
+        }
+      };
+      reader.readAsText(file);
+      return;
+    }
     const idEmpresaAtual = this.idEmpresaContexto();
     if (!idEmpresaAtual) {
       this.erro = 'Selecione uma empresa para importar categorias.';
@@ -735,7 +799,149 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
     return null;
   }
 
+  carregarTemplateSistema(): void {
+    this.carregando = true;
+    this.erro = null;
+    this.planoContasPadrao
+      .obterAdmin()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => this.aplicarRespostaTemplate(res),
+        error: (err) => {
+          this.carregando = false;
+          this.erro =
+            extractHttpErrorBodyMessage(err?.error) || 'Não foi possível carregar o plano padrão do sistema.';
+        },
+      });
+  }
+
+  salvarTemplateNoServidor(): void {
+    const arvore = serializarCategoriasParaJson(this.categorias);
+    if (!arvore.length) {
+      this.erro = 'Inclua ao menos uma categoria raiz antes de salvar.';
+      return;
+    }
+    this.templateSalvando = true;
+    this.erro = null;
+    this.planoContasPadrao
+      .salvarAdmin(arvore)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.templateSalvando = false;
+          this.aplicarRespostaTemplate(res);
+          void Swal.fire({
+            icon: 'success',
+            title: 'Plano padrão publicado',
+            text: 'Novas empresas usarão este modelo no preenchimento automático.',
+            timer: 2800,
+            showConfirmButton: false,
+          });
+        },
+        error: (err) => {
+          this.templateSalvando = false;
+          this.erro = extractHttpErrorBodyMessage(err?.error) || 'Não foi possível salvar no servidor.';
+        },
+      });
+  }
+
+  async restaurarTemplateEmbutido(): Promise<void> {
+    const ok = await Swal.fire({
+      title: 'Restaurar modelo original?',
+      text: 'Substitui o rascunho atual pelo plano embutido do finzzia.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Restaurar',
+      cancelButtonText: 'Cancelar',
+    });
+    if (!ok.isConfirmed) return;
+    this.templateSalvando = true;
+    this.planoContasPadrao
+      .restaurarEmbutidoAdmin()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.templateSalvando = false;
+          this.aplicarRespostaTemplate(res);
+        },
+        error: (err) => {
+          this.templateSalvando = false;
+          this.erro = extractHttpErrorBodyMessage(err?.error) || 'Falha ao restaurar.';
+        },
+      });
+  }
+
+  aplicarModeloEmbutidoLocal(): void {
+    this.categorias = parseArvoreJsonParaCategorias([...PLANO_CONTAS_PADRAO_BOM_CONTROLE]);
+    this.syncTemplateIdCounters();
+    this.resumoTotal.emit(this.contarNos(this.categorias));
+    this.templateUsandoEmbutido = true;
+    this.templateMetaAtualizacao = 'Rascunho local — modelo embutido (ainda não salvo no servidor).';
+  }
+
+  private aplicarRespostaTemplate(res: {
+    arvore?: unknown[];
+    dataAtualizacao?: string | null;
+    atualizadoPorEmail?: string | null;
+    usandoPadraoEmbutido?: boolean;
+  }): void {
+    this.carregando = false;
+    this.templateUsandoEmbutido = !!res.usandoPadraoEmbutido;
+    const arvore = Array.isArray(res.arvore) ? res.arvore : [];
+    this.categorias = parseArvoreJsonParaCategorias(arvore.length ? arvore : [...PLANO_CONTAS_PADRAO_BOM_CONTROLE]);
+    this.syncTemplateIdCounters();
+    this.resumoTotal.emit(this.contarNos(this.categorias));
+    if (res.usandoPadraoEmbutido) {
+      this.templateMetaAtualizacao =
+        'Nenhuma versão salva no servidor — exibindo modelo embutido. Edite e clique em Publicar no servidor.';
+    } else if (res.dataAtualizacao) {
+      const por = res.atualizadoPorEmail ? ` por ${res.atualizadoPorEmail}` : '';
+      this.templateMetaAtualizacao = `Publicado em ${new Date(res.dataAtualizacao).toLocaleString('pt-BR')}${por}`;
+    } else {
+      this.templateMetaAtualizacao = '';
+    }
+  }
+
+  private salvarTemplateLocal(nome: string): void {
+    this.erro = null;
+    if (this.modalAcao === 'editar' && this.formEditarId != null) {
+      if (!renomearNoNaArvore(this.categorias, this.formEditarId, nome)) {
+        this.erro = 'Não foi possível renomear esta conta.';
+        return;
+      }
+    } else if (this.modalModo === 'raiz') {
+      const r = adicionarRaiz(this.categorias, this.formTipo, nome, this.templateRaizSeq, this.templateNoId);
+      this.templateRaizSeq = r.raizSeq;
+      this.templateNoId = r.noId;
+    } else {
+      const raw = this.formParentDbId;
+      const parentId = raw != null ? Math.trunc(Number(raw)) : NaN;
+      if (!Number.isFinite(parentId) || parentId <= 0) {
+        this.erro = 'Conta superior inválida.';
+        return;
+      }
+      this.templateNoId = adicionarFilho(this.categorias, parentId, nome, this.templateNoId);
+    }
+    this.categorias = [...this.categorias];
+    this.resumoTotal.emit(this.contarNos(this.categorias));
+    this.modalAberto = false;
+    this.modalModo = 'raiz';
+    this.modalAcao = 'novo';
+    this.formEditarId = null;
+  }
+
+  private syncTemplateIdCounters(): void {
+    this.templateNoId = proximoIdTemporario(this.categorias);
+    let maxRaiz = 0;
+    for (const c of this.categorias) {
+      const r = parseIdRaizUtil(String(c.id));
+      if (r != null && r > maxRaiz) maxRaiz = r;
+    }
+    this.templateRaizSeq = maxRaiz + 1;
+  }
+
   private idEmpresaContexto(): number | null {
+    if (this.modoTemplateSistema) return 1;
     const selecionada = this.companySelector.obterIdEmpresaSelecionada();
     if (selecionada != null && selecionada > 0) {
       return selecionada;
@@ -800,16 +1006,35 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
       return;
     }
     this.erro = null;
-    const copia = [...PLANO_CONTAS_PADRAO_BOM_CONTROLE];
-    this.importarLote(id, copia, () => {
-      sessionStorage.setItem(this.chaveSessaoOfertaPlanoPadrao(id), 'aplicado');
-      void Swal.fire({
-        icon: 'success',
-        title: 'Categorias padrão criadas',
-        text: 'Ajuste nomes e níveis conforme a sua operação.',
-        timer: 2800,
-        showConfirmButton: false,
-      });
+    this.planoContasPadrao.obter().pipe(takeUntil(this.destroy$)).subscribe({
+      next: (res) => {
+        const arvore = Array.isArray(res?.arvore) && res.arvore.length > 0
+          ? [...res.arvore]
+          : [...PLANO_CONTAS_PADRAO_BOM_CONTROLE];
+        this.importarLote(id, arvore, () => {
+          sessionStorage.setItem(this.chaveSessaoOfertaPlanoPadrao(id), 'aplicado');
+          void Swal.fire({
+            icon: 'success',
+            title: 'Categorias padrão criadas',
+            text: 'Ajuste nomes e níveis conforme a sua operação.',
+            timer: 2800,
+            showConfirmButton: false,
+          });
+        });
+      },
+      error: () => {
+        const copia = [...PLANO_CONTAS_PADRAO_BOM_CONTROLE];
+        this.importarLote(id, copia, () => {
+          sessionStorage.setItem(this.chaveSessaoOfertaPlanoPadrao(id), 'aplicado');
+          void Swal.fire({
+            icon: 'success',
+            title: 'Categorias padrão criadas',
+            text: 'Ajuste nomes e níveis conforme a sua operação.',
+            timer: 2800,
+            showConfirmButton: false,
+          });
+        });
+      },
     });
   }
 }

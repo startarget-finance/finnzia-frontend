@@ -70,6 +70,14 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'admin-plano-contas-padrao',
+    loadComponent: () =>
+      import('./components/admin-plano-contas-padrao/admin-plano-contas-padrao.component').then(
+        m => m.AdminPlanoContasPadraoComponent
+      ),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'contratos',
     loadComponent: () => import('./components/contratos/contratos.component').then(m => m.ContratosComponent),
     canActivate: [AuthGuard]

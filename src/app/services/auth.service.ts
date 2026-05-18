@@ -479,7 +479,7 @@ export class AuthService {
     
     /** Conta administrador: apenas visão consolidada e gestão de usuários/acessos. */
     if (this.normalizeRole(user.role) === 'admin') {
-      const rotasAdmin = new Set(['dashboard', 'gerenciar-acessos', 'meu-perfil']);
+      const rotasAdmin = new Set(['dashboard', 'gerenciar-acessos', 'admin-plano-contas-padrao', 'meu-perfil']);
       return rotasAdmin.has(route);
     }
 

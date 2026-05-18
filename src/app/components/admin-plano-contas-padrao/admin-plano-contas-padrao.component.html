@@ -1,0 +1,32 @@
+<div class="min-h-full w-full bg-gradient-to-b from-slate-50 via-white to-slate-100/70">
+  <div class="mx-auto max-w-[1800px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <section class="relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white/95 p-6 shadow-sm sm:p-7">
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute inset-0 bg-[radial-gradient(900px_circle_at_8%_-10%,rgba(139,92,246,0.08),transparent_55%),radial-gradient(750px_circle_at_100%_0%,rgba(20,184,166,0.06),transparent_45%)]"
+      ></div>
+      <div class="relative z-[1] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-700">Administração</p>
+          <h1 class="mt-1 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">Plano de contas padrão</h1>
+          <p class="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
+            Defina o modelo global usado quando uma empresa nova escolhe preenchimento automático na parametrização.
+            Use as colunas <strong class="font-medium text-slate-800">Receitas</strong> e
+            <strong class="font-medium text-slate-800">Despesas</strong> como na tela de plano de contas — com +, editar e
+            excluir. Ao final, clique em <strong class="font-medium text-slate-800">Publicar no servidor</strong>.
+          </p>
+        </div>
+        <a
+          routerLink="/dashboard"
+          class="inline-flex shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+        >
+          Voltar à visão geral
+        </a>
+      </div>
+    </section>
+
+    <section class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-[0_8px_30px_-18px_rgba(15,23,42,0.12)]">
+      <app-plano-contas-gerencial [embedded]="true" [modoTemplateSistema]="true" />
+    </section>
+  </div>
+</div>

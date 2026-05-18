@@ -58,6 +58,17 @@
           <i class="fi fi-rr-users flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
           <span *ngIf="!isSidebarCollapsed" class="truncate">Gerenciar acessos</span>
         </a>
+        <a routerLink="/admin-plano-contas-padrao"
+           routerLinkActive #rlaAdmPlano="routerLinkActive"
+           [ngClass]="rlaAdmPlano.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+           class="flex min-h-[2.75rem] items-center rounded-xl transition-all duration-200"
+           [class.gap-3]="!isSidebarCollapsed"
+           [class.px-3]="!isSidebarCollapsed"
+           [class.justify-center]="isSidebarCollapsed"
+           title="Plano de contas padrão do sistema">
+          <i class="fi fi-rr-diagram-project flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
+          <span *ngIf="!isSidebarCollapsed" class="truncate">Plano padrão</span>
+        </a>
       </ng-container>
 
       <p *ngIf="!isSidebarCollapsed && !painelAdminSomente()" class="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Financeiro</p>
@@ -265,6 +276,13 @@
              class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
             <i class="fi fi-rr-users flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
             Gerenciar acessos
+          </a>
+          <a routerLink="/admin-plano-contas-padrao" (click)="closeMobileMenu()"
+             routerLinkActive #rlaAdmPlanoM="routerLinkActive"
+             [ngClass]="rlaAdmPlanoM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+             class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
+            <i class="fi fi-rr-diagram-project flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
+            Plano padrão
           </a>
         </ng-container>
         <p *ngIf="!painelAdminSomente()" class="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Financeiro</p>
