@@ -37,10 +37,35 @@ function mensagemErroHttp(
   if (fromBody) {
     return fromBody;
   }
+  const status = e?.status;
+  if (status === 502 || status === 503 || status === 504) {
+    return MSG_SYNC_REDE;
+  }
+  if (status === 0 || status === undefined) {
+    return MSG_SYNC_REDE;
+  }
   if (typeof e?.message === 'string' && /Http failure|0 Unknown Error|network|connection reset|failed to fetch|ERR_|timeout has occurred|exceeded/i.test(e.message)) {
-    return 'Falha de rede ou servidor offline. Tente de novo em instantes.';
+    return MSG_SYNC_REDE;
   }
   return opts.fallback;
+}
+
+const MAX_DIAS_SYNC_PLUGGY = 90;
+
+function parseIsoDate(s: string): Date | null {
+  const t = (s || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(t)) {
+    return null;
+  }
+  const d = new Date(`${t}T12:00:00`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function toIsoDateLocal(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 /** Tipagem mínima do widget global carregado via CDN. */
@@ -212,6 +237,45 @@ export class PluggyOpenFinanceComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Normaliza datas e valida período (máx. 90 dias, igual ao backend).
+   * Retorna mensagem de erro ou null se ok.
+   */
+  validarPeriodoSync(): string | null {
+    let ini = (this.syncDataInicio || '').trim();
+    let fim = (this.syncDataFim || '').trim();
+    if (!ini && !fim) {
+      return null;
+    }
+    if (ini && !fim) {
+      fim = toIsoDateLocal(new Date());
+      this.syncDataFim = fim;
+    }
+    if (!ini && fim) {
+      const df = parseIsoDate(fim);
+      if (!df) {
+        return 'Data fim inválida.';
+      }
+      const dIni = new Date(df);
+      dIni.setDate(dIni.getDate() - MAX_DIAS_SYNC_PLUGGY + 1);
+      ini = toIsoDateLocal(dIni);
+      this.syncDataInicio = ini;
+    }
+    const dIni = parseIsoDate(ini);
+    const dFim = parseIsoDate(fim);
+    if (!dIni || !dFim) {
+      return 'Use o seletor de data (formato AAAA-MM-DD).';
+    }
+    if (dIni.getTime() > dFim.getTime()) {
+      return 'Data início não pode ser depois da data fim.';
+    }
+    const dias = Math.floor((dFim.getTime() - dIni.getTime()) / 86400000) + 1;
+    if (dias > MAX_DIAS_SYNC_PLUGGY) {
+      return `Período máximo de ${MAX_DIAS_SYNC_PLUGGY} dias (você selecionou ${dias}). Reduza o intervalo ou sincronize em partes.`;
+    }
+    return null;
+  }
+
   montarPayloadSync(): PluggySyncPayload | undefined {
     const p: PluggySyncPayload = {};
     if (this.syncDataInicio?.trim()) {
@@ -238,6 +302,11 @@ export class PluggyOpenFinanceComponent implements OnInit, OnDestroy {
         title: 'Selecione a empresa',
         text: 'Escolha a empresa no seletor do sistema antes de importar as movimentações Pluggy.',
       });
+      return;
+    }
+    const erroPeriodo = this.validarPeriodoSync();
+    if (erroPeriodo) {
+      void Swal.fire({ icon: 'warning', title: 'Período inválido', text: erroPeriodo });
       return;
     }
     this.syncingConexaoId = c.id;
