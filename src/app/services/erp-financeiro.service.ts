@@ -187,6 +187,41 @@ export interface ConciliacoesOfxResponse {
   itens: ConciliacaoOfxItem[];
 }
 
+export interface LancamentoImportPreviewLinha {
+  numeroLinha: number;
+  valido: boolean;
+  erros: string[];
+  avisos?: string[];
+  parceiro?: string;
+  dataVencimento?: string;
+  dataQuitacao?: string;
+  descricao?: string;
+  categoria?: string;
+  valor?: number;
+  conta?: string;
+  formaPagamento?: string;
+  status?: string;
+}
+
+export interface LancamentosImportPreviewResponse {
+  erro: boolean;
+  mensagem?: string;
+  tipo?: string;
+  totalLinhas?: number;
+  linhasValidas?: number;
+  linhasInvalidas?: number;
+  linhas?: LancamentoImportPreviewLinha[];
+  colunasEsperadas?: string[];
+}
+
+export interface LancamentosImportConfirmResponse {
+  erro: boolean;
+  mensagem?: string;
+  importados?: number;
+  ignorados?: number;
+  erros?: Array<{ numeroLinha: number; mensagem: string }>;
+}
+
 export interface AprovarConciliacaoOfxResponse {
   erro: boolean;
   mensagem?: string;
@@ -393,6 +428,29 @@ export class ErpFinanceiroService {
     return this.http.get<{ empresas: Array<{ Id: number; Nome: string }> }>(`${this.apiUrl}/empresas`, {
       headers: this.getHeaders(),
     });
+  }
+
+  previewImportLancamentos(csvContent: string, tipo: 'receita' | 'despesa'): Observable<LancamentosImportPreviewResponse> {
+    return this.http.post<LancamentosImportPreviewResponse>(
+      `${this.apiUrl}/import/lancamentos/preview`,
+      { csvContent, tipo },
+      { headers: this.getHeaders() }
+    );
+  }
+
+  confirmarImportLancamentos(payload: {
+    tipo: 'receita' | 'despesa';
+    linhas: LancamentoImportPreviewLinha[];
+    categoriaPadrao?: string;
+    contaPadrao?: string;
+    formaPagamentoPadrao?: string;
+    nomeArquivo?: string;
+  }): Observable<LancamentosImportConfirmResponse> {
+    return this.http.post<LancamentosImportConfirmResponse>(
+      `${this.apiUrl}/import/lancamentos`,
+      payload,
+      { headers: this.getHeaders() }
+    );
   }
 
   importarOfx(

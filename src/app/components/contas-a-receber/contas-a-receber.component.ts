@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ErpFinanceiroService, MovimentacaoFinanceira, FiltrosMovimentacoes } from '../../services/erp-financeiro.service';
 import { FeedbackStateComponent } from '../../shared/components/feedback-state/feedback-state.component';
+import { LancamentosImportModalComponent } from '../../shared/components/lancamentos-import-modal/lancamentos-import-modal.component';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -22,7 +23,7 @@ interface LinhaExportacaoReceber {
 @Component({
   selector: 'app-contas-a-receber',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, FeedbackStateComponent],
+  imports: [CommonModule, RouterModule, FormsModule, FeedbackStateComponent, LancamentosImportModalComponent],
   templateUrl: './contas-a-receber.component.html',
 })
 export class ContasAReceberComponent implements OnInit, OnDestroy {
@@ -30,6 +31,7 @@ export class ContasAReceberComponent implements OnInit, OnDestroy {
 
   /** Mesmo menu de “Criar receita” da tela Movimentações (navega para o cadastro com fluxo). */
   mostrarMenuCriarReceita = false;
+  mostrarModalImportacao = false;
 
   // UI: Date Range Picker
   mostrarRangePicker: boolean = false;

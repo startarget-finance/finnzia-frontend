@@ -33,6 +33,12 @@ function mensagemErroHttp(
   if (typeof raw === 'string' && looksLikeNetworkInfrastructureMessage(raw)) {
     return MSG_SYNC_REDE;
   }
+  if (raw && typeof raw === 'object') {
+    const o = raw as Record<string, unknown>;
+    if (o['erro'] === true && typeof o['mensagem'] === 'string' && o['mensagem'].trim()) {
+      return o['mensagem'].trim();
+    }
+  }
   const fromBody = extractHttpErrorBodyMessage(raw);
   if (fromBody) {
     return fromBody;
@@ -296,6 +302,9 @@ export class PluggyOpenFinanceComponent implements OnInit, OnDestroy {
   }
 
   sincronizarConexao(c: PluggyConexao): void {
+    if (this.syncingConexaoId != null) {
+      return;
+    }
     if (!this.companySelector.obterIdEmpresaSelecionada()) {
       void Swal.fire({
         icon: 'info',

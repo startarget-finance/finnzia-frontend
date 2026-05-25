@@ -1,0 +1,170 @@
+<div *ngIf="aberto" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-slate-900/50" (click)="fechar()"></div>
+
+  <div
+    class="relative z-10 flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+      <div>
+        <h2 class="text-lg font-bold text-slate-900">{{ tituloModal }}</h2>
+        <p class="mt-0.5 text-sm text-slate-500">
+          Importe vendas Sipag, extratos ou planilhas exportadas do Finzzia (CSV ou Excel).
+        </p>
+      </div>
+      <button
+        type="button"
+        (click)="fechar()"
+        class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+        aria-label="Fechar"
+      >
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto px-6 py-5">
+      <ng-container *ngIf="etapa === 'upload'">
+        <div class="flex flex-wrap gap-3">
+          <button
+            type="button"
+            (click)="baixarModelo()"
+            class="inline-flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-100"
+          >
+            Baixar modelo Excel
+          </button>
+          <label
+            class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Selecionar arquivo
+            <input
+              type="file"
+              class="hidden"
+              accept=".csv,.txt,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              (change)="onArquivoSelecionado($event)"
+            />
+          </label>
+        </div>
+
+        <div class="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          <p class="font-semibold text-slate-800">Colunas esperadas</p>
+          <p class="mt-1">
+            <span *ngIf="tipo === 'receita'">
+              Cliente / origem, Vencimento, Recebimento (opcional), Descricao, Categoria, Valor, Status, Conta, Forma pagamento.
+            </span>
+            <span *ngIf="tipo === 'despesa'">
+              Fornecedor, Vencimento, Pagamento (opcional), Descricao, Categoria, Valor, Status, Conta, Forma pagamento.
+            </span>
+          </p>
+          <p class="mt-2 text-xs text-slate-500">
+            Datas em dd/MM/aaaa. Valores em reais (ex.: 1.250,50). Até 2.000 linhas por arquivo.
+          </p>
+        </div>
+
+        <div *ngIf="processando" class="mt-4 text-sm font-medium text-violet-700">Processando arquivo...</div>
+      </ng-container>
+
+      <ng-container *ngIf="etapa === 'preview'">
+        <div class="mb-4 flex flex-wrap items-center gap-2 text-sm">
+          <span class="rounded-lg bg-slate-100 px-2.5 py-1 font-medium text-slate-700">{{ nomeArquivo }}</span>
+          <span class="text-emerald-700">{{ preview?.linhasValidas ?? 0 }} válida(s)</span>
+          <span class="text-rose-700">{{ preview?.linhasInvalidas ?? 0 }} com erro</span>
+          <button type="button" (click)="voltarUpload()" class="ml-auto text-sm font-medium text-violet-700 hover:underline">
+            Trocar arquivo
+          </button>
+        </div>
+
+        <div class="mb-4 grid gap-3 sm:grid-cols-3">
+          <label class="block text-sm">
+            <span class="font-medium text-slate-700">Categoria padrão</span>
+            <input
+              type="text"
+              [(ngModel)]="categoriaPadrao"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              placeholder="Ex.: Vendas Sipag"
+            />
+          </label>
+          <label class="block text-sm">
+            <span class="font-medium text-slate-700">Conta padrão</span>
+            <input
+              type="text"
+              [(ngModel)]="contaPadrao"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              placeholder="Opcional"
+            />
+          </label>
+          <label class="block text-sm">
+            <span class="font-medium text-slate-700">Forma de pagamento</span>
+            <input
+              type="text"
+              [(ngModel)]="formaPagamentoPadrao"
+              class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              placeholder="Ex.: Cartão"
+            />
+          </label>
+        </div>
+
+        <div class="max-h-64 overflow-auto rounded-xl border border-slate-200">
+          <table class="min-w-full text-left text-xs">
+            <thead class="sticky top-0 bg-slate-100 text-slate-600">
+              <tr>
+                <th class="px-3 py-2">#</th>
+                <th class="px-3 py-2">OK</th>
+                <th class="px-3 py-2">{{ labelParceiro }}</th>
+                <th class="px-3 py-2">Venc.</th>
+                <th class="px-3 py-2">Descrição</th>
+                <th class="px-3 py-2">Categoria</th>
+                <th class="px-3 py-2">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let l of linhasPreview"
+                class="border-t border-slate-100"
+                [class.bg-rose-50]="!l.valido"
+              >
+                <td class="px-3 py-2">{{ l.numeroLinha }}</td>
+                <td class="px-3 py-2">
+                  <span *ngIf="l.valido" class="font-semibold text-emerald-700">Sim</span>
+                  <span *ngIf="!l.valido" class="font-semibold text-rose-700">Não</span>
+                </td>
+                <td class="px-3 py-2">{{ l.parceiro || '-' }}</td>
+                <td class="px-3 py-2">{{ l.dataVencimento || '-' }}</td>
+                <td class="max-w-[140px] truncate px-3 py-2" [title]="l.descricao">{{ l.descricao || '-' }}</td>
+                <td class="px-3 py-2">{{ l.categoria || '-' }}</td>
+                <td class="px-3 py-2 whitespace-nowrap">{{ formatarValor(l.valor) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div *ngIf="linhasPreview.length > 20" class="mt-2 text-xs text-slate-500">
+          Mostrando todas as {{ linhasPreview.length }} linhas. Apenas as válidas serão importadas.
+        </div>
+      </ng-container>
+
+      <p *ngIf="mensagem" class="mt-4 text-sm font-medium text-emerald-700">{{ mensagem }}</p>
+      <p *ngIf="mensagemErro" class="mt-4 text-sm font-medium text-rose-700">{{ mensagemErro }}</p>
+    </div>
+
+    <div class="flex justify-end gap-3 border-t border-slate-100 px-6 py-4">
+      <button
+        type="button"
+        (click)="fechar()"
+        class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+      >
+        Cancelar
+      </button>
+      <button
+        *ngIf="etapa === 'preview'"
+        type="button"
+        (click)="confirmarImportacao()"
+        [disabled]="importando || !linhasValidasPreview.length"
+        class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {{ importando ? 'Importando...' : 'Importar ' + linhasValidasPreview.length + ' lançamento(s)' }}
+      </button>
+    </div>
+  </div>
+</div>

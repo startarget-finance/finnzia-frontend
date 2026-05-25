@@ -2015,14 +2015,6 @@
               <p *ngIf="cadastroErrors['valor']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['valor'] }}</p>
             </div>
             <div>
-              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Descrição *</label>
-              <input [(ngModel)]="novoLancamento.descricao" type="text"
-                     [class.border-rose-300]="cadastroErrors['descricao']"
-                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-                     placeholder="Ex.: pagamento fornecedor XPTO" />
-              <p *ngIf="cadastroErrors['descricao']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['descricao'] }}</p>
-            </div>
-            <div>
               <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Categoria *</label>
               <select [(ngModel)]="novoLancamento.categoriaOpcao" (ngModelChange)="onCategoriaOpcaoChange()"
                      [class.border-rose-300]="cadastroErrors['categoria']"
@@ -2041,6 +2033,28 @@
                 Nenhuma categoria de {{ novoLancamento.tipo === 'receita' ? 'receita' : 'despesa' }} cadastrada no Plano de contas.
               </p>
               <p *ngIf="cadastroErrors['categoria']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['categoria'] }}</p>
+            </div>
+            <div>
+              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Conta bancária</label>
+              <select [(ngModel)]="novoLancamento.contaOpcao" (ngModelChange)="onContaOpcaoChange()"
+                      class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100">
+                <option value="">Selecione uma conta (opcional)</option>
+                <option *ngFor="let conta of contasBancarias" [value]="conta.value" [hidden]="!conta.value">
+                  {{ conta.label }}
+                </option>
+                <option value="__manual__">Digitar manualmente</option>
+              </select>
+              <input *ngIf="novoLancamento.contaOpcao === '__manual__'" [(ngModel)]="novoLancamento.contaManual" type="text"
+                     class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                     placeholder="Digite a conta bancária" />
+            </div>
+            <div>
+              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Descrição *</label>
+              <input [(ngModel)]="novoLancamento.descricao" type="text"
+                     [class.border-rose-300]="cadastroErrors['descricao']"
+                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
+                     placeholder="Ex.: pagamento fornecedor XPTO" />
+              <p *ngIf="cadastroErrors['descricao']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['descricao'] }}</p>
             </div>
             <div>
               <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Cliente/Fornecedor *</label>
@@ -2063,20 +2077,6 @@
                 + Adicionar {{ novoLancamento.tipo === 'despesa' ? 'fornecedor' : 'cliente' }}
               </button>
               <p *ngIf="cadastroErrors['clienteFornecedor']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['clienteFornecedor'] }}</p>
-            </div>
-            <div>
-              <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Conta bancária</label>
-              <select [(ngModel)]="novoLancamento.contaOpcao" (ngModelChange)="onContaOpcaoChange()"
-                      class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100">
-                <option value="">Selecione uma conta (opcional)</option>
-                <option *ngFor="let conta of contasBancarias" [value]="conta.value" [hidden]="!conta.value">
-                  {{ conta.label }}
-                </option>
-                <option value="__manual__">Digitar manualmente</option>
-              </select>
-              <input *ngIf="novoLancamento.contaOpcao === '__manual__'" [(ngModel)]="novoLancamento.contaManual" type="text"
-                     class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-                     placeholder="Digite a conta bancária" />
             </div>
             <div>
               <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Competência</label>

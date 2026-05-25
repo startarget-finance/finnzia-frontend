@@ -35,14 +35,6 @@
       <div class="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3" [class.opacity-70]="carregandoResumo">
         <div class="group relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-lg">
           <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-emerald-500 to-teal-400"></div>
-          <button
-            type="button"
-            (click)="alternarPopover('entrou'); $event.stopPropagation()"
-            class="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
-            aria-label="Linhas incluídas no cálculo (entradas)"
-          >
-            <i class="fi fi-rr-settings-sliders text-[0.95rem] leading-none" aria-hidden="true"></i>
-          </button>
 
           <div
             *ngIf="popoverAberto === 'entrou'"
@@ -86,11 +78,16 @@
               </div>
             </div>
           </div>
-          <div class="relative z-10 mb-4 flex items-center justify-between">
+          <div class="relative z-10 mb-4 flex items-center justify-between gap-3">
             <div class="text-sm font-semibold text-emerald-800">Tudo que entrou</div>
-            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/15 transition-transform duration-200 group-hover:scale-105">
-              <i class="fi fi-rr-plus text-[0.95rem] leading-none" aria-hidden="true"></i>
-            </div>
+            <button
+              type="button"
+              (click)="alternarPopover('entrou'); $event.stopPropagation()"
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/15 transition hover:bg-emerald-500/20 hover:text-emerald-700 group-hover:scale-105"
+              aria-label="Linhas incluídas no cálculo (entradas)"
+            >
+              <i class="fi fi-rr-settings-sliders text-[0.95rem] leading-none" aria-hidden="true"></i>
+            </button>
           </div>
           <div class="relative z-10 text-2xl font-semibold tabular-nums tracking-tight text-emerald-950 sm:text-[28px]">
             {{ formatarMoeda(totalEntrou) }}
@@ -100,14 +97,6 @@
 
         <div class="group relative overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm shadow-slate-900/5 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/90 hover:shadow-lg">
           <div class="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-rose-500 to-red-500"></div>
-          <button
-            type="button"
-            (click)="alternarPopover('pagou'); $event.stopPropagation()"
-            class="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-600 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700"
-            aria-label="Linhas incluídas no cálculo (pagamentos)"
-          >
-            <i class="fi fi-rr-settings-sliders text-[0.95rem] leading-none" aria-hidden="true"></i>
-          </button>
 
           <div
             *ngIf="popoverAberto === 'pagou'"
@@ -151,11 +140,16 @@
               </div>
             </div>
           </div>
-          <div class="relative z-10 mb-4 flex items-center justify-between">
+          <div class="relative z-10 mb-4 flex items-center justify-between gap-3">
             <div class="text-sm font-semibold text-rose-800">Tudo que pagou</div>
-            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600 ring-1 ring-rose-500/15 transition-transform duration-200 group-hover:scale-105">
-              <i class="fi fi-rr-minus text-[0.95rem] leading-none" aria-hidden="true"></i>
-            </div>
+            <button
+              type="button"
+              (click)="alternarPopover('pagou'); $event.stopPropagation()"
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600 ring-1 ring-rose-500/15 transition hover:bg-rose-500/20 hover:text-rose-700 group-hover:scale-105"
+              aria-label="Linhas incluídas no cálculo (pagamentos)"
+            >
+              <i class="fi fi-rr-settings-sliders text-[0.95rem] leading-none" aria-hidden="true"></i>
+            </button>
           </div>
           <div class="relative z-10 text-2xl font-semibold tabular-nums tracking-tight text-rose-950 sm:text-[28px]">
             {{ formatarMoeda(totalPagou) }}

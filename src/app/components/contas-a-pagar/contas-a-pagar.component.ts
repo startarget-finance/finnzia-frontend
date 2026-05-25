@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ErpFinanceiroService, MovimentacaoFinanceira, FiltrosMovimentacoes, ResumoFinanceiroResponse } from '../../services/erp-financeiro.service';
 import { FeedbackStateComponent } from '../../shared/components/feedback-state/feedback-state.component';
+import { LancamentosImportModalComponent } from '../../shared/components/lancamentos-import-modal/lancamentos-import-modal.component';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -22,13 +23,14 @@ interface LinhaExportacaoPagar {
 @Component({
   selector: 'app-contas-a-pagar',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, FeedbackStateComponent],
+  imports: [CommonModule, RouterModule, FormsModule, FeedbackStateComponent, LancamentosImportModalComponent],
   templateUrl: './contas-a-pagar.component.html',
 })
 export class ContasAPagarComponent implements OnInit, OnDestroy {
   @ViewChild('menuCriarDespesa', { read: ElementRef }) menuCriarDespesaRef?: ElementRef<HTMLElement>;
 
   mostrarMenuCriarDespesa = false;
+  mostrarModalImportacao = false;
 
   // UI: Date Range Picker
   mostrarRangePicker: boolean = false;
