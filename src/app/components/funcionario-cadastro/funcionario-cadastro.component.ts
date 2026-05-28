@@ -9,7 +9,13 @@ import {
   FuncionarioCadastroService
 } from '../../services/funcionario-cadastro.service';
 import { maskBrPhone, maskCpf, onlyDigits } from '../../utils/input-masks';
-import { buildDeleteConfirmOptions, confirmUnsavedChanges } from '../../utils/sweet-alerts';
+import {
+  buildDeleteConfirmOptions,
+  confirmUnsavedChanges,
+  showErrorAlert,
+  showValidationAlert
+} from '../../utils/sweet-alerts';
+import { sincronizarResumoParametrizacao } from '../../utils/parametrizacao-sync.util';
 
 @Component({
   selector: 'app-funcionario-cadastro',
@@ -19,7 +25,7 @@ import { buildDeleteConfirmOptions, confirmUnsavedChanges } from '../../utils/sw
 })
 export class FuncionarioCadastroComponent implements OnInit {
   @Input() embedded = false;
-  @Output() resumoTotal = new EventEmitter<number>();
+  @Output() cadastroAlterado = new EventEmitter<void>();
 
   carregando = false;
   erro: string | null = null;
@@ -95,7 +101,6 @@ export class FuncionarioCadastroComponent implements OnInit {
       this.linhas = [];
       this.totalElements = 0;
       this.totalPages = 0;
-      this.resumoTotal.emit(0);
       this.erro = null;
       return;
     }
@@ -121,14 +126,13 @@ export class FuncionarioCadastroComponent implements OnInit {
           this.linhas = page?.content ?? [];
           this.totalElements = page?.totalElements ?? 0;
           this.totalPages = page?.totalPages ?? 0;
-          this.resumoTotal.emit(this.totalElements);
           this.carregando = false;
         },
         error: (e) => {
           this.carregando = false;
           this.erro = e.error?.mensagem || 'Não foi possível carregar os funcionários.';
           this.linhas = [];
-          this.resumoTotal.emit(0);
+          void showErrorAlert(this.erro ?? 'Não foi possível carregar os funcionários.', 'Erro ao carregar funcionários');
         }
       });
   }
@@ -259,11 +263,13 @@ export class FuncionarioCadastroComponent implements OnInit {
     const nome = this.formNomeCompleto.trim();
     if (!nome) {
       this.erro = 'Informe o nome completo.';
+      void showValidationAlert(this.erro);
       return;
     }
     const idEmp = this.idEmpresaContexto();
     if (idEmp == null || idEmp <= 0) {
       this.erro = 'Não foi possível identificar a empresa do cadastro.';
+      void showErrorAlert(this.erro, 'Empresa não identificada');
       return;
     }
     const body = this.montarPayload();
@@ -276,10 +282,12 @@ export class FuncionarioCadastroComponent implements OnInit {
         this.carregando = false;
         this.modalAberto = false;
         this.carregar();
+        sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
       },
       error: (e) => {
         this.carregando = false;
         this.erro = e.error?.mensagem || 'Erro ao salvar o funcionário.';
+        void showErrorAlert(this.erro ?? 'Erro ao salvar o funcionário.', 'Erro ao salvar funcionário');
       }
     });
   }
@@ -296,10 +304,12 @@ export class FuncionarioCadastroComponent implements OnInit {
       next: () => {
         this.carregando = false;
         this.carregar();
+        sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
       },
       error: (eError) => {
         this.carregando = false;
         this.erro = eError.error?.mensagem || 'Não foi possível excluir.';
+        void showErrorAlert(this.erro ?? 'Não foi possível excluir.', 'Erro ao excluir funcionário');
       }
     });
   }
@@ -312,10 +322,12 @@ export class FuncionarioCadastroComponent implements OnInit {
       next: () => {
         this.carregando = false;
         this.carregar();
+        sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
       },
       error: (eError) => {
         this.carregando = false;
         this.erro = eError.error?.mensagem || 'Não foi possível alterar o status.';
+        void showErrorAlert(this.erro ?? 'Não foi possível alterar o status.', 'Erro ao alterar status');
       }
     });
   }

@@ -121,6 +121,65 @@ function extrairItemPluggyOnSuccess(payload: unknown): {
   return { itemId, connectorId, connectorName, status };
 }
 
+function codigoErroPluggyConnect(err: unknown): string {
+  if (!err || typeof err !== 'object') {
+    return '';
+  }
+  const o = err as Record<string, unknown>;
+  const data = o['data'] as Record<string, unknown> | undefined;
+  const raw = o['code'] ?? o['codeDescription'] ?? data?.['code'] ?? data?.['codeDescription'];
+  return raw != null ? String(raw).trim() : '';
+}
+
+/** Extrai texto legível do objeto de erro do Pluggy Connect (onError). */
+function mensagemErroPluggyConnect(err: unknown): string {
+  const code = codigoErroPluggyConnect(err);
+  if (code === 'TRIAL_CLIENT_ITEM_CREATE_NOT_ALLOWED') {
+    return (
+      'Sua conta Pluggy está no plano Trial: não é permitido conectar bancos reais (ex.: Nubank). ' +
+      'Para conta real, ative o plano Production na Pluggy (dashboard ou suporte). ' +
+      'Enquanto isso, use o conector Pluggy Sandbox com user-ok / password-ok.'
+    );
+  }
+  if (err == null) {
+    return 'Falha desconhecida no widget Pluggy.';
+  }
+  if (typeof err === 'string' && err.trim()) {
+    return err.trim();
+  }
+  if (typeof err !== 'object') {
+    return String(err);
+  }
+  const o = err as Record<string, unknown>;
+  const parts: string[] = [];
+  const msg =
+    o['message'] ??
+    o['description'] ??
+    (o['data'] as Record<string, unknown> | undefined)?.['message'];
+  if (typeof msg === 'string' && msg.trim()) {
+    parts.push(msg.trim());
+  }
+  if (code) {
+    parts.push(`Código: ${code}`);
+  }
+  const provider = (o['data'] as Record<string, unknown> | undefined)?.['providerMessage'];
+  if (typeof provider === 'string' && provider.trim()) {
+    parts.push(provider.trim());
+  }
+  if (parts.length) {
+    return parts.join(' — ');
+  }
+  try {
+    const json = JSON.stringify(err);
+    if (json && json !== '{}') {
+      return json.length > 280 ? `${json.slice(0, 280)}…` : json;
+    }
+  } catch {
+    /* ignore */
+  }
+  return 'Falha no fluxo do banco dentro do Pluggy. Em desenvolvimento, use o conector Sandbox (não Nubank real).';
+}
+
 @Component({
   selector: 'app-pluggy-open-finance',
   standalone: true,
@@ -167,13 +226,14 @@ export class PluggyOpenFinanceComponent implements OnInit, OnDestroy {
         next: (s) => {
           this.pluggyConfigurado = !!s?.configured;
           this.pluggySandboxBackend = !!s?.sandboxMode;
+          // Sandbox no widget só quando o backend/env pedem — não forçar em localhost (permite Nubank real com chaves Production).
           this.pluggyIncludeSandboxWidget =
-            this.isDev || environment.pluggyIncludeSandbox || !!s?.includeSandbox;
+            environment.pluggyIncludeSandbox || !!s?.includeSandbox || !!s?.sandboxMode;
         },
         error: () => {
           this.pluggyConfigurado = false;
           this.pluggySandboxBackend = false;
-          this.pluggyIncludeSandboxWidget = this.isDev || environment.pluggyIncludeSandbox;
+          this.pluggyIncludeSandboxWidget = environment.pluggyIncludeSandbox;
         },
       });
     this.recarregarConexoes();
@@ -411,8 +471,21 @@ export class PluggyOpenFinanceComponent implements OnInit, OnDestroy {
                 });
             },
             onError: (err: unknown) => {
-              console.error(err);
-              void Swal.fire({ icon: 'error', title: 'Erro no Pluggy Connect', text: 'Veja o console para detalhes.' });
+              console.error('Pluggy Connect onError', err);
+              const code = codigoErroPluggyConnect(err);
+              let detalhe = mensagemErroPluggyConnect(err);
+              if (
+                code !== 'TRIAL_CLIENT_ITEM_CREATE_NOT_ALLOWED' &&
+                (this.isDev || this.pluggyIncludeSandboxWidget)
+              ) {
+                detalhe +=
+                  ' No ambiente local, prefira o conector Pluggy Sandbox (credenciais user-ok / password-ok).';
+              }
+              void Swal.fire({
+                icon: 'error',
+                title: 'Erro no Pluggy Connect',
+                text: detalhe,
+              });
               this.abrindoWidget = false;
             },
           };

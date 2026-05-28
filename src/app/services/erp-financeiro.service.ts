@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { API_CONFIG } from '../config/api.config';
 import { AuthService } from './auth.service';
 
@@ -357,6 +358,15 @@ export class ErpFinanceiroService {
     return this.http.post<any>(`${this.apiUrl}/movimentacoes`, payload, {
       headers: this.getHeaders()
     });
+  }
+
+  obterMovimentacao(idMovimentacao: string): Observable<MovimentacaoFinanceira> {
+    const idEnc = encodeURIComponent(idMovimentacao);
+    return this.http
+      .get<{ movimentacao: MovimentacaoFinanceira }>(`${this.apiUrl}/movimentacoes/${idEnc}`, {
+        headers: this.getHeaders(),
+      })
+      .pipe(map((resp) => resp.movimentacao));
   }
 
   atualizarMovimentacao(idMovimentacao: string, payload: CriarMovimentacaoPayload): Observable<any> {

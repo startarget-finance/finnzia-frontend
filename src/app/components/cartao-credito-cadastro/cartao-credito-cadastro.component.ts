@@ -5,7 +5,8 @@ import { Subject, debounceTime, startWith, takeUntil } from 'rxjs';
 import Swal from 'sweetalert2';
 import { CompanySelectorService } from '../../services/company-selector.service';
 import { CartaoCreditoCadastro, FaturaCartaoService } from '../../services/fatura-cartao.service';
-import { ContaBancariaCadastroService } from '../../services/conta-bancaria-cadastro.service';
+import { showErrorAlert, showValidationAlert } from '../../utils/sweet-alerts';
+import { sincronizarResumoParametrizacao } from '../../utils/parametrizacao-sync.util';
 
 @Component({
   selector: 'app-cartao-credito-cadastro',
@@ -16,10 +17,9 @@ import { ContaBancariaCadastroService } from '../../services/conta-bancaria-cada
 export class CartaoCreditoCadastroComponent implements OnInit, OnDestroy {
   readonly bandeiras = ['Visa', 'Mastercard', 'Elo', 'American Express', 'Hipercard', 'Diners', 'Outra'];
   readonly dias = Array.from({ length: 31 }, (_, i) => i + 1);
-  readonly opcaoContaManual = '__manual__';
 
   @Input() embedded = false;
-  @Output() resumoTotal = new EventEmitter<number>();
+  @Output() cadastroAlterado = new EventEmitter<void>();
 
   carregando = false;
   salvando = false;
@@ -36,11 +36,9 @@ export class CartaoCreditoCadastroComponent implements OnInit, OnDestroy {
   fieldErrors: Partial<Record<keyof CartaoCreditoCadastro, string>> = {};
 
   itens: CartaoCreditoCadastro[] = [];
-  contasReferencia: string[] = [];
-  contaReferenciaSelect = '';
-  contaReferenciaManual = false;
   limiteDisplay = '';
   editandoId: number | null = null;
+  modalAberto = false;
 
   form: Partial<CartaoCreditoCadastro> = this.formVazio();
 
@@ -48,8 +46,7 @@ export class CartaoCreditoCadastroComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly faturaCartaoService: FaturaCartaoService,
-    private readonly companySelector: CompanySelectorService,
-    private readonly contaBancariaService: ContaBancariaCadastroService
+    private readonly companySelector: CompanySelectorService
   ) {}
 
   ngOnInit(): void {
@@ -57,7 +54,6 @@ export class CartaoCreditoCadastroComponent implements OnInit, OnDestroy {
       .pipe(startWith(null), debounceTime(50), takeUntil(this.destroy$))
       .subscribe(() => {
         this.carregar();
-        this.carregarContasReferencia();
       });
   }
 
@@ -74,12 +70,11 @@ export class CartaoCreditoCadastroComponent implements OnInit, OnDestroy {
     this.faturaCartaoService.listarCadastros(idEmpresa).subscribe({
       next: (resp) => {
         this.itens = (resp?.itens ?? []).slice();
-        this.resumoTotal.emit(this.itens.length);
       },
       error: (err) => {
         this.erro = err?.error?.mensagem || 'Não foi possível carregar os cartões.';
         this.itens = [];
-        this.resumoTotal.emit(0);
+        void showErrorAlert(this.erro, 'Erro ao carregar cartões');
       },
       complete: () => {
         this.carregando = false;
@@ -91,10 +86,26 @@ export class CartaoCreditoCadastroComponent implements OnInit, OnDestroy {
     this.editandoId = null;
     this.form = this.formVazio();
     this.limiteDisplay = '';
-    this.contaReferenciaSelect = '';
-    this.contaReferenciaManual = false;
     this.mensagem = '';
     this.erro = '';
+    this.modalAberto = false;
+  }
+
+  abrirNovoModal(): void {
+    this.editandoId = null;
+    this.form = this.formVazio();
+    this.limiteDisplay = '';
+    this.mensagem = '';
+    this.erro = '';
+    this.fieldErrors = {};
+    this.modalAberto = true;
+  }
+
+  fecharModalFormulario(): void {
+    if (this.salvando) return;
+    this.modalAberto = false;
+    this.erro = '';
+    this.fieldErrors = {};
   }
 
   editar(item: CartaoCreditoCadastro): void {
@@ -106,28 +117,18 @@ export class CartaoCreditoCadastroComponent implements OnInit, OnDestroy {
       limite: item.limite ?? null,
       diaFechamento: item.diaFechamento ?? null,
       diaVencimento: item.diaVencimento ?? null,
-      contaReferencia: item.contaReferencia ?? '',
     };
     this.limiteDisplay = this.formatarMoedaInput(item.limite ?? null);
-    this.definirModoContaReferencia(item.contaReferencia ?? null);
     this.mensagem = '';
     this.erro = '';
+    this.fieldErrors = {};
+    this.modalAberto = true;
   }
 
   onFinalCartaoInput(): void {
     const atual = String(this.form.finalCartao ?? '');
     this.form.finalCartao = atual.replace(/\D/g, '').slice(0, 4);
     this.clearFieldError('finalCartao');
-  }
-
-  onContaReferenciaSelectChange(): void {
-    if (this.contaReferenciaSelect === this.opcaoContaManual) {
-      this.contaReferenciaManual = true;
-      this.form.contaReferencia = '';
-      return;
-    }
-    this.contaReferenciaManual = false;
-    this.form.contaReferencia = this.contaReferenciaSelect || '';
   }
 
   onLimiteInput(): void {
@@ -150,13 +151,7 @@ export class CartaoCreditoCadastroComponent implements OnInit, OnDestroy {
   salvar(): void {
     if (!this.validarFormulario()) {
       this.erro = 'Preencha os campos obrigatórios para continuar.';
-      void Swal.fire({
-        icon: 'warning',
-        title: 'Campos obrigatórios',
-        text: 'Preencha os campos marcados com * antes de salvar.',
-        confirmButtonText: 'Entendi',
-        confirmButtonColor: '#7c3aed',
-      });
+      void showValidationAlert('Preencha os campos marcados com * antes de salvar.');
       return;
     }
     this.salvando = true;
@@ -170,7 +165,6 @@ export class CartaoCreditoCadastroComponent implements OnInit, OnDestroy {
       limite: this.form.limite != null ? Number(this.form.limite) : null,
       diaFechamento: this.form.diaFechamento != null ? Number(this.form.diaFechamento) : null,
       diaVencimento: this.form.diaVencimento != null ? Number(this.form.diaVencimento) : null,
-      contaReferencia: this.sanitizar(this.form.contaReferencia),
     };
 
     const req$ = this.editandoId
@@ -180,8 +174,13 @@ export class CartaoCreditoCadastroComponent implements OnInit, OnDestroy {
     req$.subscribe({
       next: () => {
         this.mensagem = this.editandoId ? 'Cartão atualizado com sucesso.' : 'Cartão cadastrado com sucesso.';
-        this.novo();
+        this.modalAberto = false;
+        this.editandoId = null;
+        this.form = this.formVazio();
+        this.limiteDisplay = '';
+        this.fieldErrors = {};
         this.carregar();
+        sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
         void Swal.fire({
           icon: 'success',
           title: 'Cadastro salvo',
@@ -227,9 +226,11 @@ export class CartaoCreditoCadastroComponent implements OnInit, OnDestroy {
           this.novo();
         }
         this.carregar();
+        sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
       },
       error: (err) => {
         this.erro = err?.error?.mensagem || 'Não foi possível remover o cartão.';
+        void showErrorAlert(this.erro, 'Erro ao remover cartão');
       },
     });
   }
@@ -246,44 +247,6 @@ export class CartaoCreditoCadastroComponent implements OnInit, OnDestroy {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(numero);
-  }
-
-  private carregarContasReferencia(): void {
-    const idEmpresa = this.companySelector.obterIdEmpresaSelecionada() ?? undefined;
-    this.contaBancariaService.listar({
-      idEmpresa,
-      ativo: true,
-      page: 0,
-      size: 300,
-      sort: 'banco,asc',
-    }).subscribe({
-      next: (resp) => {
-        const nomes = (resp?.content ?? [])
-          .map((c) => (c.nomeConta && c.nomeConta.trim() !== '' ? c.nomeConta : c.banco))
-          .filter((v): v is string => !!v && v.trim() !== '');
-        this.contasReferencia = Array.from(new Set(nomes)).sort((a, b) => a.localeCompare(b, 'pt-BR'));
-      },
-      error: () => {
-        this.contasReferencia = [];
-      },
-    });
-  }
-
-  private definirModoContaReferencia(contaReferencia: string | null): void {
-    const valor = contaReferencia?.trim() ?? '';
-    if (!valor) {
-      this.contaReferenciaSelect = '';
-      this.contaReferenciaManual = false;
-      return;
-    }
-    if (this.contasReferencia.includes(valor)) {
-      this.contaReferenciaSelect = valor;
-      this.contaReferenciaManual = false;
-    } else {
-      this.contaReferenciaSelect = this.opcaoContaManual;
-      this.contaReferenciaManual = true;
-      this.form.contaReferencia = valor;
-    }
   }
 
   private sanitizar(v: unknown): string | null {
@@ -352,7 +315,6 @@ export class CartaoCreditoCadastroComponent implements OnInit, OnDestroy {
       limite: null,
       diaFechamento: null,
       diaVencimento: null,
-      contaReferencia: '',
     };
   }
 }

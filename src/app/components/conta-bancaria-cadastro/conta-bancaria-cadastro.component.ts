@@ -10,7 +10,14 @@ import {
   ContaBancariaCadastroService,
   TipoContaBancaria
 } from '../../services/conta-bancaria-cadastro.service';
-import { buildDeleteConfirmOptions, confirmUnsavedChanges } from '../../utils/sweet-alerts';
+import { InstituicoesFinanceirasService } from '../../services/instituicoes-financeiras.service';
+import {
+  buildDeleteConfirmOptions,
+  confirmUnsavedChanges,
+  showErrorAlert,
+  showValidationAlert
+} from '../../utils/sweet-alerts';
+import { sincronizarResumoParametrizacao } from '../../utils/parametrizacao-sync.util';
 
 @Component({
   selector: 'app-conta-bancaria-cadastro',
@@ -20,7 +27,7 @@ import { buildDeleteConfirmOptions, confirmUnsavedChanges } from '../../utils/sw
 })
 export class ContaBancariaCadastroComponent implements OnInit {
   @Input() embedded = false;
-  @Output() resumoTotal = new EventEmitter<number>();
+  @Output() cadastroAlterado = new EventEmitter<void>();
 
   carregando = false;
   erro: string | null = null;
@@ -47,9 +54,16 @@ export class ContaBancariaCadastroComponent implements OnInit {
   formSaldoInicialInput = '0,00';
   formAtivo = true;
   instituicaoSelecionada = '';
+  buscaInstituicao = '';
+  mostrarSugestoesInstituicao = false;
+  instituicoesFlat: Array<{ banco: string; instituicao: string; grupo: string }> = [];
+  instituicoesFiltradas: Array<{ banco: string; instituicao: string; grupo: string }> = [];
   private modalSnapshot = '';
 
-  readonly gruposInstituicoes = [
+  gruposInstituicoes: Array<{ tipo: string; itens: Array<{ banco: string; instituicao: string }> }> = [];
+  carregandoInstituicoes = false;
+
+  private readonly fallbackGruposInstituicoes = [
     {
       tipo: 'Bancos tradicionais',
       itens: [
@@ -86,16 +100,57 @@ export class ContaBancariaCadastroComponent implements OnInit {
 
   constructor(
     private readonly api: ContaBancariaCadastroService,
-    private readonly companySelector: CompanySelectorService
+    private readonly companySelector: CompanySelectorService,
+    private readonly instituicoesService: InstituicoesFinanceirasService
   ) {}
 
   ngOnInit(): void {
+    this.carregarInstituicoes();
     this.companySelector.empresaSelecionada$.subscribe(() => {
       this.carregar();
     });
     this.companySelector.empresasPermitidas$.subscribe(() => {
       this.carregar();
     });
+  }
+
+  private carregarInstituicoes(): void {
+    this.carregandoInstituicoes = true;
+    this.instituicoesService.listar(undefined, 1000).subscribe({
+      next: (res) => {
+        const itens = res?.itens ?? [];
+        if (!itens.length) {
+          this.gruposInstituicoes = this.fallbackGruposInstituicoes;
+          this.carregandoInstituicoes = false;
+          return;
+        }
+        const map = new Map<string, Array<{ banco: string; instituicao: string }>>();
+        for (const item of itens) {
+          const grupo = (item.grupo || 'Outros').trim();
+          const lista = map.get(grupo) ?? [];
+          lista.push({ banco: item.banco, instituicao: item.instituicao });
+          map.set(grupo, lista);
+        }
+        this.gruposInstituicoes = Array.from(map.entries()).map(([tipo, itensGrupo]) => ({
+          tipo,
+          itens: itensGrupo
+        }));
+        this.atualizarInstituicoesFlat();
+        this.carregandoInstituicoes = false;
+      },
+      error: () => {
+        this.gruposInstituicoes = this.fallbackGruposInstituicoes;
+        this.atualizarInstituicoesFlat();
+        this.carregandoInstituicoes = false;
+      }
+    });
+  }
+
+  private atualizarInstituicoesFlat(): void {
+    this.instituicoesFlat = this.gruposInstituicoes.flatMap((g) =>
+      g.itens.map((i) => ({ banco: i.banco, instituicao: i.instituicao, grupo: g.tipo }))
+    );
+    this.filtrarInstituicoes();
   }
 
   private idEmpresaContexto(): number | null {
@@ -115,7 +170,6 @@ export class ContaBancariaCadastroComponent implements OnInit {
       this.linhas = [];
       this.totalElements = 0;
       this.totalPages = 0;
-      this.resumoTotal.emit(0);
       this.erro = null;
       return;
     }
@@ -140,14 +194,13 @@ export class ContaBancariaCadastroComponent implements OnInit {
           this.linhas = page?.content ?? [];
           this.totalElements = page?.totalElements ?? 0;
           this.totalPages = page?.totalPages ?? 0;
-          this.resumoTotal.emit(this.totalElements);
           this.carregando = false;
         },
         error: (e) => {
           this.carregando = false;
           this.erro = e.error?.mensagem || 'Não foi possível carregar as contas.';
           this.linhas = [];
-          this.resumoTotal.emit(0);
+          void showErrorAlert(this.erro ?? 'Não foi possível carregar as contas.', 'Erro ao carregar contas');
         }
       });
   }
@@ -216,6 +269,9 @@ export class ContaBancariaCadastroComponent implements OnInit {
     this.formSaldoInicialInput = this.formatarMoedaBr(this.formSaldoInicial);
     this.formAtivo = true;
     this.instituicaoSelecionada = '';
+    this.buscaInstituicao = '';
+    this.mostrarSugestoesInstituicao = false;
+    this.instituicoesFiltradas = [...this.instituicoesFlat].slice(0, 80);
     this.atualizarSnapshotModal();
     this.modalAberto = true;
   }
@@ -223,17 +279,19 @@ export class ContaBancariaCadastroComponent implements OnInit {
   abrirEditar(c: ContaBancariaCadastro): void {
     this.editandoId = c.id;
     this.formNomeConta = (c.nomeConta || '').trim();
-    this.formCategoria =
-      c.categoria === 'DINHEIRO' ? 'DINHEIRO' : 'BANCARIA';
+    this.formCategoria = 'BANCARIA';
     this.formInstituicao = (c.instituicao || '').trim();
     this.formBanco = c.banco;
-    this.formAgencia = c.agencia === '0' && c.categoria === 'DINHEIRO' ? '' : c.agencia;
-    this.formConta = c.conta === '0' && c.categoria === 'DINHEIRO' ? '' : c.conta;
+    this.formAgencia = c.agencia === '0' ? '' : c.agencia;
+    this.formConta = c.conta === '0' ? '' : c.conta;
     this.formTipo = c.tipo === 'POUPANCA' ? 'POUPANCA' : 'CORRENTE';
     this.formSaldoInicial = Number(c.saldoInicial ?? 0);
     this.formSaldoInicialInput = this.formatarMoedaBr(this.formSaldoInicial);
     this.formAtivo = c.ativo !== false;
     this.instituicaoSelecionada = this.formInstituicao;
+    this.buscaInstituicao = this.formBanco || this.formInstituicao || '';
+    this.filtrarInstituicoes();
+    this.mostrarSugestoesInstituicao = false;
     this.atualizarSnapshotModal();
     this.modalAberto = true;
   }
@@ -246,6 +304,55 @@ export class ContaBancariaCadastroComponent implements OnInit {
     if (item) {
       this.formBanco = item.banco;
     }
+  }
+
+  abrirSugestoesInstituicao(): void {
+    this.mostrarSugestoesInstituicao = true;
+    this.filtrarInstituicoes();
+  }
+
+  onBuscaInstituicaoChange(): void {
+    this.mostrarSugestoesInstituicao = true;
+    this.filtrarInstituicoes();
+  }
+
+  escolherInstituicao(item: { banco: string; instituicao: string }): void {
+    this.formInstituicao = item.instituicao;
+    this.formBanco = item.banco;
+    this.instituicaoSelecionada = item.instituicao;
+    this.buscaInstituicao = item.banco;
+    this.mostrarSugestoesInstituicao = false;
+  }
+
+  fecharSugestoesInstituicaoComDelay(): void {
+    setTimeout(() => {
+      this.mostrarSugestoesInstituicao = false;
+      const texto = this.buscaInstituicao.trim();
+      if (!texto) return;
+      // Se digitou manualmente, usamos o mesmo valor para banco e instituição.
+      if (!this.formBanco.trim()) {
+        this.formBanco = texto;
+      }
+      if (!this.formInstituicao.trim()) {
+        this.formInstituicao = texto;
+      }
+    }, 120);
+  }
+
+  private filtrarInstituicoes(): void {
+    const q = this.buscaInstituicao.trim().toLowerCase();
+    const base = this.instituicoesFlat;
+    if (!q) {
+      this.instituicoesFiltradas = base.slice(0, 80);
+      return;
+    }
+    this.instituicoesFiltradas = base
+      .filter((i) =>
+        i.banco.toLowerCase().includes(q) ||
+        i.instituicao.toLowerCase().includes(q) ||
+        i.grupo.toLowerCase().includes(q)
+      )
+      .slice(0, 80);
   }
 
   async fecharModal(): Promise<void> {
@@ -300,26 +407,35 @@ export class ContaBancariaCadastroComponent implements OnInit {
   }
 
   salvar(): void {
-    if (!this.formBanco.trim()) {
-      this.erro = 'Preencha o nome da instituição ou descrição (campo obrigatório).';
+    const bancoResolvido = (
+      this.formBanco ||
+      this.buscaInstituicao ||
+      this.formInstituicao
+    ).trim();
+    if (!bancoResolvido) {
+      this.erro = 'Selecione ou informe uma instituição.';
+      void showValidationAlert(this.erro);
       return;
     }
-    if (this.formCategoria === 'BANCARIA') {
-      if (!this.formAgencia.trim() || !this.formConta.trim()) {
-        this.erro = 'Para conta bancária, informe agência e conta.';
-        return;
-      }
+    this.formBanco = bancoResolvido;
+    this.formCategoria = 'BANCARIA';
+    if (!this.formAgencia.trim() || !this.formConta.trim()) {
+      this.erro = 'Informe agência e conta.';
+      void showValidationAlert(this.erro);
+      return;
     }
     const idEmpresaAtual = this.idEmpresaContexto();
     if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
       this.erro = 'Não foi possível identificar a empresa do cadastro.';
+      void showErrorAlert(this.erro);
       return;
     }
-    const ag = this.formCategoria === 'BANCARIA' ? this.formAgencia.trim() : this.formAgencia.trim() || '0';
-    const ct = this.formCategoria === 'BANCARIA' ? this.formConta.trim() : this.formConta.trim() || '0';
+    const ag = this.formAgencia.trim();
+    const ct = this.formConta.trim();
     const saldo = this.parseMoedaBrSeguro(this.formSaldoInicialInput);
     if (saldo.excedeLimite) {
       this.erro = 'Saldo inicial muito alto para processamento seguro. Use até R$ 90.071.992.547.409,91.';
+      void showValidationAlert(this.erro, 'Valor inválido');
       return;
     }
     const body: ContaBancariaCadastroPayload = {
@@ -343,10 +459,12 @@ export class ContaBancariaCadastroComponent implements OnInit {
         this.carregando = false;
         this.modalAberto = false;
         this.carregar();
+        sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
       },
       error: (e) => {
         this.carregando = false;
         this.erro = e.error?.mensagem || 'Erro ao salvar.';
+        void showErrorAlert(this.erro ?? 'Erro ao salvar conta.', 'Erro ao salvar conta');
       }
     });
   }
@@ -362,10 +480,12 @@ export class ContaBancariaCadastroComponent implements OnInit {
       next: () => {
         this.carregando = false;
         this.carregar();
+        sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
       },
       error: (e) => {
         this.carregando = false;
         this.erro = e.error?.mensagem || 'Não foi possível excluir.';
+        void showErrorAlert(this.erro ?? 'Não foi possível excluir.', 'Erro ao excluir conta');
       }
     });
   }
@@ -378,10 +498,12 @@ export class ContaBancariaCadastroComponent implements OnInit {
       next: () => {
         this.carregando = false;
         this.carregar();
+        sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
       },
       error: (e) => {
         this.carregando = false;
         this.erro = e.error?.mensagem || 'Não foi possível alterar o status.';
+        void showErrorAlert(this.erro ?? 'Não foi possível alterar o status.', 'Erro ao atualizar status');
       }
     });
   }

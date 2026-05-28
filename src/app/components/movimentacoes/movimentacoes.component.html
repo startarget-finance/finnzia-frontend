@@ -978,12 +978,14 @@
                       </div>
                       <div>
                         <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Categoria *</label>
-                        <select [(ngModel)]="novoLancamento.categoriaOpcao" (ngModelChange)="onCategoriaOpcaoChange()" [class.border-rose-300]="cadastroErrors['categoria']" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-500">
+                        <select [(ngModel)]="novoLancamento.categoriaOpcao" (ngModelChange)="onCategoriaOpcaoChange()" [class.border-rose-300]="!!cadastroErrors['categoria']" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500">
                           <option value="">Selecione</option>
-                          <option *ngFor="let categoria of categoriasCadastroTipo" [value]="categoria.value">{{ categoria.label }}</option>
-                          <option value="__manual__">Digitar</option>
+                          <option *ngFor="let cat of categoriasCadastroTipoComManual" [value]="cat.value">{{ cat.label }}</option>
                         </select>
                         <input *ngIf="novoLancamento.categoriaOpcao === '__manual__'" [(ngModel)]="novoLancamento.categoriaManual" type="text" class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                        <p *ngIf="categoriasCadastroTipo.length === 0" class="mt-1 text-[11px] text-slate-500">
+                          Nenhuma categoria de despesa cadastrada no Plano de contas.
+                        </p>
                         <p *ngIf="cadastroErrors['categoria']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['categoria'] }}</p>
                       </div>
                     </div>
@@ -1066,10 +1068,9 @@
                         </div>
                         <div class="sm:col-span-2 lg:col-span-3">
                           <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Categoria *</label>
-                          <select [(ngModel)]="novoLancamento.categoriaOpcao" (ngModelChange)="onCategoriaOpcaoChange()" [class.border-rose-300]="cadastroErrors['categoria']" class="w-full max-w-xl rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-500">
+                          <select [(ngModel)]="novoLancamento.categoriaOpcao" (ngModelChange)="onCategoriaOpcaoChange()" [class.border-rose-300]="!!cadastroErrors['categoria']" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500">
                             <option value="">Selecione</option>
-                            <option *ngFor="let categoria of categoriasCadastroTipo" [value]="categoria.value">{{ categoria.label }}</option>
-                            <option value="__manual__">Digitar</option>
+                            <option *ngFor="let cat of categoriasCadastroTipoComManual" [value]="cat.value">{{ cat.label }}</option>
                           </select>
                           <input *ngIf="novoLancamento.categoriaOpcao === '__manual__'" [(ngModel)]="novoLancamento.categoriaManual" type="text" class="mt-2 w-full max-w-xl rounded-lg border border-slate-300 px-3 py-2 text-sm" />
                           <p *ngIf="cadastroErrors['categoria']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['categoria'] }}</p>
@@ -1470,10 +1471,9 @@
                         </div>
                         <div class="md:col-span-2">
                           <label class="mb-1 block text-[11px] font-semibold uppercase text-slate-600">Categoria *</label>
-                          <select [(ngModel)]="novoLancamento.categoriaOpcao" (ngModelChange)="onCategoriaOpcaoChange()" [class.border-rose-300]="cadastroErrors['categoria']" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                          <select [(ngModel)]="novoLancamento.categoriaOpcao" (ngModelChange)="onCategoriaOpcaoChange()" [class.border-rose-300]="!!cadastroErrors['categoria']" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500">
                             <option value="">Selecione</option>
-                            <option *ngFor="let categoria of categoriasCadastroTipo" [value]="categoria.value">{{ categoria.label }}</option>
-                            <option value="__manual__">Digitar</option>
+                            <option *ngFor="let cat of categoriasCadastroTipoComManual" [value]="cat.value">{{ cat.label }}</option>
                           </select>
                           <input *ngIf="novoLancamento.categoriaOpcao === '__manual__'" [(ngModel)]="novoLancamento.categoriaManual" type="text" class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
                           <p *ngIf="cadastroErrors['categoria']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['categoria'] }}</p>
@@ -1638,10 +1638,9 @@
                         </div>
                         <div>
                           <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Categoria *</label>
-                          <select [(ngModel)]="novoLancamento.categoriaOpcao" (ngModelChange)="onCategoriaOpcaoChange()" [class.border-rose-300]="cadastroErrors['categoria']" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-500">
+                          <select [(ngModel)]="novoLancamento.categoriaOpcao" (ngModelChange)="onCategoriaOpcaoChange()" [class.border-rose-300]="!!cadastroErrors['categoria']" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500">
                             <option value="">Selecione</option>
-                            <option *ngFor="let categoria of categoriasCadastroTipo" [value]="categoria.value">{{ categoria.label }}</option>
-                            <option value="__manual__">Digitar</option>
+                            <option *ngFor="let cat of categoriasCadastroTipoComManual" [value]="cat.value">{{ cat.label }}</option>
                           </select>
                           <input *ngIf="novoLancamento.categoriaOpcao === '__manual__'" [(ngModel)]="novoLancamento.categoriaManual" type="text" class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
                           <p *ngIf="cadastroErrors['categoria']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['categoria'] }}</p>
@@ -1698,10 +1697,9 @@
                         <div *ngFor="let linha of novoLancamento.outrasRateioLinhas; let i = index" class="grid grid-cols-1 gap-2 rounded-lg border border-slate-100 bg-slate-50/80 p-3 sm:grid-cols-12 sm:items-end">
                           <div class="sm:col-span-5">
                             <label class="mb-1 block text-[10px] font-semibold uppercase text-slate-500">Categoria</label>
-                            <select [ngModel]="linha.categoriaOpcao" (ngModelChange)="onRateioCategoriaOpcaoChange(i, $event)" class="w-full rounded-lg border border-slate-300 px-2 py-2 text-sm">
+                            <select [ngModel]="linha.categoriaOpcao" (ngModelChange)="onRateioCategoriaOpcaoChange(i, $event)" class="w-full rounded border border-slate-300 bg-white px-2 py-2 text-sm outline-none focus:border-teal-500">
                               <option value="">Selecione</option>
-                              <option *ngFor="let c of categoriasCadastroTipo" [value]="c.value">{{ c.label }}</option>
-                              <option value="__manual__">Digitar</option>
+                              <option *ngFor="let cat of categoriasCadastroTipoComManual" [value]="cat.value">{{ cat.label }}</option>
                             </select>
                             <input *ngIf="linha.categoriaOpcao === '__manual__'" [(ngModel)]="linha.categoriaManual" type="text" class="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm" placeholder="Nome da categoria" />
                           </div>
@@ -1938,10 +1936,9 @@
                         </div>
                         <div>
                           <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Categoria *</label>
-                          <select [(ngModel)]="novoLancamento.categoriaOpcao" (ngModelChange)="onCategoriaOpcaoChange()" [class.border-rose-300]="cadastroErrors['categoria']" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-500">
+                          <select [(ngModel)]="novoLancamento.categoriaOpcao" (ngModelChange)="onCategoriaOpcaoChange()" [class.border-rose-300]="!!cadastroErrors['categoria']" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500">
                             <option value="">Selecione</option>
-                            <option *ngFor="let categoria of categoriasCadastroTipo" [value]="categoria.value">{{ categoria.label }}</option>
-                            <option value="__manual__">Digitar</option>
+                            <option *ngFor="let cat of categoriasCadastroTipoComManual" [value]="cat.value">{{ cat.label }}</option>
                           </select>
                           <input *ngIf="novoLancamento.categoriaOpcao === '__manual__'" [(ngModel)]="novoLancamento.categoriaManual" type="text" class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
                           <p *ngIf="cadastroErrors['categoria']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['categoria'] }}</p>
@@ -2016,15 +2013,10 @@
             </div>
             <div>
               <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Categoria *</label>
-              <select [(ngModel)]="novoLancamento.categoriaOpcao" (ngModelChange)="onCategoriaOpcaoChange()"
-                     [class.border-rose-300]="cadastroErrors['categoria']"
-                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-              >
+              <select [(ngModel)]="novoLancamento.categoriaOpcao" (ngModelChange)="onCategoriaOpcaoChange()" [class.border-rose-300]="!!cadastroErrors['categoria']"
+                      class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100">
                 <option value="">Selecione uma categoria</option>
-                <option *ngFor="let categoria of categoriasCadastroTipo" [value]="categoria.value">
-                  {{ categoria.label }}
-                </option>
-                <option value="__manual__">Digitar manualmente</option>
+                <option *ngFor="let cat of categoriasCadastroTipoComManual" [value]="cat.value">{{ cat.label }}</option>
               </select>
               <input *ngIf="novoLancamento.categoriaOpcao === '__manual__'" [(ngModel)]="novoLancamento.categoriaManual" type="text"
                      class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"

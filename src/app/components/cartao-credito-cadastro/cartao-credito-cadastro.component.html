@@ -1,14 +1,47 @@
 <div class="space-y-4">
   <div class="rounded-2xl border border-slate-200/80 bg-gradient-to-r from-slate-50/70 to-white p-4 sm:p-5">
-    <div class="mb-4 flex items-center justify-between gap-3 border-b border-slate-200/70 pb-3">
+    <div class="flex items-center justify-between gap-3">
       <div>
-        <h3 class="text-sm font-semibold text-slate-900">Cadastro de cartão de crédito</h3>
-        <p class="mt-1 text-xs text-slate-500">Campos padronizados para uso no menu Fatura e gestão de despesas.</p>
+        <h3 class="text-sm font-semibold text-slate-900">Cartões de crédito</h3>
+        <p class="mt-1 text-xs text-slate-500">Cadastre e edite cartões no mesmo padrão das demais telas.</p>
       </div>
-      <span *ngIf="carregando" class="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-500">Atualizando dados...</span>
+      <div class="flex items-center gap-2">
+        <span *ngIf="carregando" class="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-500">Atualizando dados...</span>
+        <button
+          type="button"
+          (click)="abrirNovoModal()"
+          class="rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:brightness-110"
+        >
+          Cadastrar cartão
+        </button>
+      </div>
     </div>
+  </div>
 
-    <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+  <div
+    *ngIf="modalAberto"
+    class="modal-overlay-main z-[110] bg-slate-900/35 backdrop-blur-[4px]"
+    (click)="fecharModalFormulario()"
+  >
+    <div class="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl sm:p-5" (click)="$event.stopPropagation()">
+      <div class="mb-4 flex items-center justify-between gap-3 border-b border-slate-200/70 pb-3">
+        <div>
+          <h3 class="text-sm font-semibold text-slate-900">
+            {{ editandoId ? 'Editar cartão de crédito' : 'Cadastro de cartão de crédito' }}
+          </h3>
+          <p class="mt-1 text-xs text-slate-500">Campos padronizados para uso no menu Fatura e gestão de despesas.</p>
+        </div>
+        <button
+          type="button"
+          (click)="fecharModalFormulario()"
+          class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+          aria-label="Fechar"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
       <div class="xl:col-span-2">
         <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Nome do cartão <span class="text-rose-500">*</span></label>
         <input [(ngModel)]="form.nome" (input)="onTextFieldInput('nome')" [ngClass]="isRequiredFieldInvalid('nome') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'" class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100" placeholder="Ex: Nubank PJ Empresarial" />
@@ -44,47 +77,48 @@
       </div>
       <div>
         <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Dia fechamento <span class="text-rose-500">*</span></label>
-        <select [(ngModel)]="form.diaFechamento" (ngModelChange)="onTextFieldInput('diaFechamento')" [ngClass]="isRequiredFieldInvalid('diaFechamento') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'" class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100">
-          <option [ngValue]="null">Selecione</option>
-          <option *ngFor="let d of dias" [ngValue]="d">{{ d }}</option>
-        </select>
+        <input
+          [(ngModel)]="form.diaFechamento"
+          (ngModelChange)="onTextFieldInput('diaFechamento')"
+          type="number"
+          min="1"
+          max="31"
+          inputmode="numeric"
+          [ngClass]="isRequiredFieldInvalid('diaFechamento') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'"
+          class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100"
+          placeholder="1 a 31"
+        />
         <p *ngIf="fieldErrors.diaFechamento" class="mt-1 text-xs font-medium text-rose-600">{{ fieldErrors.diaFechamento }}</p>
       </div>
       <div>
         <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Dia vencimento <span class="text-rose-500">*</span></label>
-        <select [(ngModel)]="form.diaVencimento" (ngModelChange)="onTextFieldInput('diaVencimento')" [ngClass]="isRequiredFieldInvalid('diaVencimento') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'" class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100">
-          <option [ngValue]="null">Selecione</option>
-          <option *ngFor="let d of dias" [ngValue]="d">{{ d }}</option>
-        </select>
-        <p *ngIf="fieldErrors.diaVencimento" class="mt-1 text-xs font-medium text-rose-600">{{ fieldErrors.diaVencimento }}</p>
-      </div>
-      <div class="md:col-span-2 xl:col-span-2">
-        <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Conta referência</label>
-        <select [(ngModel)]="contaReferenciaSelect" (ngModelChange)="onContaReferenciaSelectChange()" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100">
-          <option value="">Sem vínculo</option>
-          <option *ngFor="let c of contasReferencia" [value]="c">{{ c }}</option>
-          <option [value]="opcaoContaManual">Informar manualmente...</option>
-        </select>
         <input
-          *ngIf="contaReferenciaManual"
-          [(ngModel)]="form.contaReferencia"
-          class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100"
-          placeholder="Digite a conta de referência"
+          [(ngModel)]="form.diaVencimento"
+          (ngModelChange)="onTextFieldInput('diaVencimento')"
+          type="number"
+          min="1"
+          max="31"
+          inputmode="numeric"
+          [ngClass]="isRequiredFieldInvalid('diaVencimento') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'"
+          class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100"
+          placeholder="1 a 31"
         />
+        <p *ngIf="fieldErrors.diaVencimento" class="mt-1 text-xs font-medium text-rose-600">{{ fieldErrors.diaVencimento }}</p>
       </div>
     </div>
 
-    <div class="mt-4 flex flex-wrap items-center gap-2">
+      <div class="mt-4 flex flex-wrap items-center justify-end gap-2">
       <button type="button" (click)="salvar()" [disabled]="salvando" class="rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
         {{ editandoId ? 'Atualizar cartão' : 'Cadastrar cartão' }}
       </button>
-      <button type="button" (click)="novo()" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-        Limpar
+      <button type="button" (click)="fecharModalFormulario()" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+        Cancelar
       </button>
-    </div>
+      </div>
 
-    <p *ngIf="mensagem" class="mt-3 text-sm font-medium text-emerald-700">{{ mensagem }}</p>
-    <p *ngIf="erro" class="mt-3 text-sm font-medium text-rose-700">{{ erro }}</p>
+      <p *ngIf="mensagem" class="mt-3 text-sm font-medium text-emerald-700">{{ mensagem }}</p>
+      <p *ngIf="erro" class="mt-3 text-sm font-medium text-rose-700">{{ erro }}</p>
+    </div>
   </div>
 
   <div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_18px_40px_-24px_rgba(15,23,42,0.22)] ring-1 ring-slate-200/60">
@@ -98,13 +132,12 @@
             <th class="px-4 py-3.5 text-right text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Limite</th>
             <th class="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Fechamento</th>
             <th class="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Vencimento</th>
-            <th class="px-4 py-3.5 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Conta referência</th>
             <th class="w-44 px-4 py-3.5 text-right text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">Ações</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngIf="!carregando && itens.length === 0">
-            <td colspan="8" class="py-12 text-center text-slate-500">Nenhum cartão cadastrado.</td>
+            <td colspan="7" class="py-12 text-center text-slate-500">Nenhum cartão cadastrado.</td>
           </tr>
           <tr *ngFor="let item of itens" class="border-b border-slate-100/90 align-top transition-colors hover:bg-violet-50/35">
             <td class="px-4 py-3.5 font-semibold text-slate-900">{{ item.nome }}</td>
@@ -113,7 +146,6 @@
             <td class="px-4 py-3.5 text-right font-medium text-slate-800">{{ formatarLimiteTabela(item.limite) }}</td>
             <td class="px-4 py-3.5 text-slate-700">{{ item.diaFechamento || '-' }}</td>
             <td class="px-4 py-3.5 text-slate-700">{{ item.diaVencimento || '-' }}</td>
-            <td class="px-4 py-3.5 text-slate-700">{{ item.contaReferencia || '-' }}</td>
             <td class="px-4 py-3.5 text-right whitespace-nowrap">
               <div class="inline-flex items-center gap-0.5 justify-end">
                 <button

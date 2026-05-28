@@ -25,25 +25,47 @@ export interface CartaoResumo {
   contaBancariaNome?: string;
 }
 
+export type StatusClassificacao = 'pendente' | 'sugerida' | 'classificada';
+
 export interface LancamentoImportado {
   id: number;
+  idMovimentacao?: string;
   data: string;
   descricao: string;
   valor: number;
   tipo: TipoTransacao;
   categoria: string;
   confianca: NivelConfianca;
+  statusClassificacao?: StatusClassificacao;
+  precisaRevisao?: boolean;
+  origemSugestao?: string;
+  cartaoId?: number;
+  cartaoNome?: string;
   contaBancariaId?: string | number;
   contaBancariaNome?: string;
+  /** UI: seleção na conciliação pré-importação */
+  selecionado?: boolean;
+  salvarRegra?: boolean;
+  textoRegra?: string;
+}
+
+export interface PreviewImportacaoResponse {
+  mensagem: string;
+  lancamentos: LancamentoImportado[];
+  pendentesRevisao?: number;
+  modo?: 'preview' | 'confirmado';
 }
 
 export interface ContaPagarGerada {
-  id: number;
+  id: number | string;
+  idMovimentacao?: string;
   competencia: string;
   vencimento: string;
   descricao: string;
   valor: number;
-  status: 'prototipo';
+  status: 'pendente' | 'pago' | string;
+  cartaoId?: number;
+  cartaoNome?: string;
 }
 
 export interface CartaoCreditoCadastro {
@@ -87,22 +109,56 @@ export class FaturaCartaoService {
     });
   }
 
-  importarCsv(csvContent: string): Observable<{ mensagem: string; lancamentos: LancamentoImportado[] }> {
-    return this.http.post<{ mensagem: string; lancamentos: LancamentoImportado[] }>(
-      `${this.apiUrl}/importar-csv`,
-      { csvContent },
+  previewImportacao(csvContent: string, cartaoId?: number): Observable<PreviewImportacaoResponse> {
+    return this.http.post<PreviewImportacaoResponse>(
+      `${this.apiUrl}/preview-importacao`,
+      { csvContent, cartaoId },
+      { headers: this.getHeaders() }
+    );
+  }
+
+  /** @deprecated Use previewImportacao + confirmarImportacao */
+  importarCsv(csvContent: string, cartaoId?: number): Observable<PreviewImportacaoResponse> {
+    return this.previewImportacao(csvContent, cartaoId);
+  }
+
+  confirmarImportacao(
+    cartaoId: number,
+    lancamentos: LancamentoImportado[]
+  ): Observable<PreviewImportacaoResponse> {
+    return this.http.post<PreviewImportacaoResponse>(
+      `${this.apiUrl}/confirmar-importacao`,
+      { cartaoId, lancamentos },
       { headers: this.getHeaders() }
     );
   }
 
   gerarContasPagar(
+    cartaoId: number,
     nomeCartao: string,
     lancamentos: LancamentoImportado[]
   ): Observable<{ mensagem: string; contasPagar: ContaPagarGerada[] }> {
     return this.http.post<{ mensagem: string; contasPagar: ContaPagarGerada[] }>(
       `${this.apiUrl}/gerar-contas-pagar`,
-      { nomeCartao, lancamentos },
+      { cartaoId, nomeCartao, lancamentos },
       { headers: this.getHeaders() }
+    );
+  }
+
+  listarImportadosRecentes(cartaoId?: number | null): Observable<{
+    lancamentos: LancamentoImportado[];
+    contasPagar: ContaPagarGerada[];
+  }> {
+    let params = new HttpParams();
+    if (cartaoId != null) {
+      params = params.set('cartaoId', String(cartaoId));
+    }
+    return this.http.get<{ lancamentos: LancamentoImportado[]; contasPagar: ContaPagarGerada[] }>(
+      `${this.apiUrl}/importados-recentes`,
+      {
+        headers: this.getHeaders(),
+        params,
+      }
     );
   }
 

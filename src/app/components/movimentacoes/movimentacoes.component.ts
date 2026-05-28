@@ -3,7 +3,7 @@ import { CommonModule, DOCUMENT } from '@angular/common';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil, map, filter, observeOn, asyncScheduler, debounceTime, distinctUntilChanged } from 'rxjs';
+import { Subject, takeUntil, map, filter, observeOn, asyncScheduler, debounceTime, distinctUntilChanged, skip } from 'rxjs';
 import { ErpFinanceiroService, MovimentacaoFinanceira, FiltrosMovimentacoes, CriarMovimentacaoPayload } from '../../services/erp-financeiro.service';
 import { ContaBancariaCadastroService } from '../../services/conta-bancaria-cadastro.service';
 import { ClienteCadastroService } from '../../services/cliente-cadastro.service';
@@ -20,6 +20,7 @@ import {
   AnexoMovimentacaoMetadado,
 } from '../../services/movimentacoes-anexos.service';
 import { FeedbackStateComponent } from '../../shared/components/feedback-state/feedback-state.component';
+import { flattenCategoriasFinanceirasParaSelect } from '../../utils/plano-contas-padrao-tree.util';
 
 type ExportGroupId =
   | 'identificacao'
@@ -267,6 +268,9 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     textoPesquisa: ''
   };
   origemNavegacao: string | null = null;
+  private navegacaoFaturaAtiva = false;
+  private editarMovimentacaoDeepLink: string | null = null;
+  private aguardandoEdicaoDeepLink = false;
 
   /** Painel de anexos por lançamento (metadados persistidos localmente até API de upload). */
   painelAnexoMovId: string | null = null;
@@ -389,6 +393,11 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   ];
   categoriasCadastro: Array<{ value: string; label: string; tipo: TipoCategoriaFinanceira }> = [];
   categoriasCadastroTipo: Array<{ value: string; label: string }> = [];
+
+  get categoriasCadastroTipoComManual(): Array<{ value: string; label: string }> {
+    const base = this.categoriasCadastroTipo.map((c) => ({ value: c.value, label: c.label }));
+    return [...base, { value: '__manual__', label: 'Digitar' }];
+  }
   clientesCadastro: Array<{ value: string; label: string }> = [];
   fornecedoresCadastro: Array<{ value: string; label: string }> = [];
   funcionariosCadastro: FuncionarioCadastro[] = [];
@@ -520,6 +529,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.document.addEventListener('mousedown', this.fecharMenusDropMousedownCapture, true);
     this.inscreverDeepLinkCadastroPorQueryParams();
+    this.inscreverFiltrosDeNavegacaoPorUrl();
 
     const possuiFiltrosNavegacao = this.aplicarFiltrosDeNavegacao();
     if (!possuiFiltrosNavegacao) {
@@ -558,7 +568,11 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     this.carregarMapaNomesContasCadastro();
     this.carregarCategoriasCadastroPorEmpresa();
     this.carregarParceirosCadastroPorEmpresa();
-    this.carregarMovimentacoes();
+    if (this.aguardandoEdicaoDeepLink) {
+      this.iniciarEdicaoDiretaDaFatura();
+    } else {
+      this.carregarMovimentacoes();
+    }
 
     this.companySelectorService.empresaSelecionada$
       .pipe(takeUntil(this.destroy$))
@@ -617,6 +631,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     const categoria = qp.get('categoria');
     const conta = qp.get('conta');
     const textoPesquisa = qp.get('textoPesquisa');
+    const editar = (qp.get('editar') ?? '').trim();
 
     const temFiltro =
       !!dataInicial ||
@@ -625,14 +640,30 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       !!status ||
       !!categoria ||
       !!conta ||
-      !!textoPesquisa;
+      !!textoPesquisa ||
+      !!editar;
 
     if (!temFiltro) {
       this.origemNavegacao = origem;
+      this.navegacaoFaturaAtiva = false;
+      this.editarMovimentacaoDeepLink = null;
+      this.aguardandoEdicaoDeepLink = false;
       return false;
     }
 
     this.origemNavegacao = origem;
+    this.navegacaoFaturaAtiva = origem === 'fatura';
+    if (editar) {
+      this.editarMovimentacaoDeepLink = editar;
+      this.aguardandoEdicaoDeepLink = true;
+    } else {
+      this.editarMovimentacaoDeepLink = null;
+      this.aguardandoEdicaoDeepLink = false;
+    }
+    if (this.navegacaoFaturaAtiva) {
+      this.sortBy = 'data';
+      this.sortOrder = 'desc';
+    }
 
     if (dataInicial) this.dataInicial = dataInicial;
     if (dataFinal) this.dataFinal = dataFinal;
@@ -653,8 +684,100 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       this.filtrosUI.textoPesquisa = textoPesquisa;
     }
 
+    if (this.dataInicial) {
+      const [y, m] = this.dataInicial.split('-').map(Number);
+      if (y && m) {
+        this.visibleMonth = new Date(y, m - 1, 1);
+        this.buildCalendar();
+      }
+    }
 
     return true;
+  }
+
+  /** Reaplica filtros quando a URL muda (ex.: clique na fatura cartão). */
+  private inscreverFiltrosDeNavegacaoPorUrl(): void {
+    this.route.queryParamMap
+      .pipe(skip(1), debounceTime(0), takeUntil(this.destroy$))
+      .subscribe(() => {
+        if (!this.aplicarFiltrosDeNavegacao()) {
+          return;
+        }
+        this.paginaAtual = 1;
+        if (!this.companySelectorService.obterEmpresaSelecionada()) {
+          return;
+        }
+        if (this.aguardandoEdicaoDeepLink) {
+          this.iniciarEdicaoDiretaDaFatura();
+          return;
+        }
+        this.carregarMovimentacoes();
+      });
+  }
+
+  /** Abre o modal de edição ao vir da fatura cartão (?editar=ID). */
+  private iniciarEdicaoDiretaDaFatura(): void {
+    const idAlvo = (this.editarMovimentacaoDeepLink ?? '').trim();
+    if (!idAlvo) {
+      this.aguardandoEdicaoDeepLink = false;
+      this.carregarMovimentacoes();
+      return;
+    }
+
+    this.loading = true;
+    this.erpFinanceiroService.obterMovimentacao(idAlvo).subscribe({
+      next: (mov) => {
+        this.loading = false;
+        this.aguardandoEdicaoDeepLink = false;
+        this.abrirModalEdicao(mov);
+        void this.limparEdicaoDeepLinkNaUrl();
+        this.carregarMapaNomesContasCadastro();
+        this.carregarCategoriasCadastroPorEmpresa();
+        this.carregarParceirosCadastroPorEmpresa();
+        this.carregarMovimentacoes();
+      },
+      error: () => {
+        this.loading = false;
+        this.carregarMovimentacoes();
+      },
+    });
+  }
+
+  private tentarAbrirEdicaoDeepLinkNaLista(): void {
+    if (!this.aguardandoEdicaoDeepLink || !this.editarMovimentacaoDeepLink) {
+      return;
+    }
+    const idAlvo = this.editarMovimentacaoDeepLink.trim();
+    const mov = this.movimentacoes.find((m) => {
+      const idParcela = String(m.IdMovimentacaoFinanceiraParcela ?? '').trim();
+      return idParcela === idAlvo || this.idMovimentacao(m) === idAlvo;
+    });
+    this.aguardandoEdicaoDeepLink = false;
+    if (mov) {
+      this.abrirModalEdicao(mov);
+      void this.limparEdicaoDeepLinkNaUrl();
+      return;
+    }
+    void Swal.fire({
+      icon: 'info',
+      title: 'Lançamento não encontrado',
+      text: 'Não localizamos este lançamento no período filtrado.',
+      confirmButtonColor: '#7c3aed',
+    });
+    void this.limparEdicaoDeepLinkNaUrl();
+  }
+
+  private limparEdicaoDeepLinkNaUrl(): Promise<boolean> {
+    if (!this.route.snapshot.queryParamMap.get('editar')) {
+      return Promise.resolve(true);
+    }
+    this.editarMovimentacaoDeepLink = null;
+    return this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { editar: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   /**
@@ -2422,19 +2545,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     }
     this.categoriasFinanceirasService.listar(idEmp).pipe(takeUntil(this.destroy$)).subscribe({
       next: (categorias) => {
-        const opcoes: Array<{ value: string; label: string; tipo: TipoCategoriaFinanceira }> = [];
-        for (const c of categorias || []) {
-          const subs = c.subcategorias || [];
-          if (subs.length > 0) {
-            for (const s of subs) {
-              const label = `${c.nome} > ${s.nome}`;
-              opcoes.push({ value: label, label, tipo: c.tipo });
-            }
-          } else {
-            opcoes.push({ value: c.nome, label: c.nome, tipo: c.tipo });
-          }
-        }
-        this.categoriasCadastro = opcoes;
+        this.categoriasCadastro = flattenCategoriasFinanceirasParaSelect(categorias || []);
         this.atualizarOpcoesCategoriaCadastro(this.novoLancamento.tipo);
       },
       error: () => {
@@ -2686,10 +2797,14 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       tipo: (this.filtrosUI.tipo === 'receita' || this.filtrosUI.tipo === 'despesa') ? this.filtrosUI.tipo : undefined,
       statusPagamento,
       textoPesquisa: this.filtrosUI.textoPesquisa || undefined,
-      orderBy: this.sortBy || undefined,
-      orderDirection: this.sortBy ? this.sortOrder : undefined,
+      orderBy: this.sortBy || (this.navegacaoFaturaAtiva ? 'data' : undefined),
+      orderDirection: this.sortBy
+        ? this.sortOrder
+        : this.navegacaoFaturaAtiva
+          ? 'desc'
+          : undefined,
       numeroDaPagina: this.paginaAtual,
-      itensPorPagina: this.itensPorPagina
+      itensPorPagina: this.navegacaoFaturaAtiva ? 500 : this.itensPorPagina,
     };
 
     this.erpFinanceiroService.buscarMovimentacoes(filtros)
@@ -2900,7 +3015,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     
     // Garante que filtros locais (tipo/categoria/pesquisa) também sejam aplicados
     this.aplicarFiltrosUI();
-    
+    this.tentarAbrirEdicaoDeepLinkNaLista();
+
     this.loading = false;
   }
 
@@ -3097,9 +3213,10 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
 
   private aplicarFiltrosUI(): void {
     let filtradas = [...this.movimentacoes];
+    const fromFatura = this.origemNavegacao === 'fatura';
 
     // Filtro por tipo (receita/despesa)
-    if (this.filtrosUI.tipo) {
+    if (!fromFatura && this.filtrosUI.tipo) {
       filtradas = filtradas.filter(mov => {
         const isReceita = !mov.Debito;
         const isDespesa = !!mov.Debito;
@@ -3107,13 +3224,18 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       });
     }
 
-    // Filtro por categoria
-    if (this.filtrosUI.categoria) {
+    // Filtro por categoria (comparação flexível para navegação vinda da fatura)
+    if (!fromFatura && this.filtrosUI.categoria) {
       const categoriaSelecionada = this.filtrosUI.categoria.toLowerCase();
       filtradas = filtradas.filter(mov => {
         const nomeCategoria = this.categoriaExibicao(mov).toLowerCase();
         const categoriaRoot = (mov.Valores?.[0]?.NomeCategoriaRoot || '').toLowerCase();
-        return nomeCategoria === categoriaSelecionada || categoriaRoot === categoriaSelecionada;
+        return (
+          nomeCategoria === categoriaSelecionada ||
+          categoriaRoot === categoriaSelecionada ||
+          nomeCategoria.includes(categoriaSelecionada) ||
+          categoriaSelecionada.includes(nomeCategoria)
+        );
       });
     }
 
@@ -3123,12 +3245,17 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       filtradas = filtradas.filter(mov => {
         const idConta = String((mov as any).IdContaFinanceira ?? '').toLowerCase();
         const nomeConta = String((mov as any).NomeContaFinanceira ?? '').toLowerCase();
-        return idConta === contaSelecionada || nomeConta === contaSelecionada;
+        return (
+          idConta === contaSelecionada ||
+          nomeConta === contaSelecionada ||
+          nomeConta.includes(contaSelecionada) ||
+          contaSelecionada.includes(nomeConta)
+        );
       });
     }
 
     // Filtro por status (pendente / quitado)
-    if (this.filtrosUI.status) {
+    if (!fromFatura && this.filtrosUI.status) {
       filtradas = filtradas.filter(mov => {
         const quitado = !!(mov as any).DataQuitacao;
         return this.filtrosUI.status === 'quitado' ? quitado : !quitado;
@@ -3137,13 +3264,20 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
 
     // Filtro por texto de pesquisa
     if (this.filtrosUI.textoPesquisa) {
-      const texto = this.filtrosUI.textoPesquisa.toLowerCase();
-      filtradas = filtradas.filter(mov => 
-        (mov.Nome && mov.Nome.toLowerCase().includes(texto)) ||
-        this.nomeParceiroExibicao(mov).toLowerCase().includes(texto) ||
-        this.categoriaExibicao(mov).toLowerCase().includes(texto) ||
-        (mov.Observacao && mov.Observacao.toLowerCase().includes(texto))
-      );
+      const texto = this.normalizarTextoBusca(this.filtrosUI.textoPesquisa);
+      filtradas = filtradas.filter(mov => {
+        const nome = this.normalizarTextoBusca(mov.Nome || '');
+        const parceiro = this.normalizarTextoBusca(this.nomeParceiroExibicao(mov));
+        const categoria = this.normalizarTextoBusca(this.categoriaExibicao(mov));
+        const obs = this.normalizarTextoBusca(mov.Observacao || '');
+        return (
+          nome.includes(texto) ||
+          parceiro.includes(texto) ||
+          categoria.includes(texto) ||
+          obs.includes(texto) ||
+          texto.includes(nome)
+        );
+      });
     }
 
     this.movimentacoesFiltradas = filtradas;
@@ -3185,6 +3319,9 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       textoPesquisa: ''
     };
     this.origemNavegacao = null;
+    this.navegacaoFaturaAtiva = false;
+    this.editarMovimentacaoDeepLink = null;
+    this.aguardandoEdicaoDeepLink = false;
     this.dataInicial = '';
     this.dataFinal = '';
     this.paginaAtual = 1;
@@ -3194,6 +3331,15 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     this.anexoDragDepth = 0;
     this.aplicarFiltrosUI();
     this.carregarMovimentacoes();
+  }
+
+  private normalizarTextoBusca(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   idMovimentacao(mov: MovimentacaoFinanceira): string {

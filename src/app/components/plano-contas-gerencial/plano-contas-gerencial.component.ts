@@ -27,7 +27,9 @@ import {
   proximoIdTemporario,
   renomearNoNaArvore,
   serializarCategoriasParaJson,
+  contarNosCategoriasFinanceiras,
 } from '../../utils/plano-contas-padrao-tree.util';
+import { sincronizarResumoParametrizacao } from '../../utils/parametrizacao-sync.util';
 
 @Component({
   selector: 'app-plano-contas-gerencial',
@@ -40,7 +42,7 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
   @Input() embedded = false;
   /** Admin: edita o modelo global (memória + salvar no servidor), sem API por empresa. */
   @Input() modoTemplateSistema = false;
-  @Output() resumoTotal = new EventEmitter<number>();
+  @Output() cadastroAlterado = new EventEmitter<void>();
 
   templateMetaAtualizacao = '';
   templateUsandoEmbutido = false;
@@ -125,14 +127,12 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
     if (!this.authService.isAuthenticated() || !this.authService.getToken()) {
       this.carregando = false;
       this.categorias = [];
-      this.resumoTotal.emit(0);
       return;
     }
     const idEmpresaAtual = this.idEmpresaContexto();
     if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
       this.carregando = false;
       this.categorias = [];
-      this.resumoTotal.emit(0);
       return;
     }
     this.carregando = true;
@@ -140,14 +140,13 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
       next: (lista) => {
         this.categorias = lista || [];
         this.limparExpansaoPlano();
-        this.resumoTotal.emit(this.contarNos(this.categorias));
+        sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
         this.carregando = false;
         this.agendarOfertaPlanoPadraoSeVazio();
       },
       error: (e: HttpErrorResponse) => {
         this.carregando = false;
         this.categorias = [];
-        this.resumoTotal.emit(0);
         this.erro =
           extractHttpErrorBodyMessage(e.error) || 'Não foi possível carregar categorias.';
       },
@@ -156,18 +155,7 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
 
   /** Conta nós em toda a floresta (raízes + descendentes). Usado no template. */
   contarNos(raizes: CategoriaFinanceira[]): number {
-    let n = 0;
-    const walk = (subs: SubcategoriaFinanceira[] | undefined) => {
-      for (const s of subs || []) {
-        n++;
-        walk(s.children);
-      }
-    };
-    for (const c of raizes || []) {
-      n++;
-      walk(c.subcategorias);
-    }
-    return n;
+    return contarNosCategoriasFinanceiras(raizes);
   }
 
   porTipo(tipo: TipoCategoriaFinanceira): CategoriaFinanceira[] {
@@ -419,7 +407,7 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
         .subscribe({
           next: (lista) => {
             this.categorias = lista || [];
-            this.resumoTotal.emit(this.contarNos(this.categorias));
+            sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
             this.modalAberto = false;
             this.modalModo = 'raiz';
             this.modalAcao = 'novo';
@@ -456,7 +444,7 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (lista) => {
           this.categorias = lista || [];
-          this.resumoTotal.emit(this.contarNos(this.categorias));
+          sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
           this.modalAberto = false;
           this.modalModo = 'raiz';
           this.modalAcao = 'novo';
@@ -500,7 +488,7 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
         return;
       }
       this.categorias = [...this.categorias];
-      this.resumoTotal.emit(this.contarNos(this.categorias));
+          sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
       return;
     }
     const idEmpresaAtual = this.idEmpresaContexto();
@@ -509,7 +497,7 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
     this.categoriasApi.excluirNo(idEmpresaAtual ?? null, nodeId).pipe(takeUntil(this.destroy$)).subscribe({
       next: (lista) => {
         this.categorias = lista || [];
-        this.resumoTotal.emit(this.contarNos(this.categorias));
+        sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
         this.carregando = false;
       },
       error: (e: HttpErrorResponse) => {
@@ -615,7 +603,7 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
           if (!Array.isArray(arr)) throw new Error('array');
           this.categorias = parseArvoreJsonParaCategorias(arr);
           this.syncTemplateIdCounters();
-          this.resumoTotal.emit(this.contarNos(this.categorias));
+          sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
           this.erro = null;
         } catch {
           this.erro = 'Arquivo JSON inválido para o plano padrão.';
@@ -874,7 +862,7 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
   aplicarModeloEmbutidoLocal(): void {
     this.categorias = parseArvoreJsonParaCategorias([...PLANO_CONTAS_PADRAO_BOM_CONTROLE]);
     this.syncTemplateIdCounters();
-    this.resumoTotal.emit(this.contarNos(this.categorias));
+          sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
     this.templateUsandoEmbutido = true;
     this.templateMetaAtualizacao = 'Rascunho local — modelo embutido (ainda não salvo no servidor).';
   }
@@ -890,7 +878,7 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
     const arvore = Array.isArray(res.arvore) ? res.arvore : [];
     this.categorias = parseArvoreJsonParaCategorias(arvore.length ? arvore : [...PLANO_CONTAS_PADRAO_BOM_CONTROLE]);
     this.syncTemplateIdCounters();
-    this.resumoTotal.emit(this.contarNos(this.categorias));
+          sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
     if (res.usandoPadraoEmbutido) {
       this.templateMetaAtualizacao =
         'Nenhuma versão salva no servidor — exibindo modelo embutido. Edite e clique em Publicar no servidor.';
@@ -923,7 +911,7 @@ export class PlanoContasGerencialComponent implements OnInit, OnDestroy {
       this.templateNoId = adicionarFilho(this.categorias, parentId, nome, this.templateNoId);
     }
     this.categorias = [...this.categorias];
-    this.resumoTotal.emit(this.contarNos(this.categorias));
+          sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
     this.modalAberto = false;
     this.modalModo = 'raiz';
     this.modalAcao = 'novo';

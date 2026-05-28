@@ -35,6 +35,17 @@
   footer a:hover { @apply text-gray-900; }
   footer a:visited { @apply text-gray-600; }
 
+  /* Overlay de modal centralizado na área principal (à direita da sidebar 288px) */
+  .modal-overlay-main {
+    @apply fixed inset-y-0 right-0 flex items-center justify-center p-4 sm:p-6;
+    left: 0;
+  }
+  @media (min-width: 1024px) {
+    .modal-overlay-main {
+      left: 288px;
+    }
+  }
+
   .dashboard-filters select,
   .dashboard-filters input[type="date"],
   .dashboard-filters input[type="text"],

@@ -189,3 +189,59 @@ function adicionarFilhoEmSubs(
   }
   return nextNoId;
 }
+
+export interface OpcaoCategoriaFinanceiraSelect {
+  value: string;
+  label: string;
+  tipo: TipoCategoriaFinanceira;
+}
+
+/**
+ * Lista todas as contas folha do plano para selects (ex.: lançamento em Movimentações).
+ * Caminho completo: "3. DESPESAS... > Recursos Humanos > Folha - Salários (CLT)".
+ */
+export function flattenCategoriasFinanceirasParaSelect(
+  raizes: CategoriaFinanceira[]
+): OpcaoCategoriaFinanceiraSelect[] {
+  const out: OpcaoCategoriaFinanceiraSelect[] = [];
+
+  const walkSubs = (tipo: TipoCategoriaFinanceira, path: string[], subs: SubcategoriaFinanceira[]): void => {
+    for (const s of subs || []) {
+      const segmentos = [...path, s.nome];
+      const filhos = s.children || [];
+      if (filhos.length > 0) {
+        walkSubs(tipo, segmentos, filhos);
+      } else {
+        const label = segmentos.join(' > ');
+        out.push({ value: label, label, tipo });
+      }
+    }
+  };
+
+  for (const c of raizes || []) {
+    const subs = c.subcategorias || [];
+    if (subs.length === 0) {
+      out.push({ value: c.nome, label: c.nome, tipo: c.tipo });
+    } else {
+      walkSubs(c.tipo, [c.nome], subs);
+    }
+  }
+
+  return out.sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
+}
+
+/** Total de contas do plano (raízes + todos os níveis da árvore). */
+export function contarNosCategoriasFinanceiras(raizes: CategoriaFinanceira[]): number {
+  let n = 0;
+  const walk = (subs: SubcategoriaFinanceira[] | undefined) => {
+    for (const s of subs || []) {
+      n++;
+      walk(s.children);
+    }
+  };
+  for (const c of raizes || []) {
+    n++;
+    walk(c.subcategorias);
+  }
+  return n;
+}

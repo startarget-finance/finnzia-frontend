@@ -19,8 +19,14 @@ export class AppComponent implements OnInit, OnDestroy {
   isMobileMenuOpen = false;
   isUserMenuOpen = false;
   isCompanyMenuOpen = false;
-  /** Desktop: sidebar estreita por padrão; expande ao passar o mouse e recolhe ao sair. */
-  isSidebarCollapsed = true;
+  /** Desktop: sidebar fixo aberto para evitar variação por hover. */
+  isSidebarCollapsed = false;
+  sectionOpen: Record<'financeiro' | 'relatorios' | 'configuracoes' | 'ferramentas', boolean> = {
+    financeiro: true,
+    relatorios: true,
+    configuracoes: true,
+    ferramentas: true,
+  };
   currentYear: number = new Date().getFullYear();
 
   /** Nome da empresa ativa (contexto multi-empresa) para exibir no topo. */
@@ -203,11 +209,15 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   onSidebarMouseEnter(): void {
-    this.isSidebarCollapsed = false;
+    // Sidebar fixo aberto: sem efeito no hover.
   }
 
   onSidebarMouseLeave(): void {
-    this.isSidebarCollapsed = true;
+    // Sidebar fixo aberto: sem efeito no hover.
+  }
+
+  toggleSection(section: 'financeiro' | 'relatorios' | 'configuracoes' | 'ferramentas'): void {
+    this.sectionOpen[section] = !this.sectionOpen[section];
   }
 
   toggleMobileMenu() {

@@ -11,7 +11,13 @@ import {
   FornecedorCadastroService
 } from '../../services/fornecedor-cadastro.service';
 import { maskBrPhone, maskCpfCnpj, onlyDigits } from '../../utils/input-masks';
-import { buildDeleteConfirmOptions, confirmUnsavedChanges } from '../../utils/sweet-alerts';
+import {
+  buildDeleteConfirmOptions,
+  confirmUnsavedChanges,
+  showErrorAlert,
+  showValidationAlert
+} from '../../utils/sweet-alerts';
+import { sincronizarResumoParametrizacao } from '../../utils/parametrizacao-sync.util';
 
 @Component({
   selector: 'app-fornecedor-cadastro',
@@ -21,7 +27,7 @@ import { buildDeleteConfirmOptions, confirmUnsavedChanges } from '../../utils/sw
 })
 export class FornecedorCadastroComponent implements OnInit {
   @Input() embedded = false;
-  @Output() resumoTotal = new EventEmitter<number>();
+  @Output() cadastroAlterado = new EventEmitter<void>();
 
   carregando = false;
   erro: string | null = null;
@@ -90,7 +96,6 @@ export class FornecedorCadastroComponent implements OnInit {
       this.linhas = [];
       this.totalElements = 0;
       this.totalPages = 0;
-      this.resumoTotal.emit(0);
       this.erro = null;
       return;
     }
@@ -117,14 +122,13 @@ export class FornecedorCadastroComponent implements OnInit {
           this.linhas = page?.content ?? [];
           this.totalElements = page?.totalElements ?? 0;
           this.totalPages = page?.totalPages ?? 0;
-          this.resumoTotal.emit(this.totalElements);
           this.carregando = false;
         },
         error: (e) => {
           this.carregando = false;
           this.erro = e.error?.mensagem || 'Não foi possível carregar os fornecedores.';
           this.linhas = [];
-          this.resumoTotal.emit(0);
+          void showErrorAlert(this.erro ?? 'Não foi possível carregar os fornecedores.', 'Erro ao carregar fornecedores');
         }
       });
   }
@@ -307,6 +311,10 @@ export class FornecedorCadastroComponent implements OnInit {
         next: (dados) => this.aplicarDadosCnpj(digits, dados),
         error: () => {
           this.statusConsultaCnpj = 'Não foi possível consultar o CNPJ automaticamente no momento. Preencha os dados manualmente.';
+          void showErrorAlert(
+            'Não foi possível consultar o CNPJ automaticamente no momento. Preencha os dados manualmente.',
+            'Erro na consulta de CNPJ'
+          );
         }
       });
   }
@@ -331,11 +339,13 @@ export class FornecedorCadastroComponent implements OnInit {
     const razao = this.formRazaoSocial.trim();
     if (!razao) {
       this.erro = 'Informe a razão social ou nome.';
+      void showValidationAlert(this.erro);
       return;
     }
     const idEmpresaAtual = this.idEmpresaContexto();
     if (idEmpresaAtual == null || idEmpresaAtual <= 0) {
       this.erro = 'Não foi possível identificar a empresa do cadastro.';
+      void showErrorAlert(this.erro, 'Empresa não identificada');
       return;
     }
     const body = this.montarPayload();
@@ -348,10 +358,12 @@ export class FornecedorCadastroComponent implements OnInit {
         this.carregando = false;
         this.modalAberto = false;
         this.carregar();
+        sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
       },
       error: (e) => {
         this.carregando = false;
         this.erro = e.error?.mensagem || 'Erro ao salvar o fornecedor.';
+        void showErrorAlert(this.erro ?? 'Erro ao salvar o fornecedor.', 'Erro ao salvar fornecedor');
       }
     });
   }
@@ -368,10 +380,12 @@ export class FornecedorCadastroComponent implements OnInit {
       next: () => {
         this.carregando = false;
         this.carregar();
+        sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
       },
       error: (e) => {
         this.carregando = false;
         this.erro = e.error?.mensagem || 'Não foi possível excluir.';
+        void showErrorAlert(this.erro ?? 'Não foi possível excluir.', 'Erro ao excluir fornecedor');
       }
     });
   }
@@ -384,10 +398,12 @@ export class FornecedorCadastroComponent implements OnInit {
       next: () => {
         this.carregando = false;
         this.carregar();
+        sincronizarResumoParametrizacao(this.embedded, this.cadastroAlterado);
       },
       error: (e) => {
         this.carregando = false;
         this.erro = e.error?.mensagem || 'Não foi possível alterar o status.';
+        void showErrorAlert(this.erro ?? 'Não foi possível alterar o status.', 'Erro ao alterar status');
       }
     });
   }

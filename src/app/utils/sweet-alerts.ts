@@ -37,3 +37,22 @@ export async function confirmUnsavedChanges(): Promise<boolean> {
   return result.isConfirmed;
 }
 
+export function showValidationAlert(message: string, title = 'Campos obrigatórios'): Promise<unknown> {
+  return Swal.fire({
+    icon: 'warning',
+    title,
+    text: message,
+    confirmButtonText: 'Entendi',
+    confirmButtonColor: '#7c3aed',
+  });
+}
+
+export function showErrorAlert(message: string, title = 'Não foi possível concluir'): Promise<unknown> {
+  return Swal.fire({
+    icon: 'error',
+    title,
+    text: message,
+    confirmButtonColor: '#dc2626',
+  });
+}
+

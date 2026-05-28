@@ -11,8 +11,9 @@ import { CartaoCreditoCadastroComponent } from '../cartao-credito-cadastro/carta
 import { PlanoContasGerencialComponent } from '../plano-contas-gerencial/plano-contas-gerencial.component';
 import { MovimentacoesHistoricoComponent } from '../movimentacoes-historico/movimentacoes-historico.component';
 import { CompanySelectorService } from '../../services/company-selector.service';
-import { PlanoContasGerencialService } from '../../services/plano-contas-gerencial.service';
+import { CategoriasFinanceirasService } from '../../services/categorias-financeiras.service';
 import { ContaBancariaCadastroService } from '../../services/conta-bancaria-cadastro.service';
+import { contarNosCategoriasFinanceiras } from '../../utils/plano-contas-padrao-tree.util';
 import { FornecedorCadastroService } from '../../services/fornecedor-cadastro.service';
 import { ClienteCadastroService } from '../../services/cliente-cadastro.service';
 import { FuncionarioCadastroService } from '../../services/funcionario-cadastro.service';
@@ -52,7 +53,7 @@ export class ParametrizacaoComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly companySelector: CompanySelectorService,
-    private readonly planoContasService: PlanoContasGerencialService,
+    private readonly categoriasFinanceirasService: CategoriasFinanceirasService,
     private readonly contaBancariaService: ContaBancariaCadastroService,
     private readonly fornecedorService: FornecedorCadastroService,
     private readonly clienteService: ClienteCadastroService,
@@ -75,7 +76,12 @@ export class ParametrizacaoComponent implements OnInit, OnDestroy {
     this.activeTab = tab;
   }
 
-  /** Totais para os cards do topo (não dependem de abrir cada aba). */
+  /** Recarrega KPIs após alteração em qualquer aba (mesma fonte em todas as telas). */
+  aoCadastroAlterado(): void {
+    this.carregarResumos();
+  }
+
+  /** Totais para os cards do topo — fonte única, independente da aba ativa ou filtros locais. */
   carregarResumos(): void {
     const idEmp = this.companySelector.obterIdEmpresaSelecionada();
     const idEmpresa = idEmp != null && idEmp > 0 ? idEmp : undefined;
@@ -84,10 +90,13 @@ export class ParametrizacaoComponent implements OnInit, OnDestroy {
     const pageProbe = { page: 0, size: 1 } as const;
 
     forkJoin({
-      plano: this.planoContasService.listar(idEmpresa ?? undefined).pipe(
-        map((lista) => lista?.length ?? 0),
-        catchError(() => of(0))
-      ),
+      plano:
+        idEmpresa != null && idEmpresa > 0
+          ? this.categoriasFinanceirasService.listar(idEmpresa).pipe(
+              map((lista) => contarNosCategoriasFinanceiras(lista ?? [])),
+              catchError(() => of(0))
+            )
+          : of(0),
       contas: this.contaBancariaService
         .listar({
           idEmpresa: idEmpresa,

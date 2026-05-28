@@ -206,7 +206,7 @@
 
 <div
   *ngIf="modalAberto"
-  class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-[6px]"
+  class="modal-overlay-main z-[100] bg-slate-900/40 backdrop-blur-[6px]"
 >
   <div
     class="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(15,23,42,0.25)] border border-slate-200/80 max-w-md w-full max-h-[90vh] overflow-y-auto p-6 space-y-5"
@@ -234,50 +234,41 @@
         <input
           [(ngModel)]="formNomeConta"
           class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-          placeholder="Ex.: Conta principal Nubank"
+          placeholder="Ex.: Conta principal, Caixa matriz"
         />
       </div>
       <div>
-        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Categoria</label>
-        <select
-          [(ngModel)]="formCategoria"
-          class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm bg-white text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-        >
-          <option value="BANCARIA">Bancária</option>
-          <option value="DINHEIRO">Dinheiro (caixa)</option>
-        </select>
+        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Banco / instituição *</label>
+        <div class="relative mt-1.5">
+          <input
+            [(ngModel)]="buscaInstituicao"
+            (focus)="abrirSugestoesInstituicao()"
+            (input)="onBuscaInstituicaoChange()"
+            (blur)="fecharSugestoesInstituicaoComDelay()"
+            class="w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+            placeholder="Digite para buscar ou preencher manualmente"
+          />
+          <div
+            *ngIf="mostrarSugestoesInstituicao"
+            class="absolute z-[120] mt-1 max-h-56 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg"
+          >
+            <button
+              type="button"
+              *ngFor="let item of instituicoesFiltradas"
+              (mousedown)="escolherInstituicao(item)"
+              class="block w-full border-b border-slate-100 px-3 py-2 text-left text-sm hover:bg-slate-50"
+            >
+              <span class="font-medium text-slate-800">{{ item.banco }}</span>
+              <span class="ml-2 text-xs text-slate-500">{{ item.grupo }}</span>
+            </button>
+            <div *ngIf="instituicoesFiltradas.length === 0" class="px-3 py-2 text-xs text-slate-500">
+              Nenhuma instituição encontrada. Use o texto digitado como valor manual.
+            </div>
+          </div>
+        </div>
+        <p class="mt-1 text-[11px] text-slate-500">{{ carregandoInstituicoes ? 'Carregando bancos...' : 'Selecione uma sugestão ou mantenha o texto digitado.' }}</p>
       </div>
-      <div>
-        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Instituição (subtítulo no tipo)</label>
-        <select
-          [(ngModel)]="instituicaoSelecionada"
-          (ngModelChange)="selecionarInstituicao()"
-          class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 bg-white text-sm text-slate-800 shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-        >
-          <option value="">Selecione uma instituição</option>
-          <optgroup *ngFor="let grupo of gruposInstituicoes" [label]="grupo.tipo">
-            <option *ngFor="let item of grupo.itens" [value]="item.instituicao">
-              {{ item.banco }}
-            </option>
-          </optgroup>
-          <option [value]="formInstituicao" *ngIf="formInstituicao && !instituicaoSelecionada">Atual: {{ formInstituicao }}</option>
-          <option value="">Outro (preenchimento manual abaixo)</option>
-        </select>
-        <input
-          [(ngModel)]="formInstituicao"
-          class="mt-2 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-          placeholder="Instituição (opcional para ajustar manualmente)"
-        />
-      </div>
-      <div>
-        <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Nome curto / descrição *</label>
-        <input
-          [(ngModel)]="formBanco"
-          class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-          placeholder="Ex.: Nubank, Caixa loja"
-        />
-      </div>
-      <div *ngIf="formCategoria === 'BANCARIA'" class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Agência *</label>
           <input
@@ -297,29 +288,7 @@
           />
         </div>
       </div>
-      <div *ngIf="formCategoria === 'DINHEIRO'" class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Agência (opcional)</label>
-          <input
-            [(ngModel)]="formAgencia"
-            inputmode="numeric"
-            autocomplete="off"
-            class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-            placeholder="0"
-          />
-        </div>
-        <div>
-          <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Conta (opcional)</label>
-          <input
-            [(ngModel)]="formConta"
-            inputmode="numeric"
-            autocomplete="off"
-            class="mt-1.5 w-full h-10 px-3.5 rounded-lg border border-slate-200/90 text-sm shadow-[inset_0_1px_2px_rgba(15,23,42,0.04)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-            placeholder="0"
-          />
-        </div>
-      </div>
-      <div *ngIf="formCategoria === 'BANCARIA'">
+      <div>
         <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Modalidade</label>
         <select
           [(ngModel)]="formTipo"

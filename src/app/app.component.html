@@ -2,19 +2,14 @@
 <div [ngClass]="{'flex h-screen bg-white': !isAuthPublicPage()}">
 
   <!-- ========== SIDEBAR - Desktop ========== -->
-  <!-- Coluna fixa 76px no layout: o aside interno expande em overlay sem empurrar o conteúdo -->
+  <!-- Coluna fixa aberta no desktop para evitar efeito hover -->
   <div *ngIf="!isAuthPublicPage()"
-       class="relative z-30 hidden w-[76px] flex-shrink-0 self-stretch min-h-0 lg:block">
-    <aside (mouseenter)="onSidebarMouseEnter()"
-           (mouseleave)="onSidebarMouseLeave()"
-           class="absolute left-0 top-0 bottom-0 z-30 flex flex-col overflow-hidden border-r border-slate-200/80 bg-white transition-[width] duration-300 ease-out"
-           [ngClass]="{
-             'shadow-xl ring-1 ring-black/5': !isSidebarCollapsed
-           }"
-           [ngStyle]="{'width': isSidebarCollapsed ? '76px' : '288px'}">
+       class="relative hidden w-[288px] flex-shrink-0 self-stretch min-h-0 lg:block">
+    <aside
+           class="absolute left-0 top-0 bottom-0 flex w-[288px] flex-col overflow-hidden border-r border-slate-200/80 bg-white shadow-xl ring-1 ring-black/5">
 
     <!-- Marca fixa em altura para evitar "pulo" no alinhamento do menu -->
-    <div class="flex h-[8.25rem] w-full items-center justify-center border-b border-slate-100 bg-white"
+    <div class="flex h-[9.5rem] w-full items-center justify-center border-b border-slate-200/80 bg-white"
          [ngClass]="isSidebarCollapsed ? 'px-2' : 'px-4'">
       <a routerLink="/dashboard"
          class="flex h-full w-full items-center justify-center rounded-xl outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-violet-400/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
@@ -23,8 +18,8 @@
           src="assets/images/finzzialogo.png"
           alt="Finzzia"
           [ngClass]="isSidebarCollapsed
-            ? 'h-auto max-h-10 w-auto max-w-[4.5rem] object-contain object-center origin-center scale-[1.75]'
-            : 'h-auto max-h-16 w-auto max-w-[min(240px,100%)] object-contain object-center origin-center scale-[2.2]'"
+            ? 'h-auto max-h-11 w-auto max-w-[4.8rem] object-contain object-center origin-center scale-[1.95]'
+            : 'h-auto max-h-[4.5rem] w-auto max-w-[min(250px,100%)] object-contain object-center origin-center scale-[2.55]'"
         />
       </a>
     </div>
@@ -71,7 +66,16 @@
         </a>
       </ng-container>
 
-      <p *ngIf="!isSidebarCollapsed && !painelAdminSomente()" class="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Financeiro</p>
+      <button *ngIf="!isSidebarCollapsed && !painelAdminSomente()"
+              type="button"
+              (click)="toggleSection('financeiro')"
+              class="mt-2 flex w-full items-center justify-between rounded-xl border border-slate-200/80 bg-slate-50/70 px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition-colors hover:bg-slate-100/80">
+        <span>Financeiro</span>
+        <svg class="h-3.5 w-3.5 transition-transform duration-200" [class.rotate-180]="sectionOpen.financeiro" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </button>
+      <ng-container *ngIf="isSidebarCollapsed || sectionOpen.financeiro">
       <a *ngIf="canAccessRotina()" routerLink="/rotina"
          routerLinkActive #rlaRot="routerLinkActive"
          [ngClass]="rlaRot.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
@@ -141,18 +145,6 @@
         <span *ngIf="!isSidebarCollapsed" class="truncate">Conciliação Bancária</span>
       </a>
 
-      <a *ngIf="canAccessPluggyOpenFinance()" routerLink="/open-finance"
-         routerLinkActive #rlaPluggy="routerLinkActive"
-         [ngClass]="rlaPluggy.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
-         class="flex min-h-[2.75rem] items-center rounded-xl transition-all duration-200"
-         [class.gap-3]="!isSidebarCollapsed"
-         [class.px-3]="!isSidebarCollapsed"
-         [class.justify-center]="isSidebarCollapsed"
-         title="Open Finance (Pluggy) · finzzia">
-        <i class="fi fi-rr-bank flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
-        <span *ngIf="!isSidebarCollapsed" class="truncate">Open Finance</span>
-      </a>
-
       <a *ngIf="canAccessFaturaCartao()" routerLink="/fatura-cartao"
          routerLinkActive #rlaFat="routerLinkActive"
          [ngClass]="rlaFat.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
@@ -164,8 +156,18 @@
         <i class="fi fi-rr-credit-card flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
         <span *ngIf="!isSidebarCollapsed" class="truncate">Fatura Cartão Crédito</span>
       </a>
+      </ng-container>
 
-      <p *ngIf="!isSidebarCollapsed && !painelAdminSomente()" class="px-3 pb-2 pt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Relatórios</p>
+      <button *ngIf="!isSidebarCollapsed && !painelAdminSomente()"
+              type="button"
+              (click)="toggleSection('relatorios')"
+              class="mt-2 flex w-full items-center justify-between rounded-xl border border-slate-200/80 bg-slate-50/70 px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition-colors hover:bg-slate-100/80">
+        <span>Relatórios</span>
+        <svg class="h-3.5 w-3.5 transition-transform duration-200" [class.rotate-180]="sectionOpen.relatorios" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </button>
+      <ng-container *ngIf="isSidebarCollapsed || sectionOpen.relatorios">
       <a *ngIf="canAccessDashboard() && !painelAdminSomente()" routerLink="/dashboard"
          routerLinkActive #rlaDash="routerLinkActive"
          [ngClass]="rlaDash.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
@@ -200,10 +202,19 @@
         <i class="fi fi-rr-chart-line-up flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
         <span *ngIf="!isSidebarCollapsed" class="truncate">DFC</span>
       </a>
+      </ng-container>
 
-      <p *ngIf="!isSidebarCollapsed" class="px-3 pb-2 pt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Configurações</p>
+      <button *ngIf="!isSidebarCollapsed"
+              type="button"
+              (click)="toggleSection('configuracoes')"
+              class="mt-2 flex w-full items-center justify-between rounded-xl border border-slate-200/80 bg-slate-50/70 px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition-colors hover:bg-slate-100/80">
+        <span>Configurações</span>
+        <svg class="h-3.5 w-3.5 transition-transform duration-200" [class.rotate-180]="sectionOpen.configuracoes" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </button>
       <div *ngIf="isSidebarCollapsed" class="mx-auto my-2 h-px w-8 rounded-full bg-slate-200/90" aria-hidden="true"></div>
-
+      <ng-container *ngIf="isSidebarCollapsed || sectionOpen.configuracoes">
       <a *ngIf="canAccessParametrizacao()" routerLink="/parametrizacao"
          routerLinkActive #rlaParam="routerLinkActive"
          [ngClass]="rlaParam.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
@@ -215,8 +226,29 @@
         <i class="fi fi-rr-settings-sliders flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
         <span *ngIf="!isSidebarCollapsed" class="truncate">Parametrização</span>
       </a>
+      <a *ngIf="canAccessPluggyOpenFinance()" routerLink="/open-finance"
+         routerLinkActive #rlaPluggy="routerLinkActive"
+         [ngClass]="rlaPluggy.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+         class="flex min-h-[2.75rem] items-center rounded-xl transition-all duration-200"
+         [class.gap-3]="!isSidebarCollapsed"
+         [class.px-3]="!isSidebarCollapsed"
+         [class.justify-center]="isSidebarCollapsed"
+         title="Open Finance (Pluggy) · finzzia">
+        <i class="fi fi-rr-bank flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
+        <span *ngIf="!isSidebarCollapsed" class="truncate">Open Finance</span>
+      </a>
+      </ng-container>
 
-      <p *ngIf="!isSidebarCollapsed" class="px-3 pb-2 pt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Ferramentas</p>
+      <button *ngIf="!isSidebarCollapsed"
+              type="button"
+              (click)="toggleSection('ferramentas')"
+              class="mt-2 flex w-full items-center justify-between rounded-xl border border-slate-200/80 bg-slate-50/70 px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600 transition-colors hover:bg-slate-100/80">
+        <span>Ferramentas</span>
+        <svg class="h-3.5 w-3.5 transition-transform duration-200" [class.rotate-180]="sectionOpen.ferramentas" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </button>
+      <ng-container *ngIf="isSidebarCollapsed || sectionOpen.ferramentas">
       <a *ngIf="canAccessFrenteCaixaComercial()" routerLink="/frente-caixa-comercial"
          routerLinkActive #rlaFc="routerLinkActive"
          [ngClass]="rlaFc.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.55)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
@@ -240,6 +272,7 @@
         <i class="fi fi-rr-comments flex h-[1.35rem] w-[1.35rem] shrink-0 items-center justify-center text-[1.05rem] leading-none" aria-hidden="true"></i>
         <span *ngIf="!isSidebarCollapsed" class="truncate">Chat IA</span>
       </a>
+      </ng-container>
     </nav>
     </aside>
   </div>
@@ -335,14 +368,6 @@
           <i class="fi fi-rr-file-import flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
           Conciliação Bancária
         </a>
-        <a *ngIf="canAccessPluggyOpenFinance()" routerLink="/open-finance" (click)="closeMobileMenu()"
-           routerLinkActive #rlaPluggyM="routerLinkActive"
-           [ngClass]="rlaPluggyM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
-           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
-          <i class="fi fi-rr-bank flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
-          Open Finance
-        </a>
-
         <p *ngIf="!painelAdminSomente()" class="px-3 pb-2 pt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Relatórios</p>
         <a *ngIf="canAccessDashboard() && !painelAdminSomente()" routerLink="/dashboard" (click)="closeMobileMenu()"
            routerLinkActive #rlaDashM="routerLinkActive"
@@ -373,6 +398,13 @@
            class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
           <i class="fi fi-rr-settings-sliders flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
           Parametrização
+        </a>
+        <a *ngIf="canAccessPluggyOpenFinance()" routerLink="/open-finance" (click)="closeMobileMenu()"
+           routerLinkActive #rlaPluggyM="routerLinkActive"
+           [ngClass]="rlaPluggyM.isActive ? 'bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 text-white shadow-[0_10px_28px_-8px_rgba(124,58,237,0.45)]' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'"
+           class="flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 transition-all duration-200">
+          <i class="fi fi-rr-bank flex h-5 w-5 shrink-0 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
+          Open Finance
         </a>
 
         <p class="px-3 pb-2 pt-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">Ferramentas</p>
@@ -409,7 +441,7 @@
   </div>
 
   <!-- ========== MAIN CONTENT AREA ========== -->
-  <div [ngClass]="{'relative z-0 flex flex-1 flex-col min-h-0 min-w-0': !isAuthPublicPage()}">
+  <div [ngClass]="{'relative flex flex-1 flex-col min-h-0 min-w-0': !isAuthPublicPage()}">
     <!-- Desktop top bar: branco, clean -->
     <header *ngIf="!isAuthPublicPage()" class="hidden lg:flex h-[52px] bg-white border-b border-gray-200/90 items-center justify-between gap-3 px-5 flex-shrink-0">
       <div class="flex min-w-0 flex-1 items-center pr-2">

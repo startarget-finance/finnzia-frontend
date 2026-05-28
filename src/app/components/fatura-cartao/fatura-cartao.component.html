@@ -1,209 +1,408 @@
 <div class="min-h-full bg-gradient-to-b from-slate-50 via-white to-slate-100/70 pb-10 font-sans">
   <div class="mx-auto max-w-[1800px] px-4 pt-6 sm:px-6 lg:px-8">
-    <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
-      <h1 class="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">Fatura cartao de credito</h1>
+    <div class="mb-5 flex items-center justify-between gap-3">
+      <div>
+        <h1 class="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">Fatura cartao de credito</h1>
+        <p class="mt-1 text-sm text-slate-500">Importe extratos, classifique despesas e gere contas a pagar com um clique.</p>
+      </div>
     </div>
 
     <section class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_18px_45px_-28px_rgba(15,23,42,0.22)]">
-      <div class="grid min-h-[560px] grid-cols-1 lg:grid-cols-[340px_1fr]">
-        <aside class="border-b border-slate-200/80 bg-slate-50/60 p-4 lg:border-b-0 lg:border-r">
-          <h2 class="mb-3 text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Cartoes de credito</h2>
+      <div
+        class="grid min-h-[560px] grid-cols-1"
+        [ngClass]="layoutTabelaExpandida ? 'lg:grid-cols-1' : 'lg:grid-cols-[340px_1fr]'"
+      >
+        <!-- Sidebar lateral (layout normal com 5+ cartões) -->
+        <aside
+          *ngIf="!layoutTabelaExpandida"
+          class="border-b border-slate-200/80 bg-slate-50/60 p-4 lg:border-b-0 lg:border-r"
+        >
+          <div class="mb-3 flex items-center justify-between">
+            <h2 class="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Cartoes de credito</h2>
+            <span class="rounded-full bg-slate-200/70 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{{ cartoesFiltrados.length }}</span>
+          </div>
 
-          <div *ngIf="carregandoCartoes" class="mb-3 rounded-lg bg-white px-3 py-2 text-xs text-slate-600">
+          <div *ngIf="carregandoCartoes" class="mb-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600">
             Carregando cartoes...
           </div>
-          <div *ngIf="erroTela" class="mb-3 rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">
+          <div *ngIf="erroTela" class="mb-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
             {{ erroTela }}
+          </div>
+
+          <div *ngIf="!carregandoCartoes && cartoesFiltrados.length === 0" class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs font-medium text-amber-800">
+            Nenhum cartão cadastrado. Cadastre um cartão em Parametrização.
           </div>
 
           <div class="space-y-3">
             <button
+              type="button"
+              (click)="selecionarCartao(null)"
+              [ngClass]="exibindoTodos
+                ? 'border-violet-300 bg-white shadow-md ring-2 ring-violet-200/70'
+                : 'border-slate-200/80 bg-white hover:border-slate-300'"
+              class="w-full rounded-xl border p-3 text-left transition-all"
+            >
+              <p class="text-sm font-semibold text-slate-900">Todos os cartões</p>
+              <p class="mt-0.5 text-xs text-slate-500">Ver lançamentos de todos</p>
+            </button>
+            <button
               *ngFor="let c of cartoesFiltrados"
               type="button"
               (click)="selecionarCartao(c.id)"
-              [ngClass]="cartaoSelecionadoId === c.id
+              [ngClass]="!exibindoTodos && filtroCartaoId === c.id
                 ? 'border-violet-300 bg-white shadow-md ring-2 ring-violet-200/70'
                 : 'border-slate-200/80 bg-white hover:border-slate-300'"
               class="w-full rounded-xl border p-3 text-left transition-all"
             >
               <p class="truncate text-sm font-semibold text-slate-900">{{ c.nome }}</p>
               <p class="mt-0.5 truncate text-xs text-slate-500">{{ c.empresa }}</p>
-
-              <div class="mt-3 h-3 overflow-hidden rounded-full bg-slate-200/80">
+              <div class="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-200/80">
                 <div class="h-full rounded-full bg-gradient-to-r from-violet-500 to-teal-400" [style.width.%]="percentualUso(c)"></div>
               </div>
-
-              <p class="mt-2 text-right text-xs font-medium"
-                 [class.text-emerald-700]="c.disponivel >= 0"
-                 [class.text-rose-700]="c.disponivel < 0">
+              <p class="mt-2 text-right text-xs font-medium" [class.text-emerald-700]="c.disponivel >= 0" [class.text-rose-700]="c.disponivel < 0">
                 Disponivel {{ formatarMoeda(c.disponivel) }}
               </p>
             </button>
           </div>
         </aside>
 
-        <main class="p-5 sm:p-6">
-          <div class="rounded-2xl border border-slate-200/80 bg-gradient-to-r from-white via-violet-50/35 to-teal-50/30 p-4 shadow-sm">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h3 class="text-lg font-semibold text-slate-800 sm:text-xl">Relatorio de gastos com {{ cartaoSelecionado.nome }}</h3>
-                <p class="mt-1 text-sm text-slate-600">Importe a fatura (CSV) para reconhecer lancamentos e gerar contas a pagar automaticamente.</p>
-              </div>
-              <label class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
-                <i class="fi fi-rr-upload text-[0.9rem]"></i>
-                Importar CSV
-                <input type="file" class="hidden" accept=".csv,text/csv" (change)="onImportarFatura($event)" />
-              </label>
-            </div>
-
-            <div *ngIf="nomeArquivoImportado" class="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
-              Arquivo: <span class="font-semibold text-slate-800">{{ nomeArquivoImportado }}</span>
-            </div>
-            <div *ngIf="importando" class="mt-2 text-sm text-violet-700">Processando importacao...</div>
-            <div *ngIf="mensagemImportacao" class="mt-2 text-sm text-emerald-700">{{ mensagemImportacao }}</div>
+        <!-- Faixa horizontal de cartões (layout expandido com poucos cartões) -->
+        <div
+          *ngIf="layoutTabelaExpandida && cartoesFiltrados.length"
+          class="border-b border-slate-200/80 bg-slate-50/60 px-4 py-3 lg:border-b-0"
+        >
+          <div class="mb-2 flex items-center justify-between gap-2">
+            <span class="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Cartões de crédito</span>
+            <span class="rounded-full bg-slate-200/70 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{{ cartoesFiltrados.length }}</span>
+          </div>
+          <div class="flex gap-2 overflow-x-auto pb-1">
             <button
               type="button"
-              (click)="abrirLancamentosDaFatura()"
-              class="mt-3 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+              (click)="selecionarCartao(null)"
+              [ngClass]="exibindoTodos
+                ? 'shrink-0 rounded-xl border border-violet-300 bg-white px-3 py-2 shadow-sm ring-2 ring-violet-200/70'
+                : 'shrink-0 rounded-xl border border-slate-200/80 bg-white px-3 py-2 hover:border-slate-300'"
+              class="text-left transition-all"
             >
-              <i class="fi fi-rr-exchange text-[0.8rem]"></i>
-              Ver lancamentos em Movimentacoes
+              <span class="whitespace-nowrap text-sm font-semibold text-slate-900">Todos</span>
+            </button>
+            <button
+              *ngFor="let c of cartoesFiltrados"
+              type="button"
+              (click)="selecionarCartao(c.id)"
+              [ngClass]="!exibindoTodos && filtroCartaoId === c.id
+                ? 'shrink-0 rounded-xl border border-violet-300 bg-white px-3 py-2 shadow-sm ring-2 ring-violet-200/70'
+                : 'shrink-0 rounded-xl border border-slate-200/80 bg-white px-3 py-2 hover:border-slate-300'"
+              class="text-left transition-all"
+            >
+              <span class="whitespace-nowrap text-sm font-semibold text-slate-900">{{ c.nome }}</span>
+              <span class="ml-2 text-xs text-slate-500">{{ formatarMoeda(c.disponivel) }} disp.</span>
             </button>
           </div>
+        </div>
 
-          <div class="mt-6">
-            <div class="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-[0_20px_45px_-28px_rgba(15,23,42,0.28)]">
-              <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div class="rounded-xl border border-slate-200/70 bg-slate-50/60 px-3 py-2">
-                  <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Cartao</p>
-                  <p class="mt-1 truncate text-sm font-semibold text-slate-800">{{ cartaoSelecionado.nome }}</p>
+        <main
+          class="space-y-4 p-5 sm:p-6"
+          [ngClass]="layoutTabelaExpandida ? 'flex min-h-[560px] flex-1 flex-col' : ''"
+        >
+          <div class="rounded-2xl border border-slate-200/80 bg-gradient-to-r from-white via-violet-50/35 to-teal-50/30 p-4 shadow-sm">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 class="text-lg font-semibold text-slate-800 sm:text-xl">
+                  {{ exibindoTodos ? 'Gastos de todos os cartões' : 'Gastos do cartao ' + cartaoSelecionado.nome }}
+                </h3>
+                <p class="mt-1 text-sm text-slate-600">Importe CSV, OFX ou PDF, revise categorias na conciliacao e confirme para gravar no financeiro.</p>
+              </div>
+              <div class="flex flex-wrap items-end gap-2">
+                <div *ngIf="cartoesFiltrados.length > 0" class="min-w-[200px]">
+                  <label class="mb-1 block text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">Cartão para importar</label>
+                  <select
+                    [(ngModel)]="cartaoImportacaoId"
+                    class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100"
+                  >
+                    <option *ngFor="let c of cartoesFiltrados" [ngValue]="c.id">{{ c.nome }}</option>
+                  </select>
                 </div>
-                <div class="rounded-xl border border-slate-200/70 bg-slate-50/60 px-3 py-2">
-                  <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Maior fatura</p>
-                  <p class="mt-1 text-sm font-semibold text-slate-800">{{ formatarMoeda(valorMaximo) }}</p>
+                <label *ngIf="cartoesFiltrados.length > 0" class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50">
+                  <i class="fi fi-rr-upload text-[0.9rem]"></i>
+                  Importar extrato
+                  <input type="file" class="hidden" accept=".csv,.ofx,.pdf,text/csv,application/pdf" (change)="onImportarFatura($event)" />
+                </label>
+                <button
+                  type="button"
+                  (click)="abrirLancamentosDaFatura()"
+                  class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+                >
+                  <i class="fi fi-rr-exchange text-[0.85rem]"></i>
+                  Abrir em Movimentacoes
+                </button>
+              </div>
+            </div>
+
+            <div *ngIf="nomeArquivoImportado || importando || mensagemImportacao" class="mt-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-600">
+              <p *ngIf="nomeArquivoImportado">Arquivo: <span class="font-semibold text-slate-800">{{ nomeArquivoImportado }}</span></p>
+              <p *ngIf="importando" class="mt-1 font-semibold text-violet-700">Processando importacao...</p>
+              <p *ngIf="mensagemImportacao" class="mt-1 font-semibold text-emerald-700">{{ mensagemImportacao }}</p>
+            </div>
+          </div>
+
+          <div
+            *ngIf="exibindoTodos"
+            class="rounded-xl border border-dashed border-slate-300 bg-slate-50/80 px-4 py-3 text-sm text-slate-600"
+          >
+            Selecione um cartão no filtro da tabela (ou na lista lateral) para ver o gráfico de evolução da fatura.
+          </div>
+
+          <div
+            *ngIf="!exibindoTodos"
+            class="rounded-3xl border border-slate-200/80 bg-white p-4 sm:p-5"
+            [ngClass]="layoutTabelaExpandida ? 'mb-4 shadow-sm' : 'shadow-[0_20px_45px_-28px_rgba(15,23,42,0.28)]'"
+          >
+            <div
+              class="mb-4 grid grid-cols-1 gap-3"
+              [ngClass]="layoutTabelaExpandida ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-3'"
+            >
+              <div
+                class="rounded-xl border border-slate-200/70 bg-slate-50/60 px-3 py-2"
+                [ngClass]="layoutTabelaExpandida ? 'sm:col-span-2 lg:col-span-2' : ''"
+              >
+                <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Cartao</p>
+                <p class="mt-1 truncate text-sm font-semibold text-slate-800">{{ cartaoSelecionado.nome }}</p>
+              </div>
+              <div class="rounded-xl border border-slate-200/70 bg-slate-50/60 px-3 py-2">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Maior fatura</p>
+                <p class="mt-1 text-sm font-semibold text-slate-800">{{ formatarMoeda(valorMaximo) }}</p>
+              </div>
+              <div class="rounded-xl border border-slate-200/70 bg-slate-50/60 px-3 py-2">
+                <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Disponivel</p>
+                <p class="mt-1 text-sm font-semibold" [class.text-emerald-700]="cartaoSelecionado.disponivel >= 0" [class.text-rose-700]="cartaoSelecionado.disponivel < 0">
+                  {{ formatarMoeda(cartaoSelecionado.disponivel) }}
+                </p>
+              </div>
+            </div>
+
+            <div class="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50/40 p-3 sm:p-4">
+              <div class="grid grid-cols-[52px_1fr] gap-2 sm:grid-cols-[64px_1fr] sm:gap-3">
+                <div
+                  class="flex flex-col justify-between pr-1 text-right text-[10px] font-medium text-slate-500 sm:text-[11px]"
+                  [ngClass]="layoutTabelaExpandida ? 'h-[200px]' : 'h-[280px]'"
+                >
+                  <span *ngFor="let tick of yAxisTicks">{{ formatarMoeda(tick) }}</span>
                 </div>
-                <div class="rounded-xl border border-slate-200/70 bg-slate-50/60 px-3 py-2">
-                  <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Disponivel</p>
-                  <p class="mt-1 text-sm font-semibold" [class.text-emerald-700]="cartaoSelecionado.disponivel >= 0" [class.text-rose-700]="cartaoSelecionado.disponivel < 0">
-                    {{ formatarMoeda(cartaoSelecionado.disponivel) }}
-                  </p>
+                <div class="relative" [ngClass]="layoutTabelaExpandida ? 'h-[200px]' : 'h-[280px]'">
+                  <div class="absolute inset-0 flex flex-col justify-between">
+                    <div *ngFor="let _ of yAxisTicks" class="h-px w-full border-t border-dashed border-slate-200"></div>
+                  </div>
+                  <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 h-full w-full">
+                    <defs>
+                      <linearGradient id="faturaAreaGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.28"></stop>
+                        <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.02"></stop>
+                      </linearGradient>
+                    </defs>
+                    <polyline [attr.points]="areaPolylinePoints" fill="url(#faturaAreaGradient)" stroke="none"></polyline>
+                    <polyline [attr.points]="polylinePoints" fill="none" stroke="#6366f1" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                  </svg>
+                  <div *ngFor="let p of cartaoSelecionado.pontos; let i = index"
+                       class="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer"
+                       [style.left.%]="getPointX(i)" [style.top.%]="getPointY(p.valor)"
+                       (click)="abrirLancamentosDoMes(p, i)" [title]="'Abrir lançamentos de ' + p.mes">
+                    <div [ngClass]="p.status === 'paga'
+                          ? 'flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm sm:h-6 sm:w-6'
+                          : 'flex h-5 w-5 items-center justify-center rounded-full border border-sky-300 bg-sky-100 text-sky-600 shadow-sm sm:h-6 sm:w-6'">
+                      <i [ngClass]="p.status === 'paga' ? 'fi fi-rr-check text-[0.62rem] sm:text-[0.68rem]' : 'fi fi-rr-calendar text-[0.62rem] sm:text-[0.68rem]'"></i>
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              <div class="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-50/40 p-4">
-                <div class="grid grid-cols-[64px_1fr] gap-3">
-                  <div class="flex h-[280px] flex-col justify-between pr-1 text-right text-[11px] font-medium text-slate-500">
-                    <span *ngFor="let tick of yAxisTicks">{{ formatarMoeda(tick) }}</span>
-                  </div>
-
-                  <div class="relative h-[280px]">
-                    <div class="absolute inset-0 flex flex-col justify-between">
-                      <div *ngFor="let _ of yAxisTicks" class="h-px w-full border-t border-dashed border-slate-200"></div>
-                    </div>
-
-                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="absolute inset-0 h-full w-full">
-                      <defs>
-                        <linearGradient id="faturaAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.28"></stop>
-                          <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.02"></stop>
-                        </linearGradient>
-                      </defs>
-                      <polyline [attr.points]="areaPolylinePoints" fill="url(#faturaAreaGradient)" stroke="none"></polyline>
-                      <polyline [attr.points]="polylinePoints" fill="none" stroke="#6366f1" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></polyline>
-                    </svg>
-
-                    <div
-                      *ngFor="let p of cartaoSelecionado.pontos; let i = index"
-                      class="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer"
-                      [style.left.%]="getPointX(i)"
-                      [style.top.%]="getPointY(p.valor)"
-                      (click)="abrirLancamentosDoMes(p, i)"
-                      [title]="'Abrir lançamentos de ' + p.mes"
-                    >
-                      <div
-                        [ngClass]="p.status === 'paga'
-                          ? 'flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm'
-                          : 'flex h-6 w-6 items-center justify-center rounded-full border border-sky-300 bg-sky-100 text-sky-600 shadow-sm'"
-                      >
-                        <i [ngClass]="p.status === 'paga' ? 'fi fi-rr-check text-[0.68rem]' : 'fi fi-rr-calendar text-[0.68rem]'"></i>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="mt-3 grid grid-cols-7 text-center text-xs font-medium text-slate-500">
-                  <button
-                    *ngFor="let p of cartaoSelecionado.pontos; let i = index"
-                    type="button"
-                    (click)="abrirLancamentosDoMes(p, i)"
-                    class="rounded px-1 py-1 transition-colors hover:bg-slate-100 hover:text-slate-700"
-                    [title]="'Filtrar movimentações de ' + p.mes"
-                  >
-                    {{ p.mes }}
-                  </button>
-                </div>
+              <div class="mt-3 grid grid-cols-7 text-center text-xs font-medium text-slate-500">
+                <button *ngFor="let p of cartaoSelecionado.pontos; let i = index"
+                        type="button" (click)="abrirLancamentosDoMes(p, i)"
+                        class="rounded px-1 py-1 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                        [title]="'Filtrar movimentações de ' + p.mes">
+                  {{ p.mes }}
+                </button>
               </div>
             </div>
           </div>
 
-          <div *ngIf="lancamentosImportados.length" class="mt-4 rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-            <div class="flex items-center justify-between border-b border-slate-200/70 px-4 py-3">
-              <h4 class="text-sm font-semibold text-slate-800">Lancamentos reconhecidos</h4>
-              <button
-                type="button"
-                (click)="gerarContasPagarPrototipo()"
-                class="rounded-xl bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 px-3 py-2 text-xs font-semibold text-white shadow-[0_10px_22px_-12px_rgba(124,58,237,0.55)] hover:brightness-105"
+          <div
+            class="rounded-2xl border border-slate-200/80 bg-white shadow-sm"
+            [ngClass]="layoutTabelaExpandida ? 'flex min-h-0 flex-1 flex-col' : ''"
+          >
+            <div class="flex flex-col gap-3 border-b border-slate-200/70 px-4 py-3">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h4 class="text-sm font-semibold text-slate-800">Lançamentos do extrato</h4>
+                  <p class="mt-0.5 text-xs text-slate-500">Itens importados (compras, taxas, estornos).</p>
+                </div>
+                <button
+                  type="button"
+                  (click)="gerarContasPagarPrototipo()"
+                  [disabled]="!lancamentosImportados.length || exibindoTodos"
+                class="rounded-xl bg-gradient-to-r from-violet-600 via-violet-500 to-teal-400 px-3 py-2 text-xs font-semibold text-white shadow-[0_10px_22px_-12px_rgba(124,58,237,0.55)] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Gerar contas a pagar (fatura)
-              </button>
+                  Gerar contas a pagar (fatura)
+                </button>
+              </div>
+              <div *ngIf="cartoesFiltrados.length" class="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  (click)="alternarFiltroRevisar()"
+                  [ngClass]="filtroSomenteRevisar
+                    ? 'border-amber-300 bg-amber-50 text-amber-900 ring-2 ring-amber-200/70'
+                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'"
+                  class="rounded-lg border px-2.5 py-1 text-xs font-semibold transition-all"
+                >
+                  A revisar ({{ totalPendentesRevisao }})
+                </button>
+                <span class="text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-500">Cartao:</span>
+                <button
+                  type="button"
+                  (click)="selecionarCartao(null)"
+                  [ngClass]="exibindoTodos
+                    ? 'border-violet-300 bg-violet-50 text-violet-800 ring-2 ring-violet-200/60'
+                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'"
+                  class="rounded-lg border px-2.5 py-1 text-xs font-semibold transition-all"
+                >
+                  Todos
+                </button>
+                <button
+                  *ngFor="let c of cartoesFiltrados"
+                  type="button"
+                  (click)="selecionarCartao(c.id)"
+                  [ngClass]="!exibindoTodos && filtroCartaoId === c.id
+                    ? 'border-violet-300 bg-violet-50 text-violet-800 ring-2 ring-violet-200/60'
+                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'"
+                  class="rounded-lg border px-2.5 py-1 text-xs font-semibold transition-all"
+                >
+                  {{ c.nome }}
+                </button>
+              </div>
             </div>
-            <div class="overflow-x-auto">
-              <table class="min-w-full text-sm">
+            <div *ngIf="!lancamentosVisiveis.length && lancamentosImportados.length && filtroSomenteRevisar" class="px-4 py-8 text-center text-sm text-slate-500">
+              Nenhum lancamento pendente de revisao neste filtro.
+            </div>
+            <div *ngIf="!lancamentosImportados.length" class="px-4 py-8 text-center text-sm text-slate-500">
+              {{ exibindoTodos ? 'Nenhum lancamento importado ainda.' : 'Nenhum lancamento importado para este cartao ainda.' }}
+            </div>
+            <div
+              *ngIf="lancamentosVisiveis.length"
+              class="overflow-x-auto"
+              [ngClass]="layoutTabelaExpandida ? 'min-h-0 flex-1' : ''"
+            >
+              <table class="min-w-[880px] w-full table-fixed text-sm" [class.min-w-[1020px]]="exibindoTodos">
                 <thead class="bg-slate-50/90 text-left">
                   <tr>
-                    <th class="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Data</th>
+                    <th *ngIf="exibindoTodos" class="w-[150px] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Cartao</th>
+                    <th class="w-[110px] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Data</th>
                     <th class="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Descricao</th>
-                    <th class="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Categoria</th>
-                    <th class="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Confianca</th>
-                    <th class="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Valor</th>
+                    <th class="w-[190px] px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Categoria</th>
+                    <th class="w-[130px] px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">Valor</th>
+                    <th class="w-12 px-2 py-2.5"></th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                  <tr *ngFor="let l of lancamentosImportados"
-                      (click)="abrirLancamentoImportado(l)"
-                      class="cursor-pointer hover:bg-slate-50/70">
+                  <tr
+                    *ngFor="let l of lancamentosPaginados"
+                    (click)="abrirLancamentoImportado(l)"
+                    (keydown.enter)="abrirLancamentoImportado(l)"
+                    tabindex="0"
+                    role="button"
+                    class="cursor-pointer hover:bg-violet-50/60 focus:bg-violet-50/80 focus:outline-none"
+                    title="Editar lançamento"
+                  >
+                    <td *ngIf="exibindoTodos" class="px-4 py-2.5 text-slate-700 truncate" [title]="l.cartaoNome || l.contaBancariaNome">
+                      {{ l.cartaoNome || l.contaBancariaNome || '—' }}
+                    </td>
                     <td class="px-4 py-2.5 text-slate-600">{{ l.data }}</td>
-                    <td class="px-4 py-2.5 text-slate-800">{{ l.descricao }}</td>
-                    <td class="px-4 py-2.5 text-slate-700">{{ l.categoria }}</td>
+                    <td class="px-4 py-2.5 text-slate-800 truncate" [title]="l.descricao">{{ l.descricao }}</td>
                     <td class="px-4 py-2.5">
-                      <span [ngClass]="l.confianca === 'alta' ? 'bg-emerald-100 text-emerald-700' : l.confianca === 'media' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-700'" class="rounded-full px-2 py-1 text-[11px] font-semibold uppercase">
-                        {{ l.confianca }}
-                      </span>
+                      <div class="flex min-w-0 flex-col gap-1">
+                        <span class="truncate text-slate-700" [title]="l.categoria">{{ l.categoria }}</span>
+                        <span
+                          class="inline-flex w-fit rounded-md px-1.5 py-0.5 text-[10px] font-semibold ring-1"
+                          [ngClass]="classeBadgeConfianca(l.confianca, l.precisaRevisao)"
+                        >
+                          {{ labelConfianca(l.confianca) }}
+                        </span>
+                      </div>
                     </td>
                     <td class="px-4 py-2.5 text-right font-semibold text-slate-800">{{ formatarMoeda(l.valor) }}</td>
+                    <td class="px-2 py-2.5 text-center">
+                      <button
+                        type="button"
+                        (click)="$event.stopPropagation(); abrirLancamentoImportado(l)"
+                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:border-violet-300 hover:text-violet-700"
+                        title="Editar lançamento"
+                        aria-label="Abrir em Movimentações"
+                      >
+                        <i class="fi fi-rr-arrow-up-right text-sm"></i>
+                      </button>
+                    </td>
                   </tr>
                 </tbody>
               </table>
             </div>
+            <div
+              *ngIf="lancamentosVisiveis.length"
+              class="grid grid-cols-1 gap-2 border-t border-slate-200/70 bg-slate-50/50 px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-center"
+            >
+              <p class="min-w-0 text-xs font-medium text-slate-600">
+                Exibindo {{ intervaloLancamentos.inicio }}-{{ intervaloLancamentos.fim }} de
+                {{ intervaloLancamentos.total }} lançamentos
+              </p>
+              <div class="flex flex-wrap items-center justify-start gap-2 sm:justify-end">
+                <button
+                  type="button"
+                  (click)="irPaginaLancamentosAnterior()"
+                  [disabled]="paginaLancamentos === 0"
+                  class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Anterior
+                </button>
+                <span class="rounded-md bg-white px-2 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
+                  Página {{ paginaLancamentos + 1 }} de {{ totalPaginasLancamentos }}
+                </span>
+                <button
+                  type="button"
+                  (click)="irPaginaLancamentosProxima()"
+                  [disabled]="paginaLancamentos >= totalPaginasLancamentos - 1"
+                  class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Próxima
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div *ngIf="contasPagarGeradas.length" class="mt-4 rounded-2xl border border-violet-200/80 bg-violet-50/40 shadow-sm">
+          <div *ngIf="contasPagarGeradas.length" class="rounded-2xl border border-violet-200/80 bg-violet-50/40 shadow-sm">
             <div class="border-b border-violet-200/70 px-4 py-3">
-              <h4 class="text-sm font-semibold text-violet-800">Contas a pagar geradas (prototipo)</h4>
-              <p class="mt-1 text-xs text-violet-700">{{ mensagemGeracao }}</p>
+              <h4 class="text-sm font-semibold text-violet-800">Faturas consolidadas (contas a pagar)</h4>
+              <p class="mt-1 text-xs text-violet-700">
+                Total da fatura por mês — gerado ao clicar em &quot;Gerar contas a pagar&quot;.
+                <span *ngIf="mensagemGeracao" class="font-medium"> {{ mensagemGeracao }}</span>
+              </p>
             </div>
             <div class="overflow-x-auto">
               <table class="min-w-full text-sm">
                 <thead class="bg-violet-100/60 text-left">
                   <tr>
+                    <th *ngIf="exibindoTodos" class="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-700">Cartao</th>
                     <th class="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-700">Competencia</th>
                     <th class="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-700">Vencimento</th>
                     <th class="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-700">Descricao</th>
-                    <th class="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-700">Valor</th>
+                    <th class="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-[0.12em] text-violet-700">Valor total</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-violet-100/80">
-                  <tr *ngFor="let cp of contasPagarGeradas">
+                  <tr
+                    *ngFor="let cp of contasPagarGeradas"
+                    (click)="abrirContaPagarEmMovimentacoes(cp)"
+                    class="cursor-pointer hover:bg-violet-100/50"
+                    title="Editar lançamento"
+                  >
+                    <td *ngIf="exibindoTodos" class="px-4 py-2.5 text-violet-800">{{ cp.cartaoNome || '—' }}</td>
                     <td class="px-4 py-2.5 text-violet-800">{{ cp.competencia }}</td>
                     <td class="px-4 py-2.5 text-violet-700">{{ cp.vencimento }}</td>
                     <td class="px-4 py-2.5 text-violet-800">{{ cp.descricao }}</td>
@@ -216,6 +415,100 @@
         </main>
       </div>
     </section>
+  </div>
+</div>
+
+<!-- Modal conciliação pré-importação -->
+<div
+  *ngIf="previewConciliacaoAberto"
+  class="modal-overlay-main fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/50 p-4"
+  (click)="fecharPreviewConciliacao()"
+>
+  <div
+    class="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
+    (click)="$event.stopPropagation()"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="titulo-conciliacao-fatura"
+  >
+    <div class="border-b border-slate-200 px-5 py-4">
+      <h3 id="titulo-conciliacao-fatura" class="text-lg font-semibold text-slate-900">Conciliar extrato antes de importar</h3>
+      <p class="mt-1 text-sm text-slate-600">
+        Revise categorias (como Bom Controle). Itens em <strong>A classificar</strong> podem ser ajustados depois em Movimentacoes.
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2 border-b border-slate-100 bg-slate-50/80 px-5 py-2">
+      <button type="button" class="text-xs font-semibold text-violet-700 hover:underline" (click)="marcarTodosPreview(true)">Marcar todos</button>
+      <button type="button" class="text-xs font-semibold text-slate-600 hover:underline" (click)="marcarTodosPreview(false)">Desmarcar</button>
+      <span class="text-xs text-slate-500">{{ previewSelecionados.length }} de {{ previewConciliacaoLancamentos.length }} selecionado(s)</span>
+    </div>
+    <div class="min-h-0 flex-1 overflow-auto">
+      <table class="min-w-full text-sm">
+        <thead class="sticky top-0 bg-slate-50 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <tr>
+            <th class="w-10 px-3 py-2"></th>
+            <th class="px-3 py-2">Data</th>
+            <th class="px-3 py-2">Descricao</th>
+            <th class="px-3 py-2">Categoria</th>
+            <th class="px-3 py-2 text-right">Valor</th>
+            <th class="w-36 px-3 py-2">Regra</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <tr *ngFor="let l of previewConciliacaoLancamentos" [ngClass]="{ 'bg-amber-50/40': !!l.precisaRevisao }">
+            <td class="px-3 py-2">
+              <input type="checkbox" [(ngModel)]="l.selecionado" class="rounded border-slate-300" />
+            </td>
+            <td class="px-3 py-2 text-slate-600">{{ l.data }}</td>
+            <td class="max-w-[220px] px-3 py-2 text-slate-800" [title]="l.descricao">{{ l.descricao }}</td>
+            <td class="px-3 py-2">
+              <select
+                [(ngModel)]="l.categoria"
+                (ngModelChange)="aoAlterarCategoriaPreview(l)"
+                class="w-full min-w-[140px] rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+              >
+                <option *ngFor="let c of categoriasImportacao" [value]="c">{{ c }}</option>
+              </select>
+              <span
+                class="mt-1 inline-flex rounded-md px-1.5 py-0.5 text-[10px] font-semibold ring-1"
+                [ngClass]="classeBadgeConfianca(l.confianca, l.precisaRevisao)"
+              >
+                {{ labelConfianca(l.confianca) }}
+              </span>
+            </td>
+            <td class="px-3 py-2 text-right font-semibold text-slate-800">{{ formatarMoeda(l.valor) }}</td>
+            <td class="px-3 py-2">
+              <label class="flex items-start gap-1.5 text-xs text-slate-600">
+                <input
+                  type="checkbox"
+                  [(ngModel)]="l.salvarRegra"
+                  [disabled]="!!l.precisaRevisao"
+                  class="mt-0.5 rounded border-slate-300"
+                />
+                Lembrar texto
+              </label>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="flex flex-wrap justify-end gap-2 border-t border-slate-200 bg-white px-5 py-4">
+      <button
+        type="button"
+        (click)="fecharPreviewConciliacao()"
+        class="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        (click)="confirmarPreviewConciliacao()"
+        [disabled]="confirmandoImportacao || !previewSelecionados.length"
+        class="rounded-xl bg-gradient-to-r from-violet-600 to-teal-500 px-4 py-2 text-sm font-semibold text-white shadow disabled:opacity-50"
+      >
+        {{ confirmandoImportacao ? 'Importando...' : 'Confirmar importacao' }}
+      </button>
+    </div>
   </div>
 </div>
 
