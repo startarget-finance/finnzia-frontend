@@ -319,146 +319,17 @@
           <span class="text-sm text-slate-400">ou</span>
           <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 flex-wrap">
 
-        <div *ngIf="tipoFiltro === 'mes'" class="relative w-full sm:w-auto">
-          <button
-            type="button"
-            (click)="toggleRangePicker()"
-            class="inline-flex w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-violet-300/70 hover:shadow-md sm:w-auto sm:justify-center"
-          >
-            <svg
-              class="h-4 w-4 text-slate-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              ></path>
-            </svg>
-            <span>{{
-              dataInicial && dataFinal
-                ? (dataInicial | date: "dd/MM/yyyy") +
-                  " – " +
-                  (dataFinal | date: "dd/MM/yyyy")
-                : "Selecionar Período"
-            }}</span>
-          </button>
-
-          <!-- Popover Calendário -->
-          <div
-            *ngIf="mostrarRangePicker"
-            class="absolute right-0 z-50 mt-2 w-[320px] max-h-[400px] overflow-y-auto rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-xl shadow-slate-900/10 backdrop-blur-sm"
-          >
-            <div class="mb-4 flex items-center justify-between">
-              <button
-                type="button"
-                (click)="prevMonth()"
-                class="rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-slate-100"
-              >
-                <svg
-                  class="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 19l-7-7 7-7"
-                  ></path>
-                </svg>
-              </button>
-              <div class="text-sm font-semibold tracking-wide text-slate-800">
-                {{ getMonthYearLabel() }}
-              </div>
-              <button
-                type="button"
-                (click)="nextMonth()"
-                class="rounded-lg p-1.5 text-slate-600 transition-colors hover:bg-slate-100"
-              >
-                <svg
-                  class="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 5l7 7-7 7"
-                  ></path>
-                </svg>
-              </button>
-            </div>
-
-            <div
-              class="mb-2 grid grid-cols-7 text-[11px] font-semibold uppercase tracking-wider text-slate-400"
-            >
-              <div class="text-center">dom</div>
-              <div class="text-center">seg</div>
-              <div class="text-center">ter</div>
-              <div class="text-center">qua</div>
-              <div class="text-center">qui</div>
-              <div class="text-center">sex</div>
-              <div class="text-center">sáb</div>
-            </div>
-
-            <div class="grid grid-cols-7 gap-1">
-              <ng-container *ngFor="let d of calendarDays">
-                <button
-                  type="button"
-                  [disabled]="!d.inCurrentMonth"
-                  (click)="onSelectDate(d.dateStr)"
-                  (mouseenter)="onHoverDate(d.dateStr)"
-                  (mouseleave)="onHoverDate(null)"
-                  [class.opacity-30]="!d.inCurrentMonth"
-                  [class.bg-gradient-to-br]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                  [class.from-violet-600]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                  [class.to-teal-500]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                  [class.shadow-md]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                  [class.text-white]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                  [class.bg-violet-50]="isBetween(d.dateStr)"
-                  class="rounded-lg py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed"
-                >
-                  {{ d.day }}
-                </button>
-              </ng-container>
-            </div>
-
-            <div
-              class="mt-5 flex items-center justify-between border-t border-slate-100 pt-4"
-            >
-              <button
-                type="button"
-                (click)="clearRange()"
-                class="text-xs font-semibold text-slate-500 transition-colors hover:text-slate-800"
-              >
-                Limpar
-              </button>
-              <div class="flex gap-2">
-                <button
-                  type="button"
-                  (click)="cancelRangePicker()"
-                  class="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  (click)="applyRangePicker()"
-                  class="rounded-xl bg-gradient-to-r from-violet-600 to-teal-500 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-violet-500/30 transition-all hover:brightness-105"
-                >
-                  Aplicar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <app-periodo-range-picker
+          *ngIf="tipoFiltro === 'mes'"
+          class="w-full sm:w-auto"
+          [(dataInicial)]="dataInicial"
+          [(dataFinal)]="dataFinal"
+          [showLabel]="false"
+          placeholder="Selecionar período"
+          [fullWidth]="true"
+          triggerClass="sm:w-auto sm:justify-center"
+          (applied)="onPeriodoAplicado()"
+        />
 
         <select
           *ngIf="tipoFiltro === 'trimestre'"

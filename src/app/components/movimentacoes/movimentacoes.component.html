@@ -310,73 +310,17 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
           
           <!-- Período -->
-          <div class="relative z-[130]">
-            <label class="mb-1.5 block text-xs font-medium text-slate-500">Período</label>
-            <button type="button"
-                    (click)="toggleRangePicker()"
-                    class="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-700 shadow-sm transition-all hover:border-slate-300 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/25">
-              <div class="flex items-center gap-2.5 truncate">
-                <i class="fi fi-rr-calendar h-4 w-4 shrink-0 text-slate-400 flex items-center justify-center text-[0.85rem] leading-none" aria-hidden="true"></i>
-                <span class="truncate font-medium">
-                  <ng-container *ngIf="dataInicial && dataFinal; else placeholderPeriodo">
-                    {{ dataInicial === dataFinal 
-                        ? (dataInicial | date:'dd/MM/yyyy') 
-                        : (dataInicial | date:'dd/MM/yyyy') + ' até ' + (dataFinal | date:'dd/MM/yyyy') }}
-                  </ng-container>
-                  <ng-template #placeholderPeriodo>Selecionar período</ng-template>
-                </span>
-              </div>
-              <i class="fi fi-rr-angle-small-down h-4 w-4 shrink-0 text-slate-400 flex items-center justify-center text-[0.85rem] leading-none" aria-hidden="true"></i>
-            </button>
-
-            <!-- Popover Calendário -->
-            <div *ngIf="mostrarRangePicker" class="fixed left-1/2 top-[5.5rem] sm:top-24 z-[9999] w-[340px] max-w-[min(340px,calc(100vw-2rem))] -translate-x-1/2 max-h-[min(400px,calc(100vh-8rem))] overflow-y-auto rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-xl shadow-slate-900/10 backdrop-blur-sm">
-              <div class="mb-4 flex items-center justify-between">
-                <button type="button" (click)="prevMonth()" class="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100">
-                  <i class="fi fi-rr-angle-small-left h-5 w-5 flex items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
-                </button>
-                <div class="text-sm font-semibold capitalize text-slate-900">{{ getMonthYearLabel() }}</div>
-                <button type="button" (click)="nextMonth()" class="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100">
-                  <i class="fi fi-rr-angle-small-right h-5 w-5 flex items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
-                </button>
-              </div>
-
-              <div class="mb-2 grid grid-cols-7 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                <div class="text-center">dom</div><div class="text-center">seg</div><div class="text-center">ter</div>
-                <div class="text-center">qua</div><div class="text-center">qui</div><div class="text-center">sex</div><div class="text-center">sáb</div>
-              </div>
-
-              <div class="grid grid-cols-7 gap-1">
-                <ng-container *ngFor="let d of calendarDays">
-                  <button type="button"
-                          [disabled]="!d.inCurrentMonth"
-                          (click)="onSelectDate(d.dateStr)"
-                          (mouseenter)="onHoverDate(d.dateStr)"
-                          (mouseleave)="onHoverDate(null)"
-                          [class.opacity-30]="!d.inCurrentMonth"
-                          [class.bg-gradient-to-br]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                          [class.from-violet-600]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                          [class.to-teal-500]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                          [class.text-white]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                          [class.font-semibold]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                          [class.shadow-sm]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                          [class.bg-violet-100]="isBetween(d.dateStr)"
-                          [class.text-violet-800]="isBetween(d.dateStr)"
-                          class="rounded-lg py-2 text-sm text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed">
-                    {{ d.day }}
-                  </button>
-                </ng-container>
-              </div>
-
-              <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
-                <button type="button" (click)="clearRange()" class="text-xs font-medium text-slate-500 transition-colors hover:text-slate-900">Limpar</button>
-                <div class="flex gap-2">
-                  <button type="button" (click)="cancelRangePicker()" class="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50">Cancelar</button>
-                  <button type="button" (click)="applyRangePicker()" class="rounded-xl bg-gradient-to-r from-violet-600 to-teal-500 px-3 py-1.5 text-xs font-medium text-white shadow-md shadow-violet-500/30 transition-all hover:brightness-105">Aplicar</button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <app-periodo-range-picker
+            #periodoPicker
+            label="Período"
+            [(dataInicial)]="dataInicial"
+            [(dataFinal)]="dataFinal"
+            [fullWidth]="true"
+            [preloadOnOpen]="false"
+            [limparClearsApplied]="true"
+            (applied)="onPeriodoAplicado()"
+            (cleared)="onPeriodoLimpar()"
+          />
 
           <!-- Tipo -->
           <div>
@@ -565,16 +509,26 @@
                       >
                         <i class="fi fi-rr-edit h-3.5 w-3.5 flex items-center justify-center text-[0.85rem] leading-none" aria-hidden="true"></i>
                       </button>
+                      <ng-container *ngFor="let t of tiposAnexoLista">
+                        <button
+                          *ngIf="temAnexo(mov, t.id)"
+                          type="button"
+                          (click)="alternarPainelAnexo(mov, t.id, $event)"
+                          [attr.title]="t.labelCompleto + ' anexado'"
+                          [ngClass]="t.btnFilled"
+                          class="inline-flex h-7 w-7 items-center justify-center rounded-md border transition-all duration-150"
+                        >
+                          <i class="fi {{ t.iconSlug }} h-3.5 w-3.5 flex items-center justify-center text-[0.85rem] leading-none"
+                             aria-hidden="true"></i>
+                        </button>
+                      </ng-container>
                       <button
-                        *ngFor="let t of tiposAnexoLista"
                         type="button"
-                        (click)="alternarPainelAnexo(mov, t.id, $event)"
-                        [attr.title]="temAnexo(mov, t.id) ? (t.labelCompleto + ' anexado') : ('Anexar ' + t.labelCompleto.toLowerCase())"
-                        [ngClass]="temAnexo(mov, t.id) ? t.btnFilled : t.btnEmpty"
-                        class="inline-flex h-7 w-7 items-center justify-center rounded-md border transition-all duration-150"
+                        (click)="alternarPainelAnexo(mov, tipoAnexoAlvo, $event)"
+                        title="Anexar documento"
+                        class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-slate-300/90 bg-white text-slate-500 transition-all duration-150 hover:border-violet-300 hover:bg-violet-50/60 hover:text-violet-800"
                       >
-                        <i class="fi {{ t.iconSlug }} h-3.5 w-3.5 flex items-center justify-center text-[0.85rem] leading-none"
-                           aria-hidden="true"></i>
+                        <i class="fi fi-rr-paperclip h-3.5 w-3.5 flex items-center justify-center text-[0.85rem] leading-none" aria-hidden="true"></i>
                       </button>
                     </div>
                   </div>
@@ -625,7 +579,7 @@
                         ? 'border-violet-400 bg-violet-50/70 ring-2 ring-violet-300/45 shadow-[0_12px_40px_-24px_rgba(109,40,217,0.55)]'
                         : 'border-slate-200/90 bg-white/90 shadow-sm'"
                       class="rounded-2xl border-2 border-dashed px-4 py-9 text-center transition-all duration-200">
-                      <div class="mx-auto flex max-w-sm flex-col items-center">
+                      <div class="pointer-events-none mx-auto flex max-w-sm flex-col items-center">
                         <span class="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-violet-100 bg-violet-50/80 text-violet-600">
                           <i class="fi fi-rr-cloud-upload text-[1.35rem] leading-none" aria-hidden="true"></i>
                         </span>
@@ -634,13 +588,13 @@
                           Destino:
                           <span class="font-semibold text-slate-700">{{ labelTipoAnexoAlvo() }}</span>
                         </p>
-                        <div class="mt-5 flex flex-wrap items-center justify-center gap-2">
-                          <label class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/90 px-3.5 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:border-violet-200 hover:from-violet-50/40 hover:to-white hover:text-violet-900">
-                            <i class="fi fi-rr-folder-open flex h-4 w-4 items-center justify-center text-[0.9rem] leading-none text-violet-600/90" aria-hidden="true"></i>
-                            Selecionar arquivo
-                            <input type="file" class="hidden" (change)="aoSelecionarArquivoPainel($event, mov)" />
-                          </label>
-                        </div>
+                      </div>
+                      <div class="pointer-events-auto mt-5 flex flex-wrap items-center justify-center gap-2">
+                        <label class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200/90 bg-gradient-to-b from-white to-slate-50/90 px-3.5 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:border-violet-200 hover:from-violet-50/40 hover:to-white hover:text-violet-900">
+                          <i class="fi fi-rr-folder-open flex h-4 w-4 items-center justify-center text-[0.9rem] leading-none text-violet-600/90" aria-hidden="true"></i>
+                          Selecionar arquivo
+                          <input type="file" class="hidden" (change)="aoSelecionarArquivoPainel($event, mov)" />
+                        </label>
                       </div>
                     </div>
 
@@ -691,18 +645,17 @@
         </div>
       </div>
 
-      <!-- Modal Detalhes por Categoria / Cliente -->
-      <div *ngIf="mostrarModalDetalhes" class="fixed inset-0 z-[10050] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" (click)="fecharModalDetalhes()">
-        <div class="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-2xl shadow-slate-900/15" (click)="$event.stopPropagation()">
-          <div class="flex items-center justify-between border-b border-slate-200/80 bg-gradient-to-r from-slate-50/95 to-violet-50/30 px-6 py-4">
-            <h3 class="text-lg font-semibold text-slate-900">
-              Detalhes {{ tipoModalDetalhes === 'receita' ? 'Receitas' : 'Despesas' }} — por categoria e cliente
-            </h3>
-            <button type="button" (click)="fecharModalDetalhes()" class="rounded-xl p-2 text-slate-500 transition-colors hover:bg-slate-200/80 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500/40">
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-            </button>
-          </div>
-          <div class="flex-1 space-y-6 overflow-y-auto px-6 py-4">
+      <app-finzzia-modal
+        [aberto]="mostrarModalDetalhes"
+        [zIndex]="10050"
+        tamanho="2xl"
+        eyebrow="Movimentações"
+        [titulo]="'Detalhes ' + (tipoModalDetalhes === 'receita' ? 'receitas' : 'despesas')"
+        subtitulo="Por categoria e cliente/fornecedor no período filtrado."
+        [temRodape]="false"
+        (fechar)="fecharModalDetalhes()"
+      >
+        <div finzziaModalBody class="space-y-6">
             <div>
               <h4 class="mb-2 text-sm font-semibold text-slate-800">Por categoria</h4>
               <ul class="space-y-1.5 text-sm">
@@ -723,23 +676,21 @@
                 <li *ngIf="getDetalhesPorCliente(tipoModalDetalhes).length === 0" class="py-2 text-slate-500">Nenhum dado no período.</li>
               </ul>
             </div>
-          </div>
         </div>
-      </div>
+      </app-finzzia-modal>
 
-      <div *ngIf="mostrarModalExportacao" class="fixed inset-0 z-[10055] flex items-center justify-center bg-black/45 p-3 backdrop-blur-sm sm:p-4">
-        <div class="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-          <div class="flex items-center justify-between border-b border-slate-200 px-5 py-3.5 sm:px-6">
-            <div>
-              <h3 class="text-base font-semibold text-slate-900 sm:text-lg">Exportar movimentações</h3>
-              <p class="text-xs text-slate-500">Selecione as colunas e o formato do relatório.</p>
-            </div>
-            <button type="button" (click)="fecharModalExportacao()" class="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800">
-              <i class="fi fi-rr-cross-small text-[1rem] leading-none" aria-hidden="true"></i>
-            </button>
-          </div>
-
-          <div class="grid flex-1 grid-cols-1 overflow-hidden md:grid-cols-[260px_1fr]">
+      <app-finzzia-modal
+        [aberto]="mostrarModalExportacao"
+        [zIndex]="10055"
+        tamanho="6xl"
+        eyebrow="Movimentações"
+        titulo="Exportar movimentações"
+        subtitulo="Selecione as colunas e o formato do relatório."
+        [corpoSimples]="true"
+        (fechar)="fecharModalExportacao()"
+      >
+        <div finzziaModalBody class="!p-0 !bg-white">
+          <div class="grid min-h-[50vh] grid-cols-1 overflow-hidden md:grid-cols-[260px_1fr]">
             <aside class="overflow-y-auto border-b border-slate-200 bg-slate-50/70 p-3 md:border-b-0 md:border-r">
               <p class="px-2 pb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Abas (11)</p>
               <div class="space-y-1">
@@ -747,7 +698,7 @@
                   *ngFor="let g of exportGroups"
                   type="button"
                   (click)="abaExportacaoAtiva = g.id"
-                  [ngClass]="abaExportacaoAtiva === g.id ? 'border-violet-200 bg-violet-50 text-violet-800' : 'border-transparent text-slate-700 hover:bg-white'"
+                  [ngClass]="abaExportacaoAtiva === g.id ? 'border-teal-200 bg-teal-50 text-teal-900 ring-1 ring-teal-500/20' : 'border-transparent text-slate-700 hover:bg-white'"
                   class="flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-left text-sm font-medium transition"
                 >
                   <i class="fi {{ g.icon }} text-[0.85rem]" aria-hidden="true"></i>
@@ -779,13 +730,13 @@
                 <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   <label
                     *ngFor="let col of colunasAbaAtiva"
-                    class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:border-violet-200 hover:bg-violet-50/40"
+                    class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:border-teal-200 hover:bg-teal-50/40"
                   >
                     <input
                       type="checkbox"
                       [checked]="colunaSelecionada(col.id)"
                       (change)="alternarColunaExportacao(col.id)"
-                      class="h-4 w-4 accent-violet-600"
+                      class="h-4 w-4 accent-teal-600"
                     />
                     {{ col.label }}
                   </label>
@@ -793,27 +744,23 @@
               </div>
             </section>
           </div>
-
-          <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white px-5 py-3 sm:px-6">
-            <div class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5">
-              <label class="text-xs font-semibold text-slate-600">Formato</label>
-              <select [(ngModel)]="exportFormat" class="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700">
-                <option value="xlsx">XLSX</option>
-                <option value="csv">CSV</option>
-              </select>
-            </div>
-            <div class="flex items-center gap-2">
-              <button type="button" (click)="fecharModalExportacao()" class="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
-                Cancelar
-              </button>
-              <button type="button" (click)="exportarMovimentacoes()" [disabled]="exportando"
-                      class="rounded-xl bg-gradient-to-r from-sky-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70">
-                {{ exportando ? 'Exportando...' : 'Exportar arquivo' }}
-              </button>
-            </div>
+        </div>
+        <div finzziaModalFooter class="!justify-between">
+          <div class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5">
+            <label class="text-xs font-semibold text-slate-600">Formato</label>
+            <select [(ngModel)]="exportFormat" class="finzzia-field-input !w-auto !py-1 !text-xs">
+              <option value="xlsx">XLSX</option>
+              <option value="csv">CSV</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" (click)="fecharModalExportacao()" class="finzzia-btn-secondary">Cancelar</button>
+            <button type="button" (click)="exportarMovimentacoes()" [disabled]="exportando" class="finzzia-btn-primary">
+              {{ exportando ? 'Exportando...' : 'Exportar arquivo' }}
+            </button>
           </div>
         </div>
-      </div>
+      </app-finzzia-modal>
 
       <div *ngIf="mostrarModalCadastro" class="fixed inset-0 z-[10060] flex items-center justify-center bg-slate-950/50 p-3 backdrop-blur-md sm:p-4">
         <div class="relative flex max-h-[90vh] min-h-0 w-full flex-col overflow-hidden rounded-3xl border border-white/20 bg-white/95 shadow-2xl shadow-slate-900/30 ring-1 ring-slate-200/40 backdrop-blur-xl"
@@ -824,7 +771,7 @@
               <div class="min-w-0 flex-1 pr-2">
                 <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-400/95">Contas a pagar</p>
                 <h3 class="mt-1 text-lg font-semibold tracking-tight text-white sm:text-xl">{{ cadastroTituloBc() }}</h3>
-                <p class="mt-1.5 max-w-xl text-xs leading-relaxed text-slate-400">Cadastro guiado por abas, totais em destaque e anexos alinhados ao fluxo financeiro.</p>
+                <p class="mt-1.5 max-w-xl text-xs leading-relaxed text-slate-400">Cadastro em uma única tela: dados, repetição e anexos no mesmo fluxo.</p>
               </div>
               <div class="flex flex-col items-end rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-inner shadow-black/20 backdrop-blur-sm">
                 <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Total líquido</span>
@@ -842,7 +789,7 @@
               <div class="min-w-0 flex-1 pr-2">
                 <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-400/95">Contas a receber</p>
                 <h3 class="mt-1 text-lg font-semibold tracking-tight text-white sm:text-xl">{{ cadastroTituloNovaVenda() }}</h3>
-                <p class="mt-1.5 max-w-xl text-xs leading-relaxed text-slate-400">Mesmo padrão visual do cadastro a pagar: abas, totais e anexos em layout consistente.</p>
+                <p class="mt-1.5 max-w-xl text-xs leading-relaxed text-slate-400">Mesmo padrão visual do cadastro a pagar: tela única com totais e anexos.</p>
               </div>
               <div class="flex flex-col items-end rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-inner shadow-black/20 backdrop-blur-sm">
                 <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Total líquido</span>
@@ -860,7 +807,7 @@
               <div class="min-w-0 flex-1 pr-2">
                 <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-400/95">Contas a receber</p>
                 <h3 class="mt-1 text-lg font-semibold tracking-tight text-white sm:text-xl">{{ cadastroTituloReceitaFluxo() }}</h3>
-                <p class="mt-1.5 max-w-xl text-xs leading-relaxed text-slate-400">Fluxo guiado por abas; totais e anexos alinhados ao padrão do cadastro a pagar.</p>
+                <p class="mt-1.5 max-w-xl text-xs leading-relaxed text-slate-400">Fluxo em tela única; totais e anexos alinhados ao padrão do cadastro a pagar.</p>
               </div>
               <div class="flex flex-col items-end rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-inner shadow-black/20 backdrop-blur-sm">
                 <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Total líquido</span>
@@ -872,39 +819,30 @@
               <i class="fi fi-rr-cross-small text-[1rem] leading-none" aria-hidden="true"></i>
             </button>
           </div>
-          <div *ngIf="modalCadastroFormularioSimples" class="flex items-start justify-between border-b border-slate-200 px-5 py-3.5 sm:px-6">
-            <div>
-              <h3 class="text-base font-semibold text-slate-900 sm:text-lg">
-                <ng-container *ngIf="cadastroModo === 'editar'; else tituloNovoLancamento">Editar lançamento</ng-container>
-                <ng-template #tituloNovoLancamento>
-                  {{ novoLancamento.tipo === 'despesa' ? 'Nova conta a pagar' : 'Nova conta a receber' }}
-                </ng-template>
-              </h3>
-              <p class="mt-0.5 text-[11px] text-slate-500 sm:text-xs">
-                <ng-container *ngIf="cadastroModo === 'editar'">
-                  {{ novoLancamento.tipo === 'despesa' ? 'Despesa' : 'Receita' }} — ajuste os campos e salve. O tipo do lançamento não é alterado nesta tela.
-                </ng-container>
-                <ng-container *ngIf="cadastroModo !== 'editar'">Preencha os dados e confirme o lançamento financeiro.</ng-container>
-              </p>
+          <div *ngIf="modalCadastroFormularioSimples" class="finzzia-modal-header relative shrink-0">
+            <div class="pointer-events-none absolute inset-0 finzzia-modal-header-glow" aria-hidden="true"></div>
+            <div class="relative flex flex-wrap items-start gap-4">
+              <div class="min-w-0 flex-1 pr-2">
+                <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-teal-400/95">{{ cadastroEyebrowFinanceiro }}</p>
+                <h3 class="mt-1 text-lg font-semibold tracking-tight text-white sm:text-xl">Editar lançamento</h3>
+                <p class="mt-1.5 max-w-xl text-xs leading-relaxed text-slate-400">{{ cadastroSubtituloEditar }}</p>
+              </div>
+              <div class="flex flex-col items-end rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-inner shadow-black/20 backdrop-blur-sm">
+                <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Valor</span>
+                <span class="mt-0.5 text-2xl font-bold tabular-nums tracking-tight text-white">R$ {{ cadastroValorLiquidoFormatado() }}</span>
+              </div>
             </div>
-            <button type="button" (click)="fecharModalCadastro()" class="rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-800">
+            <button type="button" (click)="fecharModalCadastro()"
+                    class="absolute right-3 top-3 rounded-full border border-white/10 bg-white/5 p-2 text-slate-300 transition hover:bg-white/15 hover:text-white sm:right-4 sm:top-4">
               <i class="fi fi-rr-cross-small text-[1rem] leading-none" aria-hidden="true"></i>
             </button>
           </div>
 
           <div *ngIf="modalEstiloBomControleDespesa" class="flex min-h-0 flex-1 flex-col overflow-hidden">
             <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-              <nav class="sticky top-0 z-10 flex flex-wrap gap-1.5 border-b border-slate-200/80 bg-slate-100/90 px-3 py-2.5 backdrop-blur-md sm:gap-2 sm:px-6" aria-label="Etapas do cadastro">
-                <button type="button" (click)="selecionarCadastroAbaBc('dados')" class="rounded-xl px-3.5 py-2.5 text-xs font-semibold transition sm:text-sm"
-                        [class]="cadastroAbaBcAtiva('dados') ? 'bg-white text-slate-900 shadow-md shadow-slate-900/10 ring-2 ring-teal-500/30' : 'text-slate-500 hover:bg-white/80 hover:text-slate-800'">Dados básicos</button>
-                <button *ngIf="!cadastroBcTransferencia" type="button" (click)="selecionarCadastroAbaBc('repetir')" class="rounded-xl px-3.5 py-2.5 text-xs font-semibold transition sm:text-sm"
-                        [class]="cadastroAbaBcAtiva('repetir') ? 'bg-white text-slate-900 shadow-md shadow-slate-900/10 ring-2 ring-teal-500/30' : 'text-slate-500 hover:bg-white/80 hover:text-slate-800'">Repetir</button>
-                <button type="button" (click)="selecionarCadastroAbaBc('anexos')" class="rounded-xl px-3.5 py-2.5 text-xs font-semibold transition sm:text-sm"
-                        [class]="cadastroAbaBcAtiva('anexos') ? 'bg-white text-slate-900 shadow-md shadow-slate-900/10 ring-2 ring-teal-500/30' : 'text-slate-500 hover:bg-white/80 hover:text-slate-800'">Anexos</button>
-              </nav>
               <div class="bg-gradient-to-b from-slate-50/95 via-white to-teal-50/20 px-4 py-6 sm:px-8">
-              <ng-container [ngSwitch]="cadastroAbaBc">
-                <div *ngSwitchCase="'dados'" class="space-y-6">
+              <div class="space-y-8">
+                <div class="space-y-6">
                   <ng-container *ngIf="!cadastroBcTransferencia">
                   <section>
                     <h4 class="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Tipo de movimento</h4>
@@ -982,7 +920,9 @@
                           <option value="">Selecione</option>
                           <option *ngFor="let cat of categoriasCadastroTipoComManual" [value]="cat.value">{{ cat.label }}</option>
                         </select>
-                        <input *ngIf="novoLancamento.categoriaOpcao === '__manual__'" [(ngModel)]="novoLancamento.categoriaManual" type="text" class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                        <ng-container *ngIf="exibirPainelNovaCategoria('lancamento')">
+                          <ng-container *ngTemplateOutlet="painelNovaCategoriaTpl"></ng-container>
+                        </ng-container>
                         <p *ngIf="categoriasCadastroTipo.length === 0" class="mt-1 text-[11px] text-slate-500">
                           Nenhuma categoria de despesa cadastrada no Plano de contas.
                         </p>
@@ -1072,7 +1012,9 @@
                             <option value="">Selecione</option>
                             <option *ngFor="let cat of categoriasCadastroTipoComManual" [value]="cat.value">{{ cat.label }}</option>
                           </select>
-                          <input *ngIf="novoLancamento.categoriaOpcao === '__manual__'" [(ngModel)]="novoLancamento.categoriaManual" type="text" class="mt-2 w-full max-w-xl rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                          <ng-container *ngIf="exibirPainelNovaCategoria('lancamento')">
+                            <ng-container *ngTemplateOutlet="painelNovaCategoriaTpl"></ng-container>
+                          </ng-container>
                           <p *ngIf="cadastroErrors['categoria']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['categoria'] }}</p>
                         </div>
                         <div class="sm:col-span-2 lg:col-span-3">
@@ -1100,7 +1042,9 @@
                     </section>
                   </ng-container>
                 </div>
-                <div *ngSwitchCase="'repetir'" class="space-y-5">
+
+                <section *ngIf="!cadastroBcTransferencia" class="space-y-5 border-t border-slate-200/80 pt-8">
+                  <h3 class="text-sm font-semibold text-slate-800">Repetir</h3>
                   <div class="rounded-2xl border border-slate-200/60 bg-white/90 p-5 shadow-sm shadow-slate-200/50 backdrop-blur-sm">
                     <div class="flex flex-wrap items-center justify-between gap-3">
                       <span class="text-sm font-medium text-slate-800">Esta conta se repete?</span>
@@ -1166,7 +1110,7 @@
 
                     <div *ngIf="novoLancamento.prazoParaAcabar && novoLancamento.recorrenciaFrequencia !== 'nenhuma'" class="rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2">
                       <label class="mb-1 block text-[11px] font-semibold uppercase text-slate-600">Parcelas (anexos)</label>
-                      <p class="text-xs text-slate-500">Na aba Anexos você pode escolher em qual parcela gravar os arquivos se não marcar “todas as parcelas”.</p>
+                      <p class="text-xs text-slate-500">Na seção Anexos abaixo você pode escolher em qual parcela gravar os arquivos se não marcar “todas as parcelas”.</p>
                     </div>
                   </div>
 
@@ -1176,8 +1120,10 @@
                     <i class="fi fi-rr-exclamation mt-0.5 shrink-0 text-amber-600" aria-hidden="true"></i>
                     <span>Digite um <strong>Valor</strong> para movimentação.</span>
                   </div>
-                </div>
-                <div *ngSwitchCase="'anexos'" class="space-y-5">
+                </section>
+
+                <section class="space-y-5 border-t border-slate-200/80 pt-8">
+                  <h3 class="text-sm font-semibold text-slate-800">Anexos</h3>
                   <div class="rounded-2xl border border-slate-200/60 bg-white/90 p-5 shadow-sm shadow-slate-200/50 backdrop-blur-sm">
                     <div class="flex flex-wrap items-center justify-between gap-3">
                       <span class="text-sm font-medium text-slate-800">Adicionar em todas as parcelas?</span>
@@ -1216,10 +1162,7 @@
                     <button type="button" (click)="inputAnexoCadastro.click()" class="rounded-xl border border-teal-400/70 bg-teal-50/80 px-4 py-2.5 text-sm font-semibold text-teal-950 shadow-sm transition hover:bg-teal-100/90">Escolher arquivos</button>
                   </div>
 
-                  <div class="rounded-2xl border-2 border-dashed border-teal-300/60 bg-gradient-to-br from-teal-50/40 via-white to-cyan-50/30 px-4 py-10 text-center shadow-inner shadow-teal-900/5">
-                    <p class="text-sm font-medium text-slate-700">Solte arquivos aqui ou use “Escolher arquivos”</p>
-                    <p class="mt-1 text-xs text-slate-500">Metadados salvos localmente após criar o lançamento (upload no servidor em evolução).</p>
-                  </div>
+                  <ng-container *ngTemplateOutlet="zonaDropAnexoCadastroTpl; context: { legenda: 'Metadados salvos localmente após criar o lançamento (upload no servidor em evolução).' }"></ng-container>
 
                   <ul *ngIf="cadastroAnexosPendentes.length > 0" class="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
                     <li *ngFor="let a of cadastroAnexosPendentes; let idx = index" class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
@@ -1228,8 +1171,8 @@
                       <button type="button" (click)="removerAnexoPendenteCadastro(idx)" class="text-xs font-semibold text-rose-600 hover:underline">Remover</button>
                     </li>
                   </ul>
-                </div>
-              </ng-container>
+                </section>
+              </div>
               </div>
             </div>
           </div>
@@ -1475,7 +1418,9 @@
                             <option value="">Selecione</option>
                             <option *ngFor="let cat of categoriasCadastroTipoComManual" [value]="cat.value">{{ cat.label }}</option>
                           </select>
-                          <input *ngIf="novoLancamento.categoriaOpcao === '__manual__'" [(ngModel)]="novoLancamento.categoriaManual" type="text" class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                          <ng-container *ngIf="exibirPainelNovaCategoria('lancamento')">
+                          <ng-container *ngTemplateOutlet="painelNovaCategoriaTpl"></ng-container>
+                        </ng-container>
                           <p *ngIf="cadastroErrors['categoria']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['categoria'] }}</p>
                         </div>
                         <div>
@@ -1539,10 +1484,7 @@
                       <input #inputAnexoCadastroVenda type="file" class="hidden" multiple (change)="onInputCadastroAnexo($event)" />
                       <button type="button" (click)="inputAnexoCadastroVenda.click()" class="rounded-xl border border-teal-400/70 bg-teal-50/80 px-4 py-2.5 text-sm font-semibold text-teal-950 shadow-sm transition hover:bg-teal-100/90">Escolher arquivos</button>
                     </div>
-                    <div class="rounded-2xl border-2 border-dashed border-teal-300/60 bg-gradient-to-br from-teal-50/40 via-white to-cyan-50/30 px-4 py-10 text-center shadow-inner shadow-teal-900/5">
-                      <p class="text-sm font-medium text-slate-700">Solte arquivos aqui ou use “Escolher arquivos”</p>
-                      <p class="mt-1 text-xs text-slate-500">Metadados salvos localmente após criar o lançamento.</p>
-                    </div>
+                    <ng-container *ngTemplateOutlet="zonaDropAnexoCadastroTpl; context: { legenda: 'Metadados salvos localmente após criar o lançamento.' }"></ng-container>
                     <ul *ngIf="cadastroAnexosPendentes.length > 0" class="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
                       <li *ngFor="let a of cadastroAnexosPendentes; let idx = index" class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
                         <span class="font-medium text-slate-800">{{ a.file.name }}</span>
@@ -1563,14 +1505,10 @@
                         [class]="cadastroAbaOutrasAtiva('dados') ? 'bg-white text-slate-900 shadow-md shadow-slate-900/10 ring-2 ring-teal-500/30' : 'text-slate-500 hover:bg-white/80 hover:text-slate-800'">Dados básicos</button>
                 <button type="button" (click)="selecionarCadastroAbaOutras('informacoes')" class="rounded-xl px-3.5 py-2.5 text-xs font-semibold transition sm:text-sm"
                         [class]="cadastroAbaOutrasAtiva('informacoes') ? 'bg-white text-slate-900 shadow-md shadow-slate-900/10 ring-2 ring-teal-500/30' : 'text-slate-500 hover:bg-white/80 hover:text-slate-800'">Informações</button>
-                <button type="button" (click)="selecionarCadastroAbaOutras('repetir')" class="rounded-xl px-3.5 py-2.5 text-xs font-semibold transition sm:text-sm"
-                        [class]="cadastroAbaOutrasAtiva('repetir') ? 'bg-white text-slate-900 shadow-md shadow-slate-900/10 ring-2 ring-teal-500/30' : 'text-slate-500 hover:bg-white/80 hover:text-slate-800'">Repetir</button>
                 <button type="button" (click)="selecionarCadastroAbaOutras('faturamento')" class="rounded-xl px-3.5 py-2.5 text-xs font-semibold transition sm:text-sm"
                         [class]="cadastroAbaOutrasAtiva('faturamento') ? 'bg-white text-slate-900 shadow-md shadow-slate-900/10 ring-2 ring-teal-500/30' : 'text-slate-500 hover:bg-white/80 hover:text-slate-800'">Faturamento</button>
                 <button type="button" (click)="selecionarCadastroAbaOutras('contato')" class="rounded-xl px-3.5 py-2.5 text-xs font-semibold transition sm:text-sm"
                         [class]="cadastroAbaOutrasAtiva('contato') ? 'bg-white text-slate-900 shadow-md shadow-slate-900/10 ring-2 ring-teal-500/30' : 'text-slate-500 hover:bg-white/80 hover:text-slate-800'">Contato</button>
-                <button type="button" (click)="selecionarCadastroAbaOutras('anexos')" class="rounded-xl px-3.5 py-2.5 text-xs font-semibold transition sm:text-sm"
-                        [class]="cadastroAbaOutrasAtiva('anexos') ? 'bg-white text-slate-900 shadow-md shadow-slate-900/10 ring-2 ring-teal-500/30' : 'text-slate-500 hover:bg-white/80 hover:text-slate-800'">Anexos</button>
               </nav>
               <div class="bg-gradient-to-b from-slate-50/95 via-white to-teal-50/20 px-4 py-6 sm:px-8">
                 <ng-container [ngSwitch]="cadastroAbaOutras">
@@ -1642,7 +1580,9 @@
                             <option value="">Selecione</option>
                             <option *ngFor="let cat of categoriasCadastroTipoComManual" [value]="cat.value">{{ cat.label }}</option>
                           </select>
-                          <input *ngIf="novoLancamento.categoriaOpcao === '__manual__'" [(ngModel)]="novoLancamento.categoriaManual" type="text" class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                          <ng-container *ngIf="exibirPainelNovaCategoria('lancamento')">
+                          <ng-container *ngTemplateOutlet="painelNovaCategoriaTpl"></ng-container>
+                        </ng-container>
                           <p *ngIf="cadastroErrors['categoria']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['categoria'] }}</p>
                         </div>
                       </div>
@@ -1675,6 +1615,96 @@
                         <textarea [(ngModel)]="novoLancamento.observacao" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-500" placeholder="Detalhes"></textarea>
                       </div>
                     </section>
+
+                    <section class="space-y-5 border-t border-slate-200/80 pt-8">
+                      <h3 class="text-sm font-semibold text-slate-800">Repetir</h3>
+                      <div class="rounded-2xl border border-slate-200/60 bg-white/90 p-5 shadow-sm shadow-slate-200/50 backdrop-blur-sm">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                          <span class="text-sm font-medium text-slate-800">Esta conta se repete?</span>
+                          <div class="inline-flex rounded-full border border-teal-500/25 bg-teal-500/[0.07] p-0.5 shadow-inner shadow-teal-900/5">
+                            <button type="button" (click)="setCadastroContaSeRepete(false)" class="rounded-full px-5 py-2 text-sm font-semibold transition" [ngClass]="cadastroToggleSimNaoClasse(!novoLancamento.contaSeRepete)">Não</button>
+                            <button type="button" (click)="setCadastroContaSeRepete(true)" class="rounded-full px-5 py-2 text-sm font-semibold transition" [ngClass]="cadastroToggleSimNaoClasse(novoLancamento.contaSeRepete)">Sim</button>
+                          </div>
+                        </div>
+                      </div>
+                      <div *ngIf="novoLancamento.contaSeRepete" class="space-y-4">
+                        <div class="rounded-2xl border border-slate-200/60 bg-white/90 p-5 shadow-sm shadow-slate-200/50 backdrop-blur-sm">
+                          <div class="flex flex-wrap items-center justify-between gap-3">
+                            <span class="text-sm font-medium text-slate-800">Prazo para acabar?</span>
+                            <div class="inline-flex rounded-full border border-teal-500/25 bg-teal-500/[0.07] p-0.5 shadow-inner shadow-teal-900/5">
+                              <button type="button" (click)="setCadastroPrazoParaAcabar(false)" class="rounded-full px-5 py-2 text-sm font-semibold transition" [ngClass]="cadastroToggleSimNaoClasse(!novoLancamento.prazoParaAcabar)">Não</button>
+                              <button type="button" (click)="setCadastroPrazoParaAcabar(true)" class="rounded-full px-5 py-2 text-sm font-semibold transition" [ngClass]="cadastroToggleSimNaoClasse(novoLancamento.prazoParaAcabar)">Sim</button>
+                            </div>
+                          </div>
+                          <p *ngIf="!novoLancamento.prazoParaAcabar" class="mt-2 text-xs text-slate-500">Sem prazo fixo: serão geradas até 120 parcelas, na frequência escolhida.</p>
+                        </div>
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                          <div *ngIf="novoLancamento.prazoParaAcabar">
+                            <label class="mb-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">Quantas parcelas?</label>
+                            <input [(ngModel)]="novoLancamento.recorrenciaQuantidade" type="number" min="2" max="120" step="1" [disabled]="novoLancamento.marcarComoQuitado" [class.border-rose-300]="cadastroErrors['recorrenciaQuantidade']" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" />
+                            <p *ngIf="cadastroErrors['recorrenciaQuantidade']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['recorrenciaQuantidade'] }}</p>
+                          </div>
+                          <div>
+                            <label class="mb-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">Período</label>
+                            <select [(ngModel)]="novoLancamento.recorrenciaFrequencia" (ngModelChange)="onRecorrenciaFrequenciaChange()" [disabled]="novoLancamento.marcarComoQuitado" [class.border-rose-300]="cadastroErrors['recorrenciaFrequencia']" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
+                              <option value="nenhuma">Não repetir</option>
+                              <option value="semanal">Semanal</option>
+                              <option value="quinzenal">Quinzenal</option>
+                              <option value="mensal">Mensal</option>
+                              <option value="bimestral">Bimestral</option>
+                              <option value="trimestral">Trimestral</option>
+                              <option value="semestral">Semestral</option>
+                              <option value="anual">Anual</option>
+                            </select>
+                            <p *ngIf="cadastroErrors['recorrenciaFrequencia']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['recorrenciaFrequencia'] }}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <p *ngIf="cadastroErrors['recorrencia']" class="text-xs text-rose-600">{{ cadastroErrors['recorrencia'] }}</p>
+                      <div *ngIf="cadastroAvisoValorBcRepetir()" class="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-950">
+                        <i class="fi fi-rr-exclamation mt-0.5 shrink-0 text-amber-600" aria-hidden="true"></i>
+                        <span>Digite um <strong>Valor bruto</strong> para movimentação.</span>
+                      </div>
+                    </section>
+
+                    <section class="space-y-5 border-t border-slate-200/80 pt-8">
+                      <h3 class="text-sm font-semibold text-slate-800">Anexos</h3>
+                      <div *ngIf="novoLancamento.contaSeRepete && novoLancamento.recorrenciaFrequencia !== 'nenhuma' && !novoLancamento.anexosEmTodasParcelas" class="rounded-xl border border-slate-200 bg-slate-50/90 p-4">
+                        <label class="mb-1 block text-[11px] font-semibold uppercase text-slate-600">Anexar à parcela (nº)</label>
+                        <input [(ngModel)]="novoLancamento.anexoParcelaNumero" type="number" min="1" [max]="cadastroParcelaAnexoMax()" step="1" class="w-full max-w-[12rem] rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" />
+                        <p class="mt-1 text-xs text-slate-500">Entre 1 e {{ cadastroParcelaAnexoMax() }}.</p>
+                      </div>
+                      <div *ngIf="novoLancamento.contaSeRepete && novoLancamento.recorrenciaFrequencia !== 'nenhuma'" class="rounded-2xl border border-slate-200/60 bg-white/90 p-5 shadow-sm">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                          <span class="text-sm font-medium text-slate-800">Adicionar em todas as parcelas?</span>
+                          <div class="inline-flex rounded-full border border-teal-500/25 bg-teal-500/[0.07] p-0.5 shadow-inner shadow-teal-900/5">
+                            <button type="button" (click)="setCadastroAnexosTodasParcelas(false)" class="rounded-full px-5 py-2 text-sm font-semibold transition" [ngClass]="cadastroToggleSimNaoClasse(!novoLancamento.anexosEmTodasParcelas)">Não</button>
+                            <button type="button" (click)="setCadastroAnexosTodasParcelas(true)" class="rounded-full px-5 py-2 text-sm font-semibold transition" [ngClass]="cadastroToggleSimNaoClasse(novoLancamento.anexosEmTodasParcelas)">Sim</button>
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <p class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Tipo do arquivo</p>
+                        <div class="flex flex-wrap gap-2">
+                          <button *ngFor="let ta of tiposAnexoListaOrdemBc" type="button" (click)="cadastroAnexoTipoSelecionado = ta.id" class="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition" [ngClass]="cadastroAnexoTipoSelecionado === ta.id ? ta.pillSelected : ta.pillIdle">
+                            <i class="fi {{ ta.iconSlug }} text-[0.95rem]" aria-hidden="true"></i>
+                            {{ ta.labelCompleto }}
+                          </button>
+                        </div>
+                      </div>
+                      <div class="flex flex-wrap items-center gap-2">
+                        <input #inputAnexoCadastroOutras type="file" class="hidden" multiple (change)="onInputCadastroAnexo($event)" />
+                        <button type="button" (click)="inputAnexoCadastroOutras.click()" class="rounded-xl border border-teal-400/70 bg-teal-50/80 px-4 py-2.5 text-sm font-semibold text-teal-950 shadow-sm transition hover:bg-teal-100/90">Escolher arquivos</button>
+                      </div>
+                      <ng-container *ngTemplateOutlet="zonaDropAnexoCadastroTpl; context: { legenda: 'Metadados salvos localmente após criar o lançamento.' }"></ng-container>
+                      <ul *ngIf="cadastroAnexosPendentes.length > 0" class="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
+                        <li *ngFor="let a of cadastroAnexosPendentes; let idx = index" class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
+                          <span class="font-medium text-slate-800">{{ a.file.name }}</span>
+                          <span class="text-xs text-slate-500">{{ a.tipo }} · {{ (a.file.size / 1024) | number:'1.0-1' }} KB</span>
+                          <button type="button" (click)="removerAnexoPendenteCadastro(idx)" class="text-xs font-semibold text-rose-600 hover:underline">Remover</button>
+                        </li>
+                      </ul>
+                    </section>
                   </div>
 
                   <div *ngSwitchCase="'informacoes'" class="space-y-5">
@@ -1701,7 +1731,9 @@
                               <option value="">Selecione</option>
                               <option *ngFor="let cat of categoriasCadastroTipoComManual" [value]="cat.value">{{ cat.label }}</option>
                             </select>
-                            <input *ngIf="linha.categoriaOpcao === '__manual__'" [(ngModel)]="linha.categoriaManual" type="text" class="mt-1 w-full rounded border border-slate-300 px-2 py-1 text-sm" placeholder="Nome da categoria" />
+                            <ng-container *ngIf="exibirPainelNovaCategoria('rateio', i)">
+                              <ng-container *ngTemplateOutlet="painelNovaCategoriaTpl"></ng-container>
+                            </ng-container>
                           </div>
                           <div class="sm:col-span-3">
                             <label class="mb-1 block text-[10px] font-semibold uppercase text-slate-500">% </label>
@@ -1713,56 +1745,6 @@
                         </div>
                       </div>
                     </section>
-                  </div>
-
-                  <div *ngSwitchCase="'repetir'" class="space-y-5">
-                    <div class="rounded-2xl border border-slate-200/60 bg-white/90 p-5 shadow-sm shadow-slate-200/50 backdrop-blur-sm">
-                      <div class="flex flex-wrap items-center justify-between gap-3">
-                        <span class="text-sm font-medium text-slate-800">Esta conta se repete?</span>
-                        <div class="inline-flex rounded-full border border-teal-500/25 bg-teal-500/[0.07] p-0.5 shadow-inner shadow-teal-900/5">
-                          <button type="button" (click)="setCadastroContaSeRepete(false)" class="rounded-full px-5 py-2 text-sm font-semibold transition" [ngClass]="cadastroToggleSimNaoClasse(!novoLancamento.contaSeRepete)">Não</button>
-                          <button type="button" (click)="setCadastroContaSeRepete(true)" class="rounded-full px-5 py-2 text-sm font-semibold transition" [ngClass]="cadastroToggleSimNaoClasse(novoLancamento.contaSeRepete)">Sim</button>
-                        </div>
-                      </div>
-                    </div>
-                    <div *ngIf="novoLancamento.contaSeRepete" class="space-y-4">
-                      <div class="rounded-2xl border border-slate-200/60 bg-white/90 p-5 shadow-sm shadow-slate-200/50 backdrop-blur-sm">
-                        <div class="flex flex-wrap items-center justify-between gap-3">
-                          <span class="text-sm font-medium text-slate-800">Prazo para acabar?</span>
-                          <div class="inline-flex rounded-full border border-teal-500/25 bg-teal-500/[0.07] p-0.5 shadow-inner shadow-teal-900/5">
-                            <button type="button" (click)="setCadastroPrazoParaAcabar(false)" class="rounded-full px-5 py-2 text-sm font-semibold transition" [ngClass]="cadastroToggleSimNaoClasse(!novoLancamento.prazoParaAcabar)">Não</button>
-                            <button type="button" (click)="setCadastroPrazoParaAcabar(true)" class="rounded-full px-5 py-2 text-sm font-semibold transition" [ngClass]="cadastroToggleSimNaoClasse(novoLancamento.prazoParaAcabar)">Sim</button>
-                          </div>
-                        </div>
-                        <p *ngIf="!novoLancamento.prazoParaAcabar" class="mt-2 text-xs text-slate-500">Sem prazo fixo: serão geradas até 120 parcelas, na frequência escolhida.</p>
-                      </div>
-                      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div *ngIf="novoLancamento.prazoParaAcabar">
-                          <label class="mb-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">Quantas parcelas?</label>
-                          <input [(ngModel)]="novoLancamento.recorrenciaQuantidade" type="number" min="2" max="120" step="1" [disabled]="novoLancamento.marcarComoQuitado" [class.border-rose-300]="cadastroErrors['recorrenciaQuantidade']" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" />
-                          <p *ngIf="cadastroErrors['recorrenciaQuantidade']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['recorrenciaQuantidade'] }}</p>
-                        </div>
-                        <div>
-                          <label class="mb-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-slate-600">Período</label>
-                          <select [(ngModel)]="novoLancamento.recorrenciaFrequencia" (ngModelChange)="onRecorrenciaFrequenciaChange()" [disabled]="novoLancamento.marcarComoQuitado" [class.border-rose-300]="cadastroErrors['recorrenciaFrequencia']" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm">
-                            <option value="nenhuma">Não repetir</option>
-                            <option value="semanal">Semanal</option>
-                            <option value="quinzenal">Quinzenal</option>
-                            <option value="mensal">Mensal</option>
-                            <option value="bimestral">Bimestral</option>
-                            <option value="trimestral">Trimestral</option>
-                            <option value="semestral">Semestral</option>
-                            <option value="anual">Anual</option>
-                          </select>
-                          <p *ngIf="cadastroErrors['recorrenciaFrequencia']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['recorrenciaFrequencia'] }}</p>
-                        </div>
-                      </div>
-                    </div>
-                    <p *ngIf="cadastroErrors['recorrencia']" class="text-xs text-rose-600">{{ cadastroErrors['recorrencia'] }}</p>
-                    <div *ngIf="cadastroAvisoValorBcRepetir()" class="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-950">
-                      <i class="fi fi-rr-exclamation mt-0.5 shrink-0 text-amber-600" aria-hidden="true"></i>
-                      <span>Digite um <strong>Valor bruto</strong> para movimentação.</span>
-                    </div>
                   </div>
 
                   <div *ngSwitchCase="'faturamento'" class="space-y-4">
@@ -1817,47 +1799,6 @@
                       <button type="button" [disabled]="novoLancamento.outrasContatoPagina >= contatosReceitaTotalPaginas()" (click)="novoLancamento.outrasContatoPagina = novoLancamento.outrasContatoPagina + 1" class="rounded-lg border border-slate-300 px-3 py-1.5 font-semibold disabled:opacity-40">Próxima</button>
                     </div>
                   </div>
-
-                  <div *ngSwitchCase="'anexos'" class="space-y-5">
-                    <div *ngIf="novoLancamento.contaSeRepete && novoLancamento.recorrenciaFrequencia !== 'nenhuma' && !novoLancamento.anexosEmTodasParcelas" class="rounded-xl border border-slate-200 bg-slate-50/90 p-4">
-                      <label class="mb-1 block text-[11px] font-semibold uppercase text-slate-600">Anexar à parcela (nº)</label>
-                      <input [(ngModel)]="novoLancamento.anexoParcelaNumero" type="number" min="1" [max]="cadastroParcelaAnexoMax()" step="1" class="w-full max-w-[12rem] rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm" />
-                      <p class="mt-1 text-xs text-slate-500">Entre 1 e {{ cadastroParcelaAnexoMax() }}.</p>
-                    </div>
-                    <div *ngIf="novoLancamento.contaSeRepete && novoLancamento.recorrenciaFrequencia !== 'nenhuma'" class="rounded-2xl border border-slate-200/60 bg-white/90 p-5 shadow-sm">
-                      <div class="flex flex-wrap items-center justify-between gap-3">
-                        <span class="text-sm font-medium text-slate-800">Adicionar em todas as parcelas?</span>
-                        <div class="inline-flex rounded-full border border-teal-500/25 bg-teal-500/[0.07] p-0.5 shadow-inner shadow-teal-900/5">
-                          <button type="button" (click)="setCadastroAnexosTodasParcelas(false)" class="rounded-full px-5 py-2 text-sm font-semibold transition" [ngClass]="cadastroToggleSimNaoClasse(!novoLancamento.anexosEmTodasParcelas)">Não</button>
-                          <button type="button" (click)="setCadastroAnexosTodasParcelas(true)" class="rounded-full px-5 py-2 text-sm font-semibold transition" [ngClass]="cadastroToggleSimNaoClasse(novoLancamento.anexosEmTodasParcelas)">Sim</button>
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <p class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Tipo do arquivo</p>
-                      <div class="flex flex-wrap gap-2">
-                        <button *ngFor="let ta of tiposAnexoListaOrdemBc" type="button" (click)="cadastroAnexoTipoSelecionado = ta.id" class="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition" [ngClass]="cadastroAnexoTipoSelecionado === ta.id ? ta.pillSelected : ta.pillIdle">
-                          <i class="fi {{ ta.iconSlug }} text-[0.95rem]" aria-hidden="true"></i>
-                          {{ ta.labelCompleto }}
-                        </button>
-                      </div>
-                    </div>
-                    <div class="flex flex-wrap items-center gap-2">
-                      <input #inputAnexoCadastroOutras type="file" class="hidden" multiple (change)="onInputCadastroAnexo($event)" />
-                      <button type="button" (click)="inputAnexoCadastroOutras.click()" class="rounded-xl border border-teal-400/70 bg-teal-50/80 px-4 py-2.5 text-sm font-semibold text-teal-950 shadow-sm transition hover:bg-teal-100/90">Escolher arquivos</button>
-                    </div>
-                    <div class="rounded-2xl border-2 border-dashed border-teal-300/60 bg-gradient-to-br from-teal-50/40 via-white to-cyan-50/30 px-4 py-10 text-center shadow-inner shadow-teal-900/5">
-                      <p class="text-sm font-medium text-slate-700">Solte arquivos aqui ou use “Escolher arquivos”</p>
-                      <p class="mt-1 text-xs text-slate-500">Metadados salvos localmente após criar o lançamento.</p>
-                    </div>
-                    <ul *ngIf="cadastroAnexosPendentes.length > 0" class="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
-                      <li *ngFor="let a of cadastroAnexosPendentes; let idx = index" class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
-                        <span class="font-medium text-slate-800">{{ a.file.name }}</span>
-                        <span class="text-xs text-slate-500">{{ a.tipo }} · {{ (a.file.size / 1024) | number:'1.0-1' }} KB</span>
-                        <button type="button" (click)="removerAnexoPendenteCadastro(idx)" class="text-xs font-semibold text-rose-600 hover:underline">Remover</button>
-                      </li>
-                    </ul>
-                  </div>
                 </ng-container>
               </div>
             </div>
@@ -1865,15 +1806,9 @@
 
           <div *ngIf="modalEstiloReceitaAporte" class="flex min-h-0 flex-1 flex-col overflow-hidden">
             <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-              <nav class="sticky top-0 z-10 flex flex-wrap gap-1.5 border-b border-slate-200/80 bg-slate-100/90 px-3 py-2.5 backdrop-blur-md sm:gap-2 sm:px-6" aria-label="Etapas do aporte">
-                <button type="button" (click)="selecionarCadastroAbaAporte('dados')" class="rounded-xl px-3.5 py-2.5 text-xs font-semibold transition sm:text-sm"
-                        [class]="cadastroAbaAporteAtiva('dados') ? 'bg-white text-slate-900 shadow-md shadow-slate-900/10 ring-2 ring-teal-500/30' : 'text-slate-500 hover:bg-white/80 hover:text-slate-800'">Dados básicos</button>
-                <button type="button" (click)="selecionarCadastroAbaAporte('anexos')" class="rounded-xl px-3.5 py-2.5 text-xs font-semibold transition sm:text-sm"
-                        [class]="cadastroAbaAporteAtiva('anexos') ? 'bg-white text-slate-900 shadow-md shadow-slate-900/10 ring-2 ring-teal-500/30' : 'text-slate-500 hover:bg-white/80 hover:text-slate-800'">Anexos</button>
-              </nav>
               <div class="bg-gradient-to-b from-slate-50/95 via-white to-teal-50/20 px-4 py-6 sm:px-8">
-                <ng-container [ngSwitch]="cadastroAbaAporte">
-                  <div *ngSwitchCase="'dados'" class="space-y-6">
+                <div class="space-y-8">
+                  <div class="space-y-6">
                     <section>
                       <h4 class="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">Forma de pagamento (opcional)</h4>
                       <select [(ngModel)]="novoLancamento.formaPagamento" class="mt-2 w-full max-w-sm rounded-xl border border-slate-200/90 bg-white/90 px-3 py-2.5 text-sm shadow-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20">
@@ -1940,7 +1875,9 @@
                             <option value="">Selecione</option>
                             <option *ngFor="let cat of categoriasCadastroTipoComManual" [value]="cat.value">{{ cat.label }}</option>
                           </select>
-                          <input *ngIf="novoLancamento.categoriaOpcao === '__manual__'" [(ngModel)]="novoLancamento.categoriaManual" type="text" class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                          <ng-container *ngIf="exibirPainelNovaCategoria('lancamento')">
+                          <ng-container *ngTemplateOutlet="painelNovaCategoriaTpl"></ng-container>
+                        </ng-container>
                           <p *ngIf="cadastroErrors['categoria']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['categoria'] }}</p>
                         </div>
                       </div>
@@ -1964,7 +1901,9 @@
                       </div>
                     </section>
                   </div>
-                  <div *ngSwitchCase="'anexos'" class="space-y-5">
+
+                  <section class="space-y-5 border-t border-slate-200/80 pt-8">
+                    <h3 class="text-sm font-semibold text-slate-800">Anexos</h3>
                     <div>
                       <p class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Tipo do arquivo</p>
                       <div class="flex flex-wrap gap-2">
@@ -1978,10 +1917,7 @@
                       <input #inputAnexoCadastroAporte type="file" class="hidden" multiple (change)="onInputCadastroAnexo($event)" />
                       <button type="button" (click)="inputAnexoCadastroAporte.click()" class="rounded-xl border border-teal-400/70 bg-teal-50/80 px-4 py-2.5 text-sm font-semibold text-teal-950 shadow-sm transition hover:bg-teal-100/90">Escolher arquivos</button>
                     </div>
-                    <div class="rounded-2xl border-2 border-dashed border-teal-300/60 bg-gradient-to-br from-teal-50/40 via-white to-cyan-50/30 px-4 py-10 text-center shadow-inner shadow-teal-900/5">
-                      <p class="text-sm font-medium text-slate-700">Solte arquivos aqui ou use “Escolher arquivos”</p>
-                      <p class="mt-1 text-xs text-slate-500">Metadados salvos localmente após criar o lançamento.</p>
-                    </div>
+                    <ng-container *ngTemplateOutlet="zonaDropAnexoCadastroTpl; context: { legenda: 'Metadados salvos localmente após criar o lançamento.' }"></ng-container>
                     <ul *ngIf="cadastroAnexosPendentes.length > 0" class="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
                       <li *ngFor="let a of cadastroAnexosPendentes; let idx = index" class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm">
                         <span class="font-medium text-slate-800">{{ a.file.name }}</span>
@@ -1989,18 +1925,18 @@
                         <button type="button" (click)="removerAnexoPendenteCadastro(idx)" class="text-xs font-semibold text-rose-600 hover:underline">Remover</button>
                       </li>
                     </ul>
-                  </div>
-                </ng-container>
+                  </section>
+                </div>
               </div>
             </div>
           </div>
 
-          <div *ngIf="modalCadastroFormularioSimples" class="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto px-5 py-4 sm:px-6 md:grid-cols-2">
+          <div *ngIf="modalCadastroFormularioSimples" class="finzzia-modal-body grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-2">
             <div>
               <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Vencimento *</label>
               <input [(ngModel)]="novoLancamento.dataVencimento" type="date"
                      [class.border-rose-300]="cadastroErrors['dataVencimento']"
-                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
+                     class="finzzia-field-input" />
               <p *ngIf="cadastroErrors['dataVencimento']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['dataVencimento'] }}</p>
             </div>
             <div>
@@ -2014,13 +1950,13 @@
             <div>
               <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Categoria *</label>
               <select [(ngModel)]="novoLancamento.categoriaOpcao" (ngModelChange)="onCategoriaOpcaoChange()" [class.border-rose-300]="!!cadastroErrors['categoria']"
-                      class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100">
+                      class="finzzia-field-input">
                 <option value="">Selecione uma categoria</option>
                 <option *ngFor="let cat of categoriasCadastroTipoComManual" [value]="cat.value">{{ cat.label }}</option>
               </select>
-              <input *ngIf="novoLancamento.categoriaOpcao === '__manual__'" [(ngModel)]="novoLancamento.categoriaManual" type="text"
-                     class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"
-                     placeholder="Digite categoria ou subcategoria" />
+              <ng-container *ngIf="exibirPainelNovaCategoria('lancamento')">
+                <ng-container *ngTemplateOutlet="painelNovaCategoriaTpl"></ng-container>
+              </ng-container>
               <p *ngIf="categoriasCadastroTipo.length === 0" class="mt-1 text-[11px] text-slate-500">
                 Nenhuma categoria de {{ novoLancamento.tipo === 'receita' ? 'receita' : 'despesa' }} cadastrada no Plano de contas.
               </p>
@@ -2065,7 +2001,7 @@
               <button *ngIf="!cadastroTemParceiros()"
                       type="button"
                       routerLink="/parametrizacao"
-                      class="mt-2 inline-flex items-center rounded-lg border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-xs font-semibold text-violet-700 transition hover:bg-violet-100">
+                      class="mt-2 inline-flex items-center rounded-lg border border-teal-200 bg-teal-50 px-2.5 py-1.5 text-xs font-semibold text-teal-800 transition hover:bg-teal-100">
                 + Adicionar {{ novoLancamento.tipo === 'despesa' ? 'fornecedor' : 'cliente' }}
               </button>
               <p *ngIf="cadastroErrors['clienteFornecedor']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['clienteFornecedor'] }}</p>
@@ -2073,7 +2009,7 @@
             <div>
               <label class="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Competência</label>
               <input [(ngModel)]="novoLancamento.dataCompetencia" type="month"
-                     class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
+                     class="finzzia-field-input" />
               <p *ngIf="cadastroErrors['dataCompetencia']" class="mt-1 text-xs text-rose-600">{{ cadastroErrors['dataCompetencia'] }}</p>
             </div>
             <div>
@@ -2082,7 +2018,7 @@
                 <input type="checkbox"
                        [(ngModel)]="novoLancamento.marcarComoQuitado"
                        (ngModelChange)="onToggleMarcarComoQuitado()"
-                       class="h-4 w-4 accent-violet-600" />
+                       class="h-4 w-4 accent-teal-600" />
                 Marcar como quitado/recebido no cadastro
               </label>
               <input *ngIf="novoLancamento.marcarComoQuitado"
@@ -2141,7 +2077,7 @@
                    class="rounded-lg border border-slate-200 bg-slate-50/60 p-2.5">
                 <div class="flex flex-wrap gap-2">
                   <label *ngFor="let tipo of tiposAnexoLista"
-                         class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700 hover:border-violet-300 hover:bg-violet-50/40">
+                         class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700 hover:border-teal-300 hover:bg-teal-50/40">
                     <input type="file"
                            class="hidden"
                            (change)="tipoAnexoAlvo = tipo.id; aoSelecionarArquivoPainel($event, movEdicao)" />
@@ -2153,15 +2089,10 @@
             </div>
           </div>
 
-          <div class="flex shrink-0 items-center justify-end gap-3 border-t border-slate-200/80 bg-gradient-to-r from-slate-50/95 via-white to-teal-50/20 px-5 py-4 backdrop-blur-sm sm:px-7">
-            <button type="button" (click)="fecharModalCadastro()" class="rounded-xl border border-slate-200/90 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50">
-              Cancelar
-            </button>
-            <button type="button" (click)="salvarNovoLancamento()" [disabled]="salvandoCadastro"
-                    [ngClass]="modalCadastroLargo
-                      ? 'rounded-xl bg-gradient-to-r from-teal-600 via-teal-600 to-cyan-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-600/30 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60'
-                      : 'rounded-xl bg-gradient-to-r from-violet-600 to-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70'">
-              {{ salvandoCadastro ? 'Salvando...' : (cadastroModo === 'editar' ? 'Salvar alterações' : (modalCadastroLargo ? 'Salvar' : 'Salvar lançamento')) }}
+          <div class="finzzia-modal-footer">
+            <button type="button" (click)="fecharModalCadastro()" class="finzzia-btn-secondary">Cancelar</button>
+            <button type="button" (click)="salvarNovoLancamento()" [disabled]="salvandoCadastro" class="finzzia-btn-primary">
+              {{ salvandoCadastro ? 'Salvando...' : (cadastroModo === 'editar' ? 'Salvar alterações' : 'Salvar') }}
             </button>
           </div>
         </div>
@@ -2207,3 +2138,54 @@
     </div>
   </div>
 </div>
+
+<ng-template #zonaDropAnexoCadastroTpl let-legenda="legenda">
+  <div
+    (dragenter)="onDragEnterCadastroAnexo($event)"
+    (dragleave)="onDragLeaveCadastroAnexo($event)"
+    (dragover)="onDragOverCadastroAnexo($event)"
+    (drop)="onDropCadastroAnexo($event)"
+    [ngClass]="cadastroAnexoDragOver
+      ? 'border-teal-500 bg-teal-100/60 ring-2 ring-teal-300/45'
+      : 'border-teal-300/60 bg-gradient-to-br from-teal-50/40 via-white to-cyan-50/30'"
+    class="rounded-2xl border-2 border-dashed px-4 py-10 text-center shadow-inner shadow-teal-900/5 transition-all duration-200"
+  >
+    <div class="pointer-events-none">
+      <p class="text-sm font-medium text-slate-700">Solte arquivos aqui ou use “Escolher arquivos”</p>
+      <p *ngIf="legenda" class="mt-1 text-xs text-slate-500">{{ legenda }}</p>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #painelNovaCategoriaTpl>
+  <div class="mt-2 space-y-3 rounded-lg border border-teal-200 bg-teal-50/50 p-3">
+    <p class="text-xs font-semibold text-teal-900">Inserir nova categoria</p>
+    <div>
+      <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-600">Categoria *</label>
+      <input
+        [(ngModel)]="novaCategoriaNome"
+        type="text"
+        class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+        placeholder="Ex.: Folha - Salários (CLT)"
+      />
+    </div>
+    <div>
+      <label class="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-slate-600">Inserir em subcategoria?</label>
+      <select
+        [(ngModel)]="novaCategoriaParentId"
+        class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20"
+      >
+        <option *ngFor="let p of opcoesPaiNovaCategoria" [value]="p.value">{{ p.label }}</option>
+      </select>
+    </div>
+    <button
+      type="button"
+      (click)="criarNovaCategoria()"
+      [disabled]="salvandoNovaCategoria"
+      class="inline-flex items-center rounded-lg bg-teal-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      {{ salvandoNovaCategoria ? 'Criando…' : 'Criar e usar esta categoria' }}
+    </button>
+    <p *ngIf="cadastroErrors['categoriaNova']" class="text-xs text-rose-600">{{ cadastroErrors['categoriaNova'] }}</p>
+  </div>
+</ng-template>

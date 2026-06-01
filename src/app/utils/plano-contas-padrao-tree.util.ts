@@ -230,6 +230,44 @@ export function flattenCategoriasFinanceirasParaSelect(
   return out.sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
 }
 
+export interface OpcaoPaiCategoriaSelect {
+  value: string;
+  label: string;
+}
+
+/** Opções para inserir nova categoria como filha de uma conta existente. */
+export function listarOpcoesPaiCategoriaFinanceira(
+  raizes: CategoriaFinanceira[],
+  tipo: TipoCategoriaFinanceira
+): OpcaoPaiCategoriaSelect[] {
+  const out: OpcaoPaiCategoriaSelect[] = [
+    { value: '', label: 'Não — categoria principal (1º nível)' },
+  ];
+
+  const walkSubs = (path: string[], subs: SubcategoriaFinanceira[]): void => {
+    for (const s of subs || []) {
+      const caminho = [...path, s.nome].join(' › ');
+      if (typeof s.id === 'number' && s.id > 0) {
+        out.push({ value: String(s.id), label: `Sim — em: ${caminho}` });
+      }
+      walkSubs([...path, s.nome], s.children || []);
+    }
+  };
+
+  for (const c of raizes || []) {
+    if (c.tipo !== tipo) {
+      continue;
+    }
+    const rid = parseIdRaizUtil(String(c.id));
+    if (rid != null) {
+      out.push({ value: String(rid), label: `Sim — em: ${c.nome}` });
+    }
+    walkSubs([c.nome], c.subcategorias);
+  }
+
+  return out;
+}
+
 /** Total de contas do plano (raízes + todos os níveis da árvore). */
 export function contarNosCategoriasFinanceiras(raizes: CategoriaFinanceira[]): number {
   let n = 0;

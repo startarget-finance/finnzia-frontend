@@ -1,0 +1,88 @@
+<div class="relative" [ngClass]="wrapperClass">
+  <ng-content select="[periodoTrigger]"></ng-content>
+
+  <ng-container *ngIf="!hasCustomTrigger">
+    <label *ngIf="showLabel && label" class="mb-1.5 block text-xs font-medium text-slate-500">{{ label }}</label>
+    <button
+      type="button"
+      [disabled]="disabled"
+      (click)="toggle()"
+      [class.w-full]="fullWidth"
+      class="inline-flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-violet-300/70 hover:shadow-md focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+      [ngClass]="triggerClass"
+    >
+      <span class="flex min-w-0 items-center gap-2.5 truncate">
+        <i class="fi fi-rr-calendar shrink-0 text-[0.85rem] leading-none text-slate-400" aria-hidden="true"></i>
+        <span class="truncate">{{ displayLabel }}</span>
+      </span>
+      <i class="fi fi-rr-angle-small-down shrink-0 text-[0.85rem] leading-none text-slate-400" aria-hidden="true"></i>
+    </button>
+  </ng-container>
+
+  <div
+    *ngIf="open"
+    class="fixed left-1/2 top-[5.5rem] z-[9999] w-[340px] max-w-[min(340px,calc(100vw-2rem))] -translate-x-1/2 max-h-[min(400px,calc(100vh-8rem))] overflow-y-auto rounded-2xl border border-slate-200/80 bg-white/95 p-4 shadow-xl shadow-slate-900/10 backdrop-blur-sm sm:top-24"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Selecionar período"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="mb-4 flex items-center justify-between">
+      <button type="button" (click)="prevMonth()" class="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100" aria-label="Mês anterior">
+        <i class="fi fi-rr-angle-small-left flex h-5 w-5 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
+      </button>
+      <div class="text-sm font-semibold capitalize text-slate-900">{{ monthYearLabel }}</div>
+      <button type="button" (click)="nextMonth()" class="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100" aria-label="Próximo mês">
+        <i class="fi fi-rr-angle-small-right flex h-5 w-5 items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div class="mb-2 grid grid-cols-7 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+      <div class="text-center">dom</div>
+      <div class="text-center">seg</div>
+      <div class="text-center">ter</div>
+      <div class="text-center">qua</div>
+      <div class="text-center">qui</div>
+      <div class="text-center">sex</div>
+      <div class="text-center">sáb</div>
+    </div>
+
+    <div class="grid grid-cols-7 gap-1">
+      <ng-container *ngFor="let d of calendarDays">
+        <button
+          type="button"
+          [disabled]="!d.inCurrentMonth"
+          (click)="onSelectDate(d.dateStr)"
+          (mouseenter)="onHoverDate(d.dateStr)"
+          (mouseleave)="onHoverDate(null)"
+          [class.opacity-30]="!d.inCurrentMonth"
+          [class.bg-gradient-to-br]="isStart(d.dateStr) || isEnd(d.dateStr)"
+          [class.from-violet-600]="isStart(d.dateStr) || isEnd(d.dateStr)"
+          [class.to-teal-500]="isStart(d.dateStr) || isEnd(d.dateStr)"
+          [class.text-white]="isStart(d.dateStr) || isEnd(d.dateStr)"
+          [class.font-semibold]="isStart(d.dateStr) || isEnd(d.dateStr)"
+          [class.shadow-sm]="isStart(d.dateStr) || isEnd(d.dateStr)"
+          [class.bg-violet-100]="isBetween(d.dateStr)"
+          [class.text-violet-800]="isBetween(d.dateStr)"
+          class="rounded-lg py-2 text-sm text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-not-allowed"
+        >
+          {{ d.day }}
+        </button>
+      </ng-container>
+    </div>
+
+    <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
+      <button type="button" (click)="limpar()" class="text-xs font-medium text-slate-500 transition-colors hover:text-slate-900">
+        Limpar
+      </button>
+      <div class="flex gap-2">
+        <button type="button" (click)="cancelar()" class="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50">
+          Cancelar
+        </button>
+        <button type="button" (click)="aplicar()" class="rounded-xl bg-gradient-to-r from-violet-600 to-teal-500 px-3 py-1.5 text-xs font-medium text-white shadow-md shadow-violet-500/30 transition-all hover:brightness-105">
+          Aplicar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

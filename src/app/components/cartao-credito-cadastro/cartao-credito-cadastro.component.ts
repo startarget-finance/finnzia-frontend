@@ -7,11 +7,12 @@ import { CompanySelectorService } from '../../services/company-selector.service'
 import { CartaoCreditoCadastro, FaturaCartaoService } from '../../services/fatura-cartao.service';
 import { showErrorAlert, showValidationAlert } from '../../utils/sweet-alerts';
 import { sincronizarResumoParametrizacao } from '../../utils/parametrizacao-sync.util';
+import { FinzziaModalComponent } from '../../shared/components/finzzia-modal/finzzia-modal.component';
 
 @Component({
   selector: 'app-cartao-credito-cadastro',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FinzziaModalComponent],
   templateUrl: './cartao-credito-cadastro.component.html',
 })
 export class CartaoCreditoCadastroComponent implements OnInit, OnDestroy {

@@ -24,71 +24,29 @@
         <button type="button" class="px-3 py-2 text-xs font-semibold border border-gray-200 rounded-xl hover:border-violet-400 hover:text-violet-800 transition-colors bg-white text-gray-700 shadow-sm" (click)="ajustarPeriodo(3)">3M</button>
         <button type="button" class="px-3 py-2 text-xs font-semibold border border-gray-200 rounded-xl hover:border-violet-400 hover:text-violet-800 transition-colors bg-white text-gray-700 shadow-sm" (click)="ajustarPeriodo(6)">6M</button>
         <button type="button" class="px-3 py-2 text-xs font-semibold border border-gray-200 rounded-xl hover:border-violet-400 hover:text-violet-800 transition-colors bg-white text-gray-700 shadow-sm" (click)="ajustarPeriodo(12)">12M</button>
-        <div class="relative z-[9999]">
+        <app-periodo-range-picker
+          #periodoPicker
+          [(dataInicial)]="dataInicial"
+          [(dataFinal)]="dataFinal"
+          [showLabel]="false"
+          placeholder="Alterar período"
+          [preloadOnOpen]="false"
+          wrapperClass="relative z-[9999]"
+          (applied)="onPeriodoAplicado($event)"
+          (cleared)="onPeriodoLimpar()"
+        >
           <button
+            periodoTrigger
+            #periodoTrigger
             type="button"
-            (click)="toggleRangePicker()"
+            (click)="periodoPicker.toggle()"
             class="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-sm text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 transition-all shadow-sm"
           >
-            <i class="fi fi-rr-calendar text-[0.9rem] leading-none text-gray-400 shrink-0" aria-hidden="true"></i>
-            <span class="font-medium truncate max-w-[220px] sm:max-w-none">
-              <ng-container *ngIf="dataInicial && dataFinal; else placeholderPeriodoHeader">
-                {{ dataInicial === dataFinal
-                    ? (dataInicial + 'T00:00:00' | date:'dd/MM/yyyy')
-                    : (dataInicial + 'T00:00:00' | date:'dd/MM/yyyy') + ' até ' + (dataFinal + 'T00:00:00' | date:'dd/MM/yyyy') }}
-              </ng-container>
-              <ng-template #placeholderPeriodoHeader>Alterar período</ng-template>
-            </span>
-            <i class="fi fi-rr-angle-small-down w-4 h-4 text-gray-400 shrink-0 flex items-center justify-center text-[0.85rem] leading-none" aria-hidden="true"></i>
+            <i class="fi fi-rr-calendar shrink-0 text-[0.9rem] leading-none text-gray-400" aria-hidden="true"></i>
+            <span class="max-w-[220px] truncate font-medium sm:max-w-none">{{ periodoPicker.displayLabel }}</span>
+            <i class="fi fi-rr-angle-small-down flex h-4 w-4 shrink-0 items-center justify-center text-[0.85rem] leading-none text-gray-400" aria-hidden="true"></i>
           </button>
-
-          <div *ngIf="mostrarRangePicker"
-               class="fixed left-1/2 top-[5.5rem] sm:top-24 z-[99999] w-[340px] max-w-[min(340px,calc(100vw-2rem))] -translate-x-1/2 bg-white border border-gray-200 rounded-2xl shadow-2xl shadow-slate-900/20 p-4 max-h-[min(400px,calc(100vh-8rem))] overflow-y-auto ring-1 ring-black/5">
-            <div class="flex items-center justify-between mb-4">
-              <button type="button" (click)="prevMonth()" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
-                <i class="fi fi-rr-angle-small-left w-5 h-5 flex items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
-              </button>
-              <div class="text-sm font-bold text-gray-900 capitalize">{{ getMonthYearLabel() }}</div>
-              <button type="button" (click)="nextMonth()" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
-                <i class="fi fi-rr-angle-small-right w-5 h-5 flex items-center justify-center text-[1rem] leading-none" aria-hidden="true"></i>
-              </button>
-            </div>
-
-            <div class="grid grid-cols-7 text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
-              <div class="text-center">dom</div><div class="text-center">seg</div><div class="text-center">ter</div>
-              <div class="text-center">qua</div><div class="text-center">qui</div><div class="text-center">sex</div><div class="text-center">sáb</div>
-            </div>
-
-            <div class="grid grid-cols-7 gap-1">
-              <ng-container *ngFor="let d of calendarDays">
-                <button
-                  type="button"
-                  [disabled]="!d.inCurrentMonth"
-                  (click)="onSelectDate(d.dateStr)"
-                  (mouseenter)="onHoverDate(d.dateStr)"
-                  (mouseleave)="onHoverDate(null)"
-                  [class.opacity-30]="!d.inCurrentMonth"
-                  [class.bg-violet-600]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                  [class.text-white]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                  [class.font-semibold]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                  [class.bg-violet-50]="isBetween(d.dateStr)"
-                  [class.text-violet-700]="isBetween(d.dateStr)"
-                  class="text-sm text-gray-700 rounded-lg py-2 hover:bg-gray-100 transition-colors disabled:cursor-not-allowed"
-                >
-                  {{ d.day }}
-                </button>
-              </ng-container>
-            </div>
-
-            <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-              <button type="button" (click)="clearRange()" class="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors">Limpar</button>
-              <div class="flex gap-2">
-                <button type="button" (click)="cancelRangePicker()" class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">Cancelar</button>
-                <button type="button" (click)="applyRangePicker()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-gray-800 shadow-sm transition-colors">Aplicar</button>
-              </div>
-            </div>
-          </div>
-        </div>
+        </app-periodo-range-picker>
       </div>
     </div>
   </div>
@@ -110,7 +68,6 @@
         [dfcDados]="dfcResposta"
         [carregandoExterno]="carregando"
         [mesesSelecionados]="mesesSelecionadosFiltro"
-        (usarDfcPadrao)="resetarPeriodo()"
         (atualizarDados)="atualizarDfcAgora()"
         (filtrarMesAno)="filtrarPorMesAno($event)"
       />

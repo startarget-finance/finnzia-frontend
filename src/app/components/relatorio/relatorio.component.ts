@@ -5,7 +5,10 @@ import { RouterModule } from '@angular/router';
 import { Chart, registerables } from 'chart.js';
 import { Subject, takeUntil } from 'rxjs';
 import { ErpFinanceiroService, FiltrosMovimentacoes, ResumoFinanceiroResponse, MovimentacaoFinanceira } from '../../services/erp-financeiro.service';
+import { CompanySelectorService } from '../../services/company-selector.service';
 import { FeedbackStateComponent } from '../../shared/components/feedback-state/feedback-state.component';
+import { PeriodoRangePickerComponent } from '../../shared/components/periodo-range-picker/periodo-range-picker.component';
+import { dateToYmd, parseLocalYmd } from '../../utils/date-range-calendar.util';
 
 Chart.register(...registerables);
 
@@ -14,7 +17,7 @@ const PAGE_SIZE = 500;
 @Component({
   selector: 'app-relatorio',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FeedbackStateComponent],
+  imports: [CommonModule, FormsModule, RouterModule, FeedbackStateComponent, PeriodoRangePickerComponent],
   templateUrl: './relatorio.component.html',
   styleUrls: ['./relatorio.component.scss']
 })
@@ -23,14 +26,8 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
   periodoGrafico: 'diario' | 'mensal' = 'diario';
   receitaChart: Chart | null = null;
 
-  // UI: Date Range Picker (igual ao dashboard)
-  mostrarRangePicker: boolean = false;
-  visibleMonth: Date = new Date();
-  calendarDays: Array<{ day: number, inCurrentMonth: boolean, dateStr: string }> = [];
-  private tempRangeStart: string | null = null; // YYYY-MM-DD
-  private tempRangeEnd: string | null = null;   // YYYY-MM-DD
-  private hoverRangeDate: string | null = null;
-  
+  pickerPeriodoAberto = false;
+
   // Datas selecionadas para exibir no botão
   dataInicial: string = '';
   dataFinal: string = '';
@@ -127,17 +124,19 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
     { value: '', label: 'Todas as Categorias' }
   ];
 
-  constructor(private erpFinanceiroService: ErpFinanceiroService) {}
+  constructor(
+    private erpFinanceiroService: ErpFinanceiroService,
+    private companySelector: CompanySelectorService
+  ) {}
 
   ngOnInit() {
-    this.visibleMonth = new Date();
-    this.buildCalendar();
     this.carregarEmpresas();
     this.aplicarAtalhoPeriodo('mes');
   }
 
   ngAfterViewInit() {
     this.initChart();
+    setTimeout(() => this.redimensionarGrafico(), 0);
     this.carregarDadosGrafico();
   }
 
@@ -278,8 +277,8 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private preencherChartDataVazio(): void {
-    const inicio = this.parseLocalDateStr(this.dataInicial);
-    const fim = this.parseLocalDateStr(this.dataFinal);
+    const inicio = parseLocalYmd(this.dataInicial);
+    const fim = parseLocalYmd(this.dataFinal);
     const labels: string[] = [];
     const dates: string[] = [];
     const receita: number[] = [];
@@ -288,7 +287,7 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
     const saldoProjetado: number[] = [];
     let saldoAcum = 0;
     for (let d = new Date(inicio); d <= fim; d.setDate(d.getDate() + 1)) {
-      const dateStr = this.dateToStr(new Date(d));
+      const dateStr = dateToYmd(new Date(d));
       dates.push(dateStr);
       labels.push(this.periodoGrafico === 'mensal' ? d.toLocaleDateString('pt-BR', { month: 'short' }) : String(d.getDate()));
       receita.push(0);
@@ -303,15 +302,15 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private agregarDadosPorDia(movs: MovimentacaoFinanceira[]): void {
     this.movimentacoesPorDia = {};
-    const inicio = this.parseLocalDateStr(this.dataInicial);
-    const fim = this.parseLocalDateStr(this.dataFinal);
+    const inicio = parseLocalYmd(this.dataInicial);
+    const fim = parseLocalYmd(this.dataFinal);
     const isAnual = this.periodoGrafico === 'mensal';
 
     if (isAnual) {
       const porMes: Record<string, { receita: number; despesa: number; renegociado: number; movs: MovimentacaoFinanceira[] }> = {};
       const iter = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
       while (iter <= fim) {
-        const key = this.dateToStr(new Date(iter));
+        const key = dateToYmd(new Date(iter));
         porMes[key] = { receita: 0, despesa: 0, renegociado: 0, movs: [] };
         iter.setMonth(iter.getMonth() + 1);
       }
@@ -339,7 +338,7 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
       let saldoAcum = 0;
       const iter2 = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
       while (iter2 <= fim) {
-        const monthKey = this.dateToStr(new Date(iter2));
+        const monthKey = dateToYmd(new Date(iter2));
         const bloco = porMes[monthKey] || { receita: 0, despesa: 0, renegociado: 0, movs: [] };
         saldoAcum += bloco.receita + bloco.renegociado - bloco.despesa;
         dates.push(monthKey);
@@ -356,7 +355,7 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
       const porDia: Record<string, { receita: number; despesa: number; renegociado: number; movs: MovimentacaoFinanceira[] }> = {};
       const iter = new Date(inicio);
       while (iter <= fim) {
-        const dateStr = this.dateToStr(new Date(iter));
+        const dateStr = dateToYmd(new Date(iter));
         porDia[dateStr] = { receita: 0, despesa: 0, renegociado: 0, movs: [] };
         iter.setDate(iter.getDate() + 1);
       }
@@ -381,7 +380,7 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
       let saldoAcum = 0;
       const iter2 = new Date(inicio);
       while (iter2 <= fim) {
-        const dateStr = this.dateToStr(new Date(iter2));
+        const dateStr = dateToYmd(new Date(iter2));
         const bloco = porDia[dateStr] || { receita: 0, despesa: 0, renegociado: 0, movs: [] };
         saldoAcum += bloco.receita + bloco.renegociado - bloco.despesa;
         dates.push(dateStr);
@@ -412,6 +411,18 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
       xOpts.title.text = this.periodoGrafico === 'mensal' ? 'Mês' : 'Dia';
     }
     this.receitaChart.update('none');
+    this.redimensionarGrafico();
+  }
+
+  private redimensionarGrafico(): void {
+    if (this.receitaChart) {
+      this.receitaChart.resize();
+    }
+  }
+
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    this.redimensionarGrafico();
   }
 
   initChart() {
@@ -480,7 +491,7 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        layout: { padding: { top: 8, right: 12, bottom: 4, left: 4 } },
+        layout: { padding: { top: 12, right: 16, bottom: 12, left: 8 } },
         plugins: {
           legend: {
             position: 'top',
@@ -579,7 +590,7 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
 
   getDataSelecionadaLabel(): string {
     if (!this.dataSelecionada) return '';
-    const d = this.parseLocalDateStr(this.dataSelecionada);
+    const d = parseLocalYmd(this.dataSelecionada);
     if (this.periodoGrafico === 'mensal' && this.dataSelecionada.endsWith('-01')) {
       return d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
     }
@@ -633,20 +644,19 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private carregarEmpresas(): void {
-    this.erpFinanceiroService.listarEmpresas()
+    const aplicarLista = (lista: { idEmpresa: number; nomeEmpresa: string }[]): void => {
+      const opts = lista
+        .filter((e) => e?.idEmpresa != null)
+        .map((e) => ({
+          value: String(e.idEmpresa),
+          label: e.nomeEmpresa?.trim() || `Empresa ${e.idEmpresa}`,
+        }));
+      this.empresas = [{ value: '', label: 'Todas as Empresas' }, ...opts];
+    };
+    aplicarLista(this.companySelector.obterEmpresasAtivas());
+    this.companySelector.empresasPermitidas$
       .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (res) => {
-          const opts = (res?.empresas ?? [])
-            .filter(e => e && e.Id != null)
-            .map(e => ({ value: String(e.Id), label: e.Nome || `Empresa ${e.Id}` }));
-          this.empresas = [{ value: '', label: 'Todas as Empresas' }, ...opts];
-        },
-        error: () => {
-          // Mantém fallback sem quebrar a tela.
-          this.empresas = [{ value: '', label: 'Todas as Empresas' }];
-        }
-      });
+      .subscribe((emps) => aplicarLista(emps.filter((e) => e.ativo !== false)));
   }
 
   private mapearTipoFiltroBackend(): 'receita' | 'despesa' | undefined {
@@ -738,37 +748,10 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
     return empresa ? empresa.label : 'N/A';
   }
 
-  // ===== Date Range Picker Helpers =====
-  prepararRangePicker(): void {
-    this.tempRangeStart = this.dataInicial || null;
-    this.tempRangeEnd = this.dataFinal || null;
-    this.hoverRangeDate = null;
-    this.visibleMonth = this.dataInicial ? this.parseLocalDateStr(this.dataInicial) : new Date();
-    this.buildCalendar();
-  }
-
-  toggleRangePicker(): void {
-    this.mostrarRangePicker = !this.mostrarRangePicker;
-    if (this.mostrarRangePicker) {
-      this.prepararRangePicker();
-    }
-  }
-
-  cancelRangePicker(): void {
-    this.mostrarRangePicker = false;
-  }
-
-  applyRangePicker(): void {
-    if (this.tempRangeStart && this.tempRangeEnd) {
-      const a = this.tempRangeStart <= this.tempRangeEnd ? this.tempRangeStart : this.tempRangeEnd;
-      const b = this.tempRangeStart <= this.tempRangeEnd ? this.tempRangeEnd : this.tempRangeStart;
-      this.dataInicial = a;
-      this.dataFinal = b;
-      this.atalhoPeriodoAtivo = '';
-      this.carregarDadosContas();
-      this.carregarDadosGrafico();
-    }
-    this.mostrarRangePicker = false;
+  onPeriodoAplicado(): void {
+    this.atalhoPeriodoAtivo = '';
+    this.carregarDadosContas();
+    this.carregarDadosGrafico();
   }
 
   aplicarAtalhoPeriodo(tipo: 'mes' | 'trimestre' | 'ano'): void {
@@ -786,128 +769,14 @@ export class RelatorioComponent implements OnInit, AfterViewInit, OnDestroy {
       inicio = new Date(hoje.getFullYear(), 0, 1);
       fim = new Date(hoje.getFullYear(), 11, 31);
     }
-    this.dataInicial = this.dateToStr(inicio);
-    this.dataFinal = this.dateToStr(fim);
+    this.dataInicial = dateToYmd(inicio);
+    this.dataFinal = dateToYmd(fim);
     this.carregarDadosContas();
     this.carregarDadosGrafico();
   }
 
   isAtalhoAtivo(tipo: 'mes' | 'trimestre' | 'ano'): boolean {
     return this.atalhoPeriodoAtivo === tipo;
-  }
-
-  getPeriodoRelatorioLabel(): string {
-    if (this.dataInicial && this.dataFinal) {
-      const a = this.parseLocalDateStr(this.dataInicial);
-      const b = this.parseLocalDateStr(this.dataFinal);
-      return a.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) + ' – ' +
-        b.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
-    }
-    return 'Selecionar período';
-  }
-
-  clearRange(): void {
-    this.tempRangeStart = null;
-    this.tempRangeEnd = null;
-    this.hoverRangeDate = null;
-  }
-
-  prevMonth(): void {
-    const d = new Date(this.visibleMonth);
-    d.setMonth(d.getMonth() - 1);
-    this.visibleMonth = d;
-    this.buildCalendar();
-  }
-
-  nextMonth(): void {
-    const d = new Date(this.visibleMonth);
-    d.setMonth(d.getMonth() + 1);
-    this.visibleMonth = d;
-    this.buildCalendar();
-  }
-
-  getMonthYearLabel(): string {
-    return this.visibleMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-  }
-
-  private buildCalendar(): void {
-    const year = this.visibleMonth.getFullYear();
-    const month = this.visibleMonth.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const startWeekDay = firstDay.getDay(); // 0-6 dom..sab
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    const prevMonthDays = new Date(year, month, 0).getDate();
-    const days: Array<{ day: number, inCurrentMonth: boolean, dateStr: string }> = [];
-
-    // Preenche dias do mês anterior para alinhar a semana
-    for (let i = startWeekDay - 1; i >= 0; i--) {
-      const day = prevMonthDays - i;
-      const date = new Date(year, month - 1, day);
-      days.push({ day, inCurrentMonth: false, dateStr: this.dateToStr(date) });
-    }
-
-    // Dias do mês atual
-    for (let d = 1; d <= daysInMonth; d++) {
-      const date = new Date(year, month, d);
-      days.push({ day: d, inCurrentMonth: true, dateStr: this.dateToStr(date) });
-    }
-
-    // Completa até múltiplo de 7 com próximos dias
-    while (days.length % 7 !== 0) {
-      const nextIndex = days.length - (startWeekDay) - daysInMonth + 1;
-      const date = new Date(year, month + 1, nextIndex);
-      days.push({ day: date.getDate(), inCurrentMonth: false, dateStr: this.dateToStr(date) });
-    }
-
-    this.calendarDays = days;
-  }
-
-  private dateToStr(date: Date): string {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  }
-
-  /** Interpreta YYYY-MM-DD como data local (evita 1 dia a menos por UTC). */
-  private parseLocalDateStr(dateStr: string): Date {
-    const [y, m, d] = dateStr.split('-').map(Number);
-    return new Date(y, m - 1, d);
-  }
-
-  onSelectDate(dateStr: string): void {
-    if (!this.tempRangeStart || (this.tempRangeStart && this.tempRangeEnd)) {
-      this.tempRangeStart = dateStr;
-      this.tempRangeEnd = null;
-      return;
-    }
-    // Seleciona fim
-    if (this.tempRangeStart && !this.tempRangeEnd) {
-      this.tempRangeEnd = dateStr;
-    }
-  }
-
-  onHoverDate(dateStr: string | null): void {
-    this.hoverRangeDate = dateStr;
-  }
-
-  // Estados visuais
-  isStart(dateStr: string): boolean {
-    return !!this.tempRangeStart && this.tempRangeStart === dateStr;
-  }
-
-  isEnd(dateStr: string): boolean {
-    return !!this.tempRangeEnd && this.tempRangeEnd === dateStr;
-  }
-
-  isBetween(dateStr: string): boolean {
-    const start = this.tempRangeStart;
-    const end = this.tempRangeEnd || this.hoverRangeDate;
-    if (!start || !end) return false;
-    const a = start <= end ? start : end;
-    const b = start <= end ? end : start;
-    return dateStr > a && dateStr < b;
   }
 
   // Labels para os filtros

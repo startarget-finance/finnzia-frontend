@@ -204,31 +204,17 @@
   </div>
 </div>
 
-<div
-  *ngIf="modalAberto"
-  class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-[6px]"
+<app-finzzia-modal
+  [aberto]="modalAberto"
+  [zIndex]="10060"
+  tamanho="md"
+  eyebrow="Parametrização"
+  [titulo]="editandoId != null ? 'Editar funcionário' : 'Novo funcionário'"
+  subtitulo="O vínculo com a empresa usa a seleção do cabeçalho."
+  [corpoSimples]="true"
+  (fechar)="fecharModal()"
 >
-  <div
-    class="bg-white rounded-2xl shadow-[0_25px_50px_-12px_rgba(15,23,42,0.25)] border border-slate-200/80 max-w-md w-full max-h-[90vh] overflow-y-auto p-6 space-y-5"
-    (click)="$event.stopPropagation()"
-  >
-    <div class="flex items-start justify-between gap-3">
-      <div>
-        <h2 class="text-lg font-semibold text-slate-900 tracking-tight">
-          {{ editandoId != null ? "Editar funcionário" : "Novo funcionário" }}
-        </h2>
-        <p class="text-sm text-slate-500 mt-1">O vínculo com a empresa usa a seleção do cabeçalho.</p>
-      </div>
-      <button
-        type="button"
-        class="shrink-0 h-9 w-9 rounded-lg border border-slate-200/80 text-slate-400 hover:text-slate-700 hover:bg-slate-50"
-        (click)="fecharModal()"
-        aria-label="Fechar"
-      >
-        ✕
-      </button>
-    </div>
-    <div class="space-y-4">
+  <div finzziaModalBody class="space-y-4">
       <div class="grid grid-cols-2 gap-3">
         <div>
           <label class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">CPF</label>
@@ -293,22 +279,9 @@
         <label for="fun-ativo" class="text-sm text-slate-700">Ativo</label>
       </div>
       <p class="text-xs text-slate-500">Este funcionário será salvo automaticamente no cadastro da empresa selecionada.</p>
-    </div>
-    <div class="flex justify-end gap-2 pt-1">
-      <button
-        type="button"
-        (click)="fecharModal()"
-        class="h-10 px-4 rounded-lg border border-slate-200/80 text-sm font-medium text-slate-700 hover:bg-slate-50"
-      >
-        Cancelar
-      </button>
-      <button
-        type="button"
-        (click)="salvar()"
-        class="h-10 px-5 rounded-lg bg-slate-900 text-white hover:bg-slate-800 text-sm font-semibold shadow-sm"
-      >
-        Salvar
-      </button>
-    </div>
   </div>
-</div>
+  <div finzziaModalFooter>
+    <button type="button" (click)="fecharModal()" class="finzzia-btn-secondary">Cancelar</button>
+    <button type="button" (click)="salvar()" class="finzzia-btn-primary">Salvar</button>
+  </div>
+</app-finzzia-modal>

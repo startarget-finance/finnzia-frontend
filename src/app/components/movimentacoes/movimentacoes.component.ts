@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, Inject, ViewChild, ElementRef } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, OnDestroy, Inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { RouterModule } from '@angular/router';
@@ -11,7 +11,11 @@ import { FornecedorCadastroService } from '../../services/fornecedor-cadastro.se
 import { FuncionarioCadastroService, FuncionarioCadastro } from '../../services/funcionario-cadastro.service';
 import { OmieService, MovimentacaoOmie, MovimentacoesOmieResponse, FiltrosMovimentacoesOmie } from '../../services/omie.service';
 import { CompanySelectorService } from '../../services/company-selector.service';
-import { CategoriasFinanceirasService, TipoCategoriaFinanceira } from '../../services/categorias-financeiras.service';
+import {
+  CategoriasFinanceirasService,
+  TipoCategoriaFinanceira,
+  CategoriaFinanceira,
+} from '../../services/categorias-financeiras.service';
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import {
@@ -20,7 +24,13 @@ import {
   AnexoMovimentacaoMetadado,
 } from '../../services/movimentacoes-anexos.service';
 import { FeedbackStateComponent } from '../../shared/components/feedback-state/feedback-state.component';
-import { flattenCategoriasFinanceirasParaSelect } from '../../utils/plano-contas-padrao-tree.util';
+import { FinzziaModalComponent } from '../../shared/components/finzzia-modal/finzzia-modal.component';
+import { PeriodoRangePickerComponent } from '../../shared/components/periodo-range-picker/periodo-range-picker.component';
+import {
+  flattenCategoriasFinanceirasParaSelect,
+  listarOpcoesPaiCategoriaFinanceira,
+} from '../../utils/plano-contas-padrao-tree.util';
+import { dateToYmd, parseLocalYmd } from '../../utils/date-range-calendar.util';
 
 type ExportGroupId =
   | 'identificacao'
@@ -80,7 +90,7 @@ interface ExportColumnDef {
 @Component({
   selector: 'app-movimentacoes',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, FeedbackStateComponent],
+  imports: [CommonModule, RouterModule, FormsModule, FeedbackStateComponent, FinzziaModalComponent, PeriodoRangePickerComponent],
   templateUrl: './movimentacoes.component.html',
 })
 export class MovimentacoesComponent implements OnInit, OnDestroy {
@@ -216,14 +226,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     outrasFaturamentoEnviado: boolean;
   } = this.criarEstadoInicialCadastro('despesa');
 
-  // UI: Date Range Picker
-  mostrarRangePicker: boolean = false;
-  visibleMonth: Date = new Date();
-  calendarDays: Array<{ day: number, inCurrentMonth: boolean, dateStr: string }> = [];
-  private tempRangeStart: string | null = null;
-  private tempRangeEnd: string | null = null;
-  private hoverRangeDate: string | null = null;
-  
+  @ViewChild('periodoPicker') periodoPicker?: PeriodoRangePickerComponent;
+
   // Datas selecionadas
   dataInicial: string = '';
   dataFinal: string = '';
@@ -277,6 +281,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   tipoAnexoAlvo: TipoAnexoMovimentacao = 'comprovante';
   anexoDragDepth = 0;
   anexoDragOver = false;
+  cadastroAnexoDragDepth = 0;
+  cadastroAnexoDragOver = false;
 
   readonly tiposAnexoLista: Array<{
     id: TipoAnexoMovimentacao;
@@ -393,10 +399,22 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   ];
   categoriasCadastro: Array<{ value: string; label: string; tipo: TipoCategoriaFinanceira }> = [];
   categoriasCadastroTipo: Array<{ value: string; label: string }> = [];
+  categoriasArvoreCadastro: CategoriaFinanceira[] = [];
+  readonly opcaoNovaCategoria = '__nova_categoria__';
+  novaCategoriaNome = '';
+  novaCategoriaParentId = '';
+  salvandoNovaCategoria = false;
+  private novaCategoriaContexto: { tipo: 'lancamento' } | { tipo: 'rateio'; index: number } = {
+    tipo: 'lancamento',
+  };
 
   get categoriasCadastroTipoComManual(): Array<{ value: string; label: string }> {
     const base = this.categoriasCadastroTipo.map((c) => ({ value: c.value, label: c.label }));
-    return [...base, { value: '__manual__', label: 'Digitar' }];
+    return [...base, { value: this.opcaoNovaCategoria, label: 'Inserir nova categoria' }];
+  }
+
+  get opcoesPaiNovaCategoria(): Array<{ value: string; label: string }> {
+    return listarOpcoesPaiCategoriaFinanceira(this.categoriasArvoreCadastro, this.novoLancamento.tipo);
   }
   clientesCadastro: Array<{ value: string; label: string }> = [];
   fornecedoresCadastro: Array<{ value: string; label: string }> = [];
@@ -509,11 +527,9 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     private categoriasFinanceirasService: CategoriasFinanceirasService,
     private route: ActivatedRoute,
     private router: Router,
+    private readonly cdr: ChangeDetectorRef,
     @Inject(DOCUMENT) private readonly document: Document
   ) {
-    this.visibleMonth = new Date();
-    this.buildCalendar();
-    
             // Debounce para pesquisa de texto - recarrega dados quando texto mudar
             this.textoPesquisaSubject.pipe(
               debounceTime(500),
@@ -612,10 +628,21 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     const ultimoDia = new Date(ano, parseInt(mes), 0).getDate();
     this.dataFinal = `${ano}-${mes}-${String(ultimoDia).padStart(2, '0')}`;
     
-    // Atualizar calendário visual
-    this.visibleMonth = new Date(ano, parseInt(mes) - 1);
-    this.buildCalendar();
-    
+  }
+
+  onPeriodoAplicado(): void {
+    this.paginaAtual = 1;
+    this.carregarMovimentacoes();
+  }
+
+  onPeriodoLimpar(): void {
+    const periodoMudou = this.dataInicial !== '' || this.dataFinal !== '';
+    if (periodoMudou) {
+      this.cacheMovimentacoes.clear();
+      this.cacheKeyAtual = '';
+    }
+    this.paginaAtual = 1;
+    this.carregarMovimentacoes();
   }
 
   /**
@@ -682,14 +709,6 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     }
     if (textoPesquisa) {
       this.filtrosUI.textoPesquisa = textoPesquisa;
-    }
-
-    if (this.dataInicial) {
-      const [y, m] = this.dataInicial.split('-').map(Number);
-      if (y && m) {
-        this.visibleMonth = new Date(y, m - 1, 1);
-        this.buildCalendar();
-      }
     }
 
     return true;
@@ -902,7 +921,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   }
 
   private criarEstadoInicialCadastro(tipo: 'receita' | 'despesa') {
-    const hoje = this.dateToStr(new Date());
+    const hoje = dateToYmd(new Date());
     return {
       tipo,
       descricao: '',
@@ -1034,7 +1053,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     this.cadastroAnexosPendentes = [];
 
     const tipo: 'receita' | 'despesa' = mov.Debito ? 'despesa' : 'receita';
-    const hoje = this.dateToStr(new Date());
+    const hoje = dateToYmd(new Date());
     const catNome = (mov.NomeCategoriaFinanceira || '').trim();
     this.atualizarOpcoesCategoriaCadastro(tipo);
     const catEscolha = this.resolverOpcaoOuManual(this.categoriasCadastroTipo, catNome);
@@ -1131,6 +1150,10 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       outrasFaturamentoData: '',
       outrasFaturamentoEnviado: false,
     };
+    if (catEscolha.opcao === this.opcaoNovaCategoria) {
+      this.novaCategoriaNome = catEscolha.manual;
+      this.novaCategoriaContexto = { tipo: 'lancamento' };
+    }
 
     this.mostrarModalCadastro = true;
     this.atualizarSnapshotCadastro();
@@ -1148,7 +1171,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     if (found) {
       return { opcao: found.value, manual: '' };
     }
-    return { opcao: '__manual__', manual: t };
+    return { opcao: this.opcaoNovaCategoria, manual: t };
   }
 
   private normalizarDataParaInput(v: string | undefined | null): string {
@@ -1176,6 +1199,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       this.cadastroModo = 'novo';
       this.editandoMovimentacaoId = null;
       this.cadastroAnexosPendentes = [];
+      this.limparFormularioNovaCategoria();
       return;
     }
     if (!this.temAlteracoesCadastro()) {
@@ -1183,6 +1207,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       this.mostrarMenuCriarReceita = false;
       this.mostrarMenuCriarDespesa = false;
       this.cadastroBcTransferencia = false;
+      this.limparFormularioNovaCategoria();
       this.cadastroModo = 'novo';
       this.editandoMovimentacaoId = null;
       this.cadastroAnexosPendentes = [];
@@ -1282,7 +1307,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     if (!this.novoLancamento.dataVencimento) {
       errors['dataVencimento'] = 'Informe a data de vencimento.';
     }
-    const dataVencimento = this.novoLancamento.dataVencimento ? this.parseLocalDateStr(this.novoLancamento.dataVencimento) : null;
+    const dataVencimento = this.novoLancamento.dataVencimento ? parseLocalYmd(this.novoLancamento.dataVencimento) : null;
 
     const dataCompetencia = this.competenciaMesAnoParaData(this.novoLancamento.dataCompetencia);
     if (this.novoLancamento.dataCompetencia && !dataCompetencia) {
@@ -1291,19 +1316,21 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     if (this.novoLancamento.marcarComoQuitado && !this.novoLancamento.dataQuitacao) {
       errors['dataQuitacao'] = 'Informe a data de quitação/recebimento.';
     } else if (this.novoLancamento.marcarComoQuitado && this.novoLancamento.dataQuitacao && dataVencimento) {
-      const dataQuitacao = this.parseLocalDateStr(this.novoLancamento.dataQuitacao);
+      const dataQuitacao = parseLocalYmd(this.novoLancamento.dataQuitacao);
       if (dataQuitacao < dataVencimento) {
         errors['dataQuitacao'] = 'A quitação/recebimento não pode ser anterior ao vencimento.';
       }
     }
     if (dataCompetencia && dataVencimento) {
-      const compDate = this.parseLocalDateStr(dataCompetencia);
+      const compDate = parseLocalYmd(dataCompetencia);
       const deltaMeses = (dataVencimento.getFullYear() - compDate.getFullYear()) * 12 + (dataVencimento.getMonth() - compDate.getMonth());
       if (Math.abs(deltaMeses) > 24) {
         errors['dataCompetencia'] = 'Competência muito distante da data de vencimento.';
       }
     }
-    if (!categoriaFinal.trim()) {
+    if (this.novoLancamento.categoriaOpcao === this.opcaoNovaCategoria) {
+      errors['categoria'] = 'Crie a nova categoria ou selecione outra do plano.';
+    } else if (!categoriaFinal.trim()) {
       errors['categoria'] = 'Informe a categoria.';
     }
     if (this.modalEstiloBomControleDespesa && this.cadastroBcTransferencia) {
@@ -1623,9 +1650,126 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   }
 
   onCategoriaOpcaoChange(): void {
-    if (this.novoLancamento.categoriaOpcao !== '__manual__') {
-      this.novoLancamento.categoriaManual = '';
+    if (this.novoLancamento.categoriaOpcao === this.opcaoNovaCategoria) {
+      this.novaCategoriaContexto = { tipo: 'lancamento' };
+      return;
     }
+    this.novoLancamento.categoriaManual = '';
+    this.limparFormularioNovaCategoria();
+  }
+
+  exibirPainelNovaCategoria(modo: 'lancamento' | 'rateio', index?: number): boolean {
+    if (modo === 'lancamento') {
+      return (
+        this.novaCategoriaContexto.tipo === 'lancamento' &&
+        this.novoLancamento.categoriaOpcao === this.opcaoNovaCategoria
+      );
+    }
+    const idx = index ?? -1;
+    const linha = (this.novoLancamento.outrasRateioLinhas || [])[idx];
+    return (
+      this.novaCategoriaContexto.tipo === 'rateio' &&
+      this.novaCategoriaContexto.index === idx &&
+      linha?.categoriaOpcao === this.opcaoNovaCategoria
+    );
+  }
+
+  limparFormularioNovaCategoria(): void {
+    this.novaCategoriaNome = '';
+    this.novaCategoriaParentId = '';
+    delete this.cadastroErrors['categoriaNova'];
+  }
+
+  criarNovaCategoria(): void {
+    const nome = this.novaCategoriaNome.trim();
+    if (!nome) {
+      this.cadastroErrors['categoriaNova'] = 'Informe o nome da categoria.';
+      return;
+    }
+    const idEmp = this.empresaIdAtual();
+    if (!idEmp) {
+      this.cadastroErrors['categoriaNova'] = 'Não foi possível identificar a empresa ativa.';
+      return;
+    }
+    const parentRaw = (this.novaCategoriaParentId || '').trim();
+    let parentId: number | null = null;
+    if (parentRaw) {
+      const n = Math.trunc(Number(parentRaw));
+      if (!Number.isFinite(n) || n <= 0) {
+        this.cadastroErrors['categoriaNova'] = 'Conta superior inválida.';
+        return;
+      }
+      parentId = n;
+    }
+    const tipo = this.novoLancamento.tipo;
+    this.salvandoNovaCategoria = true;
+    delete this.cadastroErrors['categoriaNova'];
+    this.categoriasFinanceirasService
+      .salvar({
+        idEmpresa: idEmp,
+        tipo,
+        nome,
+        parentId,
+      })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (lista) => {
+          this.categoriasArvoreCadastro = lista || [];
+          this.categoriasCadastro = flattenCategoriasFinanceirasParaSelect(this.categoriasArvoreCadastro);
+          this.atualizarOpcoesCategoriaCadastro(tipo);
+          const valor = this.resolverValorSelectCategoriaCriada(nome, parentId);
+          this.aplicarCategoriaSelecionada(valor);
+          this.salvandoNovaCategoria = false;
+          this.limparFormularioNovaCategoria();
+        },
+        error: (err) => {
+          this.salvandoNovaCategoria = false;
+          this.cadastroErrors['categoriaNova'] =
+            this.obterMensagemErro(err, 'Não foi possível criar a categoria.');
+        },
+      });
+  }
+
+  private resolverValorSelectCategoriaCriada(nome: string, parentId: number | null): string {
+    const tipo = this.novoLancamento.tipo;
+    const opcoes = this.categoriasCadastro.filter((c) => c.tipo === tipo);
+    const nomeT = nome.trim();
+    if (!nomeT) {
+      return '';
+    }
+    if (parentId == null) {
+      const exata = opcoes.find((o) => o.label === nomeT || o.value === nomeT);
+      if (exata) {
+        return exata.value;
+      }
+    }
+    const sufixo = `> ${nomeT}`;
+    const candidatos = opcoes.filter((o) => o.label.endsWith(sufixo) || o.label === nomeT);
+    if (candidatos.length) {
+      return candidatos.sort((a, b) => b.label.length - a.label.length)[0].value;
+    }
+    return nomeT;
+  }
+
+  private aplicarCategoriaSelecionada(valor: string): void {
+    if (!valor) {
+      this.cadastroErrors['categoriaNova'] =
+        'Categoria criada, mas não foi possível selecioná-la automaticamente.';
+      return;
+    }
+    if (this.novaCategoriaContexto.tipo === 'lancamento') {
+      this.novoLancamento.categoriaOpcao = valor;
+      this.novoLancamento.categoriaManual = '';
+    } else {
+      const idx = this.novaCategoriaContexto.index;
+      const linhas = [...(this.novoLancamento.outrasRateioLinhas || [])];
+      if (linhas[idx]) {
+        linhas[idx] = { ...linhas[idx], categoriaOpcao: valor, categoriaManual: '' };
+        this.novoLancamento.outrasRateioLinhas = linhas;
+      }
+    }
+    delete this.cadastroErrors['categoria'];
+    delete this.cadastroErrors['categoriaNova'];
   }
 
   onTipoLancamentoChange(): void {
@@ -1636,6 +1780,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     );
     this.novoLancamento.categoriaOpcao = '';
     this.novoLancamento.categoriaManual = '';
+    this.limparFormularioNovaCategoria();
     this.novoLancamento.clienteFornecedorOpcao = '';
     this.novoLancamento.clienteFornecedorManual = '';
   }
@@ -1808,6 +1953,15 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     return this.cadastroModo === 'editar';
   }
 
+  get cadastroEyebrowFinanceiro(): string {
+    return this.novoLancamento.tipo === 'despesa' ? 'Contas a pagar' : 'Contas a receber';
+  }
+
+  get cadastroSubtituloEditar(): string {
+    const tipo = this.novoLancamento.tipo === 'despesa' ? 'Despesa' : 'Receita';
+    return `${tipo} — ajuste os campos e salve. O tipo do lançamento não é alterado nesta tela.`;
+  }
+
   selecionarCadastroAbaVenda(aba: 'vendedor' | 'produtos' | 'contrato' | 'pagamento' | 'observacao' | 'anexos'): void {
     this.cadastroAbaVenda = aba;
   }
@@ -1880,9 +2034,12 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     linhas[index] = {
       ...linhas[index],
       categoriaOpcao: valor,
-      categoriaManual: valor === '__manual__' ? linhas[index].categoriaManual : '',
+      categoriaManual: valor === this.opcaoNovaCategoria ? linhas[index].categoriaManual : '',
     };
     this.novoLancamento.outrasRateioLinhas = linhas;
+    if (valor === this.opcaoNovaCategoria) {
+      this.novaCategoriaContexto = { tipo: 'rateio', index };
+    }
     delete this.cadastroErrors['outrasRateio'];
   }
 
@@ -1908,8 +2065,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   }
 
   private obterNomeCategoriaRateioLinha(linha: CadastroRateioLinhaOutras): string {
-    if (linha.categoriaOpcao === '__manual__') {
-      return (linha.categoriaManual || '').trim();
+    if (linha.categoriaOpcao === this.opcaoNovaCategoria) {
+      return '';
     }
     const id = (linha.categoriaOpcao || '').trim();
     if (!id) {
@@ -2169,17 +2326,56 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
 
   onInputCadastroAnexo(ev: Event): void {
     const input = ev.target as HTMLInputElement;
-    const files = input.files;
+    this.adicionarArquivosCadastro(input.files);
+    input.value = '';
+  }
+
+  adicionarArquivosCadastro(files: FileList | null | undefined): void {
     if (!files?.length) {
       return;
     }
+    const novos: CadastroAnexoPendente[] = [];
     for (let i = 0; i < files.length; i++) {
       const f = files.item(i);
       if (f) {
-        this.cadastroAnexosPendentes.push({ tipo: this.cadastroAnexoTipoSelecionado, file: f });
+        novos.push({ tipo: this.cadastroAnexoTipoSelecionado, file: f });
       }
     }
-    input.value = '';
+    if (novos.length) {
+      this.cadastroAnexosPendentes = [...this.cadastroAnexosPendentes, ...novos];
+    }
+  }
+
+  onDragEnterCadastroAnexo(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.cadastroAnexoDragDepth++;
+    this.cadastroAnexoDragOver = true;
+  }
+
+  onDragLeaveCadastroAnexo(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.cadastroAnexoDragDepth = Math.max(0, this.cadastroAnexoDragDepth - 1);
+    if (this.cadastroAnexoDragDepth === 0) {
+      this.cadastroAnexoDragOver = false;
+    }
+  }
+
+  onDragOverCadastroAnexo(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'copy';
+    }
+  }
+
+  onDropCadastroAnexo(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.cadastroAnexoDragDepth = 0;
+    this.cadastroAnexoDragOver = false;
+    this.adicionarArquivosCadastro(event.dataTransfer?.files ?? null);
   }
 
   removerAnexoPendenteCadastro(index: number): void {
@@ -2489,15 +2685,18 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     this.novoLancamento.recorrenciaQuantidade = 1;
     this.novoLancamento.contaSeRepete = false;
     if (!this.novoLancamento.dataQuitacao) {
-      this.novoLancamento.dataQuitacao = this.novoLancamento.dataVencimento || this.dateToStr(new Date());
+      this.novoLancamento.dataQuitacao = this.novoLancamento.dataVencimento || dateToYmd(new Date());
     }
   }
 
   private obterCategoriaFinalCadastro(): string {
-    if (this.novoLancamento.categoriaOpcao === '__manual__') {
-      return this.novoLancamento.categoriaManual.trim();
+    if (this.novoLancamento.categoriaOpcao === this.opcaoNovaCategoria) {
+      return '';
     }
-    return this.novoLancamento.categoriaOpcao.trim();
+    const op = this.categoriasCadastroTipo.find(
+      (c) => c.value === this.novoLancamento.categoriaOpcao
+    );
+    return (op?.label || this.novoLancamento.categoriaOpcao || '').trim();
   }
 
   private obterClienteFornecedorFinalCadastro(): string {
@@ -2545,10 +2744,12 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     }
     this.categoriasFinanceirasService.listar(idEmp).pipe(takeUntil(this.destroy$)).subscribe({
       next: (categorias) => {
-        this.categoriasCadastro = flattenCategoriasFinanceirasParaSelect(categorias || []);
+        this.categoriasArvoreCadastro = categorias || [];
+        this.categoriasCadastro = flattenCategoriasFinanceirasParaSelect(this.categoriasArvoreCadastro);
         this.atualizarOpcoesCategoriaCadastro(this.novoLancamento.tipo);
       },
       error: () => {
+        this.categoriasArvoreCadastro = [];
         this.categoriasCadastro = [];
         this.categoriasCadastroTipo = [];
       }
@@ -2764,8 +2965,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   carregarMovimentacoes(): void {
     // Validação básica de intervalo de datas quando ambos estiverem preenchidos
     if (this.dataInicial && this.dataFinal) {
-      const inicio = this.parseLocalDateStr(this.dataInicial);
-      const fim = this.parseLocalDateStr(this.dataFinal);
+      const inicio = parseLocalYmd(this.dataInicial);
+      const fim = parseLocalYmd(this.dataFinal);
       if (inicio > fim) {
         this.validationError = 'A data inicial não pode ser maior que a data final.';
         this.loading = false;
@@ -3329,6 +3530,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     this.painelAnexoMovId = null;
     this.anexoDragOver = false;
     this.anexoDragDepth = 0;
+    this.cadastroAnexoDragOver = false;
+    this.cadastroAnexoDragDepth = 0;
     this.aplicarFiltrosUI();
     this.carregarMovimentacoes();
   }
@@ -3391,6 +3594,8 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     this.painelAnexoMovId = null;
     this.anexoDragOver = false;
     this.anexoDragDepth = 0;
+    this.cadastroAnexoDragOver = false;
+    this.cadastroAnexoDragDepth = 0;
   }
 
   selecionarTipoAnexoAlvo(tipo: TipoAnexoMovimentacao): void {
@@ -3420,6 +3625,9 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
   onDragOverPainel(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'copy';
+    }
   }
 
   onDropPainel(event: DragEvent, mov: MovimentacaoFinanceira): void {
@@ -3437,6 +3645,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
       this.tipoAnexoAlvo,
       files[0]
     );
+    this.notificarAnexosPainelAtualizados();
   }
 
   aoSelecionarArquivoPainel(event: Event, mov: MovimentacaoFinanceira): void {
@@ -3449,12 +3658,18 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
         this.tipoAnexoAlvo,
         file
       );
+      this.notificarAnexosPainelAtualizados();
     }
     input.value = '';
   }
 
   removerAnexoMov(mov: MovimentacaoFinanceira, tipo: TipoAnexoMovimentacao): void {
     this.movimentacoesAnexosService.removerAnexo(this.empresaIdAtual(), this.idMovimentacao(mov), tipo);
+    this.notificarAnexosPainelAtualizados();
+  }
+
+  private notificarAnexosPainelAtualizados(): void {
+    this.cdr.markForCheck();
   }
 
   formatarTamanhoArquivo(bytes: number): string {
@@ -3620,148 +3835,6 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
     if (this.paginaAtual > 1) {
       this.irParaPagina(this.paginaAtual - 1);
     }
-  }
-
-  // ===== Date Range Picker =====
-  toggleRangePicker(): void {
-    this.mostrarRangePicker = !this.mostrarRangePicker;
-    if (this.mostrarRangePicker) {
-      this.tempRangeStart = null;
-      this.tempRangeEnd = null;
-      this.hoverRangeDate = null;
-      this.visibleMonth = new Date();
-      this.buildCalendar();
-    }
-  }
-
-  cancelRangePicker(): void {
-    this.mostrarRangePicker = false;
-  }
-
-  applyRangePicker(): void {
-    if (this.tempRangeStart) {
-      const rangeEnd = this.tempRangeEnd ?? this.tempRangeStart; // permite selecionar apenas um dia
-      const a = this.tempRangeStart <= rangeEnd ? this.tempRangeStart : rangeEnd;
-      const b = this.tempRangeStart <= rangeEnd ? rangeEnd : this.tempRangeStart;
-      
-      this.dataInicial = a;
-      this.dataFinal = b;
-      
-      this.paginaAtual = 1;
-      this.carregarMovimentacoes();
-    }
-    this.mostrarRangePicker = false;
-  }
-
-  clearRange(): void {
-    this.tempRangeStart = null;
-    this.tempRangeEnd = null;
-    this.hoverRangeDate = null;
-    
-    const periodoMudou = this.dataInicial !== '' || this.dataFinal !== '';
-    this.dataInicial = '';
-    this.dataFinal = '';
-    
-    // Limpa cache se período mudou
-    if (periodoMudou) {
-      this.cacheMovimentacoes.clear();
-      this.cacheKeyAtual = '';
-    }
-    
-    this.paginaAtual = 1;
-    this.carregarMovimentacoes();
-  }
-
-  prevMonth(): void {
-    const d = new Date(this.visibleMonth);
-    d.setMonth(d.getMonth() - 1);
-    this.visibleMonth = d;
-    this.buildCalendar();
-  }
-
-  nextMonth(): void {
-    const d = new Date(this.visibleMonth);
-    d.setMonth(d.getMonth() + 1);
-    this.visibleMonth = d;
-    this.buildCalendar();
-  }
-
-  getMonthYearLabel(): string {
-    return this.visibleMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-  }
-
-  private buildCalendar(): void {
-    const year = this.visibleMonth.getFullYear();
-    const month = this.visibleMonth.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const startWeekDay = firstDay.getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const prevMonthDays = new Date(year, month, 0).getDate();
-    const days: Array<{ day: number, inCurrentMonth: boolean, dateStr: string }> = [];
-
-    for (let i = startWeekDay - 1; i >= 0; i--) {
-      const day = prevMonthDays - i;
-      const date = new Date(year, month - 1, day);
-      days.push({ day, inCurrentMonth: false, dateStr: this.dateToStr(date) });
-    }
-
-    for (let d = 1; d <= daysInMonth; d++) {
-      const date = new Date(year, month, d);
-      days.push({ day: d, inCurrentMonth: true, dateStr: this.dateToStr(date) });
-    }
-
-    while (days.length % 7 !== 0) {
-      const nextIndex = days.length - (startWeekDay) - daysInMonth + 1;
-      const date = new Date(year, month + 1, nextIndex);
-      days.push({ day: date.getDate(), inCurrentMonth: false, dateStr: this.dateToStr(date) });
-    }
-
-    this.calendarDays = days;
-  }
-
-  private dateToStr(date: Date): string {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  }
-
-  /** Interpreta YYYY-MM-DD como data local (evita 1 dia a menos por UTC). */
-  private parseLocalDateStr(dateStr: string): Date {
-    const [y, m, d] = dateStr.split('-').map(Number);
-    return new Date(y, m - 1, d);
-  }
-
-  onSelectDate(dateStr: string): void {
-    if (!this.tempRangeStart || (this.tempRangeStart && this.tempRangeEnd)) {
-      this.tempRangeStart = dateStr;
-      this.tempRangeEnd = null;
-      return;
-    }
-    if (this.tempRangeStart && !this.tempRangeEnd) {
-      this.tempRangeEnd = dateStr;
-    }
-  }
-
-  onHoverDate(dateStr: string | null): void {
-    this.hoverRangeDate = dateStr;
-  }
-
-  isStart(dateStr: string): boolean {
-    return !!this.tempRangeStart && this.tempRangeStart === dateStr;
-  }
-
-  isEnd(dateStr: string): boolean {
-    return !!this.tempRangeEnd && this.tempRangeEnd === dateStr;
-  }
-
-  isBetween(dateStr: string): boolean {
-    const start = this.tempRangeStart;
-    const end = this.tempRangeEnd || this.hoverRangeDate;
-    if (!start || !end) return false;
-    const a = start <= end ? start : end;
-    const b = start <= end ? end : start;
-    return dateStr > a && dateStr < b;
   }
 
   // ===== Cálculos =====
@@ -4214,7 +4287,7 @@ export class MovimentacoesComponent implements OnInit, OnDestroy {
 
   abrirModalDetalhes(tipo: 'receita' | 'despesa'): void {
     this.tipoModalDetalhes = tipo;
-    this.mostrarRangePicker = false;
+    this.periodoPicker?.setOpen(false);
     this.mostrarModalDetalhes = true;
   }
 

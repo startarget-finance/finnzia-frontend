@@ -6,6 +6,7 @@ import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ErpFinanceiroService, MovimentacaoFinanceira, FiltrosMovimentacoes, ResumoFinanceiroResponse } from '../../services/erp-financeiro.service';
 import { FeedbackStateComponent } from '../../shared/components/feedback-state/feedback-state.component';
 import { LancamentosImportModalComponent } from '../../shared/components/lancamentos-import-modal/lancamentos-import-modal.component';
+import { PeriodoRangePickerComponent } from '../../shared/components/periodo-range-picker/periodo-range-picker.component';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -23,7 +24,7 @@ interface LinhaExportacaoPagar {
 @Component({
   selector: 'app-contas-a-pagar',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, FeedbackStateComponent, LancamentosImportModalComponent],
+  imports: [CommonModule, RouterModule, FormsModule, FeedbackStateComponent, LancamentosImportModalComponent, PeriodoRangePickerComponent],
   templateUrl: './contas-a-pagar.component.html',
 })
 export class ContasAPagarComponent implements OnInit, OnDestroy {
@@ -32,14 +33,6 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
   mostrarMenuCriarDespesa = false;
   mostrarModalImportacao = false;
 
-  // UI: Date Range Picker
-  mostrarRangePicker: boolean = false;
-  visibleMonth: Date = new Date();
-  calendarDays: Array<{ day: number, inCurrentMonth: boolean, dateStr: string }> = [];
-  tempRangeStart: string | null = null;
-  tempRangeEnd: string | null = null;
-  hoverRangeDate: string | null = null;
-  
   // Datas selecionadas
   dataInicial: string = '';
   dataFinal: string = '';
@@ -65,7 +58,9 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
   // Filtros
   filtrosUI = {
     status: '' as 'todas' | 'pago' | 'pendente' | '',
-    textoPesquisa: ''
+    textoPesquisa: '',
+    buscaFornecedor: '',
+    buscaCategoria: ''
   };
 
   // Opções para filtros
@@ -77,6 +72,8 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   private textoPesquisaSubject = new Subject<string>();
+  private buscaFornecedorSubject = new Subject<string>();
+  private buscaCategoriaSubject = new Subject<string>();
 
   private readonly fecharMenuDespesaMousedownCapture = (ev: Event): void => {
     const mev = ev as MouseEvent;
@@ -101,9 +98,6 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
     public location: Location,
     @Inject(DOCUMENT) private readonly document: Document
   ) {
-    this.visibleMonth = new Date();
-    this.buildCalendar();
-    
     // Debounce para pesquisa de texto
     this.textoPesquisaSubject.pipe(
       debounceTime(500),
@@ -111,6 +105,26 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
       takeUntil(this.destroy$)
     ).subscribe(texto => {
       this.filtrosUI.textoPesquisa = texto;
+      this.paginaAtual = 1;
+      this.carregarContas();
+    });
+
+    this.buscaFornecedorSubject.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe((texto) => {
+      this.filtrosUI.buscaFornecedor = texto;
+      this.paginaAtual = 1;
+      this.carregarContas();
+    });
+
+    this.buscaCategoriaSubject.pipe(
+      debounceTime(400),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe((texto) => {
+      this.filtrosUI.buscaCategoria = texto;
       this.paginaAtual = 1;
       this.carregarContas();
     });
@@ -144,6 +158,8 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
       dataTermino: this.dataFinal || undefined,
       tipo: 'despesa', // Apenas contas a pagar
       textoPesquisa: this.filtrosUI.textoPesquisa || undefined,
+      buscaFornecedor: this.filtrosUI.buscaFornecedor?.trim() || undefined,
+      buscaCategoria: this.filtrosUI.buscaCategoria?.trim() || undefined,
       numeroDaPagina: this.paginaAtual,
       itensPorPagina: this.itensPorPagina
     };
@@ -223,10 +239,14 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
       filtradas = filtradas.filter(c => !this.isPago(c));
     }
 
-    // O filtro de texto já foi aplicado no backend via 'textoPesquisa', 
-    // mas se quisermos reforçar localmente ou se o backend não filtrar tudo:
-    if (this.filtrosUI.textoPesquisa) {
-       // Já filtrado no backend, mas mantemos lógica para integridade visual imediata se necessário
+    if (this.filtrosUI.buscaFornecedor?.trim()) {
+      const termo = this.normalizarTextoBusca(this.filtrosUI.buscaFornecedor);
+      filtradas = filtradas.filter((c) => this.nomeFornecedorNormalizado(c).includes(termo));
+    }
+
+    if (this.filtrosUI.buscaCategoria?.trim()) {
+      const termo = this.normalizarTextoBusca(this.filtrosUI.buscaCategoria);
+      filtradas = filtradas.filter((c) => this.categoriaNormalizada(c).includes(termo));
     }
 
     this.contasFiltradas = filtradas;
@@ -287,8 +307,17 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
     const ultimoDia = new Date(ano, mes + 1, 0);
     this.dataInicial = this.dateToStr(primeiroDia);
     this.dataFinal = this.dateToStr(ultimoDia);
-    this.visibleMonth = new Date(ano, mes, 1);
-    this.buildCalendar();
+  }
+
+  onPeriodoAplicado(): void {
+    this.paginaAtual = 1;
+    this.carregarContas();
+  }
+
+  onPeriodoLimpar(): void {
+    this.preencherMesAtual();
+    this.paginaAtual = 1;
+    this.carregarContas();
   }
 
   // ===== Filtros =====
@@ -302,10 +331,69 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
     this.textoPesquisaSubject.next(texto);
   }
 
+  onBuscaFornecedorChange(texto: string): void {
+    this.buscaFornecedorSubject.next(texto);
+  }
+
+  limparBuscaFornecedor(): void {
+    this.filtrosUI.buscaFornecedor = '';
+    this.paginaAtual = 1;
+    this.carregarContas();
+  }
+
+  onBuscaCategoriaChange(texto: string): void {
+    this.buscaCategoriaSubject.next(texto);
+  }
+
+  limparBuscaCategoria(): void {
+    this.filtrosUI.buscaCategoria = '';
+    this.paginaAtual = 1;
+    this.carregarContas();
+  }
+
+  private normalizarTextoBusca(valor: string): string {
+    return (valor || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+  private nomeFornecedorNormalizado(conta: MovimentacaoFinanceira): string {
+    const partes = [
+      conta.NomeClienteFornecedor,
+      conta.NomeFantasiaClienteFornecedor,
+      conta.RazaoSocialClienteFornecedor,
+    ]
+      .filter((p) => !!p && String(p).trim())
+      .map((p) => this.normalizarTextoBusca(String(p)));
+    return partes.join(' ');
+  }
+
+  private categoriaNormalizada(conta: MovimentacaoFinanceira): string {
+    const partes = [conta.NomeCategoriaFinanceira];
+    if (conta.Valores?.length) {
+      for (const v of conta.Valores) {
+        if (v.Categoria) {
+          partes.push(v.Categoria);
+        }
+        if (v.NomeCategoriaRoot) {
+          partes.push(v.NomeCategoriaRoot);
+        }
+      }
+    }
+    return partes
+      .filter((p) => !!p && String(p).trim())
+      .map((p) => this.normalizarTextoBusca(String(p)))
+      .join(' ');
+  }
+
   limparFiltros(): void {
     this.filtrosUI = {
       status: '',
-      textoPesquisa: ''
+      textoPesquisa: '',
+      buscaFornecedor: '',
+      buscaCategoria: ''
     };
     this.carregarContas(); // Recarrega do backend limpo
   }
@@ -346,131 +434,6 @@ export class ContasAPagarComponent implements OnInit, OnDestroy {
         paginas.push(i);
     }
     return paginas;
-  }
-
-  // ===== Date Range Picker =====
-  toggleRangePicker(): void {
-    this.mostrarRangePicker = !this.mostrarRangePicker;
-    if (this.mostrarRangePicker) {
-      this.tempRangeStart = null;
-      this.tempRangeEnd = null;
-      this.hoverRangeDate = null;
-      this.visibleMonth = this.dataInicial ? new Date(this.dataInicial) : new Date();
-      this.buildCalendar();
-    }
-  }
-
-  cancelRangePicker(): void {
-    this.mostrarRangePicker = false;
-    this.tempRangeStart = null;
-    this.tempRangeEnd = null;
-    this.hoverRangeDate = null;
-  }
-
-  clearRange(): void {
-    this.preencherMesAtual();
-    this.tempRangeStart = null;
-    this.tempRangeEnd = null;
-    this.hoverRangeDate = null;
-    this.paginaAtual = 1;
-    this.carregarContas();
-  }
-
-  applyRangePicker(): void {
-    if (this.tempRangeStart) {
-      const rangeEnd = this.tempRangeEnd ?? this.tempRangeStart;
-      const inicio = this.tempRangeStart <= rangeEnd ? this.tempRangeStart : rangeEnd;
-      const fim = this.tempRangeStart <= rangeEnd ? rangeEnd : this.tempRangeStart;
-
-      this.dataInicial = inicio;
-      this.dataFinal = fim;
-      this.paginaAtual = 1;
-      this.carregarContas();
-    }
-    this.mostrarRangePicker = false;
-    this.tempRangeStart = null;
-    this.tempRangeEnd = null;
-    this.hoverRangeDate = null;
-  }
-
-  buildCalendar(): void {
-    const year = this.visibleMonth.getFullYear();
-    const month = this.visibleMonth.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const startWeekDay = firstDay.getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const prevMonthDays = new Date(year, month, 0).getDate();
-    const days: Array<{ day: number, inCurrentMonth: boolean, dateStr: string }> = [];
-
-    for (let i = startWeekDay - 1; i >= 0; i--) {
-      const day = prevMonthDays - i;
-      const date = new Date(year, month - 1, day);
-      days.push({ day, inCurrentMonth: false, dateStr: this.dateToStr(date) });
-    }
-
-    for (let d = 1; d <= daysInMonth; d++) {
-      const date = new Date(year, month, d);
-      days.push({ day: d, inCurrentMonth: true, dateStr: this.dateToStr(date) });
-    }
-
-    while (days.length % 7 !== 0) {
-      const nextIndex = days.length - startWeekDay - daysInMonth + 1;
-      const date = new Date(year, month + 1, nextIndex);
-      days.push({ day: date.getDate(), inCurrentMonth: false, dateStr: this.dateToStr(date) });
-    }
-
-    this.calendarDays = days;
-  }
-
-  prevMonth(): void {
-    this.visibleMonth = new Date(this.visibleMonth.getFullYear(), this.visibleMonth.getMonth() - 1, 1);
-    this.buildCalendar();
-  }
-
-  nextMonth(): void {
-    this.visibleMonth = new Date(this.visibleMonth.getFullYear(), this.visibleMonth.getMonth() + 1, 1);
-    this.buildCalendar();
-  }
-
-  getMonthYearLabel(): string {
-    return this.visibleMonth.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-  }
-
-  onSelectDate(dateStr: string): void {
-    if (!this.tempRangeStart || (this.tempRangeStart && this.tempRangeEnd)) {
-      this.tempRangeStart = dateStr;
-      this.tempRangeEnd = null;
-      return;
-    }
-    this.tempRangeEnd = dateStr;
-  }
-
-  onHoverDate(dateStr: string | null): void {
-    this.hoverRangeDate = dateStr;
-  }
-
-  isStart(dateStr: string): boolean {
-    if (this.tempRangeStart) {
-      return this.tempRangeStart === dateStr;
-    }
-    return !this.mostrarRangePicker && !!this.dataInicial && this.dataInicial === dateStr;
-  }
-
-  isEnd(dateStr: string): boolean {
-    if (this.tempRangeEnd) {
-      return this.tempRangeEnd === dateStr;
-    }
-    return !this.mostrarRangePicker && !!this.dataFinal && this.dataFinal === dateStr;
-  }
-
-  isBetween(dateStr: string): boolean {
-    const start = this.tempRangeStart;
-    const end = this.tempRangeEnd || this.hoverRangeDate;
-    if (!start || !end) return false;
-
-    const inicio = start <= end ? start : end;
-    const fim = start <= end ? end : start;
-    return dateStr > inicio && dateStr < fim;
   }
 
   private dateToStr(date: Date): string {

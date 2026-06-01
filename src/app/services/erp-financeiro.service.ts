@@ -240,6 +240,9 @@ export interface FiltrosMovimentacoes {
   tipoData?: 'DataCriacao' | 'DataVencimento' | 'DataCompetencia';
   idsEmpresa?: number;
   textoPesquisa?: string;
+  /** Filtro por nome do fornecedor/cliente (contas a pagar/receber). */
+  buscaFornecedor?: string;
+  buscaCategoria?: string;
   categoria?: string;
   tipo?: 'receita' | 'despesa';
   statusPagamento?: 'pendente' | 'recebido' | 'pago';
@@ -344,6 +347,8 @@ export class ErpFinanceiroService {
     if (filtros.orderBy) params = params.set('orderBy', filtros.orderBy);
     if (filtros.orderDirection) params = params.set('orderDirection', filtros.orderDirection);
     if (filtros.textoPesquisa) params = params.set('textoPesquisa', filtros.textoPesquisa);
+    if (filtros.buscaFornecedor) params = params.set('buscaFornecedor', filtros.buscaFornecedor);
+    if (filtros.buscaCategoria) params = params.set('buscaCategoria', filtros.buscaCategoria);
     if (filtros.itensPorPagina) params = params.set('itensPorPagina', String(filtros.itensPorPagina));
     if (filtros.numeroDaPagina) params = params.set('numeroDaPagina', String(filtros.numeroDaPagina));
 

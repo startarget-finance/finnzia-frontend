@@ -18,11 +18,12 @@ import {
   showValidationAlert
 } from '../../utils/sweet-alerts';
 import { sincronizarResumoParametrizacao } from '../../utils/parametrizacao-sync.util';
+import { FinzziaModalComponent } from '../../shared/components/finzzia-modal/finzzia-modal.component';
 
 @Component({
   selector: 'app-fornecedor-cadastro',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FinzziaModalComponent],
   templateUrl: './fornecedor-cadastro.component.html'
 })
 export class FornecedorCadastroComponent implements OnInit {

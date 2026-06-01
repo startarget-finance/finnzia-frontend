@@ -38,7 +38,6 @@ export class DfcPlanilhaComponent implements OnChanges {
   @Input() mesesSelecionados: string[] = [];
 
   /** Ações da barra superior (integração com API no container pai). */
-  @Output() usarDfcPadrao = new EventEmitter<void>();
   @Output() atualizarDados = new EventEmitter<void>();
   @Output() filtrarMesAno = new EventEmitter<{ month: string; year: string }>();
 

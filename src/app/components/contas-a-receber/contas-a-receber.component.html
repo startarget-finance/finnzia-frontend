@@ -217,75 +217,15 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           <!-- Período -->
-          <div class="relative">
-            <label class="block text-xs font-medium text-gray-500 mb-1.5">Período de Vencimento</label>
-            <button type="button"
-                    (click)="toggleRangePicker()"
-                    class="w-full flex items-center justify-between bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm">
-              <div class="flex items-center gap-2.5 truncate">
-                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-                <span class="truncate font-medium">
-                  <ng-container *ngIf="dataInicial && dataFinal; else placeholderPeriodo">
-                    {{ dataInicial === dataFinal 
-                        ? (formatDate(dataInicial)) 
-                        : (formatDate(dataInicial)) + ' até ' + (formatDate(dataFinal)) }}
-                  </ng-container>
-                  <ng-template #placeholderPeriodo>Selecionar período</ng-template>
-                </span>
-              </div>
-              <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-
-            <!-- Popover Calendário -->
-            <div *ngIf="mostrarRangePicker" class="absolute z-50 mt-2 left-0 bg-white border border-gray-200 rounded-2xl shadow-xl p-4 w-[340px] max-h-[400px] overflow-y-auto">
-              <!-- Calendar Header -->
-              <div class="flex items-center justify-between mb-4">
-                <button type="button" (click)="prevMonth()" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <div class="text-sm font-bold text-gray-900 capitalize">{{ getMonthYearLabel() }}</div>
-                <button type="button" (click)="nextMonth()" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </button>
-              </div>
-
-              <!-- Days Grid -->
-              <div class="grid grid-cols-7 text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                <div class="text-center">dom</div><div class="text-center">seg</div><div class="text-center">ter</div>
-                <div class="text-center">qua</div><div class="text-center">qui</div><div class="text-center">sex</div><div class="text-center">sáb</div>
-              </div>
-
-              <div class="grid grid-cols-7 gap-1">
-                <ng-container *ngFor="let d of calendarDays">
-                  <button type="button"
-                          [disabled]="!d.inCurrentMonth"
-                          (click)="onSelectDate(d.dateStr)"
-                          (mouseenter)="onHoverDate(d.dateStr)"
-                          (mouseleave)="onHoverDate(null)"
-                          [class.opacity-30]="!d.inCurrentMonth"
-                          [class.bg-blue-600]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                          [class.text-white]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                          [class.font-semibold]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                          [class.bg-blue-50]="isBetween(d.dateStr)"
-                          [class.text-blue-700]="isBetween(d.dateStr)"
-                          class="text-sm text-gray-700 rounded-lg py-2 hover:bg-gray-100 transition-colors disabled:cursor-not-allowed">
-                    {{ d.day }}
-                  </button>
-                </ng-container>
-              </div>
-
-              <!-- Calendar Actions -->
-              <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                <button type="button" (click)="clearRange()" class="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors">Limpar</button>
-                <div class="flex gap-2">
-                  <button type="button" (click)="cancelRangePicker()" class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">Cancelar</button>
-                  <button type="button" (click)="applyRangePicker()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-gray-800 shadow-sm transition-colors">Aplicar</button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <app-periodo-range-picker
+            label="Período de Vencimento"
+            [(dataInicial)]="dataInicial"
+            [(dataFinal)]="dataFinal"
+            [fullWidth]="true"
+            [preloadOnOpen]="false"
+            (applied)="onPeriodoAplicado()"
+            (cleared)="onPeriodoLimpar()"
+          />
 
           <!-- Status -->
           <div>

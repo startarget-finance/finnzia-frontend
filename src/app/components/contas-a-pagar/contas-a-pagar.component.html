@@ -218,75 +218,15 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
           <!-- Período -->
-          <div class="relative">
-            <label class="block text-xs font-medium text-gray-500 mb-1.5">Período de Vencimento</label>
-            <button type="button"
-                    (click)="toggleRangePicker()"
-                    class="w-full flex items-center justify-between bg-white border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm">
-              <div class="flex items-center gap-2.5 truncate">
-                <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-                <span class="truncate font-medium">
-                  <ng-container *ngIf="dataInicial && dataFinal; else placeholderPeriodo">
-                    {{ dataInicial === dataFinal 
-                        ? (formatDate(dataInicial)) 
-                        : (formatDate(dataInicial)) + ' até ' + (formatDate(dataFinal)) }}
-                  </ng-container>
-                  <ng-template #placeholderPeriodo>Selecionar período</ng-template>
-                </span>
-              </div>
-              <svg class="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-
-            <!-- Popover Calendário -->
-            <div *ngIf="mostrarRangePicker" class="absolute z-50 mt-2 left-0 bg-white border border-gray-200 rounded-2xl shadow-xl p-4 w-[340px] max-h-[400px] overflow-y-auto">
-              <!-- Calendar Header -->
-              <div class="flex items-center justify-between mb-4">
-                <button type="button" (click)="prevMonth()" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <div class="text-sm font-bold text-gray-900 capitalize">{{ getMonthYearLabel() }}</div>
-                <button type="button" (click)="nextMonth()" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                </button>
-              </div>
-
-              <!-- Days Grid -->
-              <div class="grid grid-cols-7 text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                <div class="text-center">dom</div><div class="text-center">seg</div><div class="text-center">ter</div>
-                <div class="text-center">qua</div><div class="text-center">qui</div><div class="text-center">sex</div><div class="text-center">sáb</div>
-              </div>
-
-              <div class="grid grid-cols-7 gap-1">
-                <ng-container *ngFor="let d of calendarDays">
-                  <button type="button"
-                          [disabled]="!d.inCurrentMonth"
-                          (click)="onSelectDate(d.dateStr)"
-                          (mouseenter)="onHoverDate(d.dateStr)"
-                          (mouseleave)="onHoverDate(null)"
-                          [class.opacity-30]="!d.inCurrentMonth"
-                          [class.bg-blue-600]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                          [class.text-white]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                          [class.font-semibold]="isStart(d.dateStr) || isEnd(d.dateStr)"
-                          [class.bg-blue-50]="isBetween(d.dateStr)"
-                          [class.text-blue-700]="isBetween(d.dateStr)"
-                          class="text-sm text-gray-700 rounded-lg py-2 hover:bg-gray-100 transition-colors disabled:cursor-not-allowed">
-                    {{ d.day }}
-                  </button>
-                </ng-container>
-              </div>
-
-              <!-- Calendar Actions -->
-              <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-                <button type="button" (click)="clearRange()" class="text-xs font-medium text-gray-500 hover:text-gray-900 transition-colors">Limpar</button>
-                <div class="flex gap-2">
-                  <button type="button" (click)="cancelRangePicker()" class="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">Cancelar</button>
-                  <button type="button" (click)="applyRangePicker()" class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-900 text-white hover:bg-gray-800 shadow-sm transition-colors">Aplicar</button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <app-periodo-range-picker
+            label="Período de Vencimento"
+            [(dataInicial)]="dataInicial"
+            [(dataFinal)]="dataFinal"
+            [fullWidth]="true"
+            [preloadOnOpen]="false"
+            (applied)="onPeriodoAplicado()"
+            (cleared)="onPeriodoLimpar()"
+          />
 
           <!-- Status -->
           <div>
@@ -315,7 +255,7 @@
               <input type="text" 
                      [(ngModel)]="filtrosUI.textoPesquisa"
                      (ngModelChange)="onTextoPesquisaChange($event)"
-                     placeholder="Buscar por fornecedor, descrição ou documento..."
+                     placeholder="Buscar por descrição ou documento..."
                      class="w-full pl-10 pr-3.5 py-2.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 font-medium placeholder-gray-400 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm">
             </div>
           </div>
@@ -329,8 +269,63 @@
           <table class="w-full divide-y divide-gray-200 table-fixed">
             <thead class="bg-gray-50/50">
               <tr>
-                <th scope="col" class="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-1/4">Fornecedor</th>
-                <th scope="col" class="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32">Vencimento</th>
+                <th scope="col" class="px-4 py-3 text-left align-top w-1/4">
+                  <span class="block text-xs font-semibold uppercase tracking-wider text-gray-500">Fornecedor</span>
+                  <div class="relative mt-2">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5">
+                      <svg class="h-3.5 w-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      [(ngModel)]="filtrosUI.buscaFornecedor"
+                      (ngModelChange)="onBuscaFornecedorChange($event)"
+                      placeholder="Buscar fornecedor..."
+                      class="w-full rounded-lg border border-gray-300 bg-white py-2 pl-8 pr-8 text-xs font-medium text-gray-900 placeholder-gray-400 shadow-sm transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                    />
+                    <button
+                      *ngIf="filtrosUI.buscaFornecedor"
+                      type="button"
+                      (click)="limparBuscaFornecedor()"
+                      class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-700"
+                      aria-label="Limpar busca de fornecedor"
+                    >
+                      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                    </button>
+                  </div>
+                </th>
+                <th scope="col" class="px-4 py-3 text-left align-top w-[14%] min-w-[9rem]">
+                  <span class="block text-xs font-semibold uppercase tracking-wider text-gray-500">Categoria</span>
+                  <div class="relative mt-2">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5">
+                      <svg class="h-3.5 w-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                      </svg>
+                    </div>
+                    <input
+                      type="text"
+                      [(ngModel)]="filtrosUI.buscaCategoria"
+                      (ngModelChange)="onBuscaCategoriaChange($event)"
+                      placeholder="Buscar categoria..."
+                      class="w-full rounded-lg border border-gray-300 bg-white py-2 pl-8 pr-8 text-xs font-medium text-gray-900 placeholder-gray-400 shadow-sm transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                    />
+                    <button
+                      *ngIf="filtrosUI.buscaCategoria"
+                      type="button"
+                      (click)="limparBuscaCategoria()"
+                      class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-700"
+                      aria-label="Limpar busca de categoria"
+                    >
+                      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                    </button>
+                  </div>
+                </th>
+                <th scope="col" class="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-28">Vencimento</th>
                 <th scope="col" class="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider w-32">Pagamento</th>
                 <th scope="col" class="px-4 py-3.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Descrição/Doc</th>
                 <th scope="col" class="px-4 py-3.5 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider w-36">Valor</th>
@@ -350,6 +345,13 @@
                       Cód: {{ conta.CodigoClienteFornecedor || '-' }}
                     </span>
                   </div>
+                </td>
+
+                <!-- Categoria -->
+                <td class="px-4 py-4 text-sm align-top">
+                  <span class="line-clamp-2 text-gray-800" [title]="conta.NomeCategoriaFinanceira">
+                    {{ conta.NomeCategoriaFinanceira || 'Sem categoria' }}
+                  </span>
                 </td>
 
                 <!-- Vencimento -->
@@ -389,7 +391,7 @@
               
               <!-- Empty State -->
               <tr *ngIf="contasFiltradas.length === 0">
-                <td colspan="6" class="px-4 py-12 text-center">
+                <td colspan="7" class="px-4 py-12 text-center">
                   <app-feedback-state
                     kind="empty"
                     title="Nenhuma conta encontrada"

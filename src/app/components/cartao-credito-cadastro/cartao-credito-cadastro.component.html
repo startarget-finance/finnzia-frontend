@@ -10,7 +10,7 @@
         <button
           type="button"
           (click)="abrirNovoModal()"
-          class="rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:brightness-110"
+          class="finzzia-btn-primary"
         >
           Cadastrar cartão
         </button>
@@ -18,45 +18,33 @@
     </div>
   </div>
 
-  <div
-    *ngIf="modalAberto"
-    class="modal-overlay-main z-[110] bg-slate-900/35 backdrop-blur-[4px]"
-    (click)="fecharModalFormulario()"
+  <app-finzzia-modal
+    [aberto]="modalAberto"
+    [zIndex]="10060"
+    tamanho="2xl"
+    eyebrow="Parametrização"
+    [titulo]="editandoId ? 'Editar cartão de crédito' : 'Cadastro de cartão de crédito'"
+    subtitulo="Campos padronizados para uso no menu Fatura e gestão de despesas."
+    [corpoSimples]="true"
+    (fechar)="fecharModalFormulario()"
   >
-    <div class="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl sm:p-5" (click)="$event.stopPropagation()">
-      <div class="mb-4 flex items-center justify-between gap-3 border-b border-slate-200/70 pb-3">
-        <div>
-          <h3 class="text-sm font-semibold text-slate-900">
-            {{ editandoId ? 'Editar cartão de crédito' : 'Cadastro de cartão de crédito' }}
-          </h3>
-          <p class="mt-1 text-xs text-slate-500">Campos padronizados para uso no menu Fatura e gestão de despesas.</p>
-        </div>
-        <button
-          type="button"
-          (click)="fecharModalFormulario()"
-          class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700"
-          aria-label="Fechar"
-        >
-          ✕
-        </button>
-      </div>
-
+    <div finzziaModalBody>
       <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
       <div class="xl:col-span-2">
         <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Nome do cartão <span class="text-rose-500">*</span></label>
-        <input [(ngModel)]="form.nome" (input)="onTextFieldInput('nome')" [ngClass]="isRequiredFieldInvalid('nome') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'" class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100" placeholder="Ex: Nubank PJ Empresarial" />
+        <input [(ngModel)]="form.nome" (input)="onTextFieldInput('nome')" [ngClass]="isRequiredFieldInvalid('nome') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'" class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20" placeholder="Ex: Nubank PJ Empresarial" />
         <p *ngIf="fieldErrors.nome" class="mt-1 text-xs font-medium text-rose-600">{{ fieldErrors.nome }}</p>
       </div>
       <div>
         <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Bandeira <span class="text-rose-500">*</span></label>
-        <select [(ngModel)]="form.bandeira" (ngModelChange)="onTextFieldInput('bandeira')" [ngClass]="isRequiredFieldInvalid('bandeira') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'" class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100">
+        <select [(ngModel)]="form.bandeira" (ngModelChange)="onTextFieldInput('bandeira')" [ngClass]="isRequiredFieldInvalid('bandeira') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'" class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20">
           <option *ngFor="let b of bandeiras" [ngValue]="b">{{ b }}</option>
         </select>
         <p *ngIf="fieldErrors.bandeira" class="mt-1 text-xs font-medium text-rose-600">{{ fieldErrors.bandeira }}</p>
       </div>
       <div>
         <label class="mb-1 block text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">Final (4 dígitos) <span class="text-rose-500">*</span></label>
-        <input [(ngModel)]="form.finalCartao" (input)="onFinalCartaoInput()" maxlength="4" inputmode="numeric" [ngClass]="isRequiredFieldInvalid('finalCartao') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'" class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100" placeholder="1234" />
+        <input [(ngModel)]="form.finalCartao" (input)="onFinalCartaoInput()" maxlength="4" inputmode="numeric" [ngClass]="isRequiredFieldInvalid('finalCartao') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'" class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20" placeholder="1234" />
         <p *ngIf="fieldErrors.finalCartao" class="mt-1 text-xs font-medium text-rose-600">{{ fieldErrors.finalCartao }}</p>
       </div>
       <div>
@@ -69,7 +57,7 @@
             (blur)="onLimiteBlur()"
             inputmode="numeric"
             [ngClass]="isRequiredFieldInvalid('limite') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'"
-            class="w-full rounded-xl border bg-white pl-10 pr-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100"
+            class="w-full rounded-xl border bg-white pl-10 pr-3 py-2.5 text-sm shadow-sm transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
             placeholder="0,00"
           />
         </div>
@@ -85,7 +73,7 @@
           max="31"
           inputmode="numeric"
           [ngClass]="isRequiredFieldInvalid('diaFechamento') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'"
-          class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100"
+          class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
           placeholder="1 a 31"
         />
         <p *ngIf="fieldErrors.diaFechamento" class="mt-1 text-xs font-medium text-rose-600">{{ fieldErrors.diaFechamento }}</p>
@@ -100,26 +88,23 @@
           max="31"
           inputmode="numeric"
           [ngClass]="isRequiredFieldInvalid('diaVencimento') ? 'border-rose-300 ring-2 ring-rose-100' : 'border-slate-200'"
-          class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100"
+          class="w-full rounded-xl border bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/20"
           placeholder="1 a 31"
         />
         <p *ngIf="fieldErrors.diaVencimento" class="mt-1 text-xs font-medium text-rose-600">{{ fieldErrors.diaVencimento }}</p>
       </div>
     </div>
 
-      <div class="mt-4 flex flex-wrap items-center justify-end gap-2">
-      <button type="button" (click)="salvar()" [disabled]="salvando" class="rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60">
-        {{ editandoId ? 'Atualizar cartão' : 'Cadastrar cartão' }}
-      </button>
-      <button type="button" (click)="fecharModalFormulario()" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">
-        Cancelar
-      </button>
-      </div>
-
       <p *ngIf="mensagem" class="mt-3 text-sm font-medium text-emerald-700">{{ mensagem }}</p>
       <p *ngIf="erro" class="mt-3 text-sm font-medium text-rose-700">{{ erro }}</p>
     </div>
-  </div>
+    <div finzziaModalFooter>
+      <button type="button" (click)="fecharModalFormulario()" class="finzzia-btn-secondary">Cancelar</button>
+      <button type="button" (click)="salvar()" [disabled]="salvando" class="finzzia-btn-primary">
+        {{ editandoId ? 'Atualizar cartão' : 'Cadastrar cartão' }}
+      </button>
+    </div>
+  </app-finzzia-modal>
 
   <div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_18px_40px_-24px_rgba(15,23,42,0.22)] ring-1 ring-slate-200/60">
     <div class="overflow-x-auto">

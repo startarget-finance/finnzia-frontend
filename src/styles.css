@@ -46,6 +46,67 @@
     }
   }
 
+  /* Modal padrão Finzzia (Contas a pagar/receber, cadastros ERP) */
+  .finzzia-modal-overlay {
+    @apply fixed inset-0 flex items-center justify-center bg-slate-950/50 p-3 backdrop-blur-md sm:p-4;
+  }
+
+  .finzzia-modal-panel {
+    @apply relative flex max-h-[90vh] min-h-0 w-full flex-col overflow-hidden rounded-3xl border border-white/20 bg-white/95 shadow-2xl shadow-slate-900/30 ring-1 ring-slate-200/40 backdrop-blur-xl;
+  }
+
+  .finzzia-modal-header {
+    @apply relative shrink-0 border-b border-white/10 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 py-4 sm:px-8 sm:pb-5 sm:pr-16 sm:pt-5;
+  }
+
+  .finzzia-modal-header-glow {
+    background: radial-gradient(ellipse 80% 60% at 100% -20%, rgba(45, 212, 191, 0.12), transparent);
+  }
+
+  .finzzia-modal-tabs {
+    @apply sticky top-0 z-10 flex flex-wrap gap-1.5 border-b border-slate-200/80 bg-slate-100/90 px-3 py-2.5 backdrop-blur-md sm:gap-2 sm:px-6;
+  }
+
+  .finzzia-modal-body {
+    @apply min-h-0 flex-1 overflow-y-auto overscroll-contain bg-gradient-to-b from-slate-50/95 via-white to-teal-50/20 px-4 py-6 sm:px-8;
+  }
+
+  .finzzia-modal-body--plain {
+    @apply bg-white px-5 py-5 sm:px-6;
+  }
+
+  .finzzia-modal-footer {
+    @apply flex shrink-0 flex-wrap items-center justify-end gap-3 border-t border-slate-200/80 bg-gradient-to-r from-slate-50/95 via-white to-teal-50/20 px-5 py-4 backdrop-blur-sm sm:px-7;
+  }
+
+  .finzzia-field-label {
+    @apply mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600;
+  }
+
+  .finzzia-field-input {
+    @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20;
+  }
+
+  .finzzia-btn-primary {
+    @apply rounded-xl bg-gradient-to-r from-teal-600 via-teal-600 to-cyan-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-teal-600/30 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .finzzia-btn-secondary {
+    @apply rounded-xl border border-slate-200/90 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50;
+  }
+
+  .finzzia-tab-btn {
+    @apply rounded-xl px-3.5 py-2.5 text-xs font-semibold transition sm:text-sm;
+  }
+
+  .finzzia-tab-btn--active {
+    @apply bg-white text-slate-900 shadow-md shadow-slate-900/10 ring-2 ring-teal-500/30;
+  }
+
+  .finzzia-tab-btn--idle {
+    @apply text-slate-500 hover:bg-white/80 hover:text-slate-800;
+  }
+
   .dashboard-filters select,
   .dashboard-filters input[type="date"],
   .dashboard-filters input[type="text"],
